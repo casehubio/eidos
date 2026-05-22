@@ -24,5 +24,6 @@ public record AgentDescriptor(
         List<AgentCapability> capabilities,
         AgentDisposition disposition,
         String jurisdiction,
-        String dataHandlingPolicy
+        String dataHandlingPolicy,
+        String tenancyId
 ) {}
