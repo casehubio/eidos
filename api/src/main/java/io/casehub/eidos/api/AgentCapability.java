@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public record AgentCapability(
         String name,
-        double qualityHint,
+        Double qualityHint,
         Long latencyHintP50Ms,
         String costHint,
         List<String> inputTypes,

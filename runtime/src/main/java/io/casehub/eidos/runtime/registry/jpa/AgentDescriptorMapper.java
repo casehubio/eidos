@@ -51,7 +51,7 @@ class AgentDescriptorMapper {
 
     private AgentCapability toCapability(AgentCapabilityEntity c) {
         return new AgentCapability(
-            c.name, c.qualityHint != null ? c.qualityHint : 0.0, c.latencyHintP50Ms, c.costHint,
+            c.name, c.qualityHint, c.latencyHintP50Ms, c.costHint,
             readJson(c.inputTypes, new TypeReference<List<String>>() {}),
             readJson(c.outputTypes, new TypeReference<List<String>>() {}),
             readJson(c.tags, new TypeReference<List<String>>() {}),
