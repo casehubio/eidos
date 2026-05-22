@@ -18,7 +18,7 @@ class AgentCapabilityEntity {
     String name;
 
     @Column(name = "quality_hint")
-    double qualityHint;
+    Double qualityHint;
 
     @Column(name = "latency_hint_p50_ms")
     Long latencyHintP50Ms;
