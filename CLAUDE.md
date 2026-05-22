@@ -6,7 +6,7 @@
 
 ## Session Start
 
-Run `add-dir /Users/mdproctor/claude/casehub/eidos` before any other work.
+Run `add-dir /Users/mdproctor/claude/public/casehub/eidos` before any other work.
 
 ## Artifact Locations
 
