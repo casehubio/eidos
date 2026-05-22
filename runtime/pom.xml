@@ -38,6 +38,17 @@
       <artifactId>quarkus-hibernate-orm</artifactId>
     </dependency>
 
+    <!-- Reactive JPA — activated when casehub.eidos.reactive.enabled=true -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-reactive-panache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-reactive-pg-client</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- JSON for descriptor serialisation -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -71,6 +82,12 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit5</artifactId>
+      <version>1.4.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
