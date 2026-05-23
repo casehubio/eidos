@@ -32,7 +32,7 @@ class InMemoryAgentRegistryTest {
     @Test
     void register_and_find_by_id() {
         registry.register(descriptor("m-1", "reviewer", "default", "code-review"));
-        var found = registry.findById("m-1");
+        var found = registry.findById("m-1", "default");
         assertThat(found).isPresent();
         assertThat(found.get().slot()).isEqualTo("reviewer");
         assertThat(found.get().tenancyId()).isEqualTo("default");
@@ -75,6 +75,6 @@ class InMemoryAgentRegistryTest {
     void upsert_replaces_existing() {
         registry.register(descriptor("m-6", "reviewer", "default", "code-review"));
         registry.register(descriptor("m-6", "planner", "default", "planning"));
-        assertThat(registry.findById("m-6").get().slot()).isEqualTo("planner");
+        assertThat(registry.findById("m-6", "default").get().slot()).isEqualTo("planner");
     }
 }

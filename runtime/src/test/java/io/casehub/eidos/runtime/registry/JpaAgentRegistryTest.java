@@ -39,7 +39,7 @@ class JpaAgentRegistryTest {
     void register_and_find_by_id() {
         registry.register(descriptor("agent-1", "reviewer", "default", "code-review"));
 
-        var found = registry.findById("agent-1");
+        var found = registry.findById("agent-1", "default");
 
         assertThat(found).isPresent();
         assertThat(found.get().agentId()).isEqualTo("agent-1");
@@ -91,7 +91,7 @@ class JpaAgentRegistryTest {
         registry.register(descriptor("agent-5", "reviewer", "default", "code-review"));
         registry.register(descriptor("agent-5", "planner", "default", "planning"));
 
-        var found = registry.findById("agent-5");
+        var found = registry.findById("agent-5", "default");
 
         assertThat(found).isPresent();
         assertThat(found.get().slot()).isEqualTo("planner");
@@ -124,6 +124,6 @@ class JpaAgentRegistryTest {
     @Test
     @TestTransaction
     void find_by_id_returns_empty_for_missing_agent() {
-        assertThat(registry.findById("nonexistent")).isEmpty();
+        assertThat(registry.findById("nonexistent", "default")).isEmpty();
     }
 }

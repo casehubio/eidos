@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,18 +32,21 @@ public class JpaAgentRegistry implements AgentRegistry {
     }
 
     @Override
-    public Optional<AgentDescriptor> findById(String agentId) {
+    @Transactional(TxType.SUPPORTS)
+    public Optional<AgentDescriptor> findById(String agentId, String tenancyId) {
         return em.createQuery(
                 "SELECT DISTINCT a FROM AgentDescriptorEntity a LEFT JOIN FETCH a.capabilities"
-                + " WHERE a.agentId = :id",
+                + " WHERE a.agentId = :id AND a.tenancyId = :tenancyId",
                 AgentDescriptorEntity.class)
             .setParameter("id", agentId)
+            .setParameter("tenancyId", tenancyId)
             .getResultStream()
             .findFirst()
             .map(mapper::toRecord);
     }
 
     @Override
+    @Transactional(TxType.SUPPORTS)
     public List<AgentDescriptor> find(AgentQuery query) {
         String fetchJoin = query.capabilityName() != null
             ? "JOIN FETCH a.capabilities c"

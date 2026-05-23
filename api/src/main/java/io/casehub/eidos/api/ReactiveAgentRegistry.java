@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface ReactiveAgentRegistry {
     Uni<Void> register(AgentDescriptor descriptor);
-    Uni<Optional<AgentDescriptor>> findById(String agentId);
+    Uni<Optional<AgentDescriptor>> findById(String agentId, String tenancyId);
     Uni<List<AgentDescriptor>> find(AgentQuery query);
 }

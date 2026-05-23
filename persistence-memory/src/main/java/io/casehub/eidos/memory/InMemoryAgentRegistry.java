@@ -22,15 +22,16 @@ public class InMemoryAgentRegistry implements AgentRegistry {
     }
 
     @Override
-    public Optional<AgentDescriptor> findById(String agentId) {
-        return Optional.ofNullable(store.get(agentId));
+    public Optional<AgentDescriptor> findById(String agentId, String tenancyId) {
+        return Optional.ofNullable(store.get(agentId))
+            .filter(d -> d.tenancyId().equals(tenancyId));
     }
 
     @Override
     public List<AgentDescriptor> find(AgentQuery query) {
         return store.values().stream()
             .filter(d -> d.tenancyId().equals(query.tenancyId()))
-            .filter(d -> query.slot() == null || d.slot().equals(query.slot()))
+            .filter(d -> query.slot() == null || query.slot().equals(d.slot()))
             .filter(d -> query.capabilityName() == null
                 || d.capabilities().stream().anyMatch(c -> c.name().equals(query.capabilityName())))
             .collect(Collectors.toList());

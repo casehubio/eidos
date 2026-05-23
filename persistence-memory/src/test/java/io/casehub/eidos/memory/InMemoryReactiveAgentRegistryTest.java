@@ -29,7 +29,7 @@ class InMemoryReactiveAgentRegistryTest {
     @Test
     void register_and_find_by_id() {
         registry.register(descriptor("rm-1", "reviewer", "default")).await().indefinitely();
-        var found = registry.findById("rm-1").await().indefinitely();
+        var found = registry.findById("rm-1", "default").await().indefinitely();
         assertThat(found).isPresent();
         assertThat(found.get().slot()).isEqualTo("reviewer");
     }

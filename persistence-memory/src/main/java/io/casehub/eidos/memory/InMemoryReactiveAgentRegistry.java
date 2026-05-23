@@ -23,8 +23,8 @@ public class InMemoryReactiveAgentRegistry implements ReactiveAgentRegistry {
     }
 
     @Override
-    public Uni<Optional<AgentDescriptor>> findById(String agentId) {
-        return Uni.createFrom().item(delegate.findById(agentId));
+    public Uni<Optional<AgentDescriptor>> findById(String agentId, String tenancyId) {
+        return Uni.createFrom().item(delegate.findById(agentId, tenancyId));
     }
 
     @Override

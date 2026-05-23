@@ -41,7 +41,7 @@ class JpaReactiveAgentRegistryTest {
     @RunOnVertxContext
     void reactive_register_and_find_by_id(UniAsserter asserter) {
         asserter.execute(() -> registry.register(descriptor("r-agent-1", "reviewer", "default", "cap-test1")))
-            .assertThat(() -> registry.findById("r-agent-1"), found -> {
+            .assertThat(() -> registry.findById("r-agent-1", "default"), found -> {
                 assertThat(found).isPresent();
                 assertThat(found.get().slot()).isEqualTo("reviewer");
                 assertThat(found.get().tenancyId()).isEqualTo("default");
@@ -87,7 +87,7 @@ class JpaReactiveAgentRegistryTest {
         asserter
             .execute(() -> registry.register(descriptor("r-agent-5", "reviewer", "default", "cap-test5")))
             .execute(() -> registry.register(descriptor("r-agent-5", "planner", "default", "cap-test5b")))
-            .assertThat(() -> registry.findById("r-agent-5"), found -> {
+            .assertThat(() -> registry.findById("r-agent-5", "default"), found -> {
                 assertThat(found).isPresent();
                 assertThat(found.get().slot()).isEqualTo("planner");
             });

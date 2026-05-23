@@ -28,10 +28,11 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
 
     @Override
     @WithSession
-    public Uni<Optional<AgentDescriptor>> findById(String agentId) {
+    public Uni<Optional<AgentDescriptor>> findById(String agentId, String tenancyId) {
         return repo.find(
                 "SELECT DISTINCT a FROM AgentDescriptorEntity a"
-                + " LEFT JOIN FETCH a.capabilities WHERE a.agentId = ?1", agentId)
+                + " LEFT JOIN FETCH a.capabilities"
+                + " WHERE a.agentId = ?1 AND a.tenancyId = ?2", agentId, tenancyId)
             .firstResult()
             .map(e -> Optional.ofNullable(e).map(mapper::toRecord));
     }
