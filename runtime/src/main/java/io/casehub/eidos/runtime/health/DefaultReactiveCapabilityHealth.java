@@ -13,7 +13,7 @@ import jakarta.inject.Inject;
 public class DefaultReactiveCapabilityHealth implements ReactiveCapabilityHealth {
 
     @Inject
-    DefaultCapabilityHealth delegate;
+    CapabilityHealth delegate;
 
     @Override
     public Uni<CapabilityStatus> probe(AgentDescriptor descriptor, String capabilityTag,

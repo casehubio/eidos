@@ -13,6 +13,11 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
 
     @Override
     public CapabilityStatus probe(AgentDescriptor descriptor, String capabilityTag, ProbeContext context) {
+        if (descriptor.capabilities() == null || descriptor.capabilities().isEmpty()) {
+            return new CapabilityStatus.Unavailable(
+                "Capability '" + capabilityTag + "' not declared");
+        }
+
         var capability = descriptor.capabilities().stream()
             .filter(c -> c.name().equals(capabilityTag))
             .findFirst()
