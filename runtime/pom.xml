@@ -49,10 +49,10 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- JSON for descriptor serialisation -->
+    <!-- JSON for descriptor serialisation — quarkus-jackson registers ObjectMapper as CDI bean -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jackson</artifactId>
     </dependency>
 
     <!-- Mutiny for reactive variants -->
@@ -77,6 +77,11 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-flyway</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
