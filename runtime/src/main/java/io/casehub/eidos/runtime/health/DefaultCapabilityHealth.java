@@ -1,0 +1,37 @@
+package io.casehub.eidos.runtime.health;
+
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.CapabilityHealth;
+import io.quarkus.arc.properties.IfBuildProperty;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+@IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "false", enableIfMissing = true)
+@ApplicationScoped
+public class DefaultCapabilityHealth implements CapabilityHealth {
+
+    @ConfigProperty(name = "casehub.eidos.epistemic.weak-threshold", defaultValue = "0.3")
+    double weakThreshold;
+
+    @Override
+    public CapabilityStatus probe(AgentDescriptor descriptor, String capabilityTag, ProbeContext context) {
+        var capability = descriptor.capabilities().stream()
+            .filter(c -> c.name().equals(capabilityTag))
+            .findFirst()
+            .orElse(null);
+
+        if (capability == null) {
+            return new CapabilityStatus.Unavailable(
+                "Capability '" + capabilityTag + "' not declared");
+        }
+
+        if (context.taskDomain() != null && capability.epistemicDomains() != null) {
+            Double confidence = capability.epistemicDomains().get(context.taskDomain());
+            if (confidence != null && confidence < weakThreshold) {
+                return new CapabilityStatus.EpistemicallyWeak(context.taskDomain(), confidence);
+            }
+        }
+
+        return new CapabilityStatus.Ready();
+    }
+}
