@@ -20,6 +20,10 @@
       <version>${project.version}</version>
     </dependency>
 
+    <!-- Deployment modules — must mirror every runtime extension dependency transitively.
+         The extension-descriptor plugin enforces this at build time. -->
+
+    <!-- Core -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-core-deployment</artifactId>
@@ -28,22 +32,62 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc-deployment</artifactId>
     </dependency>
+
+    <!-- Hibernate ORM -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-orm-deployment</artifactId>
     </dependency>
+
+    <!-- Datasource / JDBC -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-datasource-deployment</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-agroal-deployment</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-devservices-deployment</artifactId>
+    </dependency>
+
+    <!-- Transactions -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-narayana-jta-deployment</artifactId>
+    </dependency>
+
+    <!-- Hibernate Reactive + Panache -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-reactive-panache-deployment</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-reactive-deployment</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-reactive-panache-common-deployment</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-reactive-datasource-deployment</artifactId>
     </dependency>
+
+    <!-- Reactive / async -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-mutiny-deployment</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-context-propagation-deployment</artifactId>
+    </dependency>
+
+    <!-- Networking / Vert.x -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-vertx-deployment</artifactId>
@@ -56,6 +100,14 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-virtual-threads-deployment</artifactId>
     </dependency>
+
+    <!-- Caching -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-caffeine-deployment</artifactId>
+    </dependency>
+
+    <!-- JSON -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jackson-deployment</artifactId>
