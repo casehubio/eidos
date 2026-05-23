@@ -13,7 +13,6 @@ public class ConscientiousnessVocabularyProducer {
     public static final String URI = "urn:casehub:vocab:conscientiousness";
 
     @Produces
-    @ApplicationScoped
     public Vocabulary conscientiousnessVocabulary() {
         return new Vocabulary(URI, "Conscientiousness Disposition Axes", "1.0", Map.ofEntries(
             Map.entry("strict",          new VocabularyTerm("strict", "Strict Rule Following",

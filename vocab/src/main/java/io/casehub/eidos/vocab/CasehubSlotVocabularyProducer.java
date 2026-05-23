@@ -13,7 +13,6 @@ public class CasehubSlotVocabularyProducer {
     public static final String URI = "urn:casehub:vocab:casehub-slot";
 
     @Produces
-    @ApplicationScoped
     public Vocabulary casehubSlotVocabulary() {
         return new Vocabulary(URI, "CaseHub Slot Roles", "1.0", Map.of(
             "planner",    new VocabularyTerm("planner", "Planner",

@@ -13,7 +13,6 @@ public class SvoVocabularyProducer {
     public static final String URI = "urn:casehub:vocab:svo";
 
     @Produces
-    @ApplicationScoped
     public Vocabulary svoVocabulary() {
         return new Vocabulary(URI, "SVO Roles", "1.0", Map.of(
             "performer", new VocabularyTerm("performer", "Performer",
