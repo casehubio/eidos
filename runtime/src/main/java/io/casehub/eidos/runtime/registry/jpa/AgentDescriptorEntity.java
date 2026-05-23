@@ -6,7 +6,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "agent_descriptor")
-class AgentDescriptorEntity {
+public class AgentDescriptorEntity {
 
     @Id
     @Column(name = "agent_id")

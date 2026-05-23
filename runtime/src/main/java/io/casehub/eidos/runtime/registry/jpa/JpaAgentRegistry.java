@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.registry.jpa;
 
 import io.casehub.eidos.api.*;
+import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -8,6 +9,7 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+@IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "false", enableIfMissing = true)
 @ApplicationScoped
 public class JpaAgentRegistry implements AgentRegistry {
 
