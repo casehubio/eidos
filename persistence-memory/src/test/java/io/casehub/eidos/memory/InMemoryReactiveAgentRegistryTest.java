@@ -1,0 +1,52 @@
+package io.casehub.eidos.memory;
+
+import io.casehub.eidos.api.*;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.*;
+
+@QuarkusTest
+class InMemoryReactiveAgentRegistryTest {
+
+    @Inject ReactiveAgentRegistry registry;
+
+    static AgentDescriptor descriptor(String agentId, String slot, String tenancyId) {
+        return new AgentDescriptor(
+            agentId, "Agent", "1.0", "anthropic", "claude", "claude-3-7",
+            null, null, null, null, slot,
+            List.of(new AgentCapability("cap", 0.9, null, null,
+                List.of(), List.of(), List.of(), Map.of())),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            null, null, tenancyId
+        );
+    }
+
+    @Test
+    void register_and_find_by_id() {
+        registry.register(descriptor("rm-1", "reviewer", "default")).await().indefinitely();
+        var found = registry.findById("rm-1").await().indefinitely();
+        assertThat(found).isPresent();
+        assertThat(found.get().slot()).isEqualTo("reviewer");
+    }
+
+    @Test
+    void find_by_slot() {
+        registry.register(descriptor("rm-2a", "reviewer", "default")).await().indefinitely();
+        registry.register(descriptor("rm-2b", "planner", "default")).await().indefinitely();
+        var result = registry.find(AgentQuery.bySlot("reviewer", "default")).await().indefinitely();
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+            .contains("rm-2a").doesNotContain("rm-2b");
+    }
+
+    @Test
+    void tenancy_isolation() {
+        registry.register(descriptor("rm-3", "reviewer", "tenant-a")).await().indefinitely();
+        var result = registry.find(AgentQuery.bySlot("reviewer", "tenant-b")).await().indefinitely();
+        assertThat(result).isEmpty();
+    }
+}
