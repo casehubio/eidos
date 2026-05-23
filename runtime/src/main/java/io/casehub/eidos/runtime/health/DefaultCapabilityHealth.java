@@ -2,11 +2,9 @@ package io.casehub.eidos.runtime.health;
 
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.CapabilityHealth;
-import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-@IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "false", enableIfMissing = true)
 @ApplicationScoped
 public class DefaultCapabilityHealth implements CapabilityHealth {
 
