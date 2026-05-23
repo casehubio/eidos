@@ -148,25 +148,29 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 ├── api/
 │   └── src/main/java/io/casehub/eidos/api/
-│       ├── AgentDescriptor.java         — four-layer agent description record
-│       ├── AgentCapability.java         — capability with qualityHint + epistemicDomains
+│       ├── AgentDescriptor.java         — four-layer agent description record (tenancyId always required)
+│       ├── AgentCapability.java         — capability with qualityHint (Double) + epistemicDomains
 │       ├── AgentDisposition.java        — open-String disposition axes + delegation boolean
+│       ├── AgentQuery.java              — criteria record for find(): slot, capabilityName, tenancyId (required)
 │       ├── Vocabulary.java              — named versioned vocabulary
 │       ├── VocabularyTerm.java          — term with aliases and exactMatches
 │       ├── VocabularyRegistry.java      — SPI: register, find, resolve, equivalentValues
-│       ├── AgentRegistry.java           — SPI: blocking store + discovery
+│       ├── AgentRegistry.java           — SPI: register, findById(id,tenancyId), find(AgentQuery)
 │       ├── ReactiveAgentRegistry.java   — SPI: Uni<T> reactive mirror
-│       ├── CapabilityHealth.java        — SPI + sealed CapabilityStatus + ProbeContext
+│       ├── CapabilityHealth.java        — SPI: probe(AgentDescriptor, capabilityTag, ProbeContext)
+│       ├── ReactiveCapabilityHealth.java — SPI: Uni<CapabilityStatus> probe(...)
 │       └── SystemPromptRenderer.java   — SPI + RenderedPrompt + RenderContext + RenderFormat
 ├── runtime/
 │   └── src/main/java/io/casehub/eidos/runtime/
-│       ├── registry/                    — JpaAgentRegistry (@DefaultBean)
-│       ├── vocabulary/                  — CdiVocabularyRegistry (discovers Instance<Vocabulary>)
-│       ├── health/                      — DefaultCapabilityHealth
-│       └── renderer/                    — ClaudeMarkdownRenderer (@DefaultBean)
+│       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)
+│       ├── vocabulary/                  — CdiVocabularyRegistry (@DefaultBean, discovers Instance<Vocabulary>)
+│       ├── health/                      — DefaultCapabilityHealth, DefaultReactiveCapabilityHealth
+│       └── renderer/                    — ClaudeMarkdownRenderer (@DefaultBean) — Phase 3
 ├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory
-├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor
-└── vocab/                               — casehub-eidos-vocab: SVO, Conscientiousness, CasehubSlot
+├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
+├── vocab/                               — casehub-eidos-vocab: SVO, Conscientiousness, CasehubSlot
+└── examples/
+    └── agent-scenarios/                 — @QuarkusTest examples: team, cross-vocab, epistemic, tenancy, disposition
 ```
 
 ---
