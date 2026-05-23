@@ -19,6 +19,7 @@
     <module>persistence-memory</module>
     <module>deployment</module>
     <module>vocab</module>
+    <module>examples</module>
   </modules>
 
   <distributionManagement>
