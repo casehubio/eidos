@@ -3,7 +3,7 @@ package io.casehub.eidos.api;
 import java.util.Map;
 
 public interface CapabilityHealth {
-    CapabilityStatus probe(String agentId, String capabilityTag, ProbeContext context);
+    CapabilityStatus probe(AgentDescriptor descriptor, String capabilityTag, ProbeContext context);
 
     record ProbeContext(String taskDomain, Map<String, Object> taskMetadata) {
         public static ProbeContext of(String taskDomain) {
