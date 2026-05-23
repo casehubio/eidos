@@ -94,6 +94,12 @@ class CdiVocabularyRegistryTest {
     }
 
     @Test
+    void equivalent_values_returns_empty_for_unknown_source_vocab() {
+        assertThat(registry.equivalentValues("urn:unknown:vocab", "any-value", "urn:other"))
+            .isEmpty();
+    }
+
+    @Test
     void programmatic_register_overrides_existing() {
         registry.register(testVocab("urn:test:override"));
         registry.register(new Vocabulary("urn:test:override", "Updated", "2.0", Map.of()));
