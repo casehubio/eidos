@@ -60,6 +60,26 @@ class ClaudeMarkdownRendererTest {
                 .withSituationalContext("Critical release branch");
     }
 
+    /**
+     * Renders {@code desc} + {@code ctx} via a capturing ChatModel and returns the
+     * full prompt string sent to the LLM (preamble + YAML).
+     */
+    private String renderAndCaptureYaml(final AgentDescriptor desc, final AgentPromptContext ctx) {
+        final String[] captured = {""};
+        final ChatModel capturingLlm = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest request) {
+                captured[0] = request.messages().stream()
+                        .filter(m -> m instanceof UserMessage)
+                        .map(m -> ((UserMessage) m).singleText())
+                        .reduce("", (a, b) -> a + b);
+                return ChatResponse.builder().aiMessage(AiMessage.from("rendered")).build();
+            }
+        };
+        new ClaudeMarkdownRenderer(capturingLlm, new CdiVocabularyRegistry()).render(desc, ctx);
+        return captured[0];
+    }
+
     // --- LLM path ---
 
     @Test
@@ -70,74 +90,22 @@ class ClaudeMarkdownRendererTest {
 
     @Test
     void llm_path_sends_yaml_containing_agent_id() {
-        final String[] capturedInput = new String[1];
-        final ChatModel capturingLlm = new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
-                capturedInput[0] = request.messages().stream()
-                        .filter(m -> m instanceof UserMessage)
-                        .map(m -> ((UserMessage) m).singleText())
-                        .reduce("", (a, b) -> a + b);
-                return ChatResponse.builder().aiMessage(AiMessage.from("rendered")).build();
-            }
-        };
-        final var renderer = new ClaudeMarkdownRenderer(capturingLlm, new CdiVocabularyRegistry());
-        renderer.render(fullDescriptor(), fullContext());
-        assertThat(capturedInput[0]).contains("reviewer-1");
+        assertThat(renderAndCaptureYaml(fullDescriptor(), fullContext())).contains("reviewer-1");
     }
 
     @Test
     void llm_path_yaml_contains_capabilities() {
-        final String[] capturedInput = new String[1];
-        final ChatModel capturingLlm = new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
-                capturedInput[0] = request.messages().stream()
-                        .filter(m -> m instanceof UserMessage)
-                        .map(m -> ((UserMessage) m).singleText())
-                        .reduce("", (a, b) -> a + b);
-                return ChatResponse.builder().aiMessage(AiMessage.from("rendered")).build();
-            }
-        };
-        new ClaudeMarkdownRenderer(capturingLlm, new CdiVocabularyRegistry())
-                .render(fullDescriptor(), fullContext());
-        assertThat(capturedInput[0]).contains("code-review");
+        assertThat(renderAndCaptureYaml(fullDescriptor(), fullContext())).contains("code-review");
     }
 
     @Test
     void llm_path_yaml_contains_goal_when_set() {
-        final String[] capturedInput = new String[1];
-        final ChatModel capturingLlm = new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
-                capturedInput[0] = request.messages().stream()
-                        .filter(m -> m instanceof UserMessage)
-                        .map(m -> ((UserMessage) m).singleText())
-                        .reduce("", (a, b) -> a + b);
-                return ChatResponse.builder().aiMessage(AiMessage.from("rendered")).build();
-            }
-        };
-        new ClaudeMarkdownRenderer(capturingLlm, new CdiVocabularyRegistry())
-                .render(fullDescriptor(), fullContext());
-        assertThat(capturedInput[0]).contains("Review PR #42");
+        assertThat(renderAndCaptureYaml(fullDescriptor(), fullContext())).contains("Review PR #42");
     }
 
     @Test
     void llm_path_yaml_contains_resources_when_set() {
-        final String[] capturedInput = new String[1];
-        final ChatModel capturingLlm = new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
-                capturedInput[0] = request.messages().stream()
-                        .filter(m -> m instanceof UserMessage)
-                        .map(m -> ((UserMessage) m).singleText())
-                        .reduce("", (a, b) -> a + b);
-                return ChatResponse.builder().aiMessage(AiMessage.from("rendered")).build();
-            }
-        };
-        new ClaudeMarkdownRenderer(capturingLlm, new CdiVocabularyRegistry())
-                .render(fullDescriptor(), fullContext());
-        assertThat(capturedInput[0]).contains("/src/main/java");
+        assertThat(renderAndCaptureYaml(fullDescriptor(), fullContext())).contains("/src/main/java");
     }
 
     // --- Structural path ---

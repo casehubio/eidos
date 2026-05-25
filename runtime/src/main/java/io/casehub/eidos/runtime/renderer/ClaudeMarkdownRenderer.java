@@ -245,6 +245,9 @@ public class ClaudeMarkdownRenderer implements SystemPromptRenderer {
         try {
             final var digest = MessageDigest.getInstance("SHA-256");
             final byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            // 16 hex chars = 64 bits. Birthday-bound collision probability is negligible
+            // at the scale of cached prompts — hashes are compared for equality only,
+            // not used for cryptographic trust.
             return HexFormat.of().formatHex(hash).substring(0, 16);
         } catch (final NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);

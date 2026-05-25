@@ -21,6 +21,7 @@ class DefaultCapabilityHealthDegradedTest {
 
         @Override
         public void record(final String agentId, final DegradationReason reason, final Instant expiresAt) {
+            // TTL enforcement is tested at the store level; intentionally ignored here.
             state.put(agentId, reason);
         }
 

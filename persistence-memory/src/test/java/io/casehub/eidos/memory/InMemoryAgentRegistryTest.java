@@ -87,11 +87,19 @@ class InMemoryAgentRegistryTest {
 
     @Test
     void find_by_slot_excludes_null_slot_descriptor_without_throwing() {
-        // Slot is optional (no NOT NULL in schema) — null-slot descriptors must not cause NPE
-        // when filtered by a specific slot query. Uses Objects.equals for null-safe comparison.
+        // Null-slot descriptors must be excluded by a slot filter without NPE.
         registry.register(descriptor("m-7", null, "default", "code-review"));
         var result = registry.find(AgentQuery.bySlot("reviewer", "default"));
         assertThat(result.stream().map(AgentDescriptor::agentId).toList()).doesNotContain("m-7");
+    }
+
+    @Test
+    void find_by_capability_includes_null_slot_descriptor() {
+        // A descriptor with null slot must be returned by a capability-only query — slot
+        // filter must not exclude it just because slot is null.
+        registry.register(descriptor("m-9", null, "default", "code-review"));
+        var result = registry.find(AgentQuery.byCapability("code-review", "default"));
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("m-9");
     }
 
     @Test
