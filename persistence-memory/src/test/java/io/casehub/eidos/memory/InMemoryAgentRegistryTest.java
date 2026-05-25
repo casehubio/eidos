@@ -77,4 +77,31 @@ class InMemoryAgentRegistryTest {
         registry.register(descriptor("m-6", "planner", "default", "planning"));
         assertThat(registry.findById("m-6", "default").get().slot()).isEqualTo("planner");
     }
+
+    @Test
+    void find_by_slot_excludes_null_slot_descriptor_without_throwing() {
+        // Slot is optional (no NOT NULL in schema) — null-slot descriptors must not cause NPE
+        // when filtered by a specific slot query. Uses Objects.equals for null-safe comparison.
+        registry.register(descriptor("m-7", null, "default", "code-review"));
+        var result = registry.find(AgentQuery.bySlot("reviewer", "default"));
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).doesNotContain("m-7");
+    }
+
+    @Test
+    void find_by_capability_with_null_named_capability_does_not_throw() {
+        // AgentCapability.name() may be null in the in-memory store (no JPA enforcement).
+        // find() must not NPE — uses Objects.equals(c.name(), query.capabilityName()).
+        var nullNamedCap = new AgentCapability(null, 0.9, null, null,
+            List.of(), List.of(), List.of(), Map.of());
+        var descriptor = new AgentDescriptor(
+            "m-8", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
+            null, null, null, null, "reviewer", List.of(nullNamedCap),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            null, null, "default"
+        );
+        registry.register(descriptor);
+        // Must not throw NPE — null-named capability should simply not match
+        var result = registry.find(AgentQuery.byCapability("code-review", "default"));
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).doesNotContain("m-8");
+    }
 }

@@ -5,6 +5,7 @@ import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -31,9 +32,9 @@ public class InMemoryAgentRegistry implements AgentRegistry {
     public List<AgentDescriptor> find(AgentQuery query) {
         return store.values().stream()
             .filter(d -> d.tenancyId().equals(query.tenancyId()))
-            .filter(d -> query.slot() == null || query.slot().equals(d.slot()))
+            .filter(d -> query.slot() == null || Objects.equals(d.slot(), query.slot()))
             .filter(d -> query.capabilityName() == null
-                || d.capabilities().stream().anyMatch(c -> c.name().equals(query.capabilityName())))
+                || d.capabilities().stream().anyMatch(c -> Objects.equals(c.name(), query.capabilityName())))
             .collect(Collectors.toList());
     }
 }
