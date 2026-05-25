@@ -22,8 +22,4 @@ public interface CapabilityHealth {
         record Unavailable(String reason) implements CapabilityStatus {}
         record EpistemicallyWeak(String domain, double confidence) implements CapabilityStatus {}
     }
-
-    enum DegradationReason {
-        RATE_LIMITED, CONTEXT_EXHAUSTED, OVERLOADED, DOMAIN_MISMATCH
-    }
 }

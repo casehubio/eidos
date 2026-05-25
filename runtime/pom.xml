@@ -61,6 +61,12 @@
       <artifactId>mutiny</artifactId>
     </dependency>
 
+    <!-- LangChain4j core — ChatLanguageModel interface for ClaudeMarkdownRenderer -->
+    <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-core</artifactId>
+    </dependency>
+
     <!-- JDBC drivers — optional; consuming app provides them -->
     <dependency>
       <groupId>io.quarkus</groupId>
