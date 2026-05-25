@@ -103,8 +103,8 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 - **AgentDescriptor** — four-layer structured description (identity, slot, capabilities, disposition)
 - **VocabularyRegistry** — pluggable domain vocabulary system; CdiVocabularyRegistry discovers `Instance<Vocabulary>` CDI beans
 - **AgentRegistry** — store and query descriptors (blocking + reactive)
-- **CapabilityHealth** — two-layer capability model: declared (descriptor) vs. operable now (runtime probe)
-- **SystemPromptRenderer** — generates CLAUDE.md sections (or any LLM system prompt) from descriptor + case goal
+- **CapabilityHealth** — two-layer capability model: declared (descriptor) vs. operable now (runtime probe); `AgentStateStore` SPI records degradation state with TTL; `NoOpAgentStateStore` @DefaultBean, `InMemoryAgentStateStore` @Alternative in casehub-eidos-memory
+- **SystemPromptRenderer** — renders `AgentDescriptor + AgentPromptContext` (goal, resources, situational context) into a format-specific system prompt; `ClaudeMarkdownRenderer` @DefaultBean supports LLM path (LangChain4j `ChatModel`) and structural fallback
 - **casehub-eidos-vocab** — optional well-known vocabularies: SVO, Conscientiousness, CasehubSlot
 
 ### Key Design Decisions
@@ -117,7 +117,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 
 **Two-layer capability model** — `AgentDescriptor` (static, declared at registration) + `CapabilityHealth.probe()` (dynamic, checked at dispatch time by casehub-engine). `epistemicDomains` on `AgentCapability` qualifies declared capability by domain (e.g. `{"java": 0.95, "rust": 0.42}`).
 
-**Generative** — `SystemPromptRenderer` turns a descriptor + case goal into rendered agent instructions. `ClaudeMarkdownRenderer` is the `@DefaultBean` (current target). Format-agnostic from day one.
+**Generative** — `SystemPromptRenderer` renders an `AgentDescriptor + AgentPromptContext` into LLM instructions. `ClaudeMarkdownRenderer` is the `@DefaultBean`: serializes to YAML, calls `ChatModel.chat()` when available, falls back to structural markdown. `AgentPromptContext` accumulates goal (`GoalContext`), resources (`Resource`), and situational context — re-renderable as the agent's context evolves.
 
 **Research backing:** `research/eidos.md` in the eidos workspace contains full research, rationale, and ecosystem position.
 
@@ -157,16 +157,21 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── VocabularyRegistry.java      — SPI: register, find, resolve, equivalentValues
 │       ├── AgentRegistry.java           — SPI: register, findById(id,tenancyId), find(AgentQuery)
 │       ├── ReactiveAgentRegistry.java   — SPI: Uni<T> reactive mirror
-│       ├── CapabilityHealth.java        — SPI: probe(AgentDescriptor, capabilityTag, ProbeContext)
+│       ├── AgentPromptContext.java      — render-time context: Optional<GoalContext>, List<Resource>, situationalContext, RenderFormat
+│       ├── AgentStateStore.java         — SPI: record/query/clear degradation state with TTL
+│       ├── CapabilityHealth.java        — SPI: probe(AgentDescriptor, capabilityTag, ProbeContext); returns Ready/Degraded/Unavailable/EpistemicallyWeak
+│       ├── DegradationReason.java       — top-level enum: RATE_LIMITED, CONTEXT_EXHAUSTED, OVERLOADED, DOMAIN_MISMATCH
+│       ├── GoalContext.java             — structured goal: description, subGoals, caseRef
 │       ├── ReactiveCapabilityHealth.java — SPI: Uni<CapabilityStatus> probe(...)
-│       └── SystemPromptRenderer.java   — SPI + RenderedPrompt + RenderContext + RenderFormat
+│       ├── Resource.java               — uri/label/type record for agent-accessible resources
+│       └── SystemPromptRenderer.java   — SPI: render(AgentDescriptor, AgentPromptContext) → RenderedPrompt
 ├── runtime/
 │   └── src/main/java/io/casehub/eidos/runtime/
 │       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)
 │       ├── vocabulary/                  — CdiVocabularyRegistry (@DefaultBean, discovers Instance<Vocabulary>)
-│       ├── health/                      — DefaultCapabilityHealth, DefaultReactiveCapabilityHealth
-│       └── renderer/                    — ClaudeMarkdownRenderer (@DefaultBean) — Phase 3
-├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory
+│       ├── health/                      — DefaultCapabilityHealth (checks AgentStateStore first), DefaultReactiveCapabilityHealth, NoOpAgentStateStore (@DefaultBean)
+│       └── renderer/                    — ClaudeMarkdownRenderer (@DefaultBean, LangChain4j ChatModel optional)
+├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryAgentStateStore
 ├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
 ├── vocab/                               — casehub-eidos-vocab: SVO, Conscientiousness, CasehubSlot
 └── examples/
