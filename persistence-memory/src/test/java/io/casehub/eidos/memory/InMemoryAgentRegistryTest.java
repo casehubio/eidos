@@ -3,6 +3,7 @@ package io.casehub.eidos.memory;
 import io.casehub.eidos.api.*;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -15,6 +16,12 @@ import static org.assertj.core.api.Assertions.*;
 class InMemoryAgentRegistryTest {
 
     @Inject AgentRegistry registry;
+    @Inject InMemoryAgentRegistry store;
+
+    @BeforeEach
+    void clearStore() {
+        store.clear();
+    }
 
     static AgentDescriptor descriptor(String agentId, String slot, String tenancyId, String... caps) {
         var capabilities = Arrays.stream(caps)

@@ -46,6 +46,16 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
                 .findFirst());
     }
 
+    /**
+     * Returns all exact-match values in {@code targetVocabularyUri} reachable from any term
+     * in {@code vocabularyUri} that matches {@code value} by primary value or alias.
+     *
+     * <p>Collects across <em>all</em> matching terms — not just the first. If multiple terms
+     * share the same value or alias, and each carries an exact-match entry for
+     * {@code targetVocabularyUri}, all mapped values are returned in the result set.
+     *
+     * @return exact-match values in the target vocabulary; empty set if no match or unknown URIs
+     */
     @Override
     public Set<String> equivalentValues(String vocabularyUri, String value, String targetVocabularyUri) {
         return find(vocabularyUri)

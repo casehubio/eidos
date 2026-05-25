@@ -100,6 +100,23 @@ class CdiVocabularyRegistryTest {
     }
 
     @Test
+    void equivalent_values_collects_across_all_matching_terms() {
+        // Two distinct terms share the alias "shared". Both map to different values in the
+        // target vocabulary. equivalentValues must return both — not just the first match.
+        var vocab = new Vocabulary("urn:test:multi-term", "Multi", "1.0", Map.of(
+            "alpha", new VocabularyTerm("alpha", "Alpha", "First",
+                List.of("shared"), Map.of("urn:target", "value-a")),
+            "beta",  new VocabularyTerm("beta",  "Beta",  "Second",
+                List.of("shared"), Map.of("urn:target", "value-b"))
+        ));
+        registry.register(vocab);
+
+        var result = registry.equivalentValues("urn:test:multi-term", "shared", "urn:target");
+
+        assertThat(result).containsExactlyInAnyOrder("value-a", "value-b");
+    }
+
+    @Test
     void programmatic_register_overrides_existing() {
         registry.register(testVocab("urn:test:override"));
         registry.register(new Vocabulary("urn:test:override", "Updated", "2.0", Map.of()));

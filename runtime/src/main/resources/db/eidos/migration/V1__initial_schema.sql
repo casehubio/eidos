@@ -1,3 +1,10 @@
+-- Consumer configuration required:
+--   1. Add dependency: io.quarkus:quarkus-flyway (compile or runtime scope)
+--   2. Add to application.properties:
+--        quarkus.flyway.locations=classpath:db/eidos/migration,<your-own-locations>
+--   quarkus-flyway is test-scoped in casehub-eidos-runtime and therefore not
+--   transitively exported — each consumer must declare it explicitly.
+
 CREATE TABLE agent_descriptor (
     agent_id               VARCHAR(255)  NOT NULL PRIMARY KEY,
     tenancy_id             VARCHAR(255)  NOT NULL,

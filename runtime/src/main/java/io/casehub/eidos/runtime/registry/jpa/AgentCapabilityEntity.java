@@ -2,6 +2,13 @@ package io.casehub.eidos.runtime.registry.jpa;
 
 import jakarta.persistence.*;
 
+/**
+ * JPA entity for {@link io.casehub.eidos.api.AgentCapability}.
+ *
+ * <p>The class is {@code public} because Hibernate Reactive bytecode enhancement requires it.
+ * All fields are package-private intentionally: Hibernate enhancement accesses fields directly
+ * via bytecode instrumentation — no getters or setters are needed or generated.
+ */
 @Entity
 @Table(name = "agent_capability")
 public class AgentCapabilityEntity {

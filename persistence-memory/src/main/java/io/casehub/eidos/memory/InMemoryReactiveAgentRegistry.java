@@ -18,8 +18,9 @@ public class InMemoryReactiveAgentRegistry implements ReactiveAgentRegistry {
 
     @Override
     public Uni<Void> register(AgentDescriptor descriptor) {
-        delegate.register(descriptor);
-        return Uni.createFrom().voidItem();
+        return Uni.createFrom().item(descriptor)
+            .invoke(delegate::register)
+            .replaceWithVoid();
     }
 
     @Override

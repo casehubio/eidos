@@ -28,6 +28,10 @@ public class InMemoryAgentRegistry implements AgentRegistry {
             .filter(d -> d.tenancyId().equals(tenancyId));
     }
 
+    void clear() {
+        store.clear();
+    }
+
     @Override
     public List<AgentDescriptor> find(AgentQuery query) {
         return store.values().stream()
