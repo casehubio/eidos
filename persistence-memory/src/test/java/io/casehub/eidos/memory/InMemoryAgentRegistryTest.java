@@ -94,6 +94,13 @@ class InMemoryAgentRegistryTest {
     }
 
     @Test
+    void findById_with_null_tenancyId_throws() {
+        registry.register(descriptor("m-10", "reviewer", "default", "code-review"));
+        assertThatThrownBy(() -> registry.findById("m-10", null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void find_by_capability_includes_null_slot_descriptor() {
         // A descriptor with null slot must be returned by a capability-only query — slot
         // filter must not exclude it just because slot is null.

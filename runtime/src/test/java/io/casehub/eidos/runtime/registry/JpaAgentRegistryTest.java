@@ -126,4 +126,11 @@ class JpaAgentRegistryTest {
     void find_by_id_returns_empty_for_missing_agent() {
         assertThat(registry.findById("nonexistent", "default")).isEmpty();
     }
+
+    @Test
+    @TestTransaction
+    void findById_with_null_tenancyId_throws() {
+        assertThatThrownBy(() -> registry.findById("nonexistent", null))
+            .isInstanceOf(NullPointerException.class);
+    }
 }

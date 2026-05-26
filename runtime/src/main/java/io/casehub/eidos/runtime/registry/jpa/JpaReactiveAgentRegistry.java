@@ -9,6 +9,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "true")
@@ -29,6 +30,7 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
     @Override
     @WithSession
     public Uni<Optional<AgentDescriptor>> findById(String agentId, String tenancyId) {
+        Objects.requireNonNull(tenancyId, "tenancyId");
         return repo.find(
                 "SELECT DISTINCT a FROM AgentDescriptorEntity a"
                 + " LEFT JOIN FETCH a.capabilities"

@@ -49,4 +49,11 @@ class InMemoryReactiveAgentRegistryTest {
         var result = registry.find(AgentQuery.bySlot("reviewer", "tenant-b")).await().indefinitely();
         assertThat(result).isEmpty();
     }
+
+    @Test
+    void findById_with_null_tenancyId_throws() {
+        registry.register(descriptor("rm-10", "reviewer", "default")).await().indefinitely();
+        assertThatThrownBy(() -> registry.findById("rm-10", null))
+            .isInstanceOf(NullPointerException.class);
+    }
 }

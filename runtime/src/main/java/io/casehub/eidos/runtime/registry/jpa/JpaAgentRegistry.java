@@ -8,6 +8,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "false", enableIfMissing = true)
@@ -34,6 +35,7 @@ public class JpaAgentRegistry implements AgentRegistry {
     @Override
     @Transactional(TxType.SUPPORTS)
     public Optional<AgentDescriptor> findById(String agentId, String tenancyId) {
+        Objects.requireNonNull(tenancyId, "tenancyId");
         return em.createQuery(
                 "SELECT DISTINCT a FROM AgentDescriptorEntity a LEFT JOIN FETCH a.capabilities"
                 + " WHERE a.agentId = :id AND a.tenancyId = :tenancyId",

@@ -83,6 +83,12 @@ class JpaReactiveAgentRegistryTest {
 
     @Test
     @RunOnVertxContext
+    void findById_with_null_tenancyId_throws(UniAsserter asserter) {
+        asserter.assertFailedWith(() -> registry.findById("any", null), NullPointerException.class);
+    }
+
+    @Test
+    @RunOnVertxContext
     void reactive_upsert(UniAsserter asserter) {
         asserter
             .execute(() -> registry.register(descriptor("r-agent-5", "reviewer", "default", "cap-test5")))
