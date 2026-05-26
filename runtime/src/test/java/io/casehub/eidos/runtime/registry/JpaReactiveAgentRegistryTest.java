@@ -83,8 +83,18 @@ class JpaReactiveAgentRegistryTest {
 
     @Test
     @RunOnVertxContext
+    void findById_with_null_agentId_throws(UniAsserter asserter) {
+        asserter.assertFailedWith(
+            () -> registry.findById(null, "default"),
+            t -> assertThat(t).isInstanceOf(NullPointerException.class).hasMessageContaining("agentId"));
+    }
+
+    @Test
+    @RunOnVertxContext
     void findById_with_null_tenancyId_throws(UniAsserter asserter) {
-        asserter.assertFailedWith(() -> registry.findById("any", null), NullPointerException.class);
+        asserter.assertFailedWith(
+            () -> registry.findById("any", null),
+            t -> assertThat(t).isInstanceOf(NullPointerException.class).hasMessageContaining("tenancyId"));
     }
 
     @Test

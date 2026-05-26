@@ -5,6 +5,11 @@ import java.util.Optional;
 
 public interface AgentRegistry {
     void register(AgentDescriptor descriptor);
+
+    /**
+     * @throws NullPointerException if agentId or tenancyId is null
+     */
     Optional<AgentDescriptor> findById(String agentId, String tenancyId);
+
     List<AgentDescriptor> find(AgentQuery query);
 }

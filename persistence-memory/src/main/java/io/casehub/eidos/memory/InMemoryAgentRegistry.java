@@ -24,6 +24,7 @@ public class InMemoryAgentRegistry implements AgentRegistry {
 
     @Override
     public Optional<AgentDescriptor> findById(String agentId, String tenancyId) {
+        Objects.requireNonNull(agentId, "agentId");
         Objects.requireNonNull(tenancyId, "tenancyId");
         return Optional.ofNullable(store.get(agentId))
             .filter(d -> d.tenancyId().equals(tenancyId));

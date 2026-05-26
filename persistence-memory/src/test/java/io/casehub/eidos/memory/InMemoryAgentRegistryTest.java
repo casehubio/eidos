@@ -96,8 +96,9 @@ class InMemoryAgentRegistryTest {
     @Test
     void findById_with_null_tenancyId_throws() {
         registry.register(descriptor("m-10", "reviewer", "default", "code-review"));
-        assertThatThrownBy(() -> registry.findById("m-10", null))
-            .isInstanceOf(NullPointerException.class);
+        assertThatNullPointerException()
+            .isThrownBy(() -> registry.findById("m-10", null))
+            .withMessageContaining("tenancyId");
     }
 
     @Test
@@ -107,6 +108,13 @@ class InMemoryAgentRegistryTest {
         registry.register(descriptor("m-9", null, "default", "code-review"));
         var result = registry.find(AgentQuery.byCapability("code-review", "default"));
         assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("m-9");
+    }
+
+    @Test
+    void findById_with_null_agentId_throws() {
+        assertThatNullPointerException()
+            .isThrownBy(() -> registry.findById(null, "default"))
+            .withMessageContaining("agentId");
     }
 
     @Test

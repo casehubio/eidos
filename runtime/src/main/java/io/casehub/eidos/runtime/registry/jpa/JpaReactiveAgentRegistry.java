@@ -30,6 +30,7 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
     @Override
     @WithSession
     public Uni<Optional<AgentDescriptor>> findById(String agentId, String tenancyId) {
+        Objects.requireNonNull(agentId, "agentId");
         Objects.requireNonNull(tenancyId, "tenancyId");
         return repo.find(
                 "SELECT DISTINCT a FROM AgentDescriptorEntity a"

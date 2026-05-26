@@ -129,6 +129,14 @@ class JpaAgentRegistryTest {
 
     @Test
     @TestTransaction
+    void findById_with_null_agentId_throws() {
+        assertThatNullPointerException()
+            .isThrownBy(() -> registry.findById(null, "default"))
+            .withMessageContaining("agentId");
+    }
+
+    @Test
+    @TestTransaction
     void findById_with_null_tenancyId_throws() {
         assertThatThrownBy(() -> registry.findById("nonexistent", null))
             .isInstanceOf(NullPointerException.class);

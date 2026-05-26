@@ -51,6 +51,13 @@ class InMemoryReactiveAgentRegistryTest {
     }
 
     @Test
+    void findById_with_null_agentId_throws() {
+        assertThatNullPointerException()
+            .isThrownBy(() -> registry.findById(null, "default"))
+            .withMessageContaining("agentId");
+    }
+
+    @Test
     void findById_with_null_tenancyId_throws() {
         registry.register(descriptor("rm-10", "reviewer", "default")).await().indefinitely();
         assertThatThrownBy(() -> registry.findById("rm-10", null))

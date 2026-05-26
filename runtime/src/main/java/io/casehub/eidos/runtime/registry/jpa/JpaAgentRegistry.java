@@ -35,6 +35,7 @@ public class JpaAgentRegistry implements AgentRegistry {
     @Override
     @Transactional(TxType.SUPPORTS)
     public Optional<AgentDescriptor> findById(String agentId, String tenancyId) {
+        Objects.requireNonNull(agentId, "agentId");
         Objects.requireNonNull(tenancyId, "tenancyId");
         return em.createQuery(
                 "SELECT DISTINCT a FROM AgentDescriptorEntity a LEFT JOIN FETCH a.capabilities"

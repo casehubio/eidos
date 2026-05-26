@@ -7,8 +7,11 @@ public record AgentQuery(
         String capabilityName,
         String tenancyId
 ) {
+    /**
+     * @throws NullPointerException if tenancyId is null
+     */
     public AgentQuery {
-        Objects.requireNonNull(tenancyId, "tenancyId must not be null");
+        Objects.requireNonNull(tenancyId, "tenancyId");
     }
 
     public static AgentQuery bySlot(String slot, String tenancyId) {
