@@ -20,7 +20,7 @@ import java.util.Optional;
 import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ClaudeMarkdownRendererTest {
+class EidosSystemPromptRendererTest {
 
     static final String LLM_RESPONSE = "You are a code reviewer specialising in Java.";
     static final ObjectMapper MAPPER = new ObjectMapper();
@@ -53,8 +53,8 @@ class ClaudeMarkdownRendererTest {
     }
 
     ChatModel mockLlm;
-    ClaudeMarkdownRenderer rendererWithLlm;
-    ClaudeMarkdownRenderer rendererStructural;
+    EidosSystemPromptRenderer rendererWithLlm;
+    EidosSystemPromptRenderer rendererStructural;
     TestRenderedPromptCache testCache;
 
     @BeforeEach
@@ -67,8 +67,8 @@ class ClaudeMarkdownRendererTest {
         };
         testCache = new TestRenderedPromptCache();
         final var vocab = new CdiVocabularyRegistry();
-        rendererWithLlm  = new ClaudeMarkdownRenderer(mockLlm, vocab, testCache, MAPPER);
-        rendererStructural = new ClaudeMarkdownRenderer((ChatModel) null, vocab,
+        rendererWithLlm  = new EidosSystemPromptRenderer(mockLlm, vocab, testCache, MAPPER);
+        rendererStructural = new EidosSystemPromptRenderer((ChatModel) null, vocab,
                 new NoOpRenderedPromptCache(), MAPPER);
     }
 
@@ -113,7 +113,7 @@ class ClaudeMarkdownRendererTest {
                         .build();
             }
         };
-        new ClaudeMarkdownRenderer(capturingLlm, new CdiVocabularyRegistry(),
+        new EidosSystemPromptRenderer(capturingLlm, new CdiVocabularyRegistry(),
                 new NoOpRenderedPromptCache(), MAPPER).render(desc, ctx);
         return captured[0];
     }
@@ -258,7 +258,7 @@ class ClaudeMarkdownRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from("irrelevant")).build();
             }
         };
-        final var renderer = new ClaudeMarkdownRenderer(trackingLlm, new CdiVocabularyRegistry(),
+        final var renderer = new EidosSystemPromptRenderer(trackingLlm, new CdiVocabularyRegistry(),
                 new NoOpRenderedPromptCache(), MAPPER);
         renderer.render(fullDescriptor(), AgentPromptContext.forFormat(A2A_CARD));
         assertThat(called[0]).isFalse();
@@ -267,14 +267,36 @@ class ClaudeMarkdownRendererTest {
     // ── GEMINI path ───────────────────────────────────────────────────────────
 
     @Test
-    void gemini_structural_produces_same_content_as_claude_md_structural() {
-        final var claudeResult = rendererStructural.render(fullDescriptor(),
-                AgentPromptContext.forFormat(CLAUDE_MD)
-                        .withSituationalContext("ctx"));
-        final var geminiResult = rendererStructural.render(fullDescriptor(),
-                AgentPromptContext.forFormat(GEMINI)
-                        .withSituationalContext("ctx"));
-        assertThat(geminiResult.content()).isEqualTo(claudeResult.content());
+    void gemini_structural_has_no_markdown_headers() {
+        final var ctx = AgentPromptContext.forFormat(GEMINI);
+        final var result = rendererStructural.render(fullDescriptor(), ctx);
+        assertThat(result.content()).doesNotContain("#");
+    }
+
+    @Test
+    void gemini_enriched_has_no_markdown_headers() {
+        final var ctx = AgentPromptContext.forFormat(GEMINI);
+        final var result = rendererWithLlm.render(fullDescriptor(), ctx);
+        assertThat(result.content()).doesNotContain("#");
+    }
+
+    @Test
+    void gemini_enriched_contains_identity_and_role_narrative() {
+        final var ctx = AgentPromptContext.forFormat(GEMINI);
+        final var result = rendererWithLlm.render(fullDescriptor(), ctx);
+        // LLM_RESPONSE is the identityNarrative ("You are a code reviewer specialising in Java.")
+        assertThat(result.content()).contains(LLM_RESPONSE);
+        assertThat(result.content()).contains("Your role is to review code.");
+    }
+
+    @Test
+    void gemini_enriched_resources_format_uses_no_space_before_paren() {
+        final var ctx = AgentPromptContext.forFormat(GEMINI)
+                .withResources(List.of(new Resource("https://api.example.com", "API docs", "uri")));
+        final var result = rendererWithLlm.render(fullDescriptor(), ctx);
+        // GEMINI: "API docs(https://api.example.com)" — no space before paren
+        assertThat(result.content()).contains("API docs(https://api.example.com)");
+        assertThat(result.content()).doesNotContain("API docs (https://api.example.com)");
     }
 
     // ── Cache behaviour ───────────────────────────────────────────────────────
@@ -289,7 +311,7 @@ class ClaudeMarkdownRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from("result")).build();
             }
         };
-        final var renderer = new ClaudeMarkdownRenderer(trackingLlm, new CdiVocabularyRegistry(),
+        final var renderer = new EidosSystemPromptRenderer(trackingLlm, new CdiVocabularyRegistry(),
                 testCache, MAPPER);
 
         renderer.render(fullDescriptor(), fullContext()); // miss — LLM called

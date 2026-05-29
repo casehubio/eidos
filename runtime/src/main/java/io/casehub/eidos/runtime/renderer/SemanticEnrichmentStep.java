@@ -54,7 +54,7 @@ class SemanticEnrichmentStep {
         try {
             final ChatRequest request = ChatRequest.builder()
                     .messages(
-                            SystemMessage.from(ClaudeMarkdownRenderer.PROMPT_TEMPLATE),
+                            SystemMessage.from(EidosSystemPromptRenderer.PROMPT_TEMPLATE),
                             UserMessage.from(mapper.writeValueAsString(payload))
                     )
                     .responseFormat(RESPONSE_FORMAT)

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 @DefaultBean
 @ApplicationScoped
-public class ClaudeMarkdownRenderer implements SystemPromptRenderer {
+public class EidosSystemPromptRenderer implements SystemPromptRenderer {
 
     // PROMPT_TEMPLATE must be declared before TEMPLATE_HASH — static initializers run
     // in declaration order. Reversing them causes fingerprint(null) at class load:
@@ -72,7 +72,7 @@ public class ClaudeMarkdownRenderer implements SystemPromptRenderer {
     private final SemanticEnrichmentStep enrichmentStep;
 
     @Inject
-    public ClaudeMarkdownRenderer(
+    public EidosSystemPromptRenderer(
             @Any final Instance<ChatModel> llm,
             final VocabularyRegistry vocab,
             final RenderedPromptCache cache,
@@ -88,7 +88,7 @@ public class ClaudeMarkdownRenderer implements SystemPromptRenderer {
     }
 
     /** Package-private constructor for pure-Java tests — no CDI required. */
-    ClaudeMarkdownRenderer(final ChatModel llm, final VocabularyRegistry vocab,
+    EidosSystemPromptRenderer(final ChatModel llm, final VocabularyRegistry vocab,
                            final RenderedPromptCache cache, final ObjectMapper mapper) {
         this.llm = llm;
         this.vocab = vocab;
@@ -451,9 +451,66 @@ public class ClaudeMarkdownRenderer implements SystemPromptRenderer {
     private String assembleGemini(final Optional<SemanticEnrichment> enrichment,
                                    final AgentDescriptor descriptor,
                                    final AgentPromptContext context) {
-        // Placeholder until eidos#14. RenderedPrompt.format() == GEMINI but content is
-        // CLAUDE_MD-structured. Callers must not branch on format == GEMINI for structure.
-        return assembleClaudeMarkdown(enrichment, descriptor, context);
+        final var sb = new StringBuilder();
+
+        if (enrichment.isPresent()) {
+            final SemanticEnrichment e = enrichment.get();
+            sb.append(e.identityNarrative()).append(" ").append(e.roleNarrative()).append("\n");
+            sb.append("\n").append(e.capabilityNarrative()).append("\n");
+            e.dispositionNarrative().ifPresent(d -> sb.append("\n").append(d).append("\n"));
+            e.constraintNarrative().ifPresent(c -> sb.append("\n").append(c).append("\n"));
+            e.goalNarrative().ifPresent(g -> sb.append("\n").append(g).append("\n"));
+        } else {
+            assembleGeminiStructural(sb, descriptor, context);
+        }
+
+        // Resources — label(uri) format, no space before paren (explicit delta from OPENAI_SYSTEM)
+        if (!context.resources().isEmpty()) {
+            sb.append("\nResources: ");
+            final var resources = context.resources().stream()
+                    .map(r -> (r.label() != null ? r.label() : r.uri()) + "(" + r.uri() + ")")
+                    .collect(Collectors.joining(", "));
+            sb.append(resources).append("\n");
+        }
+
+        if (context.situationalContext() != null) {
+            sb.append("\n").append(context.situationalContext()).append("\n");
+        }
+
+        return sb.toString().trim();
+    }
+
+    private void assembleGeminiStructural(final StringBuilder sb,
+                                           final AgentDescriptor descriptor,
+                                           final AgentPromptContext context) {
+        sb.append(descriptor.name());
+        if (descriptor.slot() != null) sb.append(", ").append(descriptor.slot());
+        sb.append(".");
+        if (descriptor.version() != null) sb.append(" Version ").append(descriptor.version()).append(".");
+        sb.append("\n");
+
+        if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
+            sb.append("\nCapabilities: ");
+            final var names = descriptor.capabilities().stream()
+                    .map(AgentCapability::name)
+                    .collect(Collectors.joining(", "));
+            sb.append(names).append(".\n");
+        }
+
+        if (descriptor.disposition() != null) {
+            final AgentDisposition d = descriptor.disposition();
+            sb.append("\nOperating style:");
+            if (d.ruleFollowing() != null) sb.append(" ").append(d.ruleFollowing()).append(" rule-following.");
+            if (d.autonomy() != null)      sb.append(" Autonomy: ").append(d.autonomy()).append(".");
+            sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
+        }
+
+        context.goal().ifPresent(goal -> {
+            sb.append("\nGoal: ").append(goal.description()).append(".\n");
+            if (!goal.subGoals().isEmpty()) {
+                sb.append("Sub-goals: ").append(String.join(", ", goal.subGoals())).append(".\n");
+            }
+        });
     }
 
     // ── Shared utilities ───────────────────────────────────────────────────────
