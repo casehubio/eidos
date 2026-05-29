@@ -12,14 +12,11 @@ import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 class EidosSystemPromptRendererTest {
 
@@ -38,25 +35,6 @@ class EidosSystemPromptRendererTest {
     static final String A2A_LLM_JSON_RESPONSE =
             "{\"capabilityNarratives\":[{\"name\":\"code-review\","
             + "\"description\":\"You conduct thorough Java code reviews, checking for correctness and style.\"}]}";
-
-    /** Minimal in-memory cache for testing cache-hit and cache-miss behaviour. */
-    static class TestRenderedPromptCache implements RenderedPromptCache {
-        final Map<String, SystemPromptRenderer.RenderedPrompt> store = new HashMap<>();
-        int putCount = 0;
-        int getCount = 0;
-
-        @Override
-        public Optional<SystemPromptRenderer.RenderedPrompt> get(final String cacheKey) {
-            getCount++;
-            return Optional.ofNullable(store.get(cacheKey));
-        }
-
-        @Override
-        public void put(final String cacheKey, final SystemPromptRenderer.RenderedPrompt result) {
-            putCount++;
-            store.put(cacheKey, result);
-        }
-    }
 
     ChatModel mockLlm;
     EidosSystemPromptRenderer rendererWithLlm;
