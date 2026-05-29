@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -70,6 +71,7 @@ public class EidosSystemPromptRenderer implements SystemPromptRenderer {
     private final RenderedPromptCache cache;
     private final ObjectMapper mapper;
     private final SemanticEnrichmentStep enrichmentStep;
+    private final A2ASemanticEnrichmentStep a2aEnrichmentStep;
 
     @Inject
     public EidosSystemPromptRenderer(
@@ -85,6 +87,7 @@ public class EidosSystemPromptRenderer implements SystemPromptRenderer {
         this.cache = cache;
         this.mapper = mapper;
         this.enrichmentStep = new SemanticEnrichmentStep(mapper);
+        this.a2aEnrichmentStep = new A2ASemanticEnrichmentStep(mapper);
     }
 
     /** Package-private constructor for pure-Java tests — no CDI required. */
@@ -95,6 +98,7 @@ public class EidosSystemPromptRenderer implements SystemPromptRenderer {
         this.cache = cache;
         this.mapper = mapper;
         this.enrichmentStep = new SemanticEnrichmentStep(mapper);
+        this.a2aEnrichmentStep = new A2ASemanticEnrichmentStep(mapper);
     }
 
     @Override
@@ -110,15 +114,21 @@ public class EidosSystemPromptRenderer implements SystemPromptRenderer {
         final Optional<RenderedPrompt> cached = cache.get(cacheKey);
         if (cached.isPresent()) return cached.get();
 
-        // Stage 2: optional semantic enrichment
+        // Stage 2a: optional semantic enrichment
         Optional<SemanticEnrichment> enrichment = Optional.empty();
         if (llm != null && usesEnrichment(context.format())) {
             final ObjectNode llmPayload = buildLlmPayload(descriptorNode, contextNode);
             enrichment = enrichmentStep.enrich(llm, llmPayload);
         }
 
+        // Stage 2b: A2A enrichment — descriptor-only payload, separate schema
+        Optional<A2AEnrichment> a2aEnrichment = Optional.empty();
+        if (context.format() == RenderFormat.A2A_CARD && llm != null) {
+            a2aEnrichment = a2aEnrichmentStep.enrich(llm, descriptorNode);
+        }
+
         // Stage 3: format-specific assembly
-        final String content = assemble(enrichment, descriptor, context);
+        final String content = assemble(enrichment, a2aEnrichment, descriptor, context);
         final RenderedPrompt result = new RenderedPrompt(content, context.format(),
                                                          descriptorHash, contextHash);
         cache.put(cacheKey, result);
@@ -242,12 +252,13 @@ public class EidosSystemPromptRenderer implements SystemPromptRenderer {
     // ── Stage 3: format assembly ──────────────────────────────────────────────
 
     private String assemble(final Optional<SemanticEnrichment> enrichment,
+                             final Optional<A2AEnrichment> a2aEnrichment,
                              final AgentDescriptor descriptor,
                              final AgentPromptContext context) {
         return switch (context.format()) {
             case CLAUDE_MD     -> assembleClaudeMarkdown(enrichment, descriptor, context);
             case OPENAI_SYSTEM -> assembleOpenAiSystem(enrichment, descriptor, context);
-            case A2A_CARD      -> assembleA2aCard(descriptor);
+            case A2A_CARD      -> assembleA2aCard(a2aEnrichment, descriptor);
             case GEMINI        -> assembleGemini(enrichment, descriptor, context);
         };
     }
@@ -424,20 +435,29 @@ public class EidosSystemPromptRenderer implements SystemPromptRenderer {
         return sb.toString().trim();
     }
 
-    private String assembleA2aCard(final AgentDescriptor descriptor) {
-        // Structural only — SemanticEnrichment not used for A2A_CARD.
-        // Per-capability prose deferred to eidos#13.
+    private String assembleA2aCard(final Optional<A2AEnrichment> enrichment,
+                                    final AgentDescriptor descriptor) {
         final ObjectNode card = mapper.createObjectNode();
         card.put("name", descriptor.name());
         card.put("agentId", descriptor.agentId());
         addIfPresent(card, "version", descriptor.version());
 
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
+            final Map<String, String> descriptionByName = enrichment
+                .map(e -> e.capabilityNarratives().stream()
+                    .collect(Collectors.toMap(
+                        A2AEnrichment.CapabilityNarrative::name,
+                        A2AEnrichment.CapabilityNarrative::description,
+                        (a, b) -> a)))
+                .orElse(Map.of());
+
             final ArrayNode capsArray = card.putArray("capabilities");
             for (final AgentCapability cap : descriptor.capabilities()) {
                 final ObjectNode capNode = capsArray.addObject();
                 capNode.put("name", cap.name());
                 if (cap.qualityHint() != null) capNode.put("qualityHint", cap.qualityHint());
+                final String desc = descriptionByName.get(cap.name());
+                if (desc != null) capNode.put("description", desc);
             }
         }
 

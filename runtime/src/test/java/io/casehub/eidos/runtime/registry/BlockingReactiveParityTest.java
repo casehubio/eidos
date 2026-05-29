@@ -60,15 +60,12 @@ class BlockingReactiveParityTest {
 
     @Test
     void state_store_reactive_has_same_method_names_as_blocking() {
-        JavaClasses apiClasses = new ClassFileImporter()
-            .importPackages("io.casehub.eidos.api");
-
-        var blockingMethods = apiClasses.get(AgentStateStore.class)
+        var blockingMethods = API_CLASSES.get(AgentStateStore.class)
             .getMethods().stream()
             .map(m -> m.getName())
             .collect(Collectors.toSet());
 
-        var reactiveMethods = apiClasses.get(ReactiveAgentStateStore.class)
+        var reactiveMethods = API_CLASSES.get(ReactiveAgentStateStore.class)
             .getMethods().stream()
             .map(m -> m.getName())
             .collect(Collectors.toSet());
@@ -80,25 +77,20 @@ class BlockingReactiveParityTest {
 
     @Test
     void state_store_reactive_methods_return_uni() {
-        JavaClasses apiClasses = new ClassFileImporter()
-            .importPackages("io.casehub.eidos.api");
         ArchRule rule = methods()
             .that().areDeclaredIn(ReactiveAgentStateStore.class)
             .should().haveRawReturnType(assignableTo(Uni.class));
-        rule.check(apiClasses);
+        rule.check(API_CLASSES);
     }
 
     @Test
     void renderer_reactive_has_same_method_names_as_blocking() {
-        JavaClasses apiClasses = new ClassFileImporter()
-            .importPackages("io.casehub.eidos.api");
-
-        var blockingMethods = apiClasses.get(SystemPromptRenderer.class)
+        var blockingMethods = API_CLASSES.get(SystemPromptRenderer.class)
             .getMethods().stream()
             .map(m -> m.getName())
             .collect(Collectors.toSet());
 
-        var reactiveMethods = apiClasses.get(ReactiveSystemPromptRenderer.class)
+        var reactiveMethods = API_CLASSES.get(ReactiveSystemPromptRenderer.class)
             .getMethods().stream()
             .map(m -> m.getName())
             .collect(Collectors.toSet());
@@ -110,12 +102,10 @@ class BlockingReactiveParityTest {
 
     @Test
     void renderer_reactive_methods_return_uni() {
-        JavaClasses apiClasses = new ClassFileImporter()
-            .importPackages("io.casehub.eidos.api");
         ArchRule rule = methods()
             .that().areDeclaredIn(ReactiveSystemPromptRenderer.class)
             .should().haveRawReturnType(assignableTo(Uni.class));
-        rule.check(apiClasses);
+        rule.check(API_CLASSES);
     }
 
     private static com.tngtech.archunit.base.DescribedPredicate<com.tngtech.archunit.core.domain.JavaClass> assignableTo(Class<?> type) {

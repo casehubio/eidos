@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class EidosSystemPromptRendererTest {
 
@@ -32,6 +33,11 @@ class EidosSystemPromptRendererTest {
             + "\"dispositionNarrative\":\"You operate independently.\","
             + "\"constraintNarrative\":\"You must comply with GDPR.\","
             + "\"goalNarrative\":\"\"}";
+
+    /** JSON in A2A enrichment format — capabilityNarratives array keyed by name. */
+    static final String A2A_LLM_JSON_RESPONSE =
+            "{\"capabilityNarratives\":[{\"name\":\"code-review\","
+            + "\"description\":\"You conduct thorough Java code reviews, checking for correctness and style.\"}]}";
 
     /** Minimal in-memory cache for testing cache-hit and cache-miss behaviour. */
     static class TestRenderedPromptCache implements RenderedPromptCache {
@@ -91,6 +97,17 @@ class EidosSystemPromptRendererTest {
                 .withGoal(new GoalContext("Review PR #42", List.of("Check style", "Check tests"), "case-123"))
                 .withResources(List.of(new Resource("/src/main/java", "Source", "filesystem")))
                 .withSituationalContext("Critical release branch");
+    }
+
+    static EidosSystemPromptRenderer rendererWithA2aLlm() {
+        final ChatModel a2aLlm = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(A2A_LLM_JSON_RESPONSE)).build();
+            }
+        };
+        return new EidosSystemPromptRenderer(a2aLlm, new CdiVocabularyRegistry(),
+                new NoOpRenderedPromptCache(), MAPPER);
     }
 
     /** Renders and returns the user message payload sent to the LLM. */
@@ -249,19 +266,72 @@ class EidosSystemPromptRendererTest {
     }
 
     @Test
-    void a2a_card_skips_llm_even_when_llm_is_configured() {
-        final boolean[] called = {false};
-        final ChatModel trackingLlm = new ChatModel() {
+    void a2a_card_enriched_includes_capability_descriptions() {
+        final var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        final var result = rendererWithA2aLlm().render(fullDescriptor(), ctx);
+        assertThat(result.content()).contains("\"description\"");
+        assertThat(result.content()).contains("You conduct thorough Java code reviews");
+    }
+
+    @Test
+    void a2a_card_structural_omits_descriptions() {
+        final var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        final var result = rendererStructural.render(fullDescriptor(), ctx);
+        assertThat(result.content()).doesNotContain("\"description\"");
+        assertThat(result.content()).contains("\"name\"");
+        assertThat(result.content()).contains("code-review");
+    }
+
+    @Test
+    void a2a_card_enriched_matches_capability_names() {
+        final var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        final var result = rendererWithA2aLlm().render(fullDescriptor(), ctx);
+        assertThat(result.content()).contains("\"code-review\"");
+        assertThat(result.content()).contains("You conduct thorough Java code reviews");
+    }
+
+    @Test
+    void a2a_card_enriched_ignores_unmatched_narrative_names() {
+        final ChatModel mismatchLlm = new ChatModel() {
             @Override
             public ChatResponse doChat(final ChatRequest request) {
-                called[0] = true;
-                return ChatResponse.builder().aiMessage(AiMessage.from("irrelevant")).build();
+                return ChatResponse.builder().aiMessage(AiMessage.from(
+                    "{\"capabilityNarratives\":[{\"name\":\"nonexistent-cap\","
+                    + "\"description\":\"You do things that don't exist.\"}]}"
+                )).build();
             }
         };
-        final var renderer = new EidosSystemPromptRenderer(trackingLlm, new CdiVocabularyRegistry(),
+        final var renderer = new EidosSystemPromptRenderer(mismatchLlm, new CdiVocabularyRegistry(),
                 new NoOpRenderedPromptCache(), MAPPER);
-        renderer.render(fullDescriptor(), AgentPromptContext.forFormat(A2A_CARD));
-        assertThat(called[0]).isFalse();
+        final var ctx = AgentPromptContext.forFormat(A2A_CARD);
+
+        final var result = renderer.render(fullDescriptor(), ctx);
+        assertThat(result.content()).contains("\"code-review\"");
+        assertThat(result.content()).doesNotContain("You do things that don't exist.");
+        assertThat(result.content()).doesNotContain("nonexistent-cap");
+    }
+
+    @Test
+    void a2a_card_llm_payload_excludes_goal_context() {
+        final String[] capturedPayload = {""};
+        final ChatModel capturingLlm = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest request) {
+                capturedPayload[0] = request.messages().stream()
+                    .filter(m -> m instanceof UserMessage)
+                    .map(m -> ((UserMessage) m).singleText())
+                    .reduce("", (a, b) -> a + b);
+                return ChatResponse.builder().aiMessage(AiMessage.from(A2A_LLM_JSON_RESPONSE)).build();
+            }
+        };
+        final var renderer = new EidosSystemPromptRenderer(capturingLlm, new CdiVocabularyRegistry(),
+                new NoOpRenderedPromptCache(), MAPPER);
+        renderer.render(fullDescriptor(), AgentPromptContext.forFormat(A2A_CARD)
+                .withGoal(new GoalContext("Review PR #42", List.of(), "case-123")));
+
+        assertThat(capturedPayload[0]).doesNotContain("Review PR #42");
+        assertThat(capturedPayload[0]).doesNotContain("case-123");
+        assertThat(capturedPayload[0]).contains("code-review");
     }
 
     // ── GEMINI path ───────────────────────────────────────────────────────────
