@@ -8,10 +8,6 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.request.ResponseFormat;
-import dev.langchain4j.model.chat.request.ResponseFormatType;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import dev.langchain4j.model.chat.request.json.JsonSchema;
 import org.jboss.logging.Logger;
 
 import java.util.Optional;
@@ -19,30 +15,6 @@ import java.util.Optional;
 class SemanticEnrichmentStep {
 
     private static final Logger log = Logger.getLogger(SemanticEnrichmentStep.class);
-
-    // Declaration order is load-order: RESPONSE_FORMAT is self-contained, no field dependency.
-    static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
-            .type(ResponseFormatType.JSON)
-            .jsonSchema(JsonSchema.builder()
-                    .name("SemanticEnrichment")
-                    .rootElement(JsonObjectSchema.builder()
-                            .addStringProperty("identityNarrative",
-                                    "Who this agent is — name, model, version context. Second person.")
-                            .addStringProperty("roleNarrative",
-                                    "The agent's role and purpose. Second person.")
-                            .addStringProperty("capabilityNarrative",
-                                    "What the agent can do, including domain confidence. Second person.")
-                            .addStringProperty("dispositionNarrative",
-                                    "How the agent operates. Empty string if no disposition data.")
-                            .addStringProperty("constraintNarrative",
-                                    "Data handling obligations. Empty string if none.")
-                            .addStringProperty("goalNarrative",
-                                    "Current task and objectives. Empty string if no goal.")
-                            .required("identityNarrative", "roleNarrative", "capabilityNarrative",
-                                    "dispositionNarrative", "constraintNarrative", "goalNarrative")
-                            .build())
-                    .build())
-            .build();
 
     private final ObjectMapper mapper;
 
@@ -54,10 +26,10 @@ class SemanticEnrichmentStep {
         try {
             final ChatRequest request = ChatRequest.builder()
                     .messages(
-                            SystemMessage.from(EidosSystemPromptRenderer.PROMPT_TEMPLATE),
+                            SystemMessage.from(EidosRenderPipeline.PROMPT_TEMPLATE),
                             UserMessage.from(mapper.writeValueAsString(payload))
                     )
-                    .responseFormat(RESPONSE_FORMAT)
+                    .responseFormat(EidosRenderPipeline.RESPONSE_FORMAT)
                     .build();
 
             final var response = llm.chat(request);

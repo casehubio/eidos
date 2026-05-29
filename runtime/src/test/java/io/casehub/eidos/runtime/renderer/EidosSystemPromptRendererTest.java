@@ -73,9 +73,10 @@ class EidosSystemPromptRendererTest {
         };
         testCache = new TestRenderedPromptCache();
         final var vocab = new CdiVocabularyRegistry();
-        rendererWithLlm  = new EidosSystemPromptRenderer(mockLlm, vocab, testCache, MAPPER);
-        rendererStructural = new EidosSystemPromptRenderer((ChatModel) null, vocab,
-                new NoOpRenderedPromptCache(), MAPPER);
+        rendererWithLlm  = new EidosSystemPromptRenderer(mockLlm,
+                new EidosRenderPipeline(vocab, testCache, MAPPER), MAPPER);
+        rendererStructural = new EidosSystemPromptRenderer((ChatModel) null,
+                new EidosRenderPipeline(vocab, new NoOpRenderedPromptCache(), MAPPER), MAPPER);
     }
 
     static AgentDescriptor fullDescriptor() {
@@ -106,8 +107,9 @@ class EidosSystemPromptRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(A2A_LLM_JSON_RESPONSE)).build();
             }
         };
-        return new EidosSystemPromptRenderer(a2aLlm, new CdiVocabularyRegistry(),
-                new NoOpRenderedPromptCache(), MAPPER);
+        return new EidosSystemPromptRenderer(a2aLlm,
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
+                MAPPER);
     }
 
     /** Renders and returns the user message payload sent to the LLM. */
@@ -130,8 +132,9 @@ class EidosSystemPromptRendererTest {
                         .build();
             }
         };
-        new EidosSystemPromptRenderer(capturingLlm, new CdiVocabularyRegistry(),
-                new NoOpRenderedPromptCache(), MAPPER).render(desc, ctx);
+        new EidosSystemPromptRenderer(capturingLlm,
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
+                MAPPER).render(desc, ctx);
         return captured[0];
     }
 
@@ -301,8 +304,9 @@ class EidosSystemPromptRendererTest {
                 )).build();
             }
         };
-        final var renderer = new EidosSystemPromptRenderer(mismatchLlm, new CdiVocabularyRegistry(),
-                new NoOpRenderedPromptCache(), MAPPER);
+        final var renderer = new EidosSystemPromptRenderer(mismatchLlm,
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
+                MAPPER);
         final var ctx = AgentPromptContext.forFormat(A2A_CARD);
 
         final var result = renderer.render(fullDescriptor(), ctx);
@@ -324,8 +328,9 @@ class EidosSystemPromptRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(A2A_LLM_JSON_RESPONSE)).build();
             }
         };
-        final var renderer = new EidosSystemPromptRenderer(capturingLlm, new CdiVocabularyRegistry(),
-                new NoOpRenderedPromptCache(), MAPPER);
+        final var renderer = new EidosSystemPromptRenderer(capturingLlm,
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
+                MAPPER);
         renderer.render(fullDescriptor(), AgentPromptContext.forFormat(A2A_CARD)
                 .withGoal(new GoalContext("Review PR #42", List.of(), "case-123")));
 
@@ -381,8 +386,8 @@ class EidosSystemPromptRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from("result")).build();
             }
         };
-        final var renderer = new EidosSystemPromptRenderer(trackingLlm, new CdiVocabularyRegistry(),
-                testCache, MAPPER);
+        final var renderer = new EidosSystemPromptRenderer(trackingLlm,
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), testCache, MAPPER), MAPPER);
 
         renderer.render(fullDescriptor(), fullContext()); // miss — LLM called
         called[0] = false;
@@ -447,85 +452,5 @@ class EidosSystemPromptRendererTest {
     void rendered_prompt_has_correct_format() {
         final var result = rendererStructural.render(fullDescriptor(), fullContext());
         assertThat(result.format()).isEqualTo(CLAUDE_MD);
-    }
-
-    // ── Payload building (Stage 1) ────────────────────────────────────────────
-
-    @Test
-    void descriptor_payload_includes_agent_id_and_name() {
-        final var node = rendererStructural.buildDescriptorPayload(fullDescriptor());
-        assertThat(node.get("agentId").asText()).isEqualTo("reviewer-1");
-        assertThat(node.get("name").asText()).isEqualTo("Code Reviewer");
-    }
-
-    @Test
-    void descriptor_payload_excludes_tenancy_id() {
-        final var node = rendererStructural.buildDescriptorPayload(fullDescriptor());
-        assertThat(node.has("tenancyId")).isFalse();
-    }
-
-    @Test
-    void descriptor_payload_excludes_vocabulary_uris() {
-        final var node = rendererStructural.buildDescriptorPayload(fullDescriptor());
-        assertThat(node.has("slotVocabulary")).isFalse();
-        assertThat(node.has("domainVocabulary")).isFalse();
-        assertThat(node.has("dispositionVocabulary")).isFalse();
-    }
-
-    @Test
-    void descriptor_payload_combines_model_family_and_version() {
-        final var node = rendererStructural.buildDescriptorPayload(fullDescriptor());
-        assertThat(node.get("model").asText()).isEqualTo("claude/claude-3-7-sonnet");
-    }
-
-    @Test
-    void descriptor_payload_capability_includes_input_and_output_types() {
-        final var node = rendererStructural.buildDescriptorPayload(fullDescriptor());
-        final var cap = node.get("capabilities").get(0);
-        assertThat(cap.get("inputTypes").get(0).asText()).isEqualTo("code");
-        assertThat(cap.get("outputTypes").get(0).asText()).isEqualTo("review");
-    }
-
-    @Test
-    void descriptor_payload_capability_excludes_cost_hint_and_tags() {
-        final var node = rendererStructural.buildDescriptorPayload(fullDescriptor());
-        final var cap = node.get("capabilities").get(0);
-        assertThat(cap.has("costHint")).isFalse();
-        assertThat(cap.has("tags")).isFalse();
-    }
-
-    @Test
-    void descriptor_payload_includes_weights_fingerprint_when_set() {
-        final var desc = new AgentDescriptor(
-            "id", "Name", "1.0", null, null, null, "fp-abc123",
-            null, null, null, "slot", List.of(), null, null, null, "t"
-        );
-        final var node = rendererStructural.buildDescriptorPayload(desc);
-        assertThat(node.get("weightsFingerprint").asText()).isEqualTo("fp-abc123");
-    }
-
-    @Test
-    void context_payload_includes_goal_when_present() {
-        final var node = rendererStructural.buildContextPayload(fullContext());
-        assertThat(node.get("goal").get("description").asText()).isEqualTo("Review PR #42");
-    }
-
-    @Test
-    void context_payload_includes_resources_and_situational_context_for_hash() {
-        // Per design: buildContextPayload includes resources and situationalContext
-        // to ensure cache correctness (they affect the rendered output in Stage 3).
-        // They are excluded from LLM payload in buildLlmPayload.
-        final var node = rendererStructural.buildContextPayload(fullContext());
-        assertThat(node.has("resources")).isTrue();
-        assertThat(node.get("resources").get(0).get("uri").asText()).isEqualTo("/src/main/java");
-        assertThat(node.has("situationalContext")).isTrue();
-        assertThat(node.get("situationalContext").asText()).isEqualTo("Critical release branch");
-    }
-
-    @Test
-    void context_payload_is_empty_when_no_goal() {
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
-        final var node = rendererStructural.buildContextPayload(ctx);
-        assertThat(node.isEmpty()).isTrue();
     }
 }

@@ -136,7 +136,7 @@ class SemanticEnrichmentStepTest {
     void system_message_equals_prompt_template() {
         final String[] captured = {"", ""};
         step.enrich(capturingMock(captured), payload("x"));
-        assertThat(captured[1]).isEqualTo(EidosSystemPromptRenderer.PROMPT_TEMPLATE);
+        assertThat(captured[1]).isEqualTo(EidosRenderPipeline.PROMPT_TEMPLATE);
     }
 
     @Test
