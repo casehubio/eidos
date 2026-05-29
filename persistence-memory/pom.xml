@@ -20,6 +20,13 @@
       <artifactId>casehub-eidos-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-api</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
 
     <!-- CDI for @Alternative @Priority(1) -->
     <dependency>

@@ -19,6 +19,13 @@
       <artifactId>casehub-eidos-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-api</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
 
     <!-- Ledger — evidence layer (trust scores, attestations) -->
     <dependency>

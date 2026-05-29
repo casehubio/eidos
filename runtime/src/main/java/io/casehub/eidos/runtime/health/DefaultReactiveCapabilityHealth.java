@@ -3,12 +3,12 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
-import io.quarkus.arc.properties.IfBuildProperty;
+import io.quarkus.arc.DefaultBean;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-@IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "true")
+@DefaultBean
 @ApplicationScoped
 public class DefaultReactiveCapabilityHealth implements ReactiveCapabilityHealth {
 

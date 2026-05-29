@@ -5,6 +5,10 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import io.casehub.eidos.api.AgentRegistry;
 import io.casehub.eidos.api.ReactiveAgentRegistry;
+import io.casehub.eidos.api.AgentStateStore;
+import io.casehub.eidos.api.ReactiveAgentStateStore;
+import io.casehub.eidos.api.SystemPromptRenderer;
+import io.casehub.eidos.api.ReactiveSystemPromptRenderer;
 import io.smallrye.mutiny.Uni;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +56,66 @@ class BlockingReactiveParityTest {
         assertThat(reactiveMethods)
             .as("ReactiveAgentRegistry must have the same method names as AgentRegistry")
             .containsExactlyInAnyOrderElementsOf(blockingMethods);
+    }
+
+    @Test
+    void state_store_reactive_has_same_method_names_as_blocking() {
+        JavaClasses apiClasses = new ClassFileImporter()
+            .importPackages("io.casehub.eidos.api");
+
+        var blockingMethods = apiClasses.get(AgentStateStore.class)
+            .getMethods().stream()
+            .map(m -> m.getName())
+            .collect(Collectors.toSet());
+
+        var reactiveMethods = apiClasses.get(ReactiveAgentStateStore.class)
+            .getMethods().stream()
+            .map(m -> m.getName())
+            .collect(Collectors.toSet());
+
+        assertThat(reactiveMethods)
+            .as("ReactiveAgentStateStore must have the same method names as AgentStateStore")
+            .containsExactlyInAnyOrderElementsOf(blockingMethods);
+    }
+
+    @Test
+    void state_store_reactive_methods_return_uni() {
+        JavaClasses apiClasses = new ClassFileImporter()
+            .importPackages("io.casehub.eidos.api");
+        ArchRule rule = methods()
+            .that().areDeclaredIn(ReactiveAgentStateStore.class)
+            .should().haveRawReturnType(assignableTo(Uni.class));
+        rule.check(apiClasses);
+    }
+
+    @Test
+    void renderer_reactive_has_same_method_names_as_blocking() {
+        JavaClasses apiClasses = new ClassFileImporter()
+            .importPackages("io.casehub.eidos.api");
+
+        var blockingMethods = apiClasses.get(SystemPromptRenderer.class)
+            .getMethods().stream()
+            .map(m -> m.getName())
+            .collect(Collectors.toSet());
+
+        var reactiveMethods = apiClasses.get(ReactiveSystemPromptRenderer.class)
+            .getMethods().stream()
+            .map(m -> m.getName())
+            .collect(Collectors.toSet());
+
+        assertThat(reactiveMethods)
+            .as("ReactiveSystemPromptRenderer must have the same method names as SystemPromptRenderer")
+            .containsExactlyInAnyOrderElementsOf(blockingMethods);
+    }
+
+    @Test
+    void renderer_reactive_methods_return_uni() {
+        JavaClasses apiClasses = new ClassFileImporter()
+            .importPackages("io.casehub.eidos.api");
+        ArchRule rule = methods()
+            .that().areDeclaredIn(ReactiveSystemPromptRenderer.class)
+            .should().haveRawReturnType(assignableTo(Uni.class));
+        rule.check(apiClasses);
     }
 
     private static com.tngtech.archunit.base.DescribedPredicate<com.tngtech.archunit.core.domain.JavaClass> assignableTo(Class<?> type) {
