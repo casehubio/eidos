@@ -143,8 +143,14 @@ public class PromptJudge {
         // Iterate only known dimensions — skip "issues" and unknown keys
         for (final EvalDimension d : EvalDimension.values()) {
             final JsonNode dimNode = root.get(d.name());
-            if (dimNode == null) throw new IllegalStateException("Judge response missing: " + d.name());
-            scores.put(d, new EvalScore(dimNode.get("score").asInt(), dimNode.get("reasoning").asText()));
+            if (dimNode == null) throw new IllegalStateException("Judge response missing dimension: " + d.name());
+            final JsonNode scoreNode = dimNode.get("score");
+            final JsonNode reasoningNode = dimNode.get("reasoning");
+            if (scoreNode == null || reasoningNode == null) {
+                throw new IllegalStateException(
+                    "Judge response for " + d.name() + " missing 'score' or 'reasoning'");
+            }
+            scores.put(d, new EvalScore(scoreNode.asInt(), reasoningNode.asText()));
         }
 
         final List<String> issues = new ArrayList<>();

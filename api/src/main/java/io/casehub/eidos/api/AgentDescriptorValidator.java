@@ -41,6 +41,7 @@ class AgentDescriptorValidator {
     private static boolean isBanned(final int cp) {
         if (cp <= 0x001F) return true;                      // C0 control chars (0-31)
         if (cp >= 0x007F && cp <= 0x009F) return true;     // DEL + C1 control chars (127-159)
+        if (cp == 0x061C) return true;                      // ALM — Arabic Letter Mark (BiDi control)
         if (cp == 0x200E || cp == 0x200F) return true;     // LRM, RLM
         if (cp >= 0x202A && cp <= 0x202E) return true;     // LRE, RLE, PDF, LRO, RLO
         if (cp >= 0x2066 && cp <= 0x2069) return true;     // LRI, RLI, FSI, PDI

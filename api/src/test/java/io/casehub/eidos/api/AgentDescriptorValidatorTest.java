@@ -60,7 +60,9 @@ class AgentDescriptorValidatorTest {
             Arguments.of("name BOM",          VALID_ID, "name﻿bom",     VALID_SLOT, VALID_TID, "name"),
             // Line/paragraph separators
             Arguments.of("name LS U+2028",    VALID_ID, "name sep",     VALID_SLOT, VALID_TID, "name"),
-            Arguments.of("name PS U+2029",    VALID_ID, "name sep",     VALID_SLOT, VALID_TID, "name")
+            Arguments.of("name PS U+2029",    VALID_ID, "name sep",     VALID_SLOT, VALID_TID, "name"),
+            // Arabic Letter Mark (BiDi control, Unicode 6.3)
+            Arguments.of("name ALM U+061C",   VALID_ID, "name؜alm", VALID_SLOT, VALID_TID, "name")
         );
     }
 
