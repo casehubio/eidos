@@ -20,6 +20,7 @@
     <module>deployment</module>
     <module>vocab</module>
     <module>examples</module>
+    <module>eval</module>
   </modules>
 
   <distributionManagement>
