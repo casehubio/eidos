@@ -35,7 +35,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
 
     @BeforeEach
     void setUp() {
-        pipeline = new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER);
+        pipeline = new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER);
         blockingDelegate = (descriptor, context) ->
             new RenderedPrompt("blocking:" + descriptor.name(), context.format(), "dh", "ch");
     }
@@ -74,7 +74,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     @Test
     void renders_with_streaming_llm_when_present() {
         final var renderer = new DefaultReactiveSystemPromptRenderer(
-                successMock(), blockingDelegate, pipeline, MAPPER);
+                successMock(), blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
         final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
 
         final RenderedPrompt result = renderer.render(descriptor(), ctx).await().indefinitely();
@@ -96,7 +96,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
             }
         };
         final var renderer = new DefaultReactiveSystemPromptRenderer(
-                trackingMock, blockingDelegate, pipeline, MAPPER);
+                trackingMock, blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
 
         renderer.render(descriptor(), AgentPromptContext.forFormat(CLAUDE_MD)).await().indefinitely();
 
@@ -106,7 +106,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     @Test
     void falls_back_to_structural_when_streaming_llm_on_error() {
         final var renderer = new DefaultReactiveSystemPromptRenderer(
-                errorMock(), blockingDelegate, pipeline, MAPPER);
+                errorMock(), blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
         final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
 
         final RenderedPrompt result = renderer.render(descriptor(), ctx).await().indefinitely();
@@ -118,7 +118,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     @Test
     void falls_back_to_blocking_delegate_when_streaming_llm_absent() {
         final var renderer = new DefaultReactiveSystemPromptRenderer(
-                (StreamingChatModel) null, blockingDelegate, pipeline, MAPPER);
+                (StreamingChatModel) null, blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
         final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
 
         final RenderedPrompt result = renderer.render(descriptor(), ctx).await().indefinitely();
@@ -128,29 +128,29 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
 
     @Test
     void cache_hit_returns_without_any_llm_call() {
-        final var cachingCache = new TestRenderedPromptCache();
-        final var cachingPipeline = new EidosRenderPipeline(
-                new CdiVocabularyRegistry(), cachingCache, MAPPER);
-
-        // First render: cache miss -> LLM is called
-        final var renderer = new DefaultReactiveSystemPromptRenderer(
-                successMock(), blockingDelegate, cachingPipeline, MAPPER);
+        // Pre-populate the cache with the key for our descriptor+context combo.
         final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
-        renderer.render(descriptor(), ctx).await().indefinitely();
+        final StageOneResult s1 = pipeline.buildStage1(descriptor(), ctx);
+        final RenderedPrompt cachedResult = new RenderedPrompt(
+            "cached-content", CLAUDE_MD, s1.descriptorHash(), s1.contextHash());
 
-        // Second render: cache hit -> LLM must NOT be called
+        final TestReactiveRenderedPromptCache prePopulated = new TestReactiveRenderedPromptCache();
+        prePopulated.store.put(s1.lookupKey(), cachedResult);
+
+        // Renderer with a throwing LLM — must not be called on cache hit
         final StreamingChatModel throwingMock = new StreamingChatModel() {
             @Override
-            public void doChat(ChatRequest request, StreamingChatResponseHandler handler) {
+            public void doChat(final ChatRequest request, final StreamingChatResponseHandler handler) {
                 throw new AssertionError("LLM must not be called on cache hit");
             }
         };
-        final var renderer2 = new DefaultReactiveSystemPromptRenderer(
-                throwingMock, blockingDelegate, cachingPipeline, MAPPER);
-        final RenderedPrompt result = renderer2.render(descriptor(), ctx).await().indefinitely();
+        final var renderer = new DefaultReactiveSystemPromptRenderer(
+                throwingMock, blockingDelegate, pipeline, prePopulated, MAPPER);
 
-        assertThat(result).isNotNull();
-        assertThat(cachingCache.getCount).isEqualTo(2);
-        assertThat(cachingCache.putCount).isEqualTo(1);
+        final RenderedPrompt result = renderer.render(descriptor(), ctx).await().indefinitely();
+
+        assertThat(result.content()).isEqualTo("cached-content");
+        assertThat(prePopulated.getCount).isEqualTo(1);
+        assertThat(prePopulated.putCount).isEqualTo(0); // cache hit — no put
     }
 }

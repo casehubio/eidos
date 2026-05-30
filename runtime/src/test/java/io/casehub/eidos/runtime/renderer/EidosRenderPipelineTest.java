@@ -20,7 +20,7 @@ class EidosRenderPipelineTest {
 
     @BeforeEach
     void setUp() {
-        pipeline = new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER);
+        pipeline = new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER);
     }
 
     static AgentDescriptor fullDescriptor() {
@@ -150,5 +150,27 @@ class EidosRenderPipelineTest {
     @Test
     void uses_enrichment_false_for_a2a_card() {
         assertThat(EidosRenderPipeline.usesEnrichment(A2A_CARD)).isFalse();
+    }
+
+    // ── buildStage1 ───────────────────────────────────────────────────────────
+
+    @Test
+    void buildStage1_returns_matching_hashes_and_key() {
+        final var desc = EidosRenderPipelineTest.fullDescriptor();
+        final var ctx  = EidosRenderPipelineTest.fullContext();
+        final StageOneResult s1 = pipeline.buildStage1(desc, ctx);
+        assertThat(s1.descriptorHash()).hasSize(16);
+        assertThat(s1.contextHash()).hasSize(16);
+        assertThat(s1.lookupKey()).contains(s1.descriptorHash());
+        assertThat(s1.lookupKey()).contains(s1.contextHash());
+        assertThat(s1.lookupKey()).contains("CLAUDE_MD");
+    }
+
+    @Test
+    void buildStage1_is_deterministic() {
+        final var desc = EidosRenderPipelineTest.fullDescriptor();
+        final var ctx  = EidosRenderPipelineTest.fullContext();
+        assertThat(pipeline.buildStage1(desc, ctx).lookupKey())
+            .isEqualTo(pipeline.buildStage1(desc, ctx).lookupKey());
     }
 }

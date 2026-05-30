@@ -39,7 +39,7 @@ class EidosSystemPromptRendererTest {
     ChatModel mockLlm;
     EidosSystemPromptRenderer rendererWithLlm;
     EidosSystemPromptRenderer rendererStructural;
-    TestRenderedPromptCache testCache;
+    TestReactiveRenderedPromptCache testCache; // freshly assigned in setUp() @BeforeEach
 
     @BeforeEach
     void setUp() {
@@ -49,12 +49,12 @@ class EidosSystemPromptRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(LLM_JSON_RESPONSE)).build();
             }
         };
-        testCache = new TestRenderedPromptCache();
+        testCache = new TestReactiveRenderedPromptCache();
         final var vocab = new CdiVocabularyRegistry();
         rendererWithLlm  = new EidosSystemPromptRenderer(mockLlm,
-                new EidosRenderPipeline(vocab, testCache, MAPPER), MAPPER);
+                new EidosRenderPipeline(vocab, MAPPER), testCache, MAPPER);
         rendererStructural = new EidosSystemPromptRenderer((ChatModel) null,
-                new EidosRenderPipeline(vocab, new NoOpRenderedPromptCache(), MAPPER), MAPPER);
+                new EidosRenderPipeline(vocab, MAPPER), new TestReactiveRenderedPromptCache(), MAPPER);
     }
 
     static AgentDescriptor fullDescriptor() {
@@ -86,8 +86,8 @@ class EidosSystemPromptRendererTest {
             }
         };
         return new EidosSystemPromptRenderer(a2aLlm,
-                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
-                MAPPER);
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+                new TestReactiveRenderedPromptCache(), MAPPER);
     }
 
     /** Renders and returns the user message payload sent to the LLM. */
@@ -111,8 +111,8 @@ class EidosSystemPromptRendererTest {
             }
         };
         new EidosSystemPromptRenderer(capturingLlm,
-                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
-                MAPPER).render(desc, ctx);
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+                new TestReactiveRenderedPromptCache(), MAPPER).render(desc, ctx);
         return captured[0];
     }
 
@@ -283,8 +283,8 @@ class EidosSystemPromptRendererTest {
             }
         };
         final var renderer = new EidosSystemPromptRenderer(mismatchLlm,
-                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
-                MAPPER);
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+                new TestReactiveRenderedPromptCache(), MAPPER);
         final var ctx = AgentPromptContext.forFormat(A2A_CARD);
 
         final var result = renderer.render(fullDescriptor(), ctx);
@@ -307,8 +307,8 @@ class EidosSystemPromptRendererTest {
             }
         };
         final var renderer = new EidosSystemPromptRenderer(capturingLlm,
-                new EidosRenderPipeline(new CdiVocabularyRegistry(), new NoOpRenderedPromptCache(), MAPPER),
-                MAPPER);
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+                new TestReactiveRenderedPromptCache(), MAPPER);
         renderer.render(fullDescriptor(), AgentPromptContext.forFormat(A2A_CARD)
                 .withGoal(new GoalContext("Review PR #42", List.of(), "case-123")));
 
@@ -361,17 +361,21 @@ class EidosSystemPromptRendererTest {
             @Override
             public ChatResponse doChat(final ChatRequest request) {
                 called[0] = true;
-                return ChatResponse.builder().aiMessage(AiMessage.from("result")).build();
+                return ChatResponse.builder().aiMessage(AiMessage.from(LLM_JSON_RESPONSE)).build();
             }
         };
+        final TestReactiveRenderedPromptCache freshCache = new TestReactiveRenderedPromptCache();
         final var renderer = new EidosSystemPromptRenderer(trackingLlm,
-                new EidosRenderPipeline(new CdiVocabularyRegistry(), testCache, MAPPER), MAPPER);
+                new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+                freshCache, MAPPER);
 
         renderer.render(fullDescriptor(), fullContext()); // miss — LLM called
         called[0] = false;
         renderer.render(fullDescriptor(), fullContext()); // hit — LLM must NOT be called
 
         assertThat(called[0]).isFalse();
+        assertThat(freshCache.putCount).isEqualTo(1);
+        assertThat(freshCache.getCount).isEqualTo(2);
     }
 
     @Test
@@ -388,7 +392,7 @@ class EidosSystemPromptRendererTest {
         rendererStructural.render(fullDescriptor(), openaiCtx);
 
         // Two distinct formats = two distinct cache entries
-        // rendererStructural uses NoOpRenderedPromptCache so we test via content difference
+        // rendererStructural uses TestReactiveRenderedPromptCache (live store); test is on content not cache state
         final var claudeResult = rendererStructural.render(fullDescriptor(), claudeCtx);
         final var openaiResult = rendererStructural.render(fullDescriptor(), openaiCtx);
         assertThat(claudeResult.content()).isNotEqualTo(openaiResult.content());

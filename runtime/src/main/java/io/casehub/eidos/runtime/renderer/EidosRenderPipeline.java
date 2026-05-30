@@ -12,7 +12,6 @@ import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentPromptContext;
-import io.casehub.eidos.api.RenderedPromptCache;
 import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
@@ -124,15 +123,12 @@ class EidosRenderPipeline {
     static final int STREAMING_TIMEOUT_SECONDS = 30;
 
     private final VocabularyRegistry vocab;
-    private final RenderedPromptCache cache;
     private final ObjectMapper mapper;
 
     @Inject
     EidosRenderPipeline(final VocabularyRegistry vocab,
-                        final RenderedPromptCache cache,
                         final ObjectMapper mapper) {
         this.vocab = vocab;
-        this.cache = cache;
         this.mapper = mapper;
     }
 
@@ -240,15 +236,22 @@ class EidosRenderPipeline {
         return full;
     }
 
+    // ── Stage 1: build + fingerprint ─────────────────────────────────────────
+
+    StageOneResult buildStage1(final AgentDescriptor descriptor, final AgentPromptContext context) {
+        final ObjectNode descriptorNode = buildDescriptorPayload(descriptor);
+        final ObjectNode contextNode    = buildContextPayload(context);
+        final String descriptorHash     = fingerprint(descriptorNode.toString());
+        final String contextHash        = fingerprint(contextNode.toString());
+        final String key                = cacheKey(descriptorHash, contextHash, context.format());
+        return new StageOneResult(descriptorNode, contextNode, descriptorHash, contextHash, key);
+    }
+
     // ── Cache utilities ──────────────────────────────────────────────────────
 
     String cacheKey(final String descriptorHash, final String contextHash,
                     final RenderFormat format) {
         return descriptorHash + ":" + contextHash + ":" + format.name() + ":" + TEMPLATE_HASH;
-    }
-
-    Optional<RenderedPrompt> cacheGet(final String key) {
-        return cache.get(key);
     }
 
     // ── Stage 2 predicate ────────────────────────────────────────────────────
@@ -262,30 +265,18 @@ class EidosRenderPipeline {
 
     // ── Stage 3: format assembly ──────────────────────────────────────────────
 
-    String assemble(final Optional<SemanticEnrichment> enrichment,
-                    final Optional<A2AEnrichment> a2aEnrichment,
-                    final AgentDescriptor descriptor,
-                    final AgentPromptContext context) {
-        return switch (context.format()) {
+    RenderedPrompt assemble(final StageOneResult s1,
+                             final Optional<SemanticEnrichment> enrichment,
+                             final Optional<A2AEnrichment> a2aEnrichment,
+                             final AgentDescriptor descriptor,
+                             final AgentPromptContext context) {
+        final String content = switch (context.format()) {
             case CLAUDE_MD     -> assembleClaudeMarkdown(enrichment, descriptor, context);
             case OPENAI_SYSTEM -> assembleOpenAiSystem(enrichment, descriptor, context);
             case A2A_CARD      -> assembleA2aCard(a2aEnrichment, descriptor);
             case GEMINI        -> assembleGemini(enrichment, descriptor, context);
         };
-    }
-
-    RenderedPrompt assembleAndCache(final String cacheKey,
-                                    final String descriptorHash,
-                                    final String contextHash,
-                                    final Optional<SemanticEnrichment> enrichment,
-                                    final Optional<A2AEnrichment> a2aEnrichment,
-                                    final AgentDescriptor descriptor,
-                                    final AgentPromptContext context) {
-        final String content = assemble(enrichment, a2aEnrichment, descriptor, context);
-        final RenderedPrompt result = new RenderedPrompt(content, context.format(),
-                                                         descriptorHash, contextHash);
-        cache.put(cacheKey, result);
-        return result;
+        return new RenderedPrompt(content, context.format(), s1.descriptorHash(), s1.contextHash());
     }
 
     // ── Format-specific assembly ─────────────────────────────────────────────

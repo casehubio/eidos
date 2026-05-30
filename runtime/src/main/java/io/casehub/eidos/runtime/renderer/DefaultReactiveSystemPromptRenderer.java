@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentPromptContext;
+import io.casehub.eidos.api.ReactiveRenderedPromptCache;
 import io.casehub.eidos.api.ReactiveSystemPromptRenderer;
 import io.casehub.eidos.api.SystemPromptRenderer;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
@@ -29,6 +30,7 @@ public class DefaultReactiveSystemPromptRenderer implements ReactiveSystemPrompt
     private final StreamingChatModel streamingLlm;
     private final SystemPromptRenderer blockingDelegate;
     private final EidosRenderPipeline pipeline;
+    private final ReactiveRenderedPromptCache cache;
     private final ReactiveSemanticEnrichmentStep reactiveEnrichStep;
     private final ReactiveA2ASemanticEnrichmentStep reactiveA2aStep;
 
@@ -37,10 +39,12 @@ public class DefaultReactiveSystemPromptRenderer implements ReactiveSystemPrompt
             @Any final Instance<StreamingChatModel> streamingLlmInstance,
             final SystemPromptRenderer blockingDelegate,
             final EidosRenderPipeline pipeline,
+            final ReactiveRenderedPromptCache cache,
             final ObjectMapper mapper) {
         this.streamingLlm = streamingLlmInstance.isResolvable() ? streamingLlmInstance.get() : null;
         this.blockingDelegate = blockingDelegate;
         this.pipeline = pipeline;
+        this.cache = cache;
         this.reactiveEnrichStep = new ReactiveSemanticEnrichmentStep(mapper);
         this.reactiveA2aStep = new ReactiveA2ASemanticEnrichmentStep(mapper);
     }
@@ -50,10 +54,12 @@ public class DefaultReactiveSystemPromptRenderer implements ReactiveSystemPrompt
             final StreamingChatModel streamingLlm,
             final SystemPromptRenderer blockingDelegate,
             final EidosRenderPipeline pipeline,
+            final ReactiveRenderedPromptCache cache,
             final ObjectMapper mapper) {
         this.streamingLlm = streamingLlm;
         this.blockingDelegate = blockingDelegate;
         this.pipeline = pipeline;
+        this.cache = cache;
         this.reactiveEnrichStep = new ReactiveSemanticEnrichmentStep(mapper);
         this.reactiveA2aStep = new ReactiveA2ASemanticEnrichmentStep(mapper);
     }
@@ -68,25 +74,14 @@ public class DefaultReactiveSystemPromptRenderer implements ReactiveSystemPrompt
                       .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
         }
 
-        // Stage 1 + cache check on worker pool — not on event loop
+        // Stage 1 on worker pool: payload building + reactive cache check
         return Uni.createFrom()
-                  .item(() -> buildStageOne(descriptor, context))
+                  .item(() -> pipeline.buildStage1(descriptor, context))
                   .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                  .chain(s1 -> {
-                      if (s1.cached() != null) return Uni.createFrom().item(s1.cached());
-                      return executeStagesTwoAndThree(s1, descriptor, context);
-                  });
-    }
-
-    private StageOneResult buildStageOne(final AgentDescriptor descriptor,
-                                          final AgentPromptContext context) {
-        final ObjectNode descriptorNode = pipeline.buildDescriptorPayload(descriptor);
-        final ObjectNode contextNode    = pipeline.buildContextPayload(context);
-        final String descriptorHash     = EidosRenderPipeline.fingerprint(descriptorNode.toString());
-        final String contextHash        = EidosRenderPipeline.fingerprint(contextNode.toString());
-        final String cacheKey           = pipeline.cacheKey(descriptorHash, contextHash, context.format());
-        final RenderedPrompt cached     = pipeline.cacheGet(cacheKey).orElse(null);
-        return new StageOneResult(descriptorNode, contextNode, descriptorHash, contextHash, cacheKey, cached);
+                  .chain(s1 -> cache.get(s1.lookupKey())
+                                    .chain(hit -> hit.isPresent()
+                                        ? Uni.createFrom().item(hit.get())
+                                        : executeStagesTwoAndThree(s1, descriptor, context)));
     }
 
     private Uni<RenderedPrompt> executeStagesTwoAndThree(
@@ -111,17 +106,10 @@ public class DefaultReactiveSystemPromptRenderer implements ReactiveSystemPrompt
         // Stage 3 assembly on worker pool — not on the streaming callback thread
         return Uni.combine().all().unis(enrichUni, a2aUni).asTuple()
                   .emitOn(Infrastructure.getDefaultWorkerPool())
-                  .map(t -> pipeline.assembleAndCache(
-                          s1.cacheKey(), s1.descriptorHash(), s1.contextHash(),
-                          t.getItem1(), t.getItem2(), descriptor, context));
+                  .chain(t -> {
+                      final RenderedPrompt result = pipeline.assemble(
+                          s1, t.getItem1(), t.getItem2(), descriptor, context);
+                      return cache.put(s1.lookupKey(), result).replaceWith(result);
+                  });
     }
-
-    private record StageOneResult(
-            ObjectNode descriptorNode,
-            ObjectNode contextNode,
-            String descriptorHash,
-            String contextHash,
-            String cacheKey,
-            RenderedPrompt cached
-    ) {}
 }

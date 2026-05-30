@@ -9,6 +9,7 @@ import io.casehub.eidos.api.AgentStateStore;
 import io.casehub.eidos.api.ReactiveAgentStateStore;
 import io.casehub.eidos.api.SystemPromptRenderer;
 import io.casehub.eidos.api.ReactiveSystemPromptRenderer;
+import io.casehub.eidos.api.ReactiveRenderedPromptCache;
 import io.smallrye.mutiny.Uni;
 import org.junit.jupiter.api.Test;
 
@@ -104,6 +105,14 @@ class BlockingReactiveParityTest {
     void renderer_reactive_methods_return_uni() {
         ArchRule rule = methods()
             .that().areDeclaredIn(ReactiveSystemPromptRenderer.class)
+            .should().haveRawReturnType(assignableTo(Uni.class));
+        rule.check(API_CLASSES);
+    }
+
+    @Test
+    void reactive_cache_methods_return_uni() {
+        ArchRule rule = methods()
+            .that().areDeclaredIn(ReactiveRenderedPromptCache.class)
             .should().haveRawReturnType(assignableTo(Uni.class));
         rule.check(API_CLASSES);
     }
