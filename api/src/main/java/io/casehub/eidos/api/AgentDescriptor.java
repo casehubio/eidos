@@ -26,4 +26,8 @@ public record AgentDescriptor(
         String jurisdiction,
         String dataHandlingPolicy,
         String tenancyId
-) {}
+) {
+    public AgentDescriptor {
+        AgentDescriptorValidator.validate(agentId, name, slot, tenancyId);
+    }
+}
