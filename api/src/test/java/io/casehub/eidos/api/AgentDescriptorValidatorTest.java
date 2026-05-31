@@ -1,9 +1,12 @@
 package io.casehub.eidos.api;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,8 +27,8 @@ class AgentDescriptorValidatorTest {
                                                final String tenancyId,
                                                final String expectedField) {
         assertThatThrownBy(() -> AgentDescriptorValidator.validate(agentId, name, slot, tenancyId))
-            .isInstanceOf(AgentDescriptorValidationException.class)
-            .satisfies(ex -> assertThat(((AgentDescriptorValidationException) ex).fieldName())
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo(expectedField));
     }
 
@@ -83,5 +86,85 @@ class AgentDescriptorValidatorTest {
             Arguments.of("unicode ok",    VALID_ID,          "Agent 中文", VALID_SLOT,         VALID_TID),
             Arguments.of("hyphen-dash",   "my-agent-v2",     VALID_NAME,          VALID_SLOT,          VALID_TID)
         );
+    }
+
+    // ── validateOptional ──────────────────────────────────────────────────────
+
+    @Test
+    void validateOptional_null_is_allowed() {
+        assertThatNoException().isThrownBy(
+            () -> AgentDescriptorValidator.validateOptional("field", null, 200));
+    }
+
+    @Test
+    void validateOptional_blank_throws() {
+        assertThatThrownBy(
+            () -> AgentDescriptorValidator.validateOptional("provider", "   ", 200))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("provider"));
+    }
+
+    @Test
+    void validateOptional_exceeds_length_throws() {
+        assertThatThrownBy(
+            () -> AgentDescriptorValidator.validateOptional("version", "v".repeat(201), 200))
+            .isInstanceOf(AgentValidationException.class);
+    }
+
+    @Test
+    void validateOptional_bidi_control_throws() {
+        // U+202E RIGHT-TO-LEFT OVERRIDE — a banned BiDi control character
+        assertThatThrownBy(
+            () -> AgentDescriptorValidator.validateOptional("jurisdiction", "EU‮evil", 1000))
+            .isInstanceOf(AgentValidationException.class);
+    }
+
+    @Test
+    void validateOptional_valid_value_does_not_throw() {
+        assertThatNoException().isThrownBy(
+            () -> AgentDescriptorValidator.validateOptional("provider", "anthropic", 200));
+    }
+
+    // ── validateItems ──────────────────────────────────────────────────────────
+
+    @Test
+    void validateItems_null_list_is_allowed() {
+        assertThatNoException().isThrownBy(
+            () -> AgentDescriptorValidator.validateItems("inputTypes", null, 200));
+    }
+
+    @Test
+    void validateItems_blank_item_throws_with_index() {
+        assertThatThrownBy(
+            () -> AgentDescriptorValidator.validateItems("inputTypes", List.of("ok", ""), 200))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("inputTypes[1]"));
+    }
+
+    @Test
+    void validateItems_injection_item_throws() {
+        // U+200B ZERO WIDTH SPACE — a banned zero-width character
+        assertThatThrownBy(
+            () -> AgentDescriptorValidator.validateItems("tags", List.of("valid", "bad​zero"), 200))
+            .isInstanceOf(AgentValidationException.class);
+    }
+
+    // ── validateMapKeys ────────────────────────────────────────────────────────
+
+    @Test
+    void validateMapKeys_null_set_is_allowed() {
+        assertThatNoException().isThrownBy(
+            () -> AgentDescriptorValidator.validateMapKeys("epistemicDomains", null, 200));
+    }
+
+    @Test
+    void validateMapKeys_bidi_key_throws() {
+        // U+061C ARABIC LETTER MARK — a banned BiDi control character
+        assertThatThrownBy(
+            () -> AgentDescriptorValidator.validateMapKeys("epistemicDomains",
+                Set.of("java؜injection"), 200))
+            .isInstanceOf(AgentValidationException.class);
     }
 }

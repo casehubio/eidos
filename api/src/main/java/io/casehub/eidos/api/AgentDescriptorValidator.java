@@ -1,12 +1,24 @@
 package io.casehub.eidos.api;
 
+import java.util.Set;
+
 class AgentDescriptorValidator {
 
-    // Bounds chosen to cap cache key length and LLM payload size.
+    // Required field bounds
     private static final int MAX_AGENT_ID   = 255;
     private static final int MAX_NAME       = 200;
     private static final int MAX_SLOT       = 100;
     private static final int MAX_TENANCY_ID = 255;
+
+    // Optional field bounds — accessible within package for compact constructors
+    static final int MAX_VERSION             = 200;
+    static final int MAX_PROVIDER            = 200;
+    static final int MAX_WEIGHTS_FINGERPRINT = 255;
+    static final int MAX_VOCABULARY_URI      = 500;
+    static final int MAX_JURISDICTION        = 1000;
+    static final int MAX_DISPOSITION_AXIS    = 200;
+    static final int MAX_CAPABILITY_NAME     = 100;
+    static final int MAX_CAPABILITY_STRING   = 200;
 
     static void validate(final String agentId, final String name,
                           final String slot, final String tenancyId) {
@@ -16,22 +28,49 @@ class AgentDescriptorValidator {
         validateField("tenancyId", tenancyId, MAX_TENANCY_ID);
     }
 
+    static void validateRequired(final String fieldName, final String value, final int maxLength) {
+        validateField(fieldName, value, maxLength);
+    }
+
+    static void validateOptional(final String fieldName, final String value, final int maxLength) {
+        if (value == null) return;
+        validateField(fieldName, value, maxLength);
+    }
+
+    static void validateItems(final String fieldName, final Iterable<String> items,
+                               final int maxLength) {
+        if (items == null) return;
+        int index = 0;
+        for (final String item : items) {
+            validateOptional(fieldName + "[" + index + "]", item, maxLength);
+            index++;
+        }
+    }
+
+    static void validateMapKeys(final String fieldName, final Set<String> keys,
+                                 final int maxLength) {
+        if (keys == null) return;
+        for (final String key : keys) {
+            validateOptional(fieldName + ".key", key, maxLength);
+        }
+    }
+
     private static void validateField(final String fieldName, final String value,
                                        final int maxLength) {
         if (value == null) {
-            throw new AgentDescriptorValidationException(fieldName, "must not be null");
+            throw new AgentValidationException(fieldName, "must not be null");
         }
         if (value.isBlank()) {
-            throw new AgentDescriptorValidationException(fieldName, "must not be blank");
+            throw new AgentValidationException(fieldName, "must not be blank");
         }
         if (value.length() > maxLength) {
-            throw new AgentDescriptorValidationException(fieldName,
+            throw new AgentValidationException(fieldName,
                 "exceeds maximum length " + maxLength + " (was " + value.length() + ")");
         }
         for (int i = 0; i < value.length(); ) {
             final int cp = value.codePointAt(i);
             if (isBanned(cp)) {
-                throw new AgentDescriptorValidationException(fieldName,
+                throw new AgentValidationException(fieldName,
                     "contains banned character U+" + String.format("%04X", cp));
             }
             i += Character.charCount(cp);

@@ -101,20 +101,19 @@ class InMemoryAgentRegistryTest {
     }
 
     @Test
-    void find_by_capability_with_null_named_capability_does_not_throw() {
-        // AgentCapability.name() may be null in the in-memory store (no JPA enforcement).
-        // find() must not NPE — uses Objects.equals(c.name(), query.capabilityName()).
-        var nullNamedCap = new AgentCapability(null, 0.9, null, null,
+    void capability_with_empty_types_lists_is_valid() {
+        // Empty inputTypes/outputTypes/tags are allowed; name is required.
+        var cap = new AgentCapability("empty-types", 0.9, null, null,
             List.of(), List.of(), List.of(), Map.of());
         var descriptor = new AgentDescriptor(
             "m-8", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, "reviewer", List.of(nullNamedCap),
+            null, null, null, null, "reviewer", List.of(cap),
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
             null, null, "default"
         );
         registry.register(descriptor);
-        // Must not throw NPE — null-named capability should simply not match
-        var result = registry.find(AgentQuery.byCapability("code-review", "default"));
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).doesNotContain("m-8");
+        // Empty lists should not cause NPE in find()
+        var result = registry.find(AgentQuery.byCapability("empty-types", "default"));
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("m-8");
     }
 }
