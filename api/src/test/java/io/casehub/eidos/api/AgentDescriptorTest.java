@@ -43,4 +43,75 @@ class AgentDescriptorTest {
         assertThat(cap.latencyHintP50Ms()).isEqualTo(500L);
         assertThat(cap.epistemicDomains()).containsEntry("java", 0.95);
     }
+
+    // ── Optional field validation ──────────────────────────────────────────────
+
+    @Test
+    void version_with_bidi_throws() {
+        // U+202E RIGHT-TO-LEFT OVERRIDE
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", "1.0‮", null, null, null, null,
+            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("version"));
+    }
+
+    @Test
+    void provider_blank_throws() {
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, "  ", null, null, null,
+            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("provider"));
+    }
+
+    @Test
+    void vocabulary_uri_exceeds_500_chars_throws() {
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, null, null,
+            "https://vocab.io/" + "x".repeat(490), null, null,
+            "worker", List.of(), null, null, null, "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("domainVocabulary"));
+    }
+
+    @Test
+    void jurisdiction_with_c0_throws() {
+        // U+0001 START OF HEADING — a C0 control character
+        String jurisdictionWithC0 = "EU" + (char) 0x0001 + "inject";
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, null, null,
+            null, null, null, "worker", List.of(), null,
+            jurisdictionWithC0, null, "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("jurisdiction"));
+    }
+
+    @Test
+    void data_handling_policy_null_is_allowed() {
+        assertThatNoException().isThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, null, null,
+            null, null, null, "worker", List.of(), null, null, null, "tenant"));
+    }
+
+    @Test
+    void weights_fingerprint_at_255_chars_is_valid() {
+        assertThatNoException().isThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, null, "f".repeat(255),
+            null, null, null, "worker", List.of(), null, null, null, "tenant"));
+    }
+
+    @Test
+    void weights_fingerprint_at_256_chars_throws() {
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, null, "f".repeat(256),
+            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("weightsFingerprint"));
+    }
 }

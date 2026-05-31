@@ -30,5 +30,15 @@ public record AgentDescriptor(
     public AgentDescriptor {
         capabilities = capabilities != null ? capabilities : List.of();
         AgentDescriptorValidator.validate(agentId, name, slot, tenancyId);
+        AgentDescriptorValidator.validateOptional("version",               version,               AgentDescriptorValidator.MAX_VERSION);
+        AgentDescriptorValidator.validateOptional("provider",              provider,              AgentDescriptorValidator.MAX_PROVIDER);
+        AgentDescriptorValidator.validateOptional("modelFamily",           modelFamily,           AgentDescriptorValidator.MAX_PROVIDER);
+        AgentDescriptorValidator.validateOptional("modelVersion",          modelVersion,          AgentDescriptorValidator.MAX_PROVIDER);
+        AgentDescriptorValidator.validateOptional("weightsFingerprint",    weightsFingerprint,    AgentDescriptorValidator.MAX_WEIGHTS_FINGERPRINT);
+        AgentDescriptorValidator.validateOptional("domainVocabulary",      domainVocabulary,      AgentDescriptorValidator.MAX_VOCABULARY_URI);
+        AgentDescriptorValidator.validateOptional("slotVocabulary",        slotVocabulary,        AgentDescriptorValidator.MAX_VOCABULARY_URI);
+        AgentDescriptorValidator.validateOptional("dispositionVocabulary", dispositionVocabulary, AgentDescriptorValidator.MAX_VOCABULARY_URI);
+        AgentDescriptorValidator.validateOptional("jurisdiction",          jurisdiction,          AgentDescriptorValidator.MAX_JURISDICTION);
+        AgentDescriptorValidator.validateOptional("dataHandlingPolicy",    dataHandlingPolicy,    AgentDescriptorValidator.MAX_JURISDICTION);
     }
 }

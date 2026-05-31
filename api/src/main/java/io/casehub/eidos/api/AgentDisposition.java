@@ -11,4 +11,15 @@ public record AgentDisposition(
         String riskAppetite,
         String autonomy,
         boolean delegation
-) {}
+) {
+    public AgentDisposition {
+        AgentDescriptorValidator.validateOptional("socialOrient", socialOrient,
+            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("ruleFollowing", ruleFollowing,
+            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("riskAppetite", riskAppetite,
+            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("autonomy", autonomy,
+            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+    }
+}
