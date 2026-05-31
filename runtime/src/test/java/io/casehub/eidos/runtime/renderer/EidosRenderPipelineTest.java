@@ -38,7 +38,7 @@ class EidosRenderPipelineTest {
     }
 
     static AgentPromptContext fullContext() {
-        return AgentPromptContext.forFormat(CLAUDE_MD)
+        return AgentPromptContext.forFormat(MARKDOWN)
                 .withGoal(new GoalContext("Review PR #42", List.of("Check style", "Check tests"), "case-123"))
                 .withResources(List.of(new Resource("/src/main/java", "Source", "filesystem")))
                 .withSituationalContext("Critical release branch");
@@ -119,7 +119,7 @@ class EidosRenderPipelineTest {
 
     @Test
     void context_payload_is_empty_when_no_goal() {
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
         final var node = pipeline.buildContextPayload(ctx);
         assertThat(node.isEmpty()).isTrue();
     }
@@ -143,8 +143,8 @@ class EidosRenderPipelineTest {
     // ── usesEnrichment predicate ──────────────────────────────────────────────
 
     @Test
-    void uses_enrichment_true_for_claude_md() {
-        assertThat(EidosRenderPipeline.usesEnrichment(CLAUDE_MD)).isTrue();
+    void uses_enrichment_true_for_markdown() {
+        assertThat(EidosRenderPipeline.usesEnrichment(MARKDOWN)).isTrue();
     }
 
     @Test
@@ -163,7 +163,7 @@ class EidosRenderPipelineTest {
         assertThat(s1.contextHash()).hasSize(16);
         assertThat(s1.lookupKey()).contains(s1.descriptorHash());
         assertThat(s1.lookupKey()).contains(s1.contextHash());
-        assertThat(s1.lookupKey()).contains("CLAUDE_MD");
+        assertThat(s1.lookupKey()).contains("MARKDOWN");
     }
 
     @Test

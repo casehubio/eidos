@@ -4,15 +4,15 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.CLAUDE_MD;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.MARKDOWN;
 import static org.assertj.core.api.Assertions.*;
 
 class AgentPromptContextTest {
 
     @Test
     void forFormat_creates_empty_context() {
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
-        assertThat(ctx.format()).isEqualTo(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        assertThat(ctx.format()).isEqualTo(MARKDOWN);
         assertThat(ctx.goal()).isEmpty();
         assertThat(ctx.resources()).isEmpty();
         assertThat(ctx.situationalContext()).isNull();
@@ -21,7 +21,7 @@ class AgentPromptContextTest {
     @Test
     void withGoal_adds_goal_and_preserves_other_fields() {
         final var goal = GoalContext.of("review PR");
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD)
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN)
                 .withResources(List.of(new Resource("/src", "Source", "filesystem")))
                 .withSituationalContext("critical release")
                 .withGoal(goal);
@@ -29,13 +29,13 @@ class AgentPromptContextTest {
         assertThat(ctx.goal()).contains(goal);
         assertThat(ctx.resources()).hasSize(1);
         assertThat(ctx.situationalContext()).isEqualTo("critical release");
-        assertThat(ctx.format()).isEqualTo(CLAUDE_MD);
+        assertThat(ctx.format()).isEqualTo(MARKDOWN);
     }
 
     @Test
     void withResources_adds_resources_and_preserves_other_fields() {
         final var resources = List.of(new Resource("/src", "Source", "filesystem"));
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD)
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN)
                 .withGoal(GoalContext.of("plan"))
                 .withResources(resources);
 
@@ -45,7 +45,7 @@ class AgentPromptContextTest {
 
     @Test
     void withSituationalContext_adds_context_and_preserves_other_fields() {
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD)
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN)
                 .withGoal(GoalContext.of("plan"))
                 .withSituationalContext("production deploy");
 
@@ -57,7 +57,7 @@ class AgentPromptContextTest {
     void builder_chain_sets_all_fields() {
         final var goal = GoalContext.of("review");
         final var resource = new Resource("/src", "Source", "filesystem");
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD)
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN)
                 .withGoal(goal)
                 .withResources(List.of(resource))
                 .withSituationalContext("context");
@@ -65,6 +65,6 @@ class AgentPromptContextTest {
         assertThat(ctx.goal()).contains(goal);
         assertThat(ctx.resources()).containsExactly(resource);
         assertThat(ctx.situationalContext()).isEqualTo("context");
-        assertThat(ctx.format()).isEqualTo(CLAUDE_MD);
+        assertThat(ctx.format()).isEqualTo(MARKDOWN);
     }
 }

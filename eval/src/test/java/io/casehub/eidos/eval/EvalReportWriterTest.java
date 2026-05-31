@@ -22,10 +22,14 @@ class EvalReportWriterTest {
         final var desc = new AgentDescriptor(
             "a", "Agent", null, null, null, null, null,
             null, null, null, "worker", List.of(), null, null, null, "t");
-        final var ctx = AgentPromptContext.forFormat(RenderFormat.CLAUDE_MD);
-        final var rendered = new RenderedPrompt("You are Agent.", RenderFormat.CLAUDE_MD, "dh", "ch");
+        final var ctx = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
+        final var rendered = new RenderedPrompt("You are Agent.", RenderFormat.MARKDOWN, "dh", "ch");
+        // MARKDOWN uses SECOND_PERSON, CONCISENESS, FACTUAL_FIDELITY, TONE
         final Map<EvalDimension, EvalScore> scores = new EnumMap<>(EvalDimension.class);
-        for (final EvalDimension d : EvalDimension.values()) scores.put(d, new EvalScore(4, "good"));
+        scores.put(EvalDimension.SECOND_PERSON,    new EvalScore(4, "good"));
+        scores.put(EvalDimension.CONCISENESS,      new EvalScore(4, "good"));
+        scores.put(EvalDimension.FACTUAL_FIDELITY, new EvalScore(4, "good"));
+        scores.put(EvalDimension.TONE,             new EvalScore(4, "good"));
         final var result = new EvalResult(new EvalCase("case1", desc, ctx), rendered,
             true, List.of(), scores, 4.0, List.of());
         return EvalReport.build(List.of(result), "test-judge");
@@ -37,9 +41,16 @@ class EvalReportWriterTest {
     }
 
     @Test
-    void summaryTable_contains_dimension_names() {
+    void summaryTable_contains_format_header() {
         final String table = EvalReportWriter.summaryTable(sampleReport());
-        for (final EvalDimension d : EvalDimension.values()) {
+        assertThat(table).contains("=== MARKDOWN");
+    }
+
+    @Test
+    void summaryTable_contains_applicable_dimension_names() {
+        final String table = EvalReportWriter.summaryTable(sampleReport());
+        // MARKDOWN format — 4 applicable dimensions
+        for (final EvalDimension d : EvalDimension.applicableFor(RenderFormat.MARKDOWN)) {
             assertThat(table).containsIgnoringCase(d.name().replace('_', ' ').toLowerCase());
         }
     }

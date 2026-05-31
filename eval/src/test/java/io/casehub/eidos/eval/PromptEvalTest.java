@@ -1,6 +1,7 @@
 package io.casehub.eidos.eval;
 
 import io.casehub.eidos.api.SystemPromptRenderer;
+import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +28,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("eval")
 class PromptEvalTest {
 
-    private static final double SCORE_FLOOR = 3.5; // update after first baseline run
+    private static final Map<RenderFormat, Double> SCORE_FLOORS = Map.of(
+        RenderFormat.MARKDOWN,  3.5,
+        RenderFormat.PROSE,     3.5,
+        RenderFormat.A2A_CARD,  3.5
+    );
 
     @Inject
     SystemPromptRenderer renderer;
@@ -46,12 +52,13 @@ class PromptEvalTest {
         EvalReportWriter.writeJson(report, outPath);
         System.out.println(EvalReportWriter.summaryTable(report));
 
-        assertThat(report.summary().allCasesComplete())
-            .as("All rendered prompts must include every declared capability name")
-            .isTrue();
-
-        assertThat(report.summary().meanOverall())
-            .as("Mean judge score across all cases")
-            .isGreaterThanOrEqualTo(SCORE_FLOOR);
+        report.summaryByFormat().forEach((format, summary) -> {
+            assertThat(summary.allCasesComplete())
+                .as("All %s cases must include every declared capability", format)
+                .isTrue();
+            assertThat(summary.meanOverall())
+                .as("Mean judge score for %s", format)
+                .isGreaterThanOrEqualTo(SCORE_FLOORS.getOrDefault(format, 3.5));
+        });
     }
 }

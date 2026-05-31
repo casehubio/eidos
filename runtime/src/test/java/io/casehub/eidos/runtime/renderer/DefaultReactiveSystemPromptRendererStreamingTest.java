@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.CLAUDE_MD;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.MARKDOWN;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DefaultReactiveSystemPromptRendererStreamingTest {
@@ -75,13 +75,13 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     void renders_with_streaming_llm_when_present() {
         final var renderer = new DefaultReactiveSystemPromptRenderer(
                 successMock(), blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
 
         final RenderedPrompt result = renderer.render(descriptor(), ctx).await().indefinitely();
 
         assertThat(result).isNotNull();
         assertThat(result.content()).isNotBlank();
-        assertThat(result.format()).isEqualTo(CLAUDE_MD);
+        assertThat(result.format()).isEqualTo(MARKDOWN);
     }
 
     @Test
@@ -98,7 +98,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
         final var renderer = new DefaultReactiveSystemPromptRenderer(
                 trackingMock, blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
 
-        renderer.render(descriptor(), AgentPromptContext.forFormat(CLAUDE_MD)).await().indefinitely();
+        renderer.render(descriptor(), AgentPromptContext.forFormat(MARKDOWN)).await().indefinitely();
 
         assertThat(streamingCalled[0]).isTrue();
     }
@@ -107,7 +107,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     void falls_back_to_structural_when_streaming_llm_on_error() {
         final var renderer = new DefaultReactiveSystemPromptRenderer(
                 errorMock(), blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
 
         final RenderedPrompt result = renderer.render(descriptor(), ctx).await().indefinitely();
 
@@ -119,7 +119,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     void falls_back_to_blocking_delegate_when_streaming_llm_absent() {
         final var renderer = new DefaultReactiveSystemPromptRenderer(
                 (StreamingChatModel) null, blockingDelegate, pipeline, new TestReactiveRenderedPromptCache(), MAPPER);
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
 
         final RenderedPrompt result = renderer.render(descriptor(), ctx).await().indefinitely();
 
@@ -129,10 +129,10 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     @Test
     void cache_hit_returns_without_any_llm_call() {
         // Pre-populate the cache with the key for our descriptor+context combo.
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
         final StageOneResult s1 = pipeline.buildStage1(descriptor(), ctx);
         final RenderedPrompt cachedResult = new RenderedPrompt(
-            "cached-content", CLAUDE_MD, s1.descriptorHash(), s1.contextHash());
+            "cached-content", MARKDOWN, s1.descriptorHash(), s1.contextHash());
 
         final TestReactiveRenderedPromptCache prePopulated = new TestReactiveRenderedPromptCache();
         prePopulated.store.put(s1.lookupKey(), cachedResult);

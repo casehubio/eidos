@@ -72,7 +72,7 @@ class EidosSystemPromptRendererTest {
     }
 
     static AgentPromptContext fullContext() {
-        return AgentPromptContext.forFormat(CLAUDE_MD)
+        return AgentPromptContext.forFormat(MARKDOWN)
                 .withGoal(new GoalContext("Review PR #42", List.of("Check style", "Check tests"), "case-123"))
                 .withResources(List.of(new Resource("/src/main/java", "Source", "filesystem")))
                 .withSituationalContext("Critical release branch");
@@ -156,7 +156,7 @@ class EidosSystemPromptRendererTest {
                 .doesNotContain("Critical release branch");
     }
 
-    // ── Structural CLAUDE_MD path ─────────────────────────────────────────────
+    // ── Structural MARKDOWN path ──────────────────────────────────────────────
 
     @Test
     void structural_path_contains_agent_name_and_id() {
@@ -184,7 +184,7 @@ class EidosSystemPromptRendererTest {
 
     @Test
     void structural_path_omits_goal_section_when_absent() {
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
         final var result = rendererStructural.render(fullDescriptor(), ctx);
         assertThat(result.content()).doesNotContain("## Current Goal");
     }
@@ -203,7 +203,7 @@ class EidosSystemPromptRendererTest {
 
     @Test
     void structural_path_omits_resources_section_when_empty() {
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
         final var result = rendererStructural.render(fullDescriptor(), ctx);
         assertThat(result.content()).doesNotContain("## Resources");
     }
@@ -216,23 +216,23 @@ class EidosSystemPromptRendererTest {
 
     @Test
     void structural_path_omits_context_section_when_null() {
-        final var ctx = AgentPromptContext.forFormat(CLAUDE_MD);
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
         final var result = rendererStructural.render(fullDescriptor(), ctx);
         assertThat(result.content()).doesNotContain("## Context");
     }
 
-    // ── OPENAI_SYSTEM path ────────────────────────────────────────────────────
+    // ── PROSE path ────────────────────────────────────────────────────────────
 
     @Test
-    void openai_structural_has_no_markdown_headers() {
-        final var ctx = AgentPromptContext.forFormat(OPENAI_SYSTEM);
+    void prose_structural_has_no_markdown_headers() {
+        final var ctx = AgentPromptContext.forFormat(PROSE);
         final var result = rendererStructural.render(fullDescriptor(), ctx);
         assertThat(result.content()).doesNotContain("#");
     }
 
     @Test
-    void openai_structural_contains_agent_name() {
-        final var ctx = AgentPromptContext.forFormat(OPENAI_SYSTEM);
+    void prose_structural_contains_agent_name() {
+        final var ctx = AgentPromptContext.forFormat(PROSE);
         final var result = rendererStructural.render(fullDescriptor(), ctx);
         assertThat(result.content()).contains("Code Reviewer");
     }
@@ -317,41 +317,6 @@ class EidosSystemPromptRendererTest {
         assertThat(capturedPayload[0]).contains("code-review");
     }
 
-    // ── GEMINI path ───────────────────────────────────────────────────────────
-
-    @Test
-    void gemini_structural_has_no_markdown_headers() {
-        final var ctx = AgentPromptContext.forFormat(GEMINI);
-        final var result = rendererStructural.render(fullDescriptor(), ctx);
-        assertThat(result.content()).doesNotContain("#");
-    }
-
-    @Test
-    void gemini_enriched_has_no_markdown_headers() {
-        final var ctx = AgentPromptContext.forFormat(GEMINI);
-        final var result = rendererWithLlm.render(fullDescriptor(), ctx);
-        assertThat(result.content()).doesNotContain("#");
-    }
-
-    @Test
-    void gemini_enriched_contains_identity_and_role_narrative() {
-        final var ctx = AgentPromptContext.forFormat(GEMINI);
-        final var result = rendererWithLlm.render(fullDescriptor(), ctx);
-        // LLM_RESPONSE is the identityNarrative ("You are a code reviewer specialising in Java.")
-        assertThat(result.content()).contains(LLM_RESPONSE);
-        assertThat(result.content()).contains("Your role is to review code.");
-    }
-
-    @Test
-    void gemini_enriched_resources_format_uses_no_space_before_paren() {
-        final var ctx = AgentPromptContext.forFormat(GEMINI)
-                .withResources(List.of(new Resource("https://api.example.com", "API docs", "uri")));
-        final var result = rendererWithLlm.render(fullDescriptor(), ctx);
-        // GEMINI: "API docs(https://api.example.com)" — no space before paren
-        assertThat(result.content()).contains("API docs(https://api.example.com)");
-        assertThat(result.content()).doesNotContain("API docs (https://api.example.com)");
-    }
-
     // ── Cache behaviour ───────────────────────────────────────────────────────
 
     @Test
@@ -379,25 +344,25 @@ class EidosSystemPromptRendererTest {
     }
 
     @Test
-    void claude_md_and_openai_system_produce_different_cache_entries() {
+    void markdown_and_prose_produce_different_cache_entries() {
         // This test is both a functional correctness test and a regression guard
         // for the format-in-cache-key fix (spec review finding #1).
-        final var claudeCtx  = fullContext();  // format = CLAUDE_MD from fullContext()
-        final var openaiCtx  = AgentPromptContext.forFormat(OPENAI_SYSTEM)
+        final var markdownCtx  = fullContext();  // format = MARKDOWN from fullContext()
+        final var proseCtx  = AgentPromptContext.forFormat(PROSE)
                 .withGoal(new GoalContext("Review PR #42", List.of("Check style", "Check tests"), "case-123"))
                 .withResources(List.of(new Resource("/src/main/java", "Source", "filesystem")))
                 .withSituationalContext("Critical release branch");
 
-        rendererStructural.render(fullDescriptor(), claudeCtx);
-        rendererStructural.render(fullDescriptor(), openaiCtx);
+        rendererStructural.render(fullDescriptor(), markdownCtx);
+        rendererStructural.render(fullDescriptor(), proseCtx);
 
         // Two distinct formats = two distinct cache entries
         // rendererStructural uses TestReactiveRenderedPromptCache (live store); test is on content not cache state
-        final var claudeResult = rendererStructural.render(fullDescriptor(), claudeCtx);
-        final var openaiResult = rendererStructural.render(fullDescriptor(), openaiCtx);
-        assertThat(claudeResult.content()).isNotEqualTo(openaiResult.content());
-        assertThat(claudeResult.format()).isEqualTo(CLAUDE_MD);
-        assertThat(openaiResult.format()).isEqualTo(OPENAI_SYSTEM);
+        final var markdownResult = rendererStructural.render(fullDescriptor(), markdownCtx);
+        final var proseResult = rendererStructural.render(fullDescriptor(), proseCtx);
+        assertThat(markdownResult.content()).isNotEqualTo(proseResult.content());
+        assertThat(markdownResult.format()).isEqualTo(MARKDOWN);
+        assertThat(proseResult.format()).isEqualTo(PROSE);
     }
 
     // ── Hashing ───────────────────────────────────────────────────────────────
@@ -424,7 +389,7 @@ class EidosSystemPromptRendererTest {
 
     @Test
     void different_context_produces_different_context_hash() {
-        final var ctx2 = AgentPromptContext.forFormat(CLAUDE_MD).withSituationalContext("different");
+        final var ctx2 = AgentPromptContext.forFormat(MARKDOWN).withSituationalContext("different");
         final var r1 = rendererStructural.render(fullDescriptor(), fullContext());
         final var r2 = rendererStructural.render(fullDescriptor(), ctx2);
         assertThat(r1.contextHash()).isNotEqualTo(r2.contextHash());
@@ -433,6 +398,6 @@ class EidosSystemPromptRendererTest {
     @Test
     void rendered_prompt_has_correct_format() {
         final var result = rendererStructural.render(fullDescriptor(), fullContext());
-        assertThat(result.format()).isEqualTo(CLAUDE_MD);
+        assertThat(result.format()).isEqualTo(MARKDOWN);
     }
 }

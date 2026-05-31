@@ -35,13 +35,13 @@ class SystemPromptRendererTest {
     @Test
     void renders_agent_without_goal() {
         final var descriptor = registry.findById("planner-1", "default").orElseThrow();
-        final var context = AgentPromptContext.forFormat(RenderFormat.CLAUDE_MD);
+        final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
 
         final var result = renderer.render(descriptor, context);
 
         assertThat(result.content()).contains("Strategic Planner");
         assertThat(result.content()).contains("planning");
-        assertThat(result.format()).isEqualTo(RenderFormat.CLAUDE_MD);
+        assertThat(result.format()).isEqualTo(RenderFormat.MARKDOWN);
         assertThat(result.descriptorHash()).isNotBlank();
         assertThat(result.contextHash()).isNotBlank();
     }
@@ -49,7 +49,7 @@ class SystemPromptRendererTest {
     @Test
     void renders_agent_with_goal_and_resources() {
         final var descriptor = registry.findById("planner-1", "default").orElseThrow();
-        final var context = AgentPromptContext.forFormat(RenderFormat.CLAUDE_MD)
+        final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN)
                 .withGoal(new GoalContext("Plan the Q3 release", List.of("Define milestones", "Assign owners"), "case-q3"))
                 .withResources(List.of(new Resource("https://jira.example.com/q3", "Q3 board", "web")))
                 .withSituationalContext("EOQ sprint planning session");
@@ -65,8 +65,8 @@ class SystemPromptRendererTest {
     @Test
     void hash_changes_when_context_changes() {
         final var descriptor = registry.findById("planner-1", "default").orElseThrow();
-        final var ctx1 = AgentPromptContext.forFormat(RenderFormat.CLAUDE_MD);
-        final var ctx2 = AgentPromptContext.forFormat(RenderFormat.CLAUDE_MD)
+        final var ctx1 = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
+        final var ctx2 = AgentPromptContext.forFormat(RenderFormat.MARKDOWN)
                 .withSituationalContext("different context");
 
         final var r1 = renderer.render(descriptor, ctx1);

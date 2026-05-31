@@ -258,8 +258,8 @@ class EidosRenderPipeline {
 
     static boolean usesEnrichment(final RenderFormat format) {
         return switch (format) {
-            case CLAUDE_MD, OPENAI_SYSTEM, GEMINI -> true;
-            case A2A_CARD                          -> false;
+            case MARKDOWN, PROSE -> true;
+            case A2A_CARD        -> false;
         };
     }
 
@@ -271,19 +271,18 @@ class EidosRenderPipeline {
                              final AgentDescriptor descriptor,
                              final AgentPromptContext context) {
         final String content = switch (context.format()) {
-            case CLAUDE_MD     -> assembleClaudeMarkdown(enrichment, descriptor, context);
-            case OPENAI_SYSTEM -> assembleOpenAiSystem(enrichment, descriptor, context);
-            case A2A_CARD      -> assembleA2aCard(a2aEnrichment, descriptor);
-            case GEMINI        -> assembleGemini(enrichment, descriptor, context);
+            case MARKDOWN  -> assembleMarkdown(enrichment, descriptor, context);
+            case PROSE     -> assembleProse(enrichment, descriptor, context);
+            case A2A_CARD  -> assembleA2aCard(a2aEnrichment, descriptor);
         };
         return new RenderedPrompt(content, context.format(), s1.descriptorHash(), s1.contextHash());
     }
 
     // ── Format-specific assembly ─────────────────────────────────────────────
 
-    private String assembleClaudeMarkdown(final Optional<SemanticEnrichment> enrichment,
-                                           final AgentDescriptor descriptor,
-                                           final AgentPromptContext context) {
+    private String assembleMarkdown(final Optional<SemanticEnrichment> enrichment,
+                                     final AgentDescriptor descriptor,
+                                     final AgentPromptContext context) {
         final var sb = new StringBuilder();
 
         // Header — always structural
@@ -306,7 +305,7 @@ class EidosRenderPipeline {
             e.goalNarrative().ifPresent(g ->
                 sb.append("\n## Current Goal\n").append(g).append("\n"));
         } else {
-            assembleClaudeMarkdownStructural(sb, descriptor, context);
+            assembleMarkdownStructural(sb, descriptor, context);
         }
 
         // Resources — always structural
@@ -327,9 +326,9 @@ class EidosRenderPipeline {
         return sb.toString().trim();
     }
 
-    private void assembleClaudeMarkdownStructural(final StringBuilder sb,
-                                                   final AgentDescriptor descriptor,
-                                                   final AgentPromptContext context) {
+    private void assembleMarkdownStructural(final StringBuilder sb,
+                                             final AgentDescriptor descriptor,
+                                             final AgentPromptContext context) {
         // Role — deliberate heading change from ## {slot_label} to ## Role
         // (see spec behavioral delta note)
         if (descriptor.slot() != null) {
@@ -393,9 +392,9 @@ class EidosRenderPipeline {
         });
     }
 
-    private String assembleOpenAiSystem(final Optional<SemanticEnrichment> enrichment,
-                                         final AgentDescriptor descriptor,
-                                         final AgentPromptContext context) {
+    private String assembleProse(final Optional<SemanticEnrichment> enrichment,
+                                  final AgentDescriptor descriptor,
+                                  final AgentPromptContext context) {
         final var sb = new StringBuilder();
 
         if (enrichment.isPresent()) {
@@ -406,7 +405,7 @@ class EidosRenderPipeline {
             e.constraintNarrative().ifPresent(c -> sb.append("\n").append(c).append("\n"));
             e.goalNarrative().ifPresent(g -> sb.append("\n").append(g).append("\n"));
         } else {
-            // Structural OPENAI_SYSTEM — dense prose, no headers
+            // Structural PROSE — dense prose, no headers
             sb.append(descriptor.name());
             if (descriptor.slot() != null) sb.append(", ").append(descriptor.slot());
             sb.append(".");
@@ -484,71 +483,6 @@ class EidosRenderPipeline {
         } catch (final com.fasterxml.jackson.core.JsonProcessingException ex) {
             throw new IllegalStateException("A2A card serialization failed", ex);
         }
-    }
-
-    private String assembleGemini(final Optional<SemanticEnrichment> enrichment,
-                                   final AgentDescriptor descriptor,
-                                   final AgentPromptContext context) {
-        final var sb = new StringBuilder();
-
-        if (enrichment.isPresent()) {
-            final SemanticEnrichment e = enrichment.get();
-            sb.append(e.identityNarrative()).append(" ").append(e.roleNarrative()).append("\n");
-            sb.append("\n").append(e.capabilityNarrative()).append("\n");
-            e.dispositionNarrative().ifPresent(d -> sb.append("\n").append(d).append("\n"));
-            e.constraintNarrative().ifPresent(c -> sb.append("\n").append(c).append("\n"));
-            e.goalNarrative().ifPresent(g -> sb.append("\n").append(g).append("\n"));
-        } else {
-            assembleGeminiStructural(sb, descriptor, context);
-        }
-
-        // Resources — label(uri) format, no space before paren (explicit delta from OPENAI_SYSTEM)
-        if (!context.resources().isEmpty()) {
-            sb.append("\nResources: ");
-            final var resources = context.resources().stream()
-                    .map(r -> (r.label() != null ? r.label() : r.uri()) + "(" + r.uri() + ")")
-                    .collect(Collectors.joining(", "));
-            sb.append(resources).append("\n");
-        }
-
-        if (context.situationalContext() != null) {
-            sb.append("\n").append(context.situationalContext()).append("\n");
-        }
-
-        return sb.toString().trim();
-    }
-
-    private void assembleGeminiStructural(final StringBuilder sb,
-                                           final AgentDescriptor descriptor,
-                                           final AgentPromptContext context) {
-        sb.append(descriptor.name());
-        if (descriptor.slot() != null) sb.append(", ").append(descriptor.slot());
-        sb.append(".");
-        if (descriptor.version() != null) sb.append(" Version ").append(descriptor.version()).append(".");
-        sb.append("\n");
-
-        if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
-            sb.append("\nCapabilities: ");
-            final var names = descriptor.capabilities().stream()
-                    .map(AgentCapability::name)
-                    .collect(Collectors.joining(", "));
-            sb.append(names).append(".\n");
-        }
-
-        if (descriptor.disposition() != null) {
-            final AgentDisposition d = descriptor.disposition();
-            sb.append("\nOperating style:");
-            if (d.ruleFollowing() != null) sb.append(" ").append(d.ruleFollowing()).append(" rule-following.");
-            if (d.autonomy() != null)      sb.append(" Autonomy: ").append(d.autonomy()).append(".");
-            sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
-        }
-
-        context.goal().ifPresent(goal -> {
-            sb.append("\nGoal: ").append(goal.description()).append(".\n");
-            if (!goal.subGoals().isEmpty()) {
-                sb.append("Sub-goals: ").append(String.join(", ", goal.subGoals())).append(".\n");
-            }
-        });
     }
 
     // ── Shared utilities ───────────────────────────────────────────────────────

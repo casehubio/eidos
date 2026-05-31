@@ -12,6 +12,7 @@ import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
 import dev.langchain4j.model.chat.request.json.*;
 import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
@@ -20,14 +21,16 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @ApplicationScoped
 public class PromptJudge {
 
-    static final String SYSTEM_PROMPT = """
-        You are evaluating the quality of an AI agent's system prompt.
+    static final String MARKDOWN_SYSTEM_PROMPT = """
+        You are evaluating the quality of an AI agent's system prompt in markdown format.
 
         Given the agent's descriptor (JSON) and the rendered system prompt text,
         score each dimension from 0 to 5 and provide brief reasoning.
@@ -45,7 +48,45 @@ public class PromptJudge {
         (each with "score" int 0-5 and "reasoning" string) and an "issues" string array.
         """;
 
-    static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
+    static final String PROSE_SYSTEM_PROMPT = """
+        You are evaluating the quality of an AI agent's system prompt in dense prose format.
+
+        Given the agent's descriptor (JSON) and the rendered system prompt text,
+        score each dimension from 0 to 5 and provide brief reasoning.
+
+        Dimensions:
+        - SECOND_PERSON (0-5): Uses "you"/"your" consistently. 5 = every sentence second person.
+        - CONCISENESS (0-5): Dense prose required — no markdown headers or bullets.
+          5 = dense, efficient prose with no markdown. 2 or less if any markdown header (#)
+          or bullet point (- or *) is found anywhere in the text.
+        - FACTUAL_FIDELITY (0-5): Nothing claimed absent from descriptor or context.
+          5 = every claim grounded. 0 = significant hallucinations.
+        - TONE (0-5): Reads as instructions to an AI agent, not documentation about one.
+          5 = imperative, action-oriented. 0 = reads like a bio or README.
+
+        Return JSON with keys SECOND_PERSON, CONCISENESS, FACTUAL_FIDELITY, TONE
+        (each with "score" int 0-5 and "reasoning" string) and an "issues" string array.
+        """;
+
+    static final String A2A_SYSTEM_PROMPT = """
+        You are evaluating the quality of an AI agent's A2A (agent-to-agent) identity card in JSON format.
+
+        Given the agent's descriptor (JSON) and the rendered A2A card (JSON),
+        score each dimension from 0 to 5 and provide brief reasoning.
+
+        Dimensions:
+        - COMPLETENESS (0-5): Every declared capability has a non-empty "description" field
+          that meaningfully describes what the agent can do with that capability.
+          5 = all capabilities have clear, accurate descriptions. 0 = no descriptions.
+        - FACTUAL_FIDELITY (0-5): Nothing in the card is absent from the descriptor.
+          No hallucinated capabilities, no fabricated names or versions.
+          5 = every field grounded in descriptor data. 0 = significant hallucinations.
+
+        Return JSON with keys COMPLETENESS, FACTUAL_FIDELITY
+        (each with "score" int 0-5 and "reasoning" string) and an "issues" string array.
+        """;
+
+    static final ResponseFormat STANDARD_JUDGE_RESPONSE_FORMAT = ResponseFormat.builder()
         .type(ResponseFormatType.JSON)
         .jsonSchema(JsonSchema.builder()
             .name("EvalJudgment")
@@ -59,6 +100,22 @@ public class PromptJudge {
                     .items(JsonStringSchema.builder().build())
                     .build())
                 .required("SECOND_PERSON", "CONCISENESS", "FACTUAL_FIDELITY", "TONE", "issues")
+                .build())
+            .build())
+        .build();
+
+    static final ResponseFormat A2A_JUDGE_RESPONSE_FORMAT = ResponseFormat.builder()
+        .type(ResponseFormatType.JSON)
+        .jsonSchema(JsonSchema.builder()
+            .name("A2AEvalJudgment")
+            .rootElement(JsonObjectSchema.builder()
+                .addProperty("COMPLETENESS",     scoreSchema())
+                .addProperty("FACTUAL_FIDELITY", scoreSchema())
+                .addProperty("issues", JsonArraySchema.builder()
+                    .description("Quality issues found.")
+                    .items(JsonStringSchema.builder().build())
+                    .build())
+                .required("COMPLETENESS", "FACTUAL_FIDELITY", "issues")
                 .build())
             .build())
         .build();
@@ -93,14 +150,14 @@ public class PromptJudge {
     }
 
     public EvalResult evaluate(final EvalCase evalCase, final RenderedPrompt rendered) {
-        // 1. Programmatic completeness check (deterministic — not sent to LLM)
-        final List<String> missing = evalCase.descriptor().capabilities().stream()
-            .map(AgentCapability::name)
-            .filter(n -> !rendered.content().contains(n))
-            .toList();
+        final RenderFormat format = evalCase.context().format();
+        final Set<EvalDimension> applicable = EvalDimension.applicableFor(format);
+
+        // 1. Format-aware completeness check (deterministic — not sent to LLM)
+        final List<String> missing = computeMissingCapabilities(evalCase, rendered);
         final boolean complete = missing.isEmpty();
 
-        // 2. Judge LLM call — always made, regardless of completeness
+        // 2. Build judge payload
         final ObjectNode userPayload = mapper.createObjectNode();
         try {
             userPayload.set("descriptor", mapper.valueToTree(evalCase.descriptor()));
@@ -109,19 +166,33 @@ public class PromptJudge {
             throw new IllegalStateException("Failed to build judge payload", e);
         }
 
+        // 3. Select system prompt and schema based on format
+        final String systemPrompt = switch (format) {
+            case MARKDOWN  -> MARKDOWN_SYSTEM_PROMPT;
+            case PROSE     -> PROSE_SYSTEM_PROMPT;
+            case A2A_CARD  -> A2A_SYSTEM_PROMPT;
+        };
+        final ResponseFormat responseFormat = switch (format) {
+            case MARKDOWN, PROSE -> STANDARD_JUDGE_RESPONSE_FORMAT;
+            case A2A_CARD        -> A2A_JUDGE_RESPONSE_FORMAT;
+        };
+
+        // 4. Call judge LLM
         final Map<EvalDimension, EvalScore> scores;
         final List<String> issues;
         try {
             final var request = ChatRequest.builder()
                 .messages(
-                    SystemMessage.from(SYSTEM_PROMPT),
+                    SystemMessage.from(systemPrompt),
                     UserMessage.from(mapper.writeValueAsString(userPayload)))
-                .responseFormat(RESPONSE_FORMAT)
+                .responseFormat(responseFormat)
                 .build();
             final var response = judgeModel.chat(request);
-            final var parsed = parseResponse(response.aiMessage().text());
+            final var parsed = parseResponse(response.aiMessage().text(), applicable);
             scores = parsed.scores();
             issues = parsed.issues();
+        } catch (final IllegalStateException e) {
+            throw e;
         } catch (final Exception e) {
             throw new IllegalStateException("Judge LLM call failed — check judge model configuration", e);
         }
@@ -134,16 +205,62 @@ public class PromptJudge {
         return new EvalResult(evalCase, rendered, complete, missing, scores, overall, issues);
     }
 
+    private List<String> computeMissingCapabilities(final EvalCase evalCase,
+                                                     final RenderedPrompt rendered) {
+        if (evalCase.context().format() == RenderFormat.A2A_CARD) {
+            return computeA2aMissingDescriptions(evalCase, rendered.content());
+        }
+        return evalCase.descriptor().capabilities().stream()
+            .map(AgentCapability::name)
+            .filter(n -> !rendered.content().contains(n))
+            .toList();
+    }
+
+    private List<String> computeA2aMissingDescriptions(final EvalCase evalCase,
+                                                        final String json) {
+        try {
+            final JsonNode root = mapper.readTree(json);
+            final JsonNode caps = root.get("capabilities");
+            if (caps == null || !caps.isArray()) {
+                return evalCase.descriptor().capabilities().isEmpty()
+                    ? List.of()
+                    : evalCase.descriptor().capabilities().stream()
+                        .map(AgentCapability::name).toList();
+            }
+            final Map<String, String> descriptions = new HashMap<>();
+            caps.forEach(cap -> {
+                final JsonNode name = cap.get("name");
+                final JsonNode desc = cap.get("description");
+                if (name != null) {
+                    descriptions.put(name.asText(), desc != null ? desc.asText() : "");
+                }
+            });
+            return evalCase.descriptor().capabilities().stream()
+                .map(AgentCapability::name)
+                .filter(n -> {
+                    final String desc = descriptions.get(n);
+                    return desc == null || desc.isBlank();
+                })
+                .toList();
+        } catch (final Exception e) {
+            throw new IllegalStateException("Failed to parse A2A card JSON for completeness check", e);
+        }
+    }
+
     private record ParsedResponse(Map<EvalDimension, EvalScore> scores, List<String> issues) {}
 
-    private ParsedResponse parseResponse(final String json) throws JsonProcessingException {
+    private ParsedResponse parseResponse(final String json,
+                                          final Set<EvalDimension> applicable)
+            throws JsonProcessingException {
         final JsonNode root = mapper.readTree(json);
         final Map<EvalDimension, EvalScore> scores = new EnumMap<>(EvalDimension.class);
 
-        // Iterate only known dimensions — skip "issues" and unknown keys
-        for (final EvalDimension d : EvalDimension.values()) {
+        // Iterate applicable dimensions only — extra keys in response are ignored
+        for (final EvalDimension d : applicable) {
             final JsonNode dimNode = root.get(d.name());
-            if (dimNode == null) throw new IllegalStateException("Judge response missing dimension: " + d.name());
+            if (dimNode == null) {
+                throw new IllegalStateException("Judge response missing dimension: " + d.name());
+            }
             final JsonNode scoreNode = dimNode.get("score");
             final JsonNode reasoningNode = dimNode.get("reasoning");
             if (scoreNode == null || reasoningNode == null) {

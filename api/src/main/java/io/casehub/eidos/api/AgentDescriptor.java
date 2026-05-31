@@ -28,6 +28,7 @@ public record AgentDescriptor(
         String tenancyId
 ) {
     public AgentDescriptor {
+        capabilities = capabilities != null ? capabilities : List.of();
         AgentDescriptorValidator.validate(agentId, name, slot, tenancyId);
     }
 }
