@@ -60,12 +60,18 @@ class EvalDatasetTest {
     @Test
     void realWorld_creates_markdown_and_prose_per_profile() {
         final List<ProfiledEvalCase> cases = RealWorldEvalDataset.all();
-        // stub index has 2 profiles → 4 cases (2 formats each)
-        assertThat(cases).hasSize(4);
-        assertThat(cases).extracting(c -> c.context().format())
-            .containsExactlyInAnyOrder(
-                RenderFormat.MARKDOWN, RenderFormat.PROSE,
-                RenderFormat.MARKDOWN, RenderFormat.PROSE);
+        // 8 profiles × 2 formats (MARKDOWN + PROSE) = 16 cases
+        assertThat(cases).hasSize(16);
+        final var formats = cases.stream().map(c -> c.context().format()).toList();
+        assertThat(formats).containsExactlyInAnyOrder(
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE);
     }
 
     @Test

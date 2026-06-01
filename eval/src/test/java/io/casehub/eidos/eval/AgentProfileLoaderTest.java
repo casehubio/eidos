@@ -15,9 +15,17 @@ class AgentProfileLoaderTest {
     @Test
     void load_returns_all_profiles_from_index() {
         final List<AgentProfile> profiles = new AgentProfileLoader().load();
-        assertThat(profiles).hasSize(2);
+        assertThat(profiles).hasSize(8);
         assertThat(profiles).extracting(AgentProfile::name)
-            .containsExactlyInAnyOrder("sw-engineer-careful", "sw-engineer-bold");
+            .containsExactlyInAnyOrder(
+                "sw-engineer-careful",
+                "sw-engineer-bold",
+                "security-analyst-defensive",
+                "security-analyst-proactive",
+                "product-manager",
+                "clinical-researcher",
+                "customer-support-agent",
+                "technical-writer");
     }
 
     @Test
@@ -54,7 +62,7 @@ class AgentProfileLoaderTest {
     @Test
     void loadIndex_returns_variant_pairs() {
         final var index = new AgentProfileLoader().loadIndex();
-        assertThat(index.variants()).hasSize(1);
+        assertThat(index.variants()).hasSize(2);
         assertThat(index.variants().get(0).primaryAxis()).isEqualTo("riskAppetite");
         assertThat(index.variants().get(0).higher()).isEqualTo("sw-engineer-bold");
     }

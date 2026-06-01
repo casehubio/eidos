@@ -1,8 +1,17 @@
 profiles:
   - sw-engineer-careful.yaml
   - sw-engineer-bold.yaml
+  - security-analyst-defensive.yaml
+  - security-analyst-proactive.yaml
+  - product-manager.yaml
+  - clinical-researcher.yaml
+  - customer-support-agent.yaml
+  - technical-writer.yaml
 
 variants:
   - primaryAxis: riskAppetite
     higher: sw-engineer-bold
     lower: sw-engineer-careful
+  - primaryAxis: ruleFollowing
+    higher: security-analyst-defensive
+    lower: security-analyst-proactive
