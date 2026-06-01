@@ -165,8 +165,8 @@ class PromptEvalTest {
             for (final String axis : List.of("socialOrient", "ruleFollowing", "riskAppetite", "autonomy")) {
                 final int s1 = r1.expressionScores().getOrDefault(axis, 3);
                 final int s2 = r2.expressionScores().getOrDefault(axis, 3);
-                if (Math.abs(s1 - s2) > 0.5) {
-                    warnings.add("Stage2 variance > 0.5 for " + c.profile().name() + "/" + axis
+                if (Math.abs(s1 - s2) >= 1) {
+                    warnings.add("Stage2 variance >= 1 for " + c.profile().name() + "/" + axis
                         + ": " + s1 + " vs " + s2);
                 }
             }
