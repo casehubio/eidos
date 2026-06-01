@@ -34,7 +34,7 @@ class EvalReportWriterTest {
         scores.put(EvalDimension.CONCISENESS,      new EvalScore(4, "good"));
         scores.put(EvalDimension.FACTUAL_FIDELITY, new EvalScore(4, "good"));
         scores.put(EvalDimension.TONE,             new EvalScore(4, "good"));
-        return new EvalResult(new EvalCase("case1", desc, ctx), rendered,
+        return new EvalResult(new SyntheticEvalCase("case1", desc, ctx), rendered,
             true, List.of(), scores, 4.0, List.of());
     }
 
@@ -87,7 +87,7 @@ class EvalReportWriterTest {
         a2aScores.put(EvalDimension.COMPLETENESS,     new EvalScore(4, "good"));
         a2aScores.put(EvalDimension.FACTUAL_FIDELITY, new EvalScore(4, "good"));
         final var a2aResult = new EvalResult(
-            new EvalCase("case2", desc, ctx), rendered, true, List.of(), a2aScores, 4.0, List.of());
+            new SyntheticEvalCase("case2", desc, ctx), rendered, true, List.of(), a2aScores, 4.0, List.of());
 
         final EvalReport report = EvalReport.build(
             List.of(sampleMarkdownResult(), a2aResult), "test-judge");

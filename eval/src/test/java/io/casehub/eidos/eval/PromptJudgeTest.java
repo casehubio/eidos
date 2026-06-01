@@ -55,7 +55,7 @@ class PromptJudgeTest {
             List.of(new AgentCapability("code-review", null, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             null, null, null, "tenant");
-        evalCase = new EvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
+        evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
         rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
     }
 
@@ -126,7 +126,7 @@ class PromptJudgeTest {
             List.of(new AgentCapability("code-review", null, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             null, null, null, "tenant");
-        final var a2aCase = new EvalCase("a2a-test", desc,
+        final var a2aCase = new SyntheticEvalCase("a2a-test", desc,
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final var a2aRendered = new RenderedPrompt(
             "{\"name\":\"Name\",\"agentId\":\"id\",\"capabilities\":[{\"name\":\"code-review\",\"description\":\"You can review code.\"}]}",
@@ -155,7 +155,7 @@ class PromptJudgeTest {
             List.of(new AgentCapability("sprint-planning", null, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             null, null, null, "tenant");
-        final var a2aCase = new EvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
+        final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final String cardWithDesc =
             "{\"capabilities\":[{\"name\":\"sprint-planning\",\"description\":\"You plan sprints.\"}]}";
         final var rendered = new RenderedPrompt(cardWithDesc, RenderFormat.A2A_CARD, "dh", "ch");
@@ -180,7 +180,7 @@ class PromptJudgeTest {
             List.of(new AgentCapability("sprint-planning", null, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             null, null, null, "tenant");
-        final var a2aCase = new EvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
+        final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final String cardNoDesc = "{\"capabilities\":[{\"name\":\"sprint-planning\"}]}";
         final var rendered = new RenderedPrompt(cardNoDesc, RenderFormat.A2A_CARD, "dh", "ch");
 
@@ -204,7 +204,7 @@ class PromptJudgeTest {
             List.of(new AgentCapability("sprint-planning", null, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             null, null, null, "tenant");
-        final var a2aCase = new EvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
+        final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         // description field is present but blank
         final String cardBlankDesc = "{\"capabilities\":[{\"name\":\"sprint-planning\",\"description\":\"\"}]}";
         final var rendered = new RenderedPrompt(cardBlankDesc, RenderFormat.A2A_CARD, "dh", "ch");
@@ -226,7 +226,7 @@ class PromptJudgeTest {
         final var desc = new AgentDescriptor(
             "id", "Name", null, null, null, null, null, null, null, null,
             "worker", List.of(), null, null, null, "tenant");
-        final var a2aCase = new EvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
+        final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final var rendered = new RenderedPrompt(
             "{\"name\":\"Name\",\"agentId\":\"id\"}", RenderFormat.A2A_CARD, "dh", "ch");
 
@@ -255,7 +255,7 @@ class PromptJudgeTest {
             List.of(new AgentCapability("code-review", null, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             null, null, null, "tenant");
-        final var evalCase = new EvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
+        final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
         final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
 
         assertThatThrownBy(() -> new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered))

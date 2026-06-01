@@ -19,7 +19,7 @@ public class EvalDataset {
         );
     }
 
-    private static EvalCase devtownPlanner() {
+    private static SyntheticEvalCase devtownPlanner() {
         final var descriptor = new AgentDescriptor(
             "planner-1", "Devtown Planner", "1.0", "anthropic",
             "claude", "claude-3-5-sonnet", null,
@@ -40,10 +40,10 @@ public class EvalDataset {
         final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN)
             .withGoal(new GoalContext("Plan sprint 42",
                 List.of("Prioritise backlog", "Assign capacity"), "case-sprint-42"));
-        return new EvalCase("devtown-planner", descriptor, context);
+        return new SyntheticEvalCase("devtown-planner", descriptor, context);
     }
 
-    private static EvalCase crossVocab() {
+    private static SyntheticEvalCase crossVocab() {
         final var descriptor = new AgentDescriptor(
             "reviewer-1", "Code Reviewer", "2.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
@@ -56,10 +56,10 @@ public class EvalDataset {
             new AgentDisposition("independent", "strict", "conservative", "directed", false),
             "EU", "gdpr-compliant", "devtown-1"
         );
-        return new EvalCase("cross-vocab", descriptor, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
+        return new SyntheticEvalCase("cross-vocab", descriptor, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
     }
 
-    private static EvalCase epistemicWeak() {
+    private static SyntheticEvalCase epistemicWeak() {
         final var descriptor = new AgentDescriptor(
             "ml-agent-1", "ML Researcher", "1.0", "openai",
             "gpt", "gpt-4o", null, null, null, null,
@@ -71,18 +71,18 @@ public class EvalDataset {
         );
         final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN)
             .withSituationalContext("Reviewing recent RL papers for quarterly report");
-        return new EvalCase("epistemic-weak", descriptor, context);
+        return new SyntheticEvalCase("epistemic-weak", descriptor, context);
     }
 
-    private static EvalCase minimal() {
+    private static SyntheticEvalCase minimal() {
         final var descriptor = new AgentDescriptor(
             "min-1", "Minimal Agent", null, null, null, null, null,
             null, null, null, "worker", List.of(), null, null, null, "tenant-1"
         );
-        return new EvalCase("minimal", descriptor, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
+        return new SyntheticEvalCase("minimal", descriptor, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
     }
 
-    private static EvalCase maximal() {
+    private static SyntheticEvalCase maximal() {
         final var descriptor = new AgentDescriptor(
             "max-agent-001", "Maximal Agent", "3.1.4", "anthropic",
             "claude", "claude-opus-4-7", "fp-abc123def456",
@@ -109,12 +109,12 @@ public class EvalDataset {
                 new Resource("https://internal.company.io/roadmap", "Current Roadmap", "document"),
                 new Resource("https://internal.company.io/okrs", "OKRs", "spreadsheet")))
             .withSituationalContext("End of Q2 — all teams must submit priorities by Friday.");
-        return new EvalCase("maximal", descriptor, context);
+        return new SyntheticEvalCase("maximal", descriptor, context);
     }
 
     // ── PROSE cases (new) ──────────────────────────────────────────────────────
 
-    private static EvalCase devtownPlannerProse() {
+    private static SyntheticEvalCase devtownPlannerProse() {
         final var descriptor = new AgentDescriptor(
             "planner-1", "Devtown Planner", "1.0", "anthropic",
             "claude", "claude-3-5-sonnet", null,
@@ -135,10 +135,10 @@ public class EvalDataset {
         final var context = AgentPromptContext.forFormat(RenderFormat.PROSE)
             .withGoal(new GoalContext("Plan sprint 42",
                 List.of("Prioritise backlog", "Assign capacity"), "case-sprint-42"));
-        return new EvalCase("devtown-planner-prose", descriptor, context);
+        return new SyntheticEvalCase("devtown-planner-prose", descriptor, context);
     }
 
-    private static EvalCase maximalProse() {
+    private static SyntheticEvalCase maximalProse() {
         final var descriptor = new AgentDescriptor(
             "max-agent-001", "Maximal Agent", "3.1.4", "anthropic",
             "claude", "claude-opus-4-7", "fp-abc123def456",
@@ -165,12 +165,12 @@ public class EvalDataset {
                 new Resource("https://internal.company.io/roadmap", "Current Roadmap", "document"),
                 new Resource("https://internal.company.io/okrs", "OKRs", "spreadsheet")))
             .withSituationalContext("End of Q2 — all teams must submit priorities by Friday.");
-        return new EvalCase("maximal-prose", descriptor, context);
+        return new SyntheticEvalCase("maximal-prose", descriptor, context);
     }
 
     // ── A2A_CARD cases (new) ───────────────────────────────────────────────────
 
-    private static EvalCase devtownPlannerA2a() {
+    private static SyntheticEvalCase devtownPlannerA2a() {
         final var descriptor = new AgentDescriptor(
             "planner-1", "Devtown Planner", "1.0", "anthropic",
             "claude", "claude-3-5-sonnet", null,
@@ -188,16 +188,16 @@ public class EvalDataset {
             new AgentDisposition("collaborative", "adaptive", "moderate", "assisted", true),
             null, null, "devtown-1"
         );
-        return new EvalCase("devtown-planner-a2a", descriptor,
+        return new SyntheticEvalCase("devtown-planner-a2a", descriptor,
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
     }
 
-    private static EvalCase minimalA2a() {
+    private static SyntheticEvalCase minimalA2a() {
         final var descriptor = new AgentDescriptor(
             "min-1", "Minimal Agent", null, null, null, null, null,
             null, null, null, "worker", List.of(), null, null, null, "tenant-1"
         );
-        return new EvalCase("minimal-a2a", descriptor,
+        return new SyntheticEvalCase("minimal-a2a", descriptor,
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
     }
 }
