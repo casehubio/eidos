@@ -13,6 +13,7 @@ class AgentDescriptorValidator {
     // Optional field bounds — accessible within package for compact constructors
     static final int MAX_VERSION             = 200;
     static final int MAX_PROVIDER            = 200;
+    static final int MAX_MODEL_IDENTIFIER    = 200; // modelFamily, modelVersion
     static final int MAX_WEIGHTS_FINGERPRINT = 255;
     static final int MAX_VOCABULARY_URI      = 500;
     static final int MAX_JURISDICTION        = 1000;

@@ -114,4 +114,24 @@ class AgentDescriptorTest {
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("weightsFingerprint"));
     }
+
+    @Test
+    void model_family_exceeds_200_chars_throws() {
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, "f".repeat(201), null, null,
+            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("modelFamily"));
+    }
+
+    @Test
+    void model_version_exceeds_200_chars_throws() {
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, "v".repeat(201), null,
+            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("modelVersion"));
+    }
 }
