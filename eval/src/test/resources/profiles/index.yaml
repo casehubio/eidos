@@ -1,0 +1,8 @@
+profiles:
+  - sw-engineer-careful.yaml
+  - sw-engineer-bold.yaml
+
+variants:
+  - primaryAxis: riskAppetite
+    higher: sw-engineer-bold
+    lower: sw-engineer-careful
