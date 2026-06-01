@@ -28,6 +28,7 @@ class AgentDescriptorValidator {
         validateField("tenancyId", tenancyId, MAX_TENANCY_ID);
     }
 
+    // Unlike validateOptional, passes null to validateField — where it throws.
     static void validateRequired(final String fieldName, final String value, final int maxLength) {
         validateField(fieldName, value, maxLength);
     }

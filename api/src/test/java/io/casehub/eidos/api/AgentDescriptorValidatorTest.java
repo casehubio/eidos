@@ -88,6 +88,17 @@ class AgentDescriptorValidatorTest {
         );
     }
 
+    // ── validateRequired ──────────────────────────────────────────────────────
+
+    @Test
+    void validateRequired_null_throws() {
+        assertThatThrownBy(
+            () -> AgentDescriptorValidator.validateRequired("capability.name", null, 100))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("capability.name"));
+    }
+
     // ── validateOptional ──────────────────────────────────────────────────────
 
     @Test
