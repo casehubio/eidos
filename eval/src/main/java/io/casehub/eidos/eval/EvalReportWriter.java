@@ -52,4 +52,52 @@ public class EvalReportWriter {
             throw new UncheckedIOException("Failed to write eval report to " + path, e);
         }
     }
+
+    public static void writeProximityJson(final ProximityReport report, final Path path) {
+        try {
+            MAPPER.writeValue(path.toFile(), report);
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Failed to write proximity report to " + path, e);
+        }
+    }
+
+    public static String proximitySummaryTable(final ProximityReport report) {
+        final var sb = new StringBuilder();
+        sb.append(String.format("=== Proximity Report (floor %.1f) ===%n", report.floor()));
+        sb.append(String.format("Mean score (0–5):  %.2f%n", report.meanScore()));
+        sb.append(String.format("Min score:         %.0f%n", report.minScore()));
+        sb.append(String.format("Below floor:       %d / %d%n",
+            report.belowFloor(), report.results().size()));
+        return sb.toString();
+    }
+
+    public static void writePreservationJson(final PersonalityPreservationReport report,
+                                              final Path path) {
+        try {
+            MAPPER.writeValue(path.toFile(), report);
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Failed to write preservation report to " + path, e);
+        }
+    }
+
+    public static String preservationSummaryTable(final PersonalityPreservationReport report) {
+        final var sb = new StringBuilder();
+        sb.append("=== Personality Preservation Report ===\n");
+        sb.append(String.format("Vocab expressiveness (1–5):  %.2f%n", report.meanExpressivenessScore()));
+        sb.append(String.format("Trait match rate:            %.0f%%%n",
+            report.meanTraitMatchRate() * 100));
+        sb.append(String.format("Mean effect size (1–5):      %.2f%n", report.meanEffectSize()));
+        sb.append(String.format("Discrimination accuracy:     %.0f%%%n",
+            report.discriminationAccuracy() * 100));
+        if (!report.diagnoses().isEmpty()) {
+            sb.append("\n--- Attribution Diagnoses ---\n");
+            report.diagnoses().forEach(d -> sb.append(String.format("  %-25s %-14s %s%n",
+                d.profileName() + "/" + d.axis(), "", d.attribution())));
+        }
+        if (!report.annotations().isEmpty()) {
+            sb.append("\n--- Reliability Warnings ---\n");
+            report.annotations().forEach(w -> sb.append("  ⚠ ").append(w).append("\n"));
+        }
+        return sb.toString();
+    }
 }

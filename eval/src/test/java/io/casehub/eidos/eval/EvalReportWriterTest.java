@@ -16,6 +16,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// new imports for proximity + preservation tests
+// (AgentProfile, ProfiledEvalCase, ProximityResult, ProximityReport,
+//  PersonalityPreservationReport, SourceType are all in io.casehub.eidos.eval)
+
 class EvalReportWriterTest {
 
     static EvalReport sampleReport() {
@@ -101,5 +105,67 @@ class EvalReportWriterTest {
         assertThat(a2aPos).isGreaterThan(-1);
         final String a2aSection = table.substring(a2aPos);
         assertThat(a2aSection).containsIgnoringCase("completeness");
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Proximity + Preservation tests                                      //
+    // ------------------------------------------------------------------ //
+
+    static AgentProfile sampleProfile(final AgentDescriptor desc) {
+        return new AgentProfile("test", "Test", "test", null, null,
+            SourceType.PRACTITIONER, "You are a test agent.", null, null,
+            java.util.Map.of(), java.util.Map.of(), desc, List.of());
+    }
+
+    @Test
+    void writeProximityJson_creates_valid_json(@TempDir final Path dir) throws IOException {
+        final var desc = new AgentDescriptor(
+            "a", "Agent", null, null, null, null, null, null, null, null,
+            "worker", List.of(), null, null, null, "t");
+        final var profile = sampleProfile(desc);
+        final var evalCase = new ProfiledEvalCase("case", desc,
+            AgentPromptContext.forFormat(RenderFormat.MARKDOWN), profile);
+        final var result = new ProximityResult(evalCase, 4, "good", List.of("gap1"));
+        final var report = ProximityReport.build(List.of(result), 3.0);
+
+        final Path out = dir.resolve("prox.json");
+        EvalReportWriter.writeProximityJson(report, out);
+
+        assertThat(out).exists();
+        new ObjectMapper().findAndRegisterModules().readTree(out.toFile()); // valid JSON
+    }
+
+    @Test
+    void proximitySummaryTable_contains_mean_score() {
+        final var desc = new AgentDescriptor(
+            "a", "Agent", null, null, null, null, null, null, null, null,
+            "worker", List.of(), null, null, null, "t");
+        final var profile = sampleProfile(desc);
+        final var evalCase = new ProfiledEvalCase("case", desc,
+            AgentPromptContext.forFormat(RenderFormat.MARKDOWN), profile);
+        final var result = new ProximityResult(evalCase, 4, "good", List.of());
+        final var report = ProximityReport.build(List.of(result), 3.0);
+
+        final String table = EvalReportWriter.proximitySummaryTable(report);
+        assertThat(table).contains("4.00");
+    }
+
+    @Test
+    void writePreservationJson_creates_valid_json(@TempDir final Path dir) throws IOException {
+        final var report = PersonalityPreservationReport.build(
+            List.of(), List.of(), List.of());
+
+        final Path out = dir.resolve("pres.json");
+        EvalReportWriter.writePreservationJson(report, out);
+
+        assertThat(out).exists();
+        new ObjectMapper().findAndRegisterModules().readTree(out.toFile());
+    }
+
+    @Test
+    void preservationSummaryTable_returns_non_empty_string() {
+        final var report = PersonalityPreservationReport.build(
+            List.of(), List.of(), List.of());
+        assertThat(EvalReportWriter.preservationSummaryTable(report)).isNotBlank();
     }
 }
