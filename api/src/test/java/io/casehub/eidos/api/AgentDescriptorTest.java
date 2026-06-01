@@ -99,6 +99,26 @@ class AgentDescriptorTest {
     }
 
     @Test
+    void data_handling_policy_blank_throws() {
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, null, null,
+            null, null, null, "worker", List.of(), null, null, "  ", "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("dataHandlingPolicy"));
+    }
+
+    @Test
+    void data_handling_policy_exceeds_1000_chars_throws() {
+        assertThatThrownBy(() -> new AgentDescriptor(
+            "id", "Name", null, null, null, null, null,
+            null, null, null, "worker", List.of(), null, null, "p".repeat(1001), "tenant"))
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("dataHandlingPolicy"));
+    }
+
+    @Test
     void weights_fingerprint_at_255_chars_is_valid() {
         assertThatNoException().isThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, "f".repeat(255),

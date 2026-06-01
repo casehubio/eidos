@@ -17,6 +17,7 @@ class AgentDescriptorValidator {
     static final int MAX_WEIGHTS_FINGERPRINT = 255;
     static final int MAX_VOCABULARY_URI      = 500;
     static final int MAX_JURISDICTION        = 1000;
+    static final int MAX_DATA_HANDLING_POLICY = 1000; // compliance-text field; same bound as MAX_JURISDICTION
     static final int MAX_DISPOSITION_AXIS    = 200;
     static final int MAX_CAPABILITY_NAME     = 100;
     static final int MAX_CAPABILITY_STRING   = 200;
