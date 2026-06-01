@@ -11,6 +11,6 @@ public record EvalResult(
         boolean completenessPass,
         List<String> missingCapabilities,
         Map<EvalDimension, EvalScore> scores,
-        double overall,      // 0.0–5.0; mean of all four EvalDimension scores
+        double overall,      // 0.0–5.0; mean of applicable EvalDimension scores for the result's format
         List<String> issues
 ) {}
