@@ -259,7 +259,7 @@ class PromptJudgeTest {
         final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
 
         assertThatThrownBy(() -> new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered))
-            .isInstanceOf(IllegalStateException.class)
+            .isInstanceOf(MalformedJudgeResponseException.class)
             .hasMessageContaining("missing dimension");
     }
 }

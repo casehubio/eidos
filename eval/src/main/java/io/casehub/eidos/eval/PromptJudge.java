@@ -191,7 +191,7 @@ public class PromptJudge {
             final var parsed = parseResponse(response.aiMessage().text(), applicable);
             scores = parsed.scores();
             issues = parsed.issues();
-        } catch (final IllegalStateException e) {
+        } catch (final MalformedJudgeResponseException e) {
             throw e;
         } catch (final Exception e) {
             throw new IllegalStateException("Judge LLM call failed — check judge model configuration", e);
@@ -259,12 +259,12 @@ public class PromptJudge {
         for (final EvalDimension d : applicable) {
             final JsonNode dimNode = root.get(d.name());
             if (dimNode == null) {
-                throw new IllegalStateException("Judge response missing dimension: " + d.name());
+                throw new MalformedJudgeResponseException("Judge response missing dimension: " + d.name());
             }
             final JsonNode scoreNode = dimNode.get("score");
             final JsonNode reasoningNode = dimNode.get("reasoning");
             if (scoreNode == null || reasoningNode == null) {
-                throw new IllegalStateException(
+                throw new MalformedJudgeResponseException(
                     "Judge response for " + d.name() + " missing 'score' or 'reasoning'");
             }
             scores.put(d, new EvalScore(scoreNode.asInt(), reasoningNode.asText()));

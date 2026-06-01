@@ -19,6 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EvalReportWriterTest {
 
     static EvalReport sampleReport() {
+        return EvalReport.build(List.of(sampleMarkdownResult()), "test-judge");
+    }
+
+    static EvalResult sampleMarkdownResult() {
         final var desc = new AgentDescriptor(
             "a", "Agent", null, null, null, null, null,
             null, null, null, "worker", List.of(), null, null, null, "t");
@@ -30,9 +34,8 @@ class EvalReportWriterTest {
         scores.put(EvalDimension.CONCISENESS,      new EvalScore(4, "good"));
         scores.put(EvalDimension.FACTUAL_FIDELITY, new EvalScore(4, "good"));
         scores.put(EvalDimension.TONE,             new EvalScore(4, "good"));
-        final var result = new EvalResult(new EvalCase("case1", desc, ctx), rendered,
+        return new EvalResult(new EvalCase("case1", desc, ctx), rendered,
             true, List.of(), scores, 4.0, List.of());
-        return EvalReport.build(List.of(result), "test-judge");
     }
 
     @Test
@@ -69,5 +72,34 @@ class EvalReportWriterTest {
         EvalReportWriter.writeJson(sampleReport(), out);
         final var node = new ObjectMapper().findAndRegisterModules().readTree(out.toFile());
         assertThat(node.get("judgeModel").asText()).isEqualTo("test-judge");
+    }
+
+    @Test
+    void summaryTable_two_formats_have_separate_headers() {
+        // A2A_CARD result
+        final var desc = new AgentDescriptor(
+            "b", "Bot", null, null, null, null, null,
+            null, null, null, "worker", List.of(), null, null, null, "t");
+        final var ctx = AgentPromptContext.forFormat(RenderFormat.A2A_CARD);
+        final var rendered = new RenderedPrompt(
+            "{\"name\":\"Bot\"}", RenderFormat.A2A_CARD, "dh", "ch");
+        final Map<EvalDimension, EvalScore> a2aScores = new EnumMap<>(EvalDimension.class);
+        a2aScores.put(EvalDimension.COMPLETENESS,     new EvalScore(4, "good"));
+        a2aScores.put(EvalDimension.FACTUAL_FIDELITY, new EvalScore(4, "good"));
+        final var a2aResult = new EvalResult(
+            new EvalCase("case2", desc, ctx), rendered, true, List.of(), a2aScores, 4.0, List.of());
+
+        final EvalReport report = EvalReport.build(
+            List.of(sampleMarkdownResult(), a2aResult), "test-judge");
+        final String table = EvalReportWriter.summaryTable(report);
+
+        assertThat(table).contains("=== MARKDOWN");
+        assertThat(table).contains("=== A2A_CARD");
+
+        // "completeness" must appear in the A2A_CARD section, not just anywhere in the table
+        final int a2aPos = table.indexOf("=== A2A_CARD");
+        assertThat(a2aPos).isGreaterThan(-1);
+        final String a2aSection = table.substring(a2aPos);
+        assertThat(a2aSection).containsIgnoringCase("completeness");
     }
 }
