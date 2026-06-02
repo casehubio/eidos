@@ -158,10 +158,12 @@ public class PromptJudge {
         final boolean complete = missing.isEmpty();
 
         // 2. Build judge payload
-        final ObjectNode userPayload = mapper.createObjectNode();
+        final String userPayloadJson;
         try {
+            final ObjectNode userPayload = mapper.createObjectNode();
             userPayload.set("descriptor", mapper.valueToTree(evalCase.descriptor()));
             userPayload.put("rendered", rendered.content());
+            userPayloadJson = mapper.writeValueAsString(userPayload);
         } catch (final Exception e) {
             throw new IllegalStateException("Failed to build judge payload", e);
         }
@@ -184,7 +186,7 @@ public class PromptJudge {
             final var request = ChatRequest.builder()
                 .messages(
                     SystemMessage.from(systemPrompt),
-                    UserMessage.from(mapper.writeValueAsString(userPayload)))
+                    UserMessage.from(userPayloadJson))
                 .responseFormat(responseFormat)
                 .build();
             final var response = judgeModel.chat(request);
@@ -250,9 +252,13 @@ public class PromptJudge {
     private record ParsedResponse(Map<EvalDimension, EvalScore> scores, List<String> issues) {}
 
     private ParsedResponse parseResponse(final String json,
-                                          final Set<EvalDimension> applicable)
-            throws JsonProcessingException {
-        final JsonNode root = mapper.readTree(json);
+                                          final Set<EvalDimension> applicable) {
+        final JsonNode root;
+        try {
+            root = mapper.readTree(json);
+        } catch (final JsonProcessingException e) {
+            throw new MalformedJudgeResponseException("Judge returned non-JSON response: " + e.getMessage());
+        }
         final Map<EvalDimension, EvalScore> scores = new EnumMap<>(EvalDimension.class);
 
         // Iterate applicable dimensions only — extra keys in response are ignored

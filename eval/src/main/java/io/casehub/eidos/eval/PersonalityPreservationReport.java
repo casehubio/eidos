@@ -94,7 +94,7 @@ public record PersonalityPreservationReport(
                     attr = Attribution.VOCABULARY_GAP;
                 } else if (s1 >= 4 && matchRate >= 0 && matchRate < 0.5) {
                     attr = Attribution.RENDERER_FLATTENING;
-                } else if (s1 >= 4 && matchRate >= 0.5 && s3 >= 1 && s3 <= 2) {
+                } else if (s1 >= 4 && matchRate >= 0.5 && s3 > 0 && s3 <= 2) {
                     attr = Attribution.PROFILE_DESIGN_GAP;
                 } else if (s1 >= 4 && matchRate >= 0.5 && s3 > 2) {
                     attr = Attribution.WORKING;

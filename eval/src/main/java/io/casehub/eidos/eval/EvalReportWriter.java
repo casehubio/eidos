@@ -96,7 +96,7 @@ public class EvalReportWriter {
         }
         if (!report.annotations().isEmpty()) {
             sb.append("\n--- Reliability Warnings ---\n");
-            report.annotations().forEach(w -> sb.append("  ⚠ ").append(w).append("\n"));
+            report.annotations().forEach(w -> sb.append("  [WARN] ").append(w).append("\n"));
         }
         return sb.toString();
     }

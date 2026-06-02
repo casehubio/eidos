@@ -237,6 +237,28 @@ class PromptJudgeTest {
     }
 
     @Test
+    void evaluate_throws_MalformedJudgeResponseException_when_response_is_not_valid_json() {
+        final ChatModel stub = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from("this is not json {{")).build();
+            }
+        };
+        final var desc = new AgentDescriptor(
+            "id", "Name", null, null, null, null, null, null, null, null,
+            "worker",
+            List.of(new AgentCapability("code-review", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())),
+            null, null, null, "tenant");
+        final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
+        final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
+
+        assertThatThrownBy(() -> new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered))
+            .isInstanceOf(MalformedJudgeResponseException.class)
+            .hasMessageContaining("non-JSON");
+    }
+
+    @Test
     void parseResponse_throws_when_applicable_dimension_missing() {
         final String incompleteJson = """
             {

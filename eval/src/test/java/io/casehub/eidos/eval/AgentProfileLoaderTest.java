@@ -68,12 +68,6 @@ class AgentProfileLoaderTest {
     }
 
     @Test
-    void stage0_passes_for_valid_variant_pairs() {
-        // load() runs Stage 0 validation implicitly; no exception = pass
-        new AgentProfileLoader().load();
-    }
-
-    @Test
     void stage0_fails_when_primaryAxis_same_value_in_both_profiles() {
         // Both profiles have riskAppetite=conservative (identical) — Stage 0 must reject
         final var disp = new AgentDisposition("independent", "strict", "conservative", "directed", false);

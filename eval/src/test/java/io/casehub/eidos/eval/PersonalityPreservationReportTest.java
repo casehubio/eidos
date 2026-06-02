@@ -106,6 +106,26 @@ class PersonalityPreservationReportTest {
     }
 
     @Test
+    void insufficient_data_when_stage1_high_matchrate_high_but_no_stage3() {
+        // s1 >= 4, matchRate >= 0.5, s3 == -1.0 (no Stage 3 data) → INSUFFICIENT_DATA
+        final var exp = List.of(new VocabularyExpressivenessResult(
+            "profile-a", Map.of("riskAppetite", 4), List.of()));
+        final var profile = minimalProfile("profile-a",
+            Map.of("riskAppetite", TraitPolarity.LOW));
+        final var evalCase = minimalCase(profile);
+        final var traitResult = new TraitExpressionResult(
+            evalCase, RenderFormat.MARKDOWN,
+            Map.of("riskAppetite", 1),
+            Map.of("riskAppetite", true),   // matchRate = 1.0
+            "NO");
+        // No contrasts at all → s3 = -1.0
+
+        final var report = PersonalityPreservationReport.build(exp, List.of(traitResult), List.of());
+        final var diag = diagFor(report, "profile-a", "riskAppetite");
+        assertThat(diag.attribution()).isEqualTo(Attribution.INSUFFICIENT_DATA);
+    }
+
+    @Test
     void mean_expressiveness_is_flat_mean_across_all_cells() {
         final var exp = List.of(
             new VocabularyExpressivenessResult("p1",

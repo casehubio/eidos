@@ -168,4 +168,14 @@ class EvalReportWriterTest {
             List.of(), List.of(), List.of());
         assertThat(EvalReportWriter.preservationSummaryTable(report)).isNotBlank();
     }
+
+    @Test
+    void preservationSummaryTable_uses_ascii_safe_warning_prefix() {
+        final var report = new PersonalityPreservationReport(
+            List.of(), List.of(), List.of(), List.of(), 0, 0, 0, 0,
+            List.of("low sample count"));
+        final String table = EvalReportWriter.preservationSummaryTable(report);
+        assertThat(table).contains("[WARN]");
+        assertThat(table).doesNotContain("⚠");
+    }
 }
