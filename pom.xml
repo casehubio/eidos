@@ -21,6 +21,7 @@
     <module>vocab</module>
     <module>examples</module>
     <module>eval</module>
+    <module>graph</module>
   </modules>
 
   <distributionManagement>
