@@ -25,7 +25,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
     @Override
     public CapabilityStatus probe(final AgentDescriptor descriptor, final String capabilityTag,
                                   final ProbeContext context) {
-        final var degraded = stateStore.query(descriptor.agentId());
+        final var degraded = stateStore.query(descriptor.agentId(), descriptor.tenancyId());
         if (degraded.isPresent()) {
             return new CapabilityStatus.Degraded(degraded.get(), "recorded at dispatch time");
         }

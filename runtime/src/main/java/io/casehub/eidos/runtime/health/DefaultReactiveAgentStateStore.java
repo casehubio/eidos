@@ -19,24 +19,25 @@ public class DefaultReactiveAgentStateStore implements ReactiveAgentStateStore {
     AgentStateStore delegate;
 
     @Override
-    public Uni<Void> record(final String agentId, final DegradationReason reason, final Instant expiresAt) {
+    public Uni<Void> record(final String agentId, final String tenancyId,
+                            final DegradationReason reason, final Instant expiresAt) {
         return Uni.createFrom().<Void>item(() -> {
-            delegate.record(agentId, reason, expiresAt);
+            delegate.record(agentId, tenancyId, reason, expiresAt);
             return null;
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
     @Override
-    public Uni<Optional<DegradationReason>> query(final String agentId) {
+    public Uni<Optional<DegradationReason>> query(final String agentId, final String tenancyId) {
         return Uni.createFrom()
-                  .item(() -> delegate.query(agentId))
+                  .item(() -> delegate.query(agentId, tenancyId))
                   .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
     @Override
-    public Uni<Void> clear(final String agentId) {
+    public Uni<Void> clear(final String agentId, final String tenancyId) {
         return Uni.createFrom().<Void>item(() -> {
-            delegate.clear(agentId);
+            delegate.clear(agentId, tenancyId);
             return null;
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }

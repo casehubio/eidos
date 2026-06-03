@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 public interface ReactiveAgentStateStore {
-    Uni<Void>                        record(String agentId, DegradationReason reason, Instant expiresAt);
-    Uni<Optional<DegradationReason>> query(String agentId);
-    Uni<Void>                        clear(String agentId);
+    Uni<Void>                        record(String agentId, String tenancyId, DegradationReason reason, Instant expiresAt);
+    Uni<Optional<DegradationReason>> query(String agentId, String tenancyId);
+    Uni<Void>                        clear(String agentId, String tenancyId);
 }

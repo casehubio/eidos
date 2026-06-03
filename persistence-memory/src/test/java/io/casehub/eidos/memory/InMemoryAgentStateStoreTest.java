@@ -40,9 +40,9 @@ class InMemoryAgentStateStoreTest extends AgentStateStoreContractTest {
             executor.submit(() -> {
                 try {
                     for (int i = 0; i < recordsPerThread; i++) {
-                        store.record("agent-" + threadId, DegradationReason.RATE_LIMITED,
+                        store.record("agent-" + threadId, "default", DegradationReason.RATE_LIMITED,
                                 Instant.now().plusSeconds(60));
-                        store.query("agent-" + threadId);
+                        store.query("agent-" + threadId, "default");
                     }
                 } catch (final Exception e) {
                     errors.incrementAndGet();
@@ -56,7 +56,7 @@ class InMemoryAgentStateStoreTest extends AgentStateStoreContractTest {
         executor.shutdownNow();
         assertThat(errors.get()).isZero();
         for (int t = 0; t < threads; t++) {
-            assertThat(store.query("agent-" + t)).contains(DegradationReason.RATE_LIMITED);
+            assertThat(store.query("agent-" + t, "default")).contains(DegradationReason.RATE_LIMITED);
         }
     }
 }

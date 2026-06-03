@@ -19,35 +19,40 @@ public class JpaAgentStateStore implements AgentStateStore {
 
     @Override
     @Transactional
-    public void record(final String agentId, final DegradationReason reason, final Instant expiresAt) {
-        em.createQuery("DELETE FROM AgentDegradationStateEntity e WHERE e.agentId = :id")
+    public void record(final String agentId, final String tenancyId,
+                       final DegradationReason reason, final Instant expiresAt) {
+        em.createQuery("DELETE FROM AgentStateEntity e WHERE e.id.agentId = :id AND e.id.tenancyId = :tenancyId")
           .setParameter("id", agentId)
+          .setParameter("tenancyId", tenancyId)
           .executeUpdate();
         // flush + clear: without these, Hibernate's first-level cache retains the deleted entity
         // and throws EntityExistsException on the subsequent persist
         em.flush();
         em.clear();
-        em.persist(new AgentDegradationStateEntity(agentId, reason.name(), expiresAt));
+        em.persist(new AgentStateEntity(agentId, tenancyId, reason.name(), expiresAt));
     }
 
     @Override
     @Transactional(TxType.SUPPORTS)
-    public Optional<DegradationReason> query(final String agentId) {
+    public Optional<DegradationReason> query(final String agentId, final String tenancyId) {
         return em.createQuery(
-                "SELECT e FROM AgentDegradationStateEntity e WHERE e.agentId = :id AND e.expiresAt > :now",
-                AgentDegradationStateEntity.class)
+                "SELECT e FROM AgentStateEntity e WHERE e.id.agentId = :id"
+                + " AND e.id.tenancyId = :tenancyId AND e.expiresAt > :now",
+                AgentStateEntity.class)
             .setParameter("id", agentId)
+            .setParameter("tenancyId", tenancyId)
             .setParameter("now", Instant.now())
             .getResultStream()
             .findFirst()
-            .map(e -> DegradationReason.valueOf(e.getDegradationReason()));
+            .map(e -> DegradationReason.valueOf(e.getDegradation()));
     }
 
     @Override
     @Transactional
-    public void clear(final String agentId) {
-        em.createQuery("DELETE FROM AgentDegradationStateEntity e WHERE e.agentId = :id")
+    public void clear(final String agentId, final String tenancyId) {
+        em.createQuery("DELETE FROM AgentStateEntity e WHERE e.id.agentId = :id AND e.id.tenancyId = :tenancyId")
           .setParameter("id", agentId)
+          .setParameter("tenancyId", tenancyId)
           .executeUpdate();
     }
 }

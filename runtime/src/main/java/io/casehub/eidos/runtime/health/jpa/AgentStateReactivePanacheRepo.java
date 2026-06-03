@@ -6,6 +6,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "true")
 @ApplicationScoped
-class AgentDegradationStateReactivePanacheRepo
-        implements PanacheRepositoryBase<AgentDegradationStateEntity, String> {
+class AgentStateReactivePanacheRepo
+        implements PanacheRepositoryBase<AgentStateEntity, AgentStateId> {
 }
