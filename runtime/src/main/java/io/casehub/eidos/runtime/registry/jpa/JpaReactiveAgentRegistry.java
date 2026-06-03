@@ -22,7 +22,8 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
     @Override
     @WithTransaction
     public Uni<Void> register(AgentDescriptor descriptor) {
-        return repo.delete("agentId", descriptor.agentId())
+        return repo.delete("agentId = ?1 AND tenancyId = ?2",
+                          descriptor.agentId(), descriptor.tenancyId())
                    .chain(() -> repo.persist(mapper.toEntity(descriptor)))
                    .replaceWithVoid();
     }

@@ -18,30 +18,21 @@ public class AgentCapabilityEntity {
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "agent_id", nullable = false)
+    @JoinColumn(name = "descriptor_id", nullable = false)
     AgentDescriptorEntity descriptor;
+
+    @Column(name = "agent_id")   String agentId;
+    @Column(name = "tenancy_id") String tenancyId;
 
     @Column(nullable = false)
     String name;
 
-    @Column(name = "quality_hint")
-    Double qualityHint;
+    @Column(name = "quality_hint")        Double qualityHint;
+    @Column(name = "latency_hint_p50_ms") Long latencyHintP50Ms;
+    @Column(name = "cost_hint")           String costHint;
 
-    @Column(name = "latency_hint_p50_ms")
-    Long latencyHintP50Ms;
-
-    @Column(name = "cost_hint")
-    String costHint;
-
-    @Column(name = "input_types", columnDefinition = "TEXT")
-    String inputTypes;
-
-    @Column(name = "output_types", columnDefinition = "TEXT")
-    String outputTypes;
-
-    @Column(columnDefinition = "TEXT")
-    String tags;
-
-    @Column(name = "epistemic_domains", columnDefinition = "TEXT")
-    String epistemicDomains;
+    @Column(name = "input_types",       columnDefinition = "TEXT") String inputTypes;
+    @Column(name = "output_types",      columnDefinition = "TEXT") String outputTypes;
+    @Column(columnDefinition = "TEXT")                              String tags;
+    @Column(name = "epistemic_domains", columnDefinition = "TEXT") String epistemicDomains;
 }

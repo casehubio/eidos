@@ -21,8 +21,9 @@ public class JpaAgentRegistry implements AgentRegistry {
     @Override
     @Transactional
     public void register(AgentDescriptor descriptor) {
-        em.createQuery("DELETE FROM AgentDescriptorEntity e WHERE e.agentId = :id")
+        em.createQuery("DELETE FROM AgentDescriptorEntity e WHERE e.agentId = :id AND e.tenancyId = :tenancyId")
           .setParameter("id", descriptor.agentId())
+          .setParameter("tenancyId", descriptor.tenancyId())
           .executeUpdate();
         // Flush and clear so the bulk delete is visible to the session before persist.
         // Without this, Hibernate's first-level cache still holds the old entity

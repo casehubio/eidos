@@ -1,13 +1,10 @@
 -- Consumer configuration required:
---   1. Add dependency: io.quarkus:quarkus-flyway (compile or runtime scope)
---   2. Add to application.properties:
---        quarkus.flyway.locations=classpath:db/eidos/migration,<your-own-locations>
---   quarkus-flyway is test-scoped in casehub-eidos-runtime and therefore not
---   transitively exported — each consumer must declare it explicitly.
+--   quarkus.flyway.locations=classpath:db/eidos/migration,<your-own-locations>
 
 CREATE TABLE agent_descriptor (
-    agent_id               VARCHAR(255)  NOT NULL PRIMARY KEY,
-    tenancy_id             VARCHAR(255)  NOT NULL,
+    internal_id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    agent_id               VARCHAR(255)    NOT NULL,
+    tenancy_id             VARCHAR(255)    NOT NULL,
     name                   VARCHAR(255),
     version                VARCHAR(255),
     provider               VARCHAR(255),
@@ -20,13 +17,17 @@ CREATE TABLE agent_descriptor (
     slot                   VARCHAR(255),
     jurisdiction           VARCHAR(255),
     data_handling_policy   TEXT,
-    disposition            TEXT
+    disposition            TEXT,
+    CONSTRAINT uq_agent UNIQUE (agent_id, tenancy_id)
 );
+CREATE INDEX idx_agent_descriptor_tenancy_slot ON agent_descriptor(tenancy_id, slot);
 
 CREATE TABLE agent_capability (
     id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    agent_id            VARCHAR(255)  NOT NULL
-                            REFERENCES agent_descriptor(agent_id) ON DELETE CASCADE,
+    descriptor_id       BIGINT        NOT NULL
+                            REFERENCES agent_descriptor(internal_id) ON DELETE CASCADE,
+    agent_id            VARCHAR(255)  NOT NULL,
+    tenancy_id          VARCHAR(255)  NOT NULL,
     name                VARCHAR(255)  NOT NULL,
     quality_hint        DOUBLE PRECISION,
     latency_hint_p50_ms BIGINT,
@@ -36,6 +37,4 @@ CREATE TABLE agent_capability (
     tags                TEXT,
     epistemic_domains   TEXT
 );
-
-CREATE INDEX idx_agent_descriptor_tenancy_slot ON agent_descriptor(tenancy_id, slot);
-CREATE INDEX idx_agent_capability_name         ON agent_capability(name);
+CREATE INDEX idx_agent_capability_name ON agent_capability(name);

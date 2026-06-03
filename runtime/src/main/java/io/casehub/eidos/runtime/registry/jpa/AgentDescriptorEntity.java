@@ -12,11 +12,16 @@ import java.util.List;
  * via bytecode instrumentation — no getters or setters are needed or generated.
  */
 @Entity
-@Table(name = "agent_descriptor")
+@Table(name = "agent_descriptor",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"agent_id", "tenancy_id"}))
 public class AgentDescriptorEntity {
 
     @Id
-    @Column(name = "agent_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "internal_id")
+    Long internalId;
+
+    @Column(name = "agent_id", nullable = false)
     String agentId;
 
     @Column(name = "tenancy_id", nullable = false)
@@ -26,23 +31,12 @@ public class AgentDescriptorEntity {
     String version;
     String provider;
 
-    @Column(name = "model_family")
-    String modelFamily;
-
-    @Column(name = "model_version")
-    String modelVersion;
-
-    @Column(name = "weights_fingerprint")
-    String weightsFingerprint;
-
-    @Column(name = "domain_vocabulary")
-    String domainVocabulary;
-
-    @Column(name = "slot_vocabulary")
-    String slotVocabulary;
-
-    @Column(name = "disposition_vocabulary")
-    String dispositionVocabulary;
+    @Column(name = "model_family")           String modelFamily;
+    @Column(name = "model_version")          String modelVersion;
+    @Column(name = "weights_fingerprint")    String weightsFingerprint;
+    @Column(name = "domain_vocabulary")      String domainVocabulary;
+    @Column(name = "slot_vocabulary")        String slotVocabulary;
+    @Column(name = "disposition_vocabulary") String dispositionVocabulary;
 
     String slot;
     String jurisdiction;

@@ -62,6 +62,8 @@ class AgentDescriptorMapper {
     private AgentCapabilityEntity toCapabilityEntity(AgentCapability c, AgentDescriptorEntity parent) {
         var e = new AgentCapabilityEntity();
         e.descriptor = parent;
+        e.agentId    = parent.agentId;
+        e.tenancyId  = parent.tenancyId;
         e.name = c.name();
         e.qualityHint = c.qualityHint();
         e.latencyHintP50Ms = c.latencyHintP50Ms();
