@@ -14,6 +14,13 @@ public class BlockingToReactiveGraphBridge implements ReactiveAgentGraphQuery {
 
     @Inject AgentGraphQuery blocking;
 
+    public BlockingToReactiveGraphBridge() {}           // CDI — Weld needs this; adding the test
+                                                        // constructor removes the implicit no-arg
+
+    BlockingToReactiveGraphBridge(AgentGraphQuery blocking) { // test path
+        this.blocking = blocking;
+    }
+
     @Override
     public Uni<AgentTaskHistory> agentHistory(final String agentId, final String tenancyId) {
         return Uni.createFrom()
@@ -22,10 +29,28 @@ public class BlockingToReactiveGraphBridge implements ReactiveAgentGraphQuery {
     }
 
     @Override
-    public Uni<List<String>> topAgentsByOutcome(final String capabilityTag, final String taskDomain,
+    public Uni<List<String>> topAgentsByOutcome(final String capabilityTag,
+                                                 final String taskDomain,
                                                  final String tenancyId, final int limit) {
         return Uni.createFrom()
                   .item(() -> blocking.topAgentsByOutcome(capabilityTag, taskDomain, tenancyId, limit))
+                  .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+    }
+
+    @Override
+    public Uni<AgentTaskHistory> historyByCapability(final String agentId,
+                                                      final String capabilityTag,
+                                                      final String tenancyId) {
+        return Uni.createFrom()
+                  .item(() -> blocking.historyByCapability(agentId, capabilityTag, tenancyId))
+                  .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+    }
+
+    @Override
+    public Uni<List<AttestationRef>> attestationsFor(final String agentId,
+                                                      final String tenancyId) {
+        return Uni.createFrom()
+                  .item(() -> blocking.attestationsFor(agentId, tenancyId))
                   .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 }
