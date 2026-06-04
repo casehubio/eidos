@@ -6,6 +6,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
@@ -32,15 +33,17 @@ class JpaAgentGraphStoreTest {
 
     @Test
     void recordOutcome_links_to_task() {
+        Instant before = Instant.now().truncatedTo(ChronoUnit.MICROS);
         store.recordTask(task("t2", "agent-a", "code-review", "java"));
         store.recordOutcome(new AgentTaskId("t2", "agent-a", "t1"),
-                            new AgentOutcome("t2", TaskResult.SUCCEEDED, 0.9, null));
+                            new AgentOutcome("t2", TaskResult.SUCCEEDED, 0.9, before, null));
 
         var history = query.agentHistory("agent-a", "t1");
 
         assertThat(history.outcomes()).hasSize(1);
         assertThat(history.outcomes().get(0).result()).isEqualTo(TaskResult.SUCCEEDED);
         assertThat(history.outcomes().get(0).confidence()).isEqualTo(0.9);
+        assertThat(history.outcomes().get(0).observedAt()).isEqualTo(before);
     }
 
     @Test

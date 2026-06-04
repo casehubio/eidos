@@ -25,7 +25,7 @@ class JpaAgentGraphQueryTest {
             store.recordTask(new AgentTask(tid, agentId, "t1", cap, domain,
                                            "ref-" + i, Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, agentId, "t1"),
-                                new AgentOutcome(tid, result, confidence, null));
+                                new AgentOutcome(tid, result, confidence, Instant.now(), null));
         }
     }
 
@@ -91,14 +91,14 @@ class JpaAgentGraphQueryTest {
             store.recordTask(new AgentTask(tid, "agent-a", "t1", "code-review", "java",
                                            "r", Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, "agent-a", "t1"),
-                                new AgentOutcome(tid, TaskResult.SUCCEEDED, 0.9, null));
+                                new AgentOutcome(tid, TaskResult.SUCCEEDED, 0.9, Instant.now(), null));
         }
         for (int i = 0; i < 2; i++) {
             String tid = "pl-agent-a-" + i;
             store.recordTask(new AgentTask(tid, "agent-a", "t1", "planning", "agile",
                                            "r", Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, "agent-a", "t1"),
-                                new AgentOutcome(tid, TaskResult.FAILED, 0.1, null));
+                                new AgentOutcome(tid, TaskResult.FAILED, 0.1, Instant.now(), null));
         }
 
         AgentTaskHistory codeReviewHistory = query.historyByCapability("agent-a", "code-review", "t1");
@@ -122,7 +122,7 @@ class JpaAgentGraphQueryTest {
             store.recordTask(new AgentTask(tid, "agent-a", "other-tenant",
                 "code-review", "java", "r", Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, "agent-a", "other-tenant"),
-                new AgentOutcome(tid, TaskResult.SUCCEEDED, 0.9, null));
+                new AgentOutcome(tid, TaskResult.SUCCEEDED, 0.9, Instant.now(), null));
         }
         // Query for t1 only
         List<String> ranked = query.topAgentsByOutcome("code-review", "java", "t1", 10);

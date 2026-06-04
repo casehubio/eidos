@@ -33,7 +33,7 @@ public class AgentOutcomeEntity {
         e.result            = o.result().name();
         e.confidence        = o.confidence();
         e.degradationReason = o.degradationReason() != null ? o.degradationReason().name() : null;
-        e.observedAt        = Instant.now();
+        e.observedAt        = o.observedAt();
         return e;
     }
 
@@ -42,6 +42,7 @@ public class AgentOutcomeEntity {
             taskId,
             TaskResult.valueOf(result),
             confidence,
+            observedAt,
             degradationReason != null ? DegradationReason.valueOf(degradationReason) : null
         );
     }
