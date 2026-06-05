@@ -1,0 +1,828 @@
+# Personality and Role Frameworks — Mapping to AgentDescriptor
+
+> **Status:** Reference document for eidos vocabulary design.
+> **Issue:** eidos#29 · **Downstream:** eidos#26 (Belbin/DISC vocabulary module)
+
+This document maps established personality, team-role, and occupational frameworks to
+the fields of `AgentDescriptor`. It serves two purposes:
+
+- **Part I — Reference:** What each framework models, its scientific validity, and how
+  its dimensions correspond to AgentDescriptor fields. Encyclopedic; does not make
+  recommendations.
+- **Part II — Design Guide:** Opinionated guidance for vocabulary designers on which
+  frameworks to use, how to combine them, what to avoid, and normative vocabulary draft
+  tables for eidos#26.
+
+## How to read mapping tables
+
+Disposition column values (`socialOrient`, `ruleFollowing`, `riskAppetite`, `autonomy`)
+are exact keys from `urn:casehub:vocab:conscientiousness`:
+
+| Term | Axis | Meaning |
+|------|------|---------|
+| `collaborative` | socialOrient | Works with others by default |
+| `independent` | socialOrient | Works alone by preference |
+| `facilitative` | socialOrient | Enables others to work |
+| `strict` | ruleFollowing | Follows rules rigidly |
+| `principled` | ruleFollowing | Follows intent of rules |
+| `flexible` | ruleFollowing | Adapts rules to context |
+| `conservative` | riskAppetite | Avoids uncertainty |
+| `measured` | riskAppetite | Balances risk and reward |
+| `bold` | riskAppetite | Accepts high uncertainty for reward |
+| `directed` | autonomy | Follows explicit instructions |
+| `semi-autonomous` | autonomy | Acts within defined boundaries |
+| `autonomous` | autonomy | Acts on own judgment |
+
+A dimension that maps strongly to a field gets a concrete term. Weak mappings are marked
+`(partial)` with a note. `—` means the framework makes no claim for that field.
+
+## Preamble Notes
+
+- **MBTI:** Included for completeness. Unsuitable for vocabulary design — ~50% of people
+  receive a different type one month later (poor test-retest reliability). Use Big Five instead.
+- **DISC:** Included as a disposition vocabulary source despite Low scientific validity —
+  its imprecision is bounded (correlates with Big Five Extraversion × Agreeableness), making
+  it usable as shorthand in practice. ⚠ Full implementation requires an axis-aware API
+  extension — see eidos#40 (axis-aware `equivalentValues()` for multi-axis DISC resolution) before writing `DiscVocabularyProducer`.
+- **Situational Leadership:** Describes how a *leader* adapts to a follower's development
+  stage, not agent traits. Included as conceptual framing for the autonomy axis only; not
+  a vocabulary source.
+
+---
+
+# Part I — Reference
+
+## 1. Team Role Frameworks
+
+### 1.1 Belbin Team Roles
+
+**What it models:** Nine roles describing what each person contributes to a team's
+function. Roles are complementary and a balanced team needs all nine. Based on
+research by Meredith Belbin at Henley Management College, observing real management
+teams over nine years.
+
+**Scientific validity:** Medium — widely cited and used in practice; some empirical
+support from the original research; critics note reliance on self-report and limited
+independent replication.
+
+**Workplace adoption:** Widespread — standard in UK and EU management development.
+
+**Vocabulary role:** Slot vocabulary (`urn:casehub:vocab:belbin`). Belbin roles answer
+"what do you contribute to a team?" → `slot` field.
+
+| Dimension | slot | socialOrient | ruleFollowing | riskAppetite | autonomy | delegation |
+|-----------|------|--------------|---------------|--------------|----------|------------|
+| Plant | `plant` | `independent` | `flexible` | `bold` | `autonomous` | `false` |
+| Resource Investigator | `resource-investigator` | `collaborative` | `flexible` | `measured` | `semi-autonomous` | `false` |
+| Co-ordinator | `co-ordinator` | `facilitative` | `principled` | `measured` | `semi-autonomous` | `true` |
+| Shaper | `shaper` | `independent` | `flexible` | `bold` | `autonomous` | `false` |
+| Monitor Evaluator | `monitor-evaluator` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` |
+| Teamworker | `teamworker` | `collaborative` | `principled` | `conservative` | `directed` | `false` |
+| Implementer | `implementer` | `collaborative` | `strict` | `conservative` | `directed` | `false` |
+| Completer Finisher | `completer-finisher` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` |
+| Specialist | `specialist` | `independent` | `principled` | `measured` | `autonomous` | `false` |
+
+Note: disposition columns show values *implied* by each role. They are reference
+annotations — not fields in `BelbinVocabularyProducer`'s `VocabularyTerm` entries.
+
+---
+
+### 1.2 Margerison-McCann Team Management Wheel
+
+**What it models:** Eight role preferences describing how people prefer to work in
+teams. Roles are arranged on a wheel showing related preferences. Developed by Charles
+Margerison and Dick McCann; similar motivations to Belbin but different theoretical basis.
+
+**Scientific validity:** Low-Medium — less independently validated than Belbin; primarily
+practitioner-adopted.
+
+**Workplace adoption:** Moderate — more common in Australia/New Zealand; less globally
+adopted than Belbin.
+
+**Vocabulary role:** Reference only. Covers the same conceptual space as Belbin (team
+contribution roles) with incompatible terminology. Not recommended for eidos vocabulary.
+
+**Compare/contrast with Belbin:**
+
+| MM Role | Closest Belbin | Where they diverge |
+|---------|---------------|-------------------|
+| Reporter-Adviser | Monitor Evaluator | MM emphasises information gathering; Belbin emphasises judgement |
+| Creator-Innovator | Plant | High overlap; both generate novel ideas independently |
+| Explorer-Promoter | Resource Investigator | High overlap; both explore external opportunities |
+| Assessor-Developer | Monitor Evaluator / Implementer | MM combines analysis with development; Belbin separates them |
+| Thruster-Organiser | Shaper / Implementer | MM combines drive with organisation; Belbin separates them |
+| Concluder-Producer | Completer Finisher / Implementer | High overlap; both focus on delivery |
+| Controller-Inspector | Monitor Evaluator / Completer Finisher | MM emphasises control; Belbin emphasises quality and judgement |
+| Upholder-Maintainer | Teamworker | High overlap; both provide support and stability |
+
+**Recommendation:** Use Belbin. The conceptual territory is the same; Belbin has broader
+global adoption, more independent research, and was established earlier. Implementing
+both creates contradictory slot vocabulary with no additive signal.
+
+---
+
+## 2. Personality / Behavioral Frameworks
+
+### 2.1 Big Five (OCEAN)
+
+**What it models:** Five broad dimensions of human personality derived from factor
+analysis of personality trait language across cultures. Dimensions: Openness to
+Experience, Conscientiousness, Extraversion, Agreeableness, Neuroticism (inverted:
+Emotional Stability). The dominant scientific model of personality since the 1990s.
+
+**Scientific validity:** High — the most replicated personality model in psychology;
+cross-cultural replication across 50+ countries; strong predictive validity for job
+performance and life outcomes. Measured definitively by the NEO PI-R (Costa & McCrae, 1992).
+
+**Workplace adoption:** Widespread in research and clinical settings; Moderate in direct
+practitioner use (often mediated through DISC or MBTI as accessible shorthand).
+
+**Vocabulary role:** Reference only. Big Five is the *scientific grounding* for the eidos
+disposition axes — the Conscientiousness vocabulary (`urn:casehub:vocab:conscientiousness`)
+is Big Five-grounded by design. There is no separate Big Five vocabulary module; agents
+using Conscientiousness vocabulary terms are implicitly using Big Five semantics.
+
+| Dimension | socialOrient | ruleFollowing | riskAppetite | autonomy |
+|-----------|--------------|---------------|--------------|----------|
+| Openness (high) | — | `flexible` (partial) | `bold` (partial) | `autonomous` (partial) |
+| Openness (low) | — | `strict` (partial) | `conservative` (partial) | `directed` (partial) |
+| Conscientiousness (high) | — | `strict` | `conservative` (partial) | — |
+| Conscientiousness (low) | — | `flexible` | `bold` (partial) | — |
+| Extraversion (high) | `collaborative` (partial) | — | — | — |
+| Extraversion (low) | `independent` (partial) | — | — | — |
+| Agreeableness (high) | `facilitative` (partial) | — | — | — |
+| Agreeableness (low) | `independent` (partial) | — | — | — |
+| Neuroticism (high / Stability low) | — | — | `conservative` (partial) | — |
+
+Note: Big Five dimensions are continuous; the table shows the direction of the mapping
+at high/low extremes. Partial mappings indicate overlapping but non-identical constructs.
+
+---
+
+### 2.2 DISC
+
+**What it models:** Four behavioral style quadrants describing how people respond to
+their environment. Dimensions: Dominance (task-focused, assertive), Influence (people-
+focused, assertive), Steadiness (people-focused, unassertive), Conscientiousness (task-
+focused, unassertive). Originated in Marston (1928); now offered by many vendors
+(Everything DiSC, DiSC Classic, Thomas International, etc.).
+
+**Scientific validity:** Low — correlates with Big Five Extraversion × Agreeableness
+quadrants, confirming some construct validity; however, lacks peer-reviewed normative
+data and independent factor replication. Wide vendor variation makes standardisation
+difficult. Unlike MBTI (poor test-retest stability), DISC types tend to be consistent —
+the validity problem is imprecision, not instability.
+
+**Workplace adoption:** Widespread — one of the most-used workplace personality tools
+globally, especially in sales, leadership, and team development.
+
+**Vocabulary role:** Disposition vocabulary (`urn:casehub:vocab:disc`). DISC types
+answer "how does this agent behave in any context?" → disposition fields.
+⚠ **Implementation blocked on eidos#40** (axis-aware `equivalentValues()` for multi-axis
+DISC resolution) — the current `VocabularyRegistry.equivalentValues()` signature cannot
+resolve a DISC type to different Conscientiousness terms per axis. Do not implement
+`DiscVocabularyProducer` until eidos#40 is resolved.
+
+| Dimension | socialOrient | ruleFollowing | riskAppetite | autonomy |
+|-----------|--------------|---------------|--------------|----------|
+| Dominance (D) | `independent` | `flexible` | `bold` | `autonomous` |
+| Influence (i) | `collaborative` | `flexible` | `measured` | `semi-autonomous` |
+| Steadiness (S) | `facilitative` | `principled` | `conservative` | `directed` |
+| Conscientiousness (C) | `independent` | `strict` | `conservative` | `semi-autonomous` |
+
+Note: DISC types do not predict `delegation`. Leave `delegation` at its role-specific
+default (from Belbin if a Belbin slot is set; `false` otherwise).
+
+---
+
+### 2.3 MBTI (Myers-Briggs Type Indicator)
+
+**What it models:** Sixteen personality types derived from four binary dichotomies
+(I/E, S/N, T/F, J/P), loosely based on Jungian typology. Widely used in corporate
+development since the 1950s.
+
+**Scientific validity:** Low — poor test-retest reliability (~50% of people receive a
+different type when retested one month later); dichotomous scoring ignores continuous
+distributions; limited predictive validity for job performance. Not recommended by the
+Society for Industrial and Organizational Psychology for personnel decisions.
+
+**Workplace adoption:** Widespread — estimated 2 million assessments per year; deeply
+embedded in corporate culture despite validity concerns.
+
+**Vocabulary role:** Reference only. MBTI types are unsuitable as vocabulary terms due
+to instability. The approximate Big Five mappings below are provided for legacy
+compatibility only — for example, if an existing agent is described in MBTI terms and
+must be translated.
+
+| MBTI dichotomy | Approximate Big Five | AgentDescriptor field |
+|----------------|---------------------|----------------------|
+| Introvert (I) | Low Extraversion | `socialOrient: independent` (partial) |
+| Extravert (E) | High Extraversion | `socialOrient: collaborative` (partial) |
+| Sensing (S) | Low Openness | `riskAppetite: conservative` (partial) |
+| iNtuition (N) | High Openness | `riskAppetite: bold` (partial) |
+| Thinking (T) | Low Agreeableness | `socialOrient: independent` (partial) |
+| Feeling (F) | High Agreeableness | `socialOrient: facilitative` (partial) |
+| Judging (J) | High Conscientiousness | `ruleFollowing: strict` (partial) |
+| Perceiving (P) | Low Conscientiousness | `ruleFollowing: flexible` (partial) |
+
+**Do not create a MBTI vocabulary module.** The instability of type assignments makes
+any vocabulary built on MBTI terms unreliable over time.
+
+---
+
+## 3. Cognitive / Work Style Frameworks
+
+### 3.1 Thomas-Kilmann Conflict Modes
+
+**What it models:** Five strategies for handling interpersonal conflict, defined by two
+dimensions: assertiveness (pursuing own concerns) and cooperativeness (attending to
+others' concerns). Modes: Competing (high assert, low coop), Collaborating (high/high),
+Compromising (mid/mid), Avoiding (low/low), Accommodating (low assert, high coop).
+Developed by Thomas and Kilmann (1974) from the Blake-Mouton Managerial Grid.
+
+**Scientific validity:** Medium — empirically grounded in the Blake-Mouton framework;
+reasonable construct validity for conflict behavior; not predictive of stable trait.
+
+**Workplace adoption:** Widespread in conflict resolution, negotiation, and team dynamics.
+
+**Vocabulary role:** Reference only. TK modes describe *conflict strategy* (situational),
+not social preference (stable trait). They do not map cleanly to the current four
+disposition axes. Only Collaborating maps unambiguously to `socialOrient`.
+
+| Dimension | socialOrient | ruleFollowing | riskAppetite | autonomy |
+|-----------|--------------|---------------|--------------|----------|
+| Competing | `independent` (partial — assertive in conflict, not general preference) | — | — | — |
+| Collaborating | `collaborative` | — | — | — |
+| Compromising | — | — | — | — |
+| Avoiding | — | — | — | — |
+| Accommodating | — | — | — | — |
+
+The missing mappings (Avoiding, Accommodating, Compromising) are not gaps in the
+Conscientiousness vocabulary — they are a different construct. A `conflictMode` disposition
+axis would accommodate all five TK modes cleanly. See eidos#38.
+
+---
+
+### 3.2 Situational Leadership (Hersey & Blanchard)
+
+**What it models:** How a *leader* should adapt their management style to a follower's
+development level for a specific task. Four leader styles: S1 Directing (high task, low
+relationship), S2 Coaching (high/high), S3 Supporting (low task, high relationship),
+S4 Delegating (low/low). Developed by Hersey and Blanchard (1969).
+
+**Scientific validity:** Low — widely adopted in corporate leadership training; weak
+empirical support as a predictive model; the contingency relationship between follower
+readiness and recommended style has not replicated reliably.
+
+**Workplace adoption:** Widespread in corporate management development.
+
+**Vocabulary role:** Reference only — conceptual framing for the autonomy axis, not
+a vocabulary source. **Important:** SL describes LEADER behavior adapting to follower
+readiness, not follower (or agent) traits. Mapping SL styles to agent autonomy uses the
+model backwards. The value is the intuitive framing: the S1→S4 arc provides a memorable
+image of the directed→autonomous progression, not an authoritative definition.
+
+| SL style (leader) | Follower readiness implied | Autonomy axis framing |
+|--------------------|--------------------------|----------------------|
+| S1 Directing | Low competence, low commitment | `directed` — follows explicit instructions |
+| S2 Coaching | Low-moderate competence, high commitment | (between `directed` and `semi-autonomous` — no distinct term) |
+| S3 Supporting | High competence, variable commitment | `semi-autonomous` — acts within defined boundaries |
+| S4 Delegating | High competence, high commitment | `autonomous` — acts on own judgment |
+
+---
+
+### 3.3 Kirton Adaption-Innovation (KAI)
+
+**What it models:** A single cognitive style dimension ranging from Adaptor (prefers
+proven methods, works within structure, incrementally improves) to Innovator (prefers
+novel approaches, challenges assumptions, reconstructs problems). Developed by Michael
+Kirton (1976); measured by the KAI inventory.
+
+**Scientific validity:** Medium — the KAI inventory has good test-retest reliability
+and convergent validity with related constructs; the single-axis model has been
+challenged but holds reasonably well empirically.
+
+**Workplace adoption:** Moderate — used in innovation management and team composition.
+
+**Vocabulary role:** Reference only. Supports the Conscientiousness vocabulary — KAI
+Adaptor and Innovator endpoints align with existing terms.
+
+| Dimension | ruleFollowing | riskAppetite |
+|-----------|---------------|--------------|
+| Adaptor (low KAI score) | `strict` | `conservative` |
+| Innovator (high KAI score) | `flexible` | `bold` |
+
+The KAI dimension provides supporting evidence for the `ruleFollowing` and `riskAppetite`
+axes — not additional vocabulary. If an agent's KAI score is known, use the corresponding
+Conscientiousness terms directly.
+
+---
+
+## 4. Occupational Frameworks
+
+### 4.1 O*NET
+
+**What it models:** The US Occupational Information Network — a comprehensive database
+of ~1,000 occupations organised by Knowledge, Skills, Abilities, Work Activities, Work
+Context, and Work Styles. Maintained by the US Department of Labor. Provides standardised
+vocabulary for describing what workers need to know and be able to do.
+
+**Scientific validity:** High — government-maintained; empirically derived from job
+analysis across thousands of occupations; updated continuously.
+
+**Workplace adoption:** Widespread — the US standard for occupational classification;
+widely referenced internationally.
+
+**Vocabulary role:** Capabilities vocabulary source. O*NET Knowledge and Skill category
+names are the primary source for `AgentCapability.name` values. Occupation codes
+(e.g., `15-1252.00` for Software Developers) can be used as `slot` values for technically
+precise occupational roles.
+
+| O*NET component | AgentDescriptor field |
+|----------------|----------------------|
+| Occupation code | `slot` (when technical precision needed) |
+| Knowledge categories | `capabilities[].name` |
+| Skill categories | `capabilities[].name` |
+| Abilities | `capabilities[].name` (partial — some abilities → disposition) |
+| Work Styles | disposition (partial — Achievement/Effort → `autonomy`; Concern for Others → `socialOrient`) |
+| Work Activities | `capabilities[].name` |
+
+**Example capability names from O*NET:** `programming`, `systems-analysis`,
+`critical-thinking`, `active-listening`, `judgment-and-decision-making`.
+
+---
+
+### 4.2 SFIA (Skills Framework for the Information Age)
+
+**What it models:** A competence framework for IT and digital professionals, defining
+~120 skills across seven categories and seven responsibility levels (1 = Follow to
+7 = Set strategy). Maintained by the SFIA Foundation. IT-specific — not general purpose.
+
+**Scientific validity:** Medium — industry-maintained standard; widely validated through
+industry use; not peer-reviewed research.
+
+**Workplace adoption:** Widespread in IT sector — standard in UK public sector and many
+enterprise IT organisations.
+
+**Vocabulary role:** Capabilities vocabulary source for IT-domain agents. SFIA skill
+names provide precise `AgentCapability.name` values for technical roles. Responsibility
+levels offer a partial `autonomy` mapping.
+
+| SFIA component | AgentDescriptor field |
+|---------------|----------------------|
+| Skill names | `capabilities[].name` |
+| Skill categories | `capabilities[].tags` |
+| Responsibility levels 1–2 | `autonomy: directed` (partial) |
+| Responsibility levels 3–4 | `autonomy: semi-autonomous` (partial) |
+| Responsibility levels 5–7 | `autonomy: autonomous` (partial) |
+
+**Example SFIA skill names:** `software-development`, `systems-architecture`,
+`data-management`, `security-administration`, `user-experience-design`.
+
+**Note:** Use O*NET for non-IT agents; use SFIA for IT/digital agents. Using both
+simultaneously adds no signal — SFIA is an IT-specific subset of the O*NET knowledge space.
+
+---
+
+## 5. Cross-Reference Summary Table
+
+Rows = AgentDescriptor fields. Columns = all frameworks except BDI (appendix only).
+
+| Field | Belbin | MM | Big Five | DISC | MBTI | TK | SL | KAI | O\*NET | SFIA |
+|-------|--------|----|----------|------|------|----|----|-----|--------|------|
+| `slot` | **slot** | — | — | — | — | — | — | — | capabilities* | capabilities* |
+| `capabilities` | — | — | — | — | — | — | — | — | **capabilities** | **capabilities** |
+| `socialOrient` | **disposition** | reference | partial | **disposition** | partial | partial | — | — | partial | — |
+| `ruleFollowing` | **disposition** | reference | partial | **disposition** | partial | — | — | partial | — | — |
+| `riskAppetite` | **disposition** | reference | partial | **disposition** | partial | — | — | partial | — | — |
+| `autonomy` | **disposition** | reference | partial | **disposition** | — | — | reference | — | partial | partial |
+| `delegation` | **disposition** | — | — | — | — | — | — | — | — | — |
+
+Key: **bold** = primary vocabulary source for this field · `partial` = partial/approximate mapping ·
+`reference` = conceptual grounding only, no vocabulary terms · `Partial` (compatibility) = meaningful overlap but insufficient to justify dual vocabulary · `—` = no claim
+
+*O\*NET and SFIA provide occupation codes that may be used as `slot` values when technical
+precision is needed over team-role vocabulary.
+
+---
+
+## 6. Framework Compatibility
+
+Curated pairs only — combinations that are meaningfully Additive, Redundant, or
+Contradictory. Full N×N matrix omitted; most cross-category pairings are simply
+orthogonal.
+
+| Pair | Rating | Reasoning |
+|------|--------|-----------|
+| Belbin + Big Five | Additive | Role (Belbin slot) and stable trait (Conscientiousness vocabulary, which is Big Five-grounded) are orthogonal — this is the natural Belbin Profile |
+| Belbin + DISC | Additive | Role assignment (slot) and behavioral style (disposition) are orthogonal; an agent holds both simultaneously. Pending eidos#40 for full implementation |
+| Belbin + Margerison-McCann | Redundant | Same conceptual territory; contradictory terminology; pick Belbin |
+| DISC + Big Five (Conscientiousness vocabulary) | Redundant | DISC is a quadrant simplification of Big Five Extraversion × Agreeableness; no new signal; choose one |
+| Big Five + Thomas-Kilmann | Additive | Stable personality trait + situational conflict strategy are different constructs |
+| Big Five + Situational Leadership | Reference | SL describes leader response to follower readiness, not agent trait; useful as autonomy axis framing only |
+| O*NET + Big Five | Additive | Occupational competence (capabilities) + behavioral trait (disposition) are orthogonal |
+| SFIA + O*NET | Redundant | Both are occupational competence frameworks; SFIA is an IT-specific subset |
+| MBTI + anything | Inadvisable | Low test-retest reliability makes any vocabulary built on MBTI types unstable; not a conceptual contradiction but any combination produces unreliable encodings |
+| KAI + DISC | Partial | Adaptor/Innovator overlaps with DISC C/D on ruleFollowing and riskAppetite; KAI adds precision but not enough to justify two vocabularies |
+
+---
+
+# Part II — Design Guide
+
+## Architecture: DISC as Disposition Vocabulary
+
+DISC types describe behavioral patterns that an agent brings to every context — they are
+not roles assigned by a team. This makes DISC a **disposition vocabulary**, not a slot
+vocabulary.
+
+- **Belbin** answers "what role do you play in this team?" → `slot` field
+- **DISC** answers "how do you behave in any context?" → disposition fields
+
+An agent holds both simultaneously:
+
+```
+slotVocabulary        = "urn:casehub:vocab:belbin"     ← team role
+dispositionVocabulary = "urn:casehub:vocab:disc"        ← behavioral style
+slot                  = "co-ordinator"
+disposition.socialOrient  = "dominance"                 ← DISC type; resolved per axis
+```
+
+This combination is additive: a Co-ordinator (Belbin: `facilitative`, `measured`) who is
+also a D-type (DISC: `independent` on socialOrient, `bold` on riskAppetite) diverges on
+both axes.
+The DISC type reveals behavioral style that the Belbin role does not predict.
+
+⚠ **API gap — eidos#40** (axis-aware `equivalentValues()` for multi-axis DISC
+resolution): `VocabularyRegistry.equivalentValues(fromVocab, value, toVocab)` has no
+axis parameter. A DISC type maps to *different* Conscientiousness terms on each axis
+(`dominance → independent` on socialOrient, `bold` on riskAppetite, etc.). The current
+signature cannot disambiguate. Do not implement `DiscVocabularyProducer` until eidos#40
+is resolved.
+
+---
+
+## Vocabulary URI Field Interaction
+
+`AgentDescriptor` has three vocabulary URI fields:
+
+| Field | Scope | Purpose |
+|-------|-------|---------|
+| `domainVocabulary` | ALL fields (default) | Sets the default vocabulary for slot, capabilities, and all disposition axes |
+| `slotVocabulary` | `slot` only | Overrides `domainVocabulary` for slot resolution |
+| `dispositionVocabulary` | All disposition axes | Overrides `domainVocabulary` for all disposition field values |
+
+`domainVocabulary` is useful when a single custom vocabulary covers all fields in a descriptor — for example, a domain-specific vocabulary that defines both slot terms and disposition terms under one URI. When using separate Belbin and Conscientiousness vocabularies, use the more specific `slotVocabulary` and `dispositionVocabulary` fields instead.
+
+**Resolution precedence (most specific wins):**
+1. `slotVocabulary` for `slot`; `dispositionVocabulary` for disposition fields
+2. `domainVocabulary` for any field without a specific override
+3. No vocabulary — raw string, no resolution
+
+**Worked examples:**
+
+*Belbin Profile* — Belbin slot + Conscientiousness disposition:
+```
+slotVocabulary        = "urn:casehub:vocab:belbin"
+dispositionVocabulary = "urn:casehub:vocab:conscientiousness"
+slot                  = "co-ordinator"
+disposition.socialOrient  = "facilitative"
+disposition.ruleFollowing = "principled"
+disposition.riskAppetite  = "measured"
+disposition.autonomy      = "semi-autonomous"
+disposition.delegation    = true
+```
+
+*Belbin + DISC Profile* (pending eidos#40):
+```
+slotVocabulary        = "urn:casehub:vocab:belbin"
+dispositionVocabulary = "urn:casehub:vocab:disc"
+slot                  = "co-ordinator"
+disposition.socialOrient  = "dominance"   ← DISC type; axis-aware resolution needed
+disposition.ruleFollowing = "dominance"   ← same DISC type → different Conscientiousness term
+disposition.riskAppetite  = "dominance"
+disposition.autonomy      = "dominance"
+disposition.delegation    = true          ← from Belbin role (Co-ordinator), not from DISC
+```
+
+*Occupational Profile* — O*NET capabilities + Conscientiousness disposition:
+```
+slotVocabulary        = null
+dispositionVocabulary = "urn:casehub:vocab:conscientiousness"
+capabilities          = [AgentCapability(name="software-development", ...), ...]
+disposition.socialOrient  = "independent"
+disposition.ruleFollowing = "strict"
+disposition.riskAppetite  = "conservative"
+disposition.autonomy      = "semi-autonomous"
+```
+
+---
+
+## Encoding Guidance
+
+Rules that apply regardless of which framework is used:
+
+1. **Slot vocabulary vs. disposition vocabulary:** Belbin roles go in `slot` via
+   `slotVocabulary`. Explicitly populating disposition axes alongside a Belbin slot is
+   correct and expected — the axes are independent fields and explicit values are
+   directly queryable without vocabulary resolution.
+
+2. **DISC as disposition vocabulary:** Do not place DISC type names in `slot`. DISC
+   describes behavioral pattern (disposition), not team assignment. Use
+   `dispositionVocabulary="urn:casehub:vocab:disc"`.
+
+3. **Thomas-Kilmann conflict modes:** Map only TK Collaborating to
+   `socialOrient=collaborative`. Do not map TK Competing to `riskAppetite` — Competing
+   is conflict assertiveness, not risk tolerance. Avoiding and Accommodating have no
+   current axis mapping; see eidos#38.
+
+4. **Autonomy axis authority:** The `directed / semi-autonomous / autonomous` progression
+   is conceptually inspired by SL's S1→S4 arc. SL describes leader behavior, not agent
+   traits. The axis stands on its own — do not cite SL as the authority for autonomy values.
+
+---
+
+## Axis-by-Axis Recommendations
+
+For each `AgentDescriptor` field, the primary framework to reach for and why:
+
+**`slot`:** Belbin for team composition roles; O*NET occupation codes for technical
+roles; SFIA skill categories for IT roles. Never use DISC or MBTI type names as slot
+values — they describe behavioral patterns, not role assignments.
+
+**`socialOrient`:** Conscientiousness vocabulary directly (`collaborative`, `independent`,
+`facilitative`). TK Collaborating aligns with `collaborative`; no other TK modes map
+cleanly. Big Five Extraversion and Agreeableness provide supporting evidence but not
+additional terms. See eidos#38 for conflict-mode coverage.
+
+**`ruleFollowing`:** Conscientiousness vocabulary (`strict`, `principled`, `flexible`)
+is complete. KAI and DISC-C provide supporting evidence — no additional terms needed.
+
+**`riskAppetite`:** Conscientiousness vocabulary (`conservative`, `measured`, `bold`)
+is complete. KAI and Big Five Openness support it. Do not use TK modes here.
+
+**`autonomy`:** Conscientiousness vocabulary (`directed`, `semi-autonomous`, `autonomous`)
+is complete. SL S1→S4 provides an intuitive mental model. Do not cite SL as authority.
+
+**`delegation`:** Set to `true` for Belbin Co-ordinator. DISC types make no delegation
+claim (sub-agent spawning is platform-semantic, not personality-semantic). Default `false`
+unless the role explicitly involves empowering others.
+
+**`capabilities`:** O*NET Knowledge and Skill category names for general roles; SFIA
+skill names for IT roles. Big Five Openness predicts breadth of capability domains but
+does not define capability names.
+
+---
+
+## Combination Patterns
+
+Three named patterns covering the most common agent descriptor compositions:
+
+---
+
+### Belbin Profile
+
+*Belbin slot + Conscientiousness disposition*
+
+```
+slotVocabulary        = "urn:casehub:vocab:belbin"
+dispositionVocabulary = "urn:casehub:vocab:conscientiousness"
+slot                  = "<belbin-role-key>"
+disposition.socialOrient  = "<conscientiousness term>"
+disposition.ruleFollowing = "<conscientiousness term>"
+disposition.riskAppetite  = "<conscientiousness term>"
+disposition.autonomy      = "<conscientiousness term>"
+disposition.delegation    = <bool from Belbin draft table>
+```
+
+**What it expresses:** Team contribution role + full behavioral profile.
+**What it leaves unspecified:** Occupational domain; conflict mode (eidos#38).
+**When to use:** Agents defined primarily by team function. Populate all four disposition
+axes — the Belbin vocabulary draft table shows typical implied values per role; actual
+behavioral assessment may warrant deviation.
+
+---
+
+### Belbin + DISC Profile *(implementation pending eidos#40)*
+
+*Belbin slot + DISC disposition*
+
+```
+slotVocabulary        = "urn:casehub:vocab:belbin"
+dispositionVocabulary = "urn:casehub:vocab:disc"
+slot                  = "<belbin-role-key>"
+disposition.socialOrient  = "<disc-type-key>"
+disposition.ruleFollowing = "<disc-type-key>"
+disposition.riskAppetite  = "<disc-type-key>"
+disposition.autonomy      = "<disc-type-key>"
+disposition.delegation    = <bool from Belbin draft table — not from DISC>
+```
+
+**What it expresses:** Team role (Belbin) + independently-measured personality style
+(DISC). Additive when the DISC type diverges from the Belbin role's implied disposition
+— a Co-ordinator (`facilitative`, `measured`) who is also a D-type (`independent` on
+socialOrient, `bold` on riskAppetite) diverges on both axes.
+Always populate `delegation` from the Belbin draft table; DISC types make no delegation claim.
+**Implementation blocked:** Requires axis-aware resolution from eidos#40.
+
+---
+
+### Occupational Profile
+
+*O*NET or SFIA capabilities + Conscientiousness disposition*
+
+```
+slotVocabulary        = null   ← or domain-specific slot vocabulary
+dispositionVocabulary = "urn:casehub:vocab:conscientiousness"
+capabilities          = [<o*net or sfia skill names as AgentCapability entries>]
+disposition.socialOrient  = "<conscientiousness term>"
+disposition.ruleFollowing = "<conscientiousness term>"
+disposition.riskAppetite  = "<conscientiousness term>"
+disposition.autonomy      = "<conscientiousness term>"
+```
+
+**What it expresses:** Technical competence domain + behavioral traits.
+**What it leaves unspecified:** Team dynamic; conflict mode (eidos#38).
+**When to use:** Agents defined primarily by technical skill (code review, data analysis,
+security analysis). Use O*NET for general roles; SFIA for IT-specific roles.
+
+---
+
+## Anti-Patterns
+
+### Framework Selection Errors
+
+**1. MBTI as vocabulary basis**
+MBTI types are unstable (~50% type-change one month later). Any vocabulary built on MBTI
+terms becomes unreliable as agents are re-assessed. Use Big Five / Conscientiousness
+vocabulary instead. MBTI→Big Five approximate mappings (§2.3) are provided for legacy
+translation only.
+
+**2. DISC + Conscientiousness vocabulary simultaneously**
+DISC is a quadrant simplification of Big Five Extraversion × Agreeableness. Using
+`dispositionVocabulary=disc` alongside explicit Conscientiousness terms adds no signal
+and creates contradictory encodings. Choose one vocabulary per descriptor.
+
+**3. Belbin + Margerison-McCann together**
+Both model team contribution roles with overlapping but inconsistently-named dimensions.
+Combining them produces contradictory slot vocabulary. Pick Belbin (broader global
+adoption, more research).
+
+### Encoding Errors
+
+**4. DISC type names in `slot`**
+`slot="dominance"` treats a behavioral personality style as a team role assignment. DISC
+types describe how an agent behaves everywhere, not what role a team assigned it. Use
+`dispositionVocabulary="urn:casehub:vocab:disc"` and leave `slotVocabulary` for Belbin
+or an occupational vocabulary.
+
+**5. Using a Belbin role key as a disposition field value**
+`socialOrient="shaper"` treats a Belbin slot key as a disposition term. This is a
+vocabulary category error — `socialOrient` must contain a disposition vocabulary term
+(`collaborative`, `independent`, etc.), not a slot key. Explicitly populating disposition
+axes alongside a Belbin slot is correct; the mistake is using the slot key itself as a
+disposition value.
+
+### Axis Assignment Errors
+
+**6. Thomas-Kilmann Competing mode → `riskAppetite`**
+TK Competing describes assertiveness in conflict (willingness to pursue one's position),
+not willingness to accept risk. Map only TK Collaborating to `socialOrient=collaborative`.
+Leave TK Competing, Avoiding, Accommodating, Compromising unmapped until eidos#38
+resolves the `conflictMode` axis question.
+
+**7. DISC Dominance → `delegation=true`**
+`delegation` means "can spawn sub-agents" — a platform-semantic boolean. DISC D-types
+assign tasks but often maintain tight oversight; this does not predict sub-agent spawning
+capability. DISC types make no delegation claim; leave it at its role-specific default.
+
+---
+
+## Vocabulary Draft Tables
+
+These tables are the normative source for eidos#26 implementation. The
+`BelbinVocabularyProducer` implementation is mechanical — read the Belbin draft table,
+write the Java. `DiscVocabularyProducer` is blocked on eidos#40 and requires a design
+decision before implementation can begin.
+
+`exactMatches` is `Map.of()` for all entries — neither Belbin Associates nor DISC
+framework publishers have released canonical semantic web URIs for their terms.
+
+### Belbin Team Roles
+
+**Framework source:** Belbin, *Team Roles at Work*, 1993 edition (9-role model)
+**Vocabulary version:** `"1.0"` (eidos vocabulary; not a Belbin publication version)
+**URI:** `"urn:casehub:vocab:belbin"`
+
+**Implementation note:** The disposition columns in this section (`socialOrient`,
+`ruleFollowing`, `riskAppetite`, `autonomy`, `delegation`) are reference annotation —
+they show Conscientiousness values implied by each role for cross-mapping guidance.
+They are **not** fields in `VocabularyTerm`. `BelbinVocabularyProducer` writes only:
+`value`, `label`, `description`, `aliases`, `exactMatches = Map.of()`.
+
+| Role | value (key) | label | description | aliases |
+|------|-------------|-------|-------------|---------|
+| Plant | `plant` | Plant | Creative, unorthodox problem-solver; generates novel ideas independently | `["pl"]` |
+| Resource Investigator | `resource-investigator` | Resource Investigator | Extrovert who explores external opportunities and develops contacts | `["ri"]` |
+| Co-ordinator | `co-ordinator` | Co-ordinator | Clarifies goals, promotes team decision-making, delegates effectively | `["co"]` |
+| Shaper | `shaper` | Shaper | Challenges the team to improve; driven, dynamic, thrives under pressure | `["sh"]` |
+| Monitor Evaluator | `monitor-evaluator` | Monitor Evaluator | Sober, strategic, discerning; sees all options and judges accurately | `["me"]` |
+| Teamworker | `teamworker` | Teamworker | Cooperative, perceptive, diplomatic; averts friction and builds cohesion | `["tw"]` |
+| Implementer | `implementer` | Implementer | Disciplined, reliable, efficient; turns ideas into practical actions | `["imp"]` |
+| Completer Finisher | `completer-finisher` | Completer Finisher | Painstaking, conscientious, anxious; ensures delivery to standard | `["cf"]` |
+| Specialist | `specialist` | Specialist | Dedicated, self-starting, single-minded; provides rare knowledge | `["sp"]` |
+
+Implied disposition values per role (reference — use in combination pattern selection,
+not in VocabularyTerm entries):
+
+| Key | socialOrient | ruleFollowing | riskAppetite | autonomy | delegation |
+|-----|--------------|---------------|--------------|----------|------------|
+| `plant` | `independent` | `flexible` | `bold` | `autonomous` | `false` |
+| `resource-investigator` | `collaborative` | `flexible` | `measured` | `semi-autonomous` | `false` |
+| `co-ordinator` | `facilitative` | `principled` | `measured` | `semi-autonomous` | `true` |
+| `shaper` | `independent` | `flexible` | `bold` | `autonomous` | `false` |
+| `monitor-evaluator` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` |
+| `teamworker` | `collaborative` | `principled` | `conservative` | `directed` | `false` |
+| `implementer` | `collaborative` | `strict` | `conservative` | `directed` | `false` |
+| `completer-finisher` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` |
+| `specialist` | `independent` | `principled` | `measured` | `autonomous` | `false` |
+
+---
+
+### DISC Types
+
+**Framework source:** Conceptual DiSC quadrant model, Marston (1928); framework-neutral —
+not tied to any vendor assessment
+**Vocabulary version:** `"1.0"` (eidos vocabulary; not a vendor or framework version)
+**URI:** `"urn:casehub:vocab:disc"`
+
+**⚠ Blocked on eidos#40** (axis-aware `equivalentValues()` for multi-axis DISC
+resolution). The `→` columns show the Conscientiousness term that must be returned when
+resolving this DISC type on each specific axis. This is the mapping the
+`DiscVocabularyProducer` must implement — but the current `equivalentValues()` signature
+cannot express per-axis resolution. Resolve eidos#40 before writing this producer.
+
+DISC types are disposition vocabulary terms, not slot terms. An agent declares
+`dispositionVocabulary="urn:casehub:vocab:disc"` and uses DISC type keys as disposition
+field values.
+
+| Type | value (key) | label | description | aliases | → socialOrient | → ruleFollowing | → riskAppetite | → autonomy |
+|------|-------------|-------|-------------|---------|----------------|-----------------|----------------|------------|
+| Dominance | `dominance` | Dominance | Results-driven, direct, decisive; prioritises outcomes over relationships | `["D"]` | `independent` | `flexible` | `bold` | `autonomous` |
+| Influence | `influence` | Influence | Enthusiastic, optimistic, collaborative; motivates and involves others | `["i"]` | `collaborative` | `flexible` | `measured` | `semi-autonomous` |
+| Steadiness | `steadiness` | Steadiness | Patient, reliable, supportive; values stability and consistency | `["S"]` | `facilitative` | `principled` | `conservative` | `directed` |
+| Conscientiousness | `conscientiousness-disc` | Conscientiousness | Analytical, systematic, quality-focused; emphasises accuracy | `["C"]` | `independent` | `strict` | `conservative` | `semi-autonomous` |
+
+Note: `delegation` absent — DISC types make no claim about sub-agent spawning.
+`conscientiousness-disc` key avoids collision with `urn:casehub:vocab:conscientiousness`
+(a disposition term vocabulary); this DISC entry names a personality type.
+
+---
+
+## Vocabulary Gap Notes
+
+| Gap | Source | What is missing | Note |
+|-----|--------|-----------------|------|
+| Co-ordinator autonomy | Belbin Co-ordinator | Orchestrates team decision-making; higher coordination intent than `semi-autonomous` but not independently agenda-driven like `autonomous` | Mapped to `semi-autonomous + delegation=true` — the combination may be sufficient; decision for eidos#26 |
+| Conflict modes (all 5) | Thomas-Kilmann | No `conflictMode` axis; TK Avoiding, Accommodating, Competing, Compromising have no current home | Tracked in eidos#38 — do not add these to `socialOrient` |
+
+Previously proposed gap terms (accommodating, deferring, compromising) are withdrawn.
+Adding them to `socialOrient` would mix conflict strategy with social preference, making
+the axis semantically incoherent.
+
+---
+
+## Implementation Notes for eidos#26
+
+- Vocabulary URIs: `urn:casehub:vocab:<name>`
+- Each producer: `@ApplicationScoped` with `@Produces` returning a `Vocabulary`
+- Constructor: `Vocabulary(String uri, String name, String version, Map<String, VocabularyTerm> terms)`
+- Constructor: `VocabularyTerm(String value, String label, String description, List<String> aliases, Map<String, String> exactMatches)`
+  - `exactMatches` maps external URI → equivalent term value in that external vocabulary
+  - For Belbin and DISC: `Map.of()` (no published canonical URIs exist)
+- `CdiVocabularyRegistry` discovers all `Instance<Vocabulary>` CDI beans automatically — no registration step needed
+- `ConscientiousnessVocabularyProducer` is the model for `BelbinVocabularyProducer`
+- Keep Belbin and DISC as separate producer classes in the same `casehub-eidos-vocab` module
+- **`DiscVocabularyProducer` is blocked on eidos#40** — resolve the axis-aware resolution mechanism before writing it
+
+---
+
+## Appendix: BDI Agent Architecture Model
+
+BDI (Belief-Desire-Intention) is a formal computational architecture for rational agents
+(Rao & Georgeff, 1991). It describes how an agent's reasoning cycle should be implemented,
+not how to characterise behavioral disposition or team contribution. It is included here
+for architectural context only — it contributes no slot, capabilities, or disposition
+vocabulary terms and is excluded from the cross-reference table and all combination patterns.
+
+The following mapping is **illustrative only, not a precise correspondence:**
+
+| BDI component | Approximate AgentDescriptor analogue | Where the analogy breaks |
+|---------------|--------------------------------------|--------------------------|
+| Beliefs — what the agent knows | `AgentCapability` — declared knowledge and skills | Beliefs are dynamic (updated by perception); capabilities are static declarations |
+| Desires — what the agent wants to achieve | `AgentPromptContext.GoalContext` — render-time goal context | Desires are persistent motivations; GoalContext is session-scoped |
+| Intentions — committed action plans | `AgentDisposition` — stable behavioral character | Intentions are dynamic and context-specific; AgentDisposition is a static prior |
+
+The value of this mapping is recognising that AgentDescriptor's overall structure has
+BDI lineage. The descriptor captures static priors (what the agent is, what it can do,
+how it tends to behave); BDI describes the runtime loop that uses those priors. They are
+complementary, not equivalent.
