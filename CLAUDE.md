@@ -101,7 +101,7 @@ type: java
 Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 
 - **AgentDescriptor** — four-layer structured description (identity, slot, capabilities, disposition)
-- **VocabularyRegistry** — pluggable domain vocabulary system; CdiVocabularyRegistry discovers `Instance<Vocabulary>` CDI beans
+- **VocabularyRegistry** — pluggable domain vocabulary system; vocabularies are Java enums implementing `VocabularyTerm`; `CdiVocabularyRegistry` discovers `Instance<VocabularyRegistrar>` CDI beans at startup; axis-aware `equivalentValues()` with `DispositionAxis`
 - **AgentRegistry** — store and query descriptors (blocking + reactive)
 - **CapabilityHealth** — two-layer capability model: declared (descriptor) vs. operable now (runtime probe); `AgentStateStore` SPI records degradation state with TTL; `NoOpAgentStateStore` @DefaultBean, `InMemoryAgentStateStore` @Alternative in casehub-eidos-memory
 - **SystemPromptRenderer** — renders `AgentDescriptor + AgentPromptContext` (goal, resources, situational context) into a format-specific system prompt; `ClaudeMarkdownRenderer` @DefaultBean supports LLM path (LangChain4j `ChatModel`) and structural fallback
@@ -150,11 +150,14 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │   └── src/main/java/io/casehub/eidos/api/
 │       ├── AgentDescriptor.java         — four-layer agent description record (tenancyId always required)
 │       ├── AgentCapability.java         — capability with qualityHint (Double) + epistemicDomains
-│       ├── AgentDisposition.java        — open-String disposition axes + delegation boolean
+│       ├── AgentDisposition.java        — open-String disposition axes + delegation boolean + get(DispositionAxis)
 │       ├── AgentQuery.java              — criteria record for find(): slot, capabilityName, tenancyId (required)
-│       ├── Vocabulary.java              — named versioned vocabulary
-│       ├── VocabularyTerm.java          — term with aliases and exactMatches
-│       ├── VocabularyRegistry.java      — SPI: register, find, resolve, equivalentValues
+│       ├── DispositionAxis.java         — enum: SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY
+│       ├── VocabularyMetadata.java      — annotation: uri (required), name, version on vocabulary enum classes
+│       ├── VocabularyTerm.java          — interface implemented by vocabulary enum constants; exactMatch + axisExactMatch
+│       ├── VocabularyRegistry.java      — SPI: register(Class<T>), isRegistered, resolve, allTerms, equivalentValues (typed + string-based + axis-aware)
+│       └── spi/
+│           └── VocabularyRegistrar.java — @FunctionalInterface CDI SPI; @ApplicationScoped beans auto-register vocab enums
 │       ├── AgentRegistry.java           — SPI: register, findById(id,tenancyId), find(AgentQuery)
 │       ├── ReactiveAgentRegistry.java   — SPI: Uni<T> reactive mirror
 │       ├── AgentPromptContext.java      — render-time context: Optional<GoalContext>, List<Resource>, situationalContext, RenderFormat
@@ -168,12 +171,12 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 ├── runtime/
 │   └── src/main/java/io/casehub/eidos/runtime/
 │       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)
-│       ├── vocabulary/                  — CdiVocabularyRegistry (@DefaultBean, discovers Instance<Vocabulary>)
+│       ├── vocabulary/                  — CdiVocabularyRegistry (@DefaultBean, discovers Instance<VocabularyRegistrar>; three-map: byUri/byClass/byClassOrdered)
 │       ├── health/                      — DefaultCapabilityHealth (checks AgentStateStore first), DefaultReactiveCapabilityHealth, NoOpAgentStateStore (@DefaultBean)
 │       └── renderer/                    — ClaudeMarkdownRenderer (@DefaultBean, LangChain4j ChatModel optional)
 ├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryAgentStateStore
 ├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
-├── vocab/                               — casehub-eidos-vocab: SVO, Conscientiousness, CasehubSlot
+├── vocab/                               — casehub-eidos-vocab: SvoTerm, ConscientiousnessTerm, CasehubSlotTerm enums + VocabularyRegistrar beans
 └── examples/
     └── agent-scenarios/                 — @QuarkusTest examples: team, cross-vocab, epistemic, tenancy, disposition
 ```
