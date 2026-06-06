@@ -62,4 +62,22 @@ class AgentDispositionTest {
         assertThatNoException().isThrownBy(
             () -> new AgentDisposition(null, null, null, null, true));
     }
+
+    @Test
+    void get_returns_value_for_each_axis() {
+        var d = new AgentDisposition("collaborative", "strict", "conservative", "directed", false);
+        assertThat(d.get(DispositionAxis.SOCIAL_ORIENTATION)).contains("collaborative");
+        assertThat(d.get(DispositionAxis.RULE_FOLLOWING)).contains("strict");
+        assertThat(d.get(DispositionAxis.RISK_APPETITE)).contains("conservative");
+        assertThat(d.get(DispositionAxis.AUTONOMY)).contains("directed");
+    }
+
+    @Test
+    void get_returns_empty_for_null_axis_field() {
+        var d = new AgentDisposition(null, null, null, null, false);
+        assertThat(d.get(DispositionAxis.SOCIAL_ORIENTATION)).isEmpty();
+        assertThat(d.get(DispositionAxis.RULE_FOLLOWING)).isEmpty();
+        assertThat(d.get(DispositionAxis.RISK_APPETITE)).isEmpty();
+        assertThat(d.get(DispositionAxis.AUTONOMY)).isEmpty();
+    }
 }

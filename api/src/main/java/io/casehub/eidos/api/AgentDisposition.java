@@ -1,5 +1,7 @@
 package io.casehub.eidos.api;
 
+import java.util.Optional;
+
 /**
  * Behavioural disposition of an agent across open-String axes.
  * All String fields are self-declared and interpreted via the descriptor's vocabulary.
@@ -21,5 +23,14 @@ public record AgentDisposition(
             AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
         AgentDescriptorValidator.validateOptional("autonomy", autonomy,
             AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+    }
+
+    public Optional<String> get(DispositionAxis axis) {
+        return switch (axis) {
+            case SOCIAL_ORIENTATION -> Optional.ofNullable(socialOrient);
+            case RULE_FOLLOWING     -> Optional.ofNullable(ruleFollowing);
+            case RISK_APPETITE      -> Optional.ofNullable(riskAppetite);
+            case AUTONOMY           -> Optional.ofNullable(autonomy);
+        };
     }
 }
