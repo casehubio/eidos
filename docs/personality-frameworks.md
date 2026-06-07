@@ -283,7 +283,7 @@ image of the directed→autonomous progression, not an authoritative definition.
 **What it models:** A single cognitive style dimension ranging from Adaptor (prefers
 proven methods, works within structure, incrementally improves) to Innovator (prefers
 novel approaches, challenges assumptions, reconstructs problems). Developed by Michael
-Kirton (1976); measured by the KAI inventory.
+Kirton (1976); measured by the KAI inventory (32–160).
 
 **Scientific validity:** Medium — the KAI inventory has good test-retest reliability
 and convergent validity with related constructs; the single-axis model has been
@@ -377,7 +377,7 @@ Rows = AgentDescriptor fields. Columns = all frameworks except BDI (appendix onl
 
 | Field | Belbin | MM | Big Five | DISC | MBTI | TK | SL | KAI | O\*NET | SFIA |
 |-------|--------|----|----------|------|------|----|----|-----|--------|------|
-| `slot` | **slot** | — | — | — | — | — | — | — | capabilities* | capabilities* |
+| `slot` | **slot** | — | — | — | — | — | — | — | capabilities* | — |
 | `capabilities` | — | — | — | — | — | — | — | — | **capabilities** | **capabilities** |
 | `socialOrient` | **disposition** | reference | partial | **disposition** | partial | partial | — | — | partial | — |
 | `ruleFollowing` | **disposition** | reference | partial | **disposition** | partial | — | — | partial | — | — |
@@ -388,15 +388,14 @@ Rows = AgentDescriptor fields. Columns = all frameworks except BDI (appendix onl
 Key: **bold** = primary vocabulary source for this field · `partial` = partial/approximate mapping ·
 `reference` = conceptual grounding only, no vocabulary terms · `Partial` (compatibility) = meaningful overlap but insufficient to justify dual vocabulary · `—` = no claim
 
-*O\*NET and SFIA provide occupation codes that may be used as `slot` values when technical
+*O\*NET provides occupation codes that may be used as `slot` values when technical
 precision is needed over team-role vocabulary.
 
 ---
 
 ## 6. Framework Compatibility
 
-Curated pairs only — combinations that are meaningfully Additive, Redundant, or
-Contradictory. Full N×N matrix omitted; most cross-category pairings are simply
+Curated pairs only — combinations that are meaningfully Additive, Redundant, Reference, Inadvisable, or Partial. Full N×N matrix omitted; most cross-category pairings are simply
 orthogonal.
 
 | Pair | Rating | Reasoning |
