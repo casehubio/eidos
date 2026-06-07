@@ -8,14 +8,16 @@ import static org.assertj.core.api.Assertions.*;
 class AgentDescriptorTest {
 
     static AgentDescriptor minimal(String agentId, String tenancyId) {
-        return new AgentDescriptor(
-            agentId, "name", "1.0", "provider",
-            "modelFamily", "modelVersion", null,
-            null, null, null, null,
-            "slot", List.of(),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, tenancyId
-        );
+        return AgentDescriptor.builder()
+            .agentId(agentId).name("name").version("1.0").provider("provider")
+            .modelFamily("modelFamily").modelVersion("modelVersion")
+            .slot("slot").capabilities(List.of())
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative").ruleFollowing("principled")
+                .riskAppetite("measured").autonomy("semi-autonomous")
+                .build())
+            .tenancyId(tenancyId)
+            .build();
     }
 
     @Test
@@ -49,9 +51,10 @@ class AgentDescriptorTest {
     @Test
     void version_with_bidi_throws() {
         // U+202E RIGHT-TO-LEFT OVERRIDE
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", "1.0‮", null, null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name").version("1.0‮")
+            .slot("worker").tenancyId("tenant")
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("version"));
@@ -59,9 +62,10 @@ class AgentDescriptorTest {
 
     @Test
     void provider_blank_throws() {
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, "  ", null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name").provider("  ")
+            .slot("worker").tenancyId("tenant")
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("provider"));
@@ -69,10 +73,11 @@ class AgentDescriptorTest {
 
     @Test
     void vocabulary_uri_exceeds_500_chars_throws() {
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, null, null,
-            "https://vocab.io/" + "x".repeat(490), null, null, null,
-            "worker", List.of(), null, null, null, "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .domainVocabulary("https://vocab.io/" + "x".repeat(490))
+            .slot("worker").tenancyId("tenant")
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("domainVocabulary"));
@@ -82,10 +87,11 @@ class AgentDescriptorTest {
     void jurisdiction_with_c0_throws() {
         // U+0001 START OF HEADING — a C0 control character
         String jurisdictionWithC0 = "EU" + (char) 0x0001 + "inject";
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), null,
-            jurisdictionWithC0, null, "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .slot("worker").tenancyId("tenant")
+            .jurisdiction(jurisdictionWithC0)
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("jurisdiction"));
@@ -93,16 +99,19 @@ class AgentDescriptorTest {
 
     @Test
     void data_handling_policy_null_is_allowed() {
-        assertThatNoException().isThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant"));
+        assertThatNoException().isThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .slot("worker").tenancyId("tenant")
+            .build());
     }
 
     @Test
     void data_handling_policy_blank_throws() {
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, "  ", "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .slot("worker").tenancyId("tenant")
+            .dataHandlingPolicy("  ")
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("dataHandlingPolicy"));
@@ -110,9 +119,11 @@ class AgentDescriptorTest {
 
     @Test
     void data_handling_policy_exceeds_1000_chars_throws() {
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, "p".repeat(1001), "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .slot("worker").tenancyId("tenant")
+            .dataHandlingPolicy("p".repeat(1001))
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("dataHandlingPolicy"));
@@ -120,16 +131,20 @@ class AgentDescriptorTest {
 
     @Test
     void weights_fingerprint_at_255_chars_is_valid() {
-        assertThatNoException().isThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, null, "f".repeat(255),
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant"));
+        assertThatNoException().isThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .weightsFingerprint("f".repeat(255))
+            .slot("worker").tenancyId("tenant")
+            .build());
     }
 
     @Test
     void weights_fingerprint_at_256_chars_throws() {
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, null, "f".repeat(256),
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .weightsFingerprint("f".repeat(256))
+            .slot("worker").tenancyId("tenant")
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("weightsFingerprint"));
@@ -137,9 +152,11 @@ class AgentDescriptorTest {
 
     @Test
     void model_family_exceeds_200_chars_throws() {
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, "f".repeat(201), null, null,
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .modelFamily("f".repeat(201))
+            .slot("worker").tenancyId("tenant")
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("modelFamily"));
@@ -147,9 +164,11 @@ class AgentDescriptorTest {
 
     @Test
     void model_version_exceeds_200_chars_throws() {
-        assertThatThrownBy(() -> new AgentDescriptor(
-            "id", "Name", null, null, null, "v".repeat(201), null,
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+            .agentId("id").name("Name")
+            .modelVersion("v".repeat(201))
+            .slot("worker").tenancyId("tenant")
+            .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("modelVersion"));
@@ -256,16 +275,30 @@ class AgentDescriptorTest {
     }
 
     @Test
-    void builder_produces_same_result_as_minimal_constructor() {
-        var fromCtor = minimal("agent-1", "default");
-        var fromBuilder = AgentDescriptor.builder()
+    void builder_with_explicit_nulls_equals_builder_with_nulls_omitted() {
+        var explicit = AgentDescriptor.builder()
             .agentId("agent-1").name("name").version("1.0").provider("provider")
-            .modelFamily("modelFamily").modelVersion("modelVersion").weightsFingerprint(null)
+            .modelFamily("modelFamily").modelVersion("modelVersion")
+            .weightsFingerprint(null)
             .domainVocabulary(null).slotVocabulary(null).dispositionVocabulary(null)
-            .axisVocabularies(null).slot("slot").capabilities(List.of())
-            .disposition(new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false))
+            .axisVocabularies(null)          // null → compact constructor skips Map.copyOf
+            .slot("slot").capabilities(List.of())
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative").ruleFollowing("principled")
+                .riskAppetite("measured").autonomy("semi-autonomous")
+                .build())
             .jurisdiction(null).dataHandlingPolicy(null).tenancyId("default")
             .build();
-        assertThat(fromBuilder).isEqualTo(fromCtor);
+        var omitted = AgentDescriptor.builder()
+            .agentId("agent-1").name("name").version("1.0").provider("provider")
+            .modelFamily("modelFamily").modelVersion("modelVersion")
+            .slot("slot").capabilities(List.of())
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative").ruleFollowing("principled")
+                .riskAppetite("measured").autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
+        assertThat(explicit).isEqualTo(omitted);
     }
 }

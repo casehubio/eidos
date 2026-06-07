@@ -28,12 +28,23 @@ class InMemoryAgentRegistryTest {
             .map(n -> new AgentCapability(n, 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of()))
             .toList();
-        return new AgentDescriptor(
-            agentId, "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, null, slot, capabilities,
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, tenancyId
-        );
+        return AgentDescriptor.builder()
+            .agentId(agentId)
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot(slot)
+            .capabilities(capabilities)
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId(tenancyId)
+            .build();
     }
 
     @Test
@@ -105,12 +116,23 @@ class InMemoryAgentRegistryTest {
         // Empty inputTypes/outputTypes/tags are allowed; name is required.
         var cap = new AgentCapability("empty-types", 0.9, null, null,
             List.of(), List.of(), List.of(), Map.of());
-        var descriptor = new AgentDescriptor(
-            "m-8", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, null, "reviewer", List.of(cap),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, "default"
-        );
+        var descriptor = AgentDescriptor.builder()
+            .agentId("m-8")
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(cap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
         registry.register(descriptor);
         // Empty lists should not cause NPE in find()
         var result = registry.find(AgentQuery.byCapability("empty-types", "default"));

@@ -355,4 +355,49 @@ class CdiVocabularyRegistryTest {
         assertThat(registry.equivalentValues(BypassSource.TERM, BypassTarget.class))
             .contains(BypassTarget.MAPPED);
     }
+
+    // --- Robustness guards (#42) ---
+
+    @Test
+    void register_alias_vs_alias_collision_throws() {
+        @VocabularyMetadata(uri = "urn:test:alias-vs-alias", name = "Alias vs Alias", version = "1.0")
+        enum AliasVsAlias implements VocabularyTerm {
+            TERM_A("a", "A", List.of("shared")),
+            TERM_B("b", "B", List.of("shared"));  // "shared" collides with TERM_A's alias
+            final String value, label; final List<String> aliases;
+            AliasVsAlias(String v, String l, List<String> a) { value=v; label=l; aliases=a; }
+            @Override public String value()         { return value; }
+            @Override public String label()         { return label; }
+            @Override public List<String> aliases() { return aliases; }
+        }
+        assertThatThrownBy(() -> registry.register(AliasVsAlias.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("conflicts");
+    }
+
+    @Test
+    void register_blank_uri_throws() {
+        @VocabularyMetadata(uri = "")
+        enum BlankUri implements VocabularyTerm {
+            TERM("term", "Term", List.of());
+            final String value, label; final List<String> aliases;
+            BlankUri(String v, String l, List<String> a) { value=v; label=l; aliases=a; }
+            @Override public String value()         { return value; }
+            @Override public String label()         { return label; }
+            @Override public List<String> aliases() { return aliases; }
+        }
+        assertThatThrownBy(() -> registry.register(BlankUri.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("blank");
+    }
+
+    @Test
+    void allTerms_excludes_aliases_when_constants_have_aliases() {
+        // SourceTerm.ALPHA aliases ["a","one"], SourceTerm.BETA alias ["b"] — 5 lookup entries, 2 constants
+        registry.register(SourceTerm.class);
+        var terms = registry.allTerms("urn:test:source");
+        assertThat(terms).hasSize(2);
+        assertThat(terms).extracting(VocabularyTerm::value)
+            .doesNotContain("a", "one", "b");
+    }
 }

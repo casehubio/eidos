@@ -12,9 +12,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ValidatedRecordTest {
 
     static SyntheticEvalCase minimalCase() {
-        final var desc = new AgentDescriptor(
-            "id", "N", null, null, null, null, null, null, null, null, null,
-            "worker", List.of(), null, null, null, "t");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("N")
+            .slot("worker")
+            .capabilities(List.of())
+            .tenancyId("t")
+            .build();
         return new SyntheticEvalCase("c", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
     }
 

@@ -18,42 +18,73 @@ class MultiAgentTeamTest {
 
     @BeforeEach
     void registerTeam() {
-        registry.register(new AgentDescriptor(
-            "planner-1", "Strategic Planner", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null, null,
-            "planner",
-            List.of(new AgentCapability("planning", 0.9, 200L, "medium",
+        registry.register(AgentDescriptor.builder()
+            .agentId("planner-1")
+            .name("Strategic Planner")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slotVocabulary("urn:casehub:vocab:casehub-slot")
+            .slot("planner")
+            .capabilities(List.of(new AgentCapability("planning", 0.9, 200L, "medium",
                 List.of("requirements"), List.of("plan"), List.of("orchestration"),
-                Map.of("software", 0.95, "logistics", 0.4))),
-            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", null, true),
-            null, null, "default"));
+                Map.of("software", 0.95, "logistics", 0.4))))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("facilitative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .delegation(true)
+                .build())
+            .tenancyId("default")
+            .build());
 
-        registry.register(new AgentDescriptor(
-            "reviewer-1", "Code Reviewer", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null, null,
-            "reviewer",
-            List.of(
+        registry.register(AgentDescriptor.builder()
+            .agentId("reviewer-1")
+            .name("Code Reviewer")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slotVocabulary("urn:casehub:vocab:casehub-slot")
+            .slot("reviewer")
+            .capabilities(List.of(
                 new AgentCapability("code-review", 0.95, 150L, "low",
                     List.of("code"), List.of("review"), List.of("quality"),
                     Map.of("java", 0.95, "python", 0.8, "rust", 0.3)),
                 new AgentCapability("test-writing", 0.8, 300L, "medium",
                     List.of("code"), List.of("tests"), List.of("testing"),
-                    Map.of("java", 0.9))),
-            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
-            null, null, "default"));
+                    Map.of("java", 0.9))))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent")
+                .ruleFollowing("strict")
+                .riskAppetite("conservative")
+                .autonomy("directed")
+                .build())
+            .tenancyId("default")
+            .build());
 
-        registry.register(new AgentDescriptor(
-            "executor-1", "Task Executor", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null, null,
-            "executor",
-            List.of(new AgentCapability("code-generation", 0.85, 500L, "high",
+        registry.register(AgentDescriptor.builder()
+            .agentId("executor-1")
+            .name("Task Executor")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slotVocabulary("urn:casehub:vocab:casehub-slot")
+            .slot("executor")
+            .capabilities(List.of(new AgentCapability("code-generation", 0.85, 500L, "high",
                 List.of("spec"), List.of("code"), List.of("implementation"),
-                Map.of("java", 0.9, "python", 0.85, "rust", 0.6))),
-            new AgentDisposition("collaborative", "flexible", "bold", "autonomous", null, false),
-            null, null, "default"));
+                Map.of("java", 0.9, "python", 0.85, "rust", 0.6))))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("flexible")
+                .riskAppetite("bold")
+                .autonomy("autonomous")
+                .build())
+            .tenancyId("default")
+            .build());
     }
 
     @Test

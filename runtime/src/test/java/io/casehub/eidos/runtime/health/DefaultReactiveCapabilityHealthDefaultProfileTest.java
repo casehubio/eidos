@@ -18,14 +18,24 @@ class DefaultReactiveCapabilityHealthDefaultProfileTest {
 
     @Test
     void reactive_health_is_injectable_under_default_profile() {
-        var descriptor = new AgentDescriptor(
-            "agent-1", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, null, "reviewer",
-            List.of(new AgentCapability("code-review", 0.9, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, "default"
-        );
+        var descriptor = AgentDescriptor.builder()
+            .agentId("agent-1")
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(new AgentCapability("code-review", 0.9, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
 
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null))
                            .await().indefinitely();

@@ -41,15 +41,24 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     }
 
     static AgentDescriptor descriptor() {
-        return new AgentDescriptor(
-            "reviewer-1", "Code Reviewer", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null, null, null, null, null,
-            "reviewer",
-            List.of(new AgentCapability("code-review", 0.9, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
-            null, null, "default"
-        );
+        return AgentDescriptor.builder()
+            .agentId("reviewer-1")
+            .name("Code Reviewer")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slot("reviewer")
+            .capabilities(List.of(new AgentCapability("code-review", 0.9, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent")
+                .ruleFollowing("strict")
+                .riskAppetite("conservative")
+                .autonomy("directed")
+                .build())
+            .tenancyId("default")
+            .build();
     }
 
     static StreamingChatModel successMock() {

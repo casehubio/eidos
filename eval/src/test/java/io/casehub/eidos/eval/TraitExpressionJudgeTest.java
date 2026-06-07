@@ -109,9 +109,13 @@ class TraitExpressionJudgeTest {
     }
 
     private static ProfiledEvalCase minimalCase() {
-        final var desc = new AgentDescriptor(
-            "id", "N", null, null, null, null, null, null, null, null, null,
-            "reviewer", List.of(), null, null, null, "t");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("N")
+            .slot("reviewer")
+            .capabilities(List.of())
+            .tenancyId("t")
+            .build();
         final var profile = new AgentProfile(
             "sw-engineer-careful", "SW Eng", "sw", null, null,
             SourceType.ANTHROPIC_LIBRARY, "You are careful.", null, null,

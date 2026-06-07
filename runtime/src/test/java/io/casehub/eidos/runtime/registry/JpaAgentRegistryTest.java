@@ -24,14 +24,23 @@ class JpaAgentRegistryTest {
             .map(n -> new AgentCapability(n, 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of()))
             .toList();
-        return new AgentDescriptor(
-            agentId, "Agent " + agentId, "1.0", "anthropic",
-            "claude", "claude-3-7", null,
-            null, null, null, null,
-            slot, caps,
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, tenancyId
-        );
+        return AgentDescriptor.builder()
+            .agentId(agentId)
+            .name("Agent " + agentId)
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot(slot)
+            .capabilities(caps)
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId(tenancyId)
+            .build();
     }
 
     @Test
@@ -145,17 +154,28 @@ class JpaAgentRegistryTest {
     @Test
     @TestTransaction
     void axis_vocabularies_round_trips_through_jpa() {
-        var d = new AgentDescriptor(
-            "agent-axis", "Axis Agent", "1.0", "anthropic",
-            "claude", "claude-3-7", null,
-            null, "urn:casehub:vocab:belbin",
-            "urn:casehub:vocab:disc",
-            Map.of(DispositionAxis.CONFLICT_MODE, "urn:casehub:vocab:thomas-kilmann"),
-            "co-ordinator",
-            List.of(),
-            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", "collaborating", true),
-            null, null, "default"
-        );
+        var d = AgentDescriptor.builder()
+            .agentId("agent-axis")
+            .name("Axis Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slotVocabulary("urn:casehub:vocab:belbin")
+            .dispositionVocabulary("urn:casehub:vocab:disc")
+            .axisVocabularies(Map.of(DispositionAxis.CONFLICT_MODE, "urn:casehub:vocab:thomas-kilmann"))
+            .slot("co-ordinator")
+            .capabilities(List.of())
+            .disposition(AgentDisposition.builder()
+                .socialOrient("facilitative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .conflictMode("collaborating")
+                .delegation(true)
+                .build())
+            .tenancyId("default")
+            .build();
         registry.register(d);
         var found = registry.findById("agent-axis", "default").orElseThrow();
         assertThat(found.axisVocabularies())

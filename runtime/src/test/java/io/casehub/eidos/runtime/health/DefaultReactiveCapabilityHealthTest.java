@@ -22,13 +22,23 @@ class DefaultReactiveCapabilityHealthTest {
     ReactiveCapabilityHealth health;
 
     static AgentDescriptor agent(AgentCapability... capabilities) {
-        return new AgentDescriptor(
-            "agent-1", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, null, "reviewer",
-            List.of(capabilities),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, "default"
-        );
+        return AgentDescriptor.builder()
+            .agentId("agent-1")
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(capabilities))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
     }
 
     @Test

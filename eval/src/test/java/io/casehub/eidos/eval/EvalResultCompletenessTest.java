@@ -18,8 +18,13 @@ class EvalResultCompletenessTest {
             .map(n -> new AgentCapability(n, null, null, null,
                 List.of(), List.of(), List.of(), Map.of()))
             .toList();
-        return new AgentDescriptor("id", "Name", null, null, null, null, null,
-            null, null, null, null, "worker", caps, null, null, null, "tenant");
+        return AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(caps)
+            .tenancyId("tenant")
+            .build();
     }
 
     static boolean computeCompleteness(final AgentDescriptor descriptor, final String renderedContent) {

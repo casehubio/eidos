@@ -24,17 +24,27 @@ class EidosRenderPipelineTest {
     }
 
     static AgentDescriptor fullDescriptor() {
-        return new AgentDescriptor(
-            "reviewer-1", "Code Reviewer", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null,
-            null, null, null, null,
-            "reviewer",
-            List.of(new AgentCapability("code-review", 0.95, 150L, "low",
+        return AgentDescriptor.builder()
+            .agentId("reviewer-1")
+            .name("Code Reviewer")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slot("reviewer")
+            .capabilities(List.of(new AgentCapability("code-review", 0.95, 150L, "low",
                 List.of("code"), List.of("review"), List.of(),
-                Map.of("java", 0.95, "rust", 0.3))),
-            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
-            "EU", "gdpr-compliant", "default"
-        );
+                Map.of("java", 0.95, "rust", 0.3))))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent")
+                .ruleFollowing("strict")
+                .riskAppetite("conservative")
+                .autonomy("directed")
+                .build())
+            .jurisdiction("EU")
+            .dataHandlingPolicy("gdpr-compliant")
+            .tenancyId("default")
+            .build();
     }
 
     static AgentPromptContext fullContext() {
@@ -91,10 +101,15 @@ class EidosRenderPipelineTest {
 
     @Test
     void descriptor_payload_includes_weights_fingerprint_when_set() {
-        final var desc = new AgentDescriptor(
-            "id", "Name", "1.0", null, null, null, "fp-abc123",
-            null, null, null, null, "slot", List.of(), null, null, null, "t"
-        );
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .version("1.0")
+            .weightsFingerprint("fp-abc123")
+            .slot("slot")
+            .capabilities(List.of())
+            .tenancyId("t")
+            .build();
         final var node = pipeline.buildDescriptorPayload(desc);
         assertThat(node.get("weightsFingerprint").asText()).isEqualTo("fp-abc123");
     }

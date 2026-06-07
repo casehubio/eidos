@@ -16,14 +16,24 @@ class InMemoryReactiveAgentRegistryTest {
     @Inject ReactiveAgentRegistry registry;
 
     static AgentDescriptor descriptor(String agentId, String slot, String tenancyId) {
-        return new AgentDescriptor(
-            agentId, "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, null, slot,
-            List.of(new AgentCapability("cap", 0.9, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, tenancyId
-        );
+        return AgentDescriptor.builder()
+            .agentId(agentId)
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot(slot)
+            .capabilities(List.of(new AgentCapability("cap", 0.9, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId(tenancyId)
+            .build();
     }
 
     @Test

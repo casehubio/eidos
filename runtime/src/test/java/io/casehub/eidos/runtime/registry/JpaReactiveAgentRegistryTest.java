@@ -27,14 +27,23 @@ class JpaReactiveAgentRegistryTest {
             .map(n -> new AgentCapability(n, 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of()))
             .toList();
-        return new AgentDescriptor(
-            agentId, "Agent " + agentId, "1.0", "anthropic",
-            "claude", "claude-3-7", null,
-            null, null, null, null,
-            slot, caps,
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
-            null, null, tenancyId
-        );
+        return AgentDescriptor.builder()
+            .agentId(agentId)
+            .name("Agent " + agentId)
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot(slot)
+            .capabilities(caps)
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId(tenancyId)
+            .build();
     }
 
     @Test

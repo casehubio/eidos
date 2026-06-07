@@ -49,12 +49,14 @@ class PromptJudgeTest {
         };
         judge = new PromptJudge(stubJudge, new ObjectMapper());
 
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker",
-            List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .tenancyId("tenant")
+            .build();
         evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
         rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
     }
@@ -120,12 +122,14 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(VALID_A2A_JUDGE_JSON)).build();
             }
         };
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker",
-            List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .tenancyId("tenant")
+            .build();
         final var a2aCase = new SyntheticEvalCase("a2a-test", desc,
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final var a2aRendered = new RenderedPrompt(
@@ -149,12 +153,14 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(VALID_A2A_JUDGE_JSON)).build();
             }
         };
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker",
-            List.of(new AgentCapability("sprint-planning", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of(new AgentCapability("sprint-planning", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .tenancyId("tenant")
+            .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final String cardWithDesc =
             "{\"capabilities\":[{\"name\":\"sprint-planning\",\"description\":\"You plan sprints.\"}]}";
@@ -174,12 +180,14 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(VALID_A2A_JUDGE_JSON)).build();
             }
         };
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker",
-            List.of(new AgentCapability("sprint-planning", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of(new AgentCapability("sprint-planning", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .tenancyId("tenant")
+            .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final String cardNoDesc = "{\"capabilities\":[{\"name\":\"sprint-planning\"}]}";
         final var rendered = new RenderedPrompt(cardNoDesc, RenderFormat.A2A_CARD, "dh", "ch");
@@ -198,12 +206,14 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(VALID_A2A_JUDGE_JSON)).build();
             }
         };
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker",
-            List.of(new AgentCapability("sprint-planning", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of(new AgentCapability("sprint-planning", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .tenancyId("tenant")
+            .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         // description field is present but blank
         final String cardBlankDesc = "{\"capabilities\":[{\"name\":\"sprint-planning\",\"description\":\"\"}]}";
@@ -223,9 +233,13 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(VALID_A2A_JUDGE_JSON)).build();
             }
         };
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker", List.of(), null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of())
+            .tenancyId("tenant")
+            .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final var rendered = new RenderedPrompt(
             "{\"name\":\"Name\",\"agentId\":\"id\"}", RenderFormat.A2A_CARD, "dh", "ch");
@@ -244,12 +258,14 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from("this is not json {{")).build();
             }
         };
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker",
-            List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .tenancyId("tenant")
+            .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
         final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
 
@@ -271,12 +287,14 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(incompleteJson)).build();
             }
         };
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null, null, null, null, null,
-            "worker",
-            List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())),
-            null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .tenancyId("tenant")
+            .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
         final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
 

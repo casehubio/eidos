@@ -58,17 +58,27 @@ class EidosSystemPromptRendererTest {
     }
 
     static AgentDescriptor fullDescriptor() {
-        return new AgentDescriptor(
-            "reviewer-1", "Code Reviewer", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null,
-            null, null, null, null,
-            "reviewer",
-            List.of(new AgentCapability("code-review", 0.95, 150L, "low",
+        return AgentDescriptor.builder()
+            .agentId("reviewer-1")
+            .name("Code Reviewer")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slot("reviewer")
+            .capabilities(List.of(new AgentCapability("code-review", 0.95, 150L, "low",
                 List.of("code"), List.of("review"), List.of(),
-                Map.of("java", 0.95, "rust", 0.3))),
-            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
-            "EU", "gdpr-compliant", "default"
-        );
+                Map.of("java", 0.95, "rust", 0.3))))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent")
+                .ruleFollowing("strict")
+                .riskAppetite("conservative")
+                .autonomy("directed")
+                .build())
+            .jurisdiction("EU")
+            .dataHandlingPolicy("gdpr-compliant")
+            .tenancyId("default")
+            .build();
     }
 
     static AgentPromptContext fullContext() {
@@ -377,11 +387,17 @@ class EidosSystemPromptRendererTest {
 
     @Test
     void different_descriptor_produces_different_descriptor_hash() {
-        final var desc2 = new AgentDescriptor(
-            "planner-1", "Planner", "1.0", "anthropic", "claude", "claude-3-7-sonnet",
-            null, null, null, null, null, "planner",
-            List.of(), null, null, null, "default"
-        );
+        final var desc2 = AgentDescriptor.builder()
+            .agentId("planner-1")
+            .name("Planner")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slot("planner")
+            .capabilities(List.of())
+            .tenancyId("default")
+            .build();
         final var r1 = rendererStructural.render(fullDescriptor(), fullContext());
         final var r2 = rendererStructural.render(desc2, fullContext());
         assertThat(r1.descriptorHash()).isNotEqualTo(r2.descriptorHash());

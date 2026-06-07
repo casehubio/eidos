@@ -16,9 +16,13 @@ class EvalReportTest {
     static EvalResult resultFor(final RenderFormat format,
                                  final Map<EvalDimension, EvalScore> scores,
                                  final boolean complete) {
-        final var desc = new AgentDescriptor(
-            "id", "Name", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, null, "tenant");
+        final var desc = AgentDescriptor.builder()
+            .agentId("id")
+            .name("Name")
+            .slot("worker")
+            .capabilities(List.of())
+            .tenancyId("tenant")
+            .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(format));
         final var rendered = new RenderedPrompt("content", format, "dh", "ch");
         final double overall = scores.values().stream()

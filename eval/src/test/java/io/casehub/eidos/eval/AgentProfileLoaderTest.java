@@ -70,13 +70,28 @@ class AgentProfileLoaderTest {
     @Test
     void stage0_fails_when_primaryAxis_same_value_in_both_profiles() {
         // Both profiles have riskAppetite=conservative (identical) — Stage 0 must reject
-        final var disp = new AgentDisposition("independent", "strict", "conservative", "directed", null, false);
-        final var desc1 = new AgentDescriptor(
-            "p1", "P1", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), disp, null, null, "t");
-        final var desc2 = new AgentDescriptor(
-            "p2", "P2", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), disp, null, null, "t");
+        final var disp = AgentDisposition.builder()
+            .socialOrient("independent")
+            .ruleFollowing("strict")
+            .riskAppetite("conservative")
+            .autonomy("directed")
+            .build();
+        final var desc1 = AgentDescriptor.builder()
+            .agentId("p1")
+            .name("P1")
+            .slot("worker")
+            .capabilities(List.of())
+            .disposition(disp)
+            .tenancyId("t")
+            .build();
+        final var desc2 = AgentDescriptor.builder()
+            .agentId("p2")
+            .name("P2")
+            .slot("worker")
+            .capabilities(List.of())
+            .disposition(disp)
+            .tenancyId("t")
+            .build();
         final var p1 = new AgentProfile(
             "p1", "Role", "domain", null, null, SourceType.PRACTITIONER,
             "prose", null, null, Map.of(), Map.of(), desc1, List.of());

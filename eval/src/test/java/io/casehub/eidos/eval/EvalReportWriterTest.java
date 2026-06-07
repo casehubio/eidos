@@ -27,9 +27,13 @@ class EvalReportWriterTest {
     }
 
     static EvalResult sampleMarkdownResult() {
-        final var desc = new AgentDescriptor(
-            "a", "Agent", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, null, "t");
+        final var desc = AgentDescriptor.builder()
+            .agentId("a")
+            .name("Agent")
+            .slot("worker")
+            .capabilities(List.of())
+            .tenancyId("t")
+            .build();
         final var ctx = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
         final var rendered = new RenderedPrompt("You are Agent.", RenderFormat.MARKDOWN, "dh", "ch");
         // MARKDOWN uses SECOND_PERSON, CONCISENESS, FACTUAL_FIDELITY, TONE
@@ -81,9 +85,13 @@ class EvalReportWriterTest {
     @Test
     void summaryTable_two_formats_have_separate_headers() {
         // A2A_CARD result
-        final var desc = new AgentDescriptor(
-            "b", "Bot", null, null, null, null, null,
-            null, null, null, null, "worker", List.of(), null, null, null, "t");
+        final var desc = AgentDescriptor.builder()
+            .agentId("b")
+            .name("Bot")
+            .slot("worker")
+            .capabilities(List.of())
+            .tenancyId("t")
+            .build();
         final var ctx = AgentPromptContext.forFormat(RenderFormat.A2A_CARD);
         final var rendered = new RenderedPrompt(
             "{\"name\":\"Bot\"}", RenderFormat.A2A_CARD, "dh", "ch");
@@ -119,9 +127,13 @@ class EvalReportWriterTest {
 
     @Test
     void writeProximityJson_creates_valid_json(@TempDir final Path dir) throws IOException {
-        final var desc = new AgentDescriptor(
-            "a", "Agent", null, null, null, null, null, null, null, null, null,
-            "worker", List.of(), null, null, null, "t");
+        final var desc = AgentDescriptor.builder()
+            .agentId("a")
+            .name("Agent")
+            .slot("worker")
+            .capabilities(List.of())
+            .tenancyId("t")
+            .build();
         final var profile = sampleProfile(desc);
         final var evalCase = new ProfiledEvalCase("case", desc,
             AgentPromptContext.forFormat(RenderFormat.MARKDOWN), profile);
@@ -137,9 +149,13 @@ class EvalReportWriterTest {
 
     @Test
     void proximitySummaryTable_contains_mean_score() {
-        final var desc = new AgentDescriptor(
-            "a", "Agent", null, null, null, null, null, null, null, null, null,
-            "worker", List.of(), null, null, null, "t");
+        final var desc = AgentDescriptor.builder()
+            .agentId("a")
+            .name("Agent")
+            .slot("worker")
+            .capabilities(List.of())
+            .tenancyId("t")
+            .build();
         final var profile = sampleProfile(desc);
         final var evalCase = new ProfiledEvalCase("case", desc,
             AgentPromptContext.forFormat(RenderFormat.MARKDOWN), profile);

@@ -20,16 +20,29 @@ class SystemPromptRendererTest {
 
     @BeforeEach
     void registerAgent() {
-        registry.register(new AgentDescriptor(
-            "planner-1", "Strategic Planner", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null, null,
-            "planner",
-            List.of(new AgentCapability("planning", 0.9, 200L, "medium",
+        registry.register(AgentDescriptor.builder()
+            .agentId("planner-1")
+            .name("Strategic Planner")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7-sonnet")
+            .slotVocabulary("urn:casehub:vocab:casehub-slot")
+            .slot("planner")
+            .capabilities(List.of(new AgentCapability("planning", 0.9, 200L, "medium",
                 List.of("requirements"), List.of("plan"), List.of(),
-                Map.of("software", 0.95, "logistics", 0.4))),
-            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", null, true),
-            "EU", "gdpr-compliant", "default"));
+                Map.of("software", 0.95, "logistics", 0.4))))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("facilitative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .delegation(true)
+                .build())
+            .jurisdiction("EU")
+            .dataHandlingPolicy("gdpr-compliant")
+            .tenancyId("default")
+            .build());
     }
 
     @Test

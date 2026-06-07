@@ -17,16 +17,25 @@ class EpistemicDomainMatchingTest {
 
     @Inject CapabilityHealth health;
 
-    final AgentDescriptor polyglotReviewer = new AgentDescriptor(
-        "polyglot-1", "Polyglot Reviewer", "1.0", "anthropic",
-        "claude", "claude-3-7-sonnet", null,
-        null, null, null, null, "reviewer",
-        List.of(new AgentCapability("code-review", 0.9, 150L, "low",
+    final AgentDescriptor polyglotReviewer = AgentDescriptor.builder()
+        .agentId("polyglot-1")
+        .name("Polyglot Reviewer")
+        .version("1.0")
+        .provider("anthropic")
+        .modelFamily("claude")
+        .modelVersion("claude-3-7-sonnet")
+        .slot("reviewer")
+        .capabilities(List.of(new AgentCapability("code-review", 0.9, 150L, "low",
             List.of("code"), List.of("review"), List.of("quality"),
-            Map.of("java", 0.95, "python", 0.8, "rust", 0.2))),
-        new AgentDisposition("independent", "principled", "measured", "directed", null, false),
-        null, null, "default"
-    );
+            Map.of("java", 0.95, "python", 0.8, "rust", 0.2))))
+        .disposition(AgentDisposition.builder()
+            .socialOrient("independent")
+            .ruleFollowing("principled")
+            .riskAppetite("measured")
+            .autonomy("directed")
+            .build())
+        .tenancyId("default")
+        .build();
 
     @Test
     void probe_ready_for_strong_domain() {
