@@ -48,9 +48,9 @@ which is the additive combination the platform needs for full behavioral profili
 
 ### Negative Consequences / Tradeoffs
 
-* Axis-aware resolution of DISC types requires extending `VocabularyRegistry.equivalentValues()`
+* Axis-aware resolution of DISC types required extending `VocabularyRegistry.equivalentValues()`
   with an axis parameter (a single DISC type maps to different Conscientiousness terms per axis)
-  — tracked in eidos#40; `DiscVocabularyProducer` implementation is blocked until resolved
+  — resolved in eidos#40 (CLOSED). Implemented as `DiscTerm` + `DiscVocabRegistrar` in `casehub-eidos-vocab`. See eidos#26 for the implementation.
 
 ## Pros and Cons of the Options
 
@@ -66,7 +66,7 @@ which is the additive combination the platform needs for full behavioral profili
 * ✅ Semantically correct: behavioral pattern → disposition
 * ✅ Belbin + DISC combination is additive and representable
 * ✅ Disposition axis queries return behavioral signal, not role assignments
-* ❌ Requires axis-aware API extension (eidos#40) before DiscVocabularyProducer can be implemented
+* ✅ Axis-aware API extension implemented in eidos#40 (CLOSED); `DiscTerm` uses `axisExactMatch` for per-axis resolution
 
 ### Option C — DISC and Belbin unified slot vocabulary
 
@@ -79,5 +79,5 @@ which is the additive combination the platform needs for full behavioral profili
 
 * eidos#29 — personality framework mapping (design analysis that identified the category error)
 * eidos#26 — Belbin/DISC vocabulary module implementation
-* eidos#40 — axis-aware `equivalentValues()` API extension (blocks DiscVocabularyProducer)
+* eidos#40 — axis-aware `equivalentValues()` API extension (CLOSED — enabled DiscTerm implementation)
 * docs/personality-frameworks.md §Architecture: DISC as Disposition Vocabulary

@@ -42,8 +42,8 @@ A dimension that maps strongly to a field gets a concrete term. Weak mappings ar
   receive a different type one month later (poor test-retest reliability). Use Big Five instead.
 - **DISC:** Included as a disposition vocabulary source despite Low scientific validity —
   its imprecision is bounded (correlates with Big Five Extraversion × Agreeableness), making
-  it usable as shorthand in practice. ⚠ Full implementation requires an axis-aware API
-  extension — see eidos#40 (axis-aware `equivalentValues()` for multi-axis DISC resolution) before writing `DiscVocabularyProducer`.
+  it usable as shorthand in practice. Implemented as `DiscTerm` + `DiscVocabRegistrar` in
+  `casehub-eidos-vocab`; axis-aware resolution via `axisExactMatch` was enabled by eidos#40 (CLOSED).
 - **Situational Leadership:** Describes how a *leader* adapts to a follower's development
   stage, not agent traits. Included as conceptual framing for the autonomy axis only; not
   a vocabulary source.
@@ -178,17 +178,16 @@ globally, especially in sales, leadership, and team development.
 
 **Vocabulary role:** Disposition vocabulary (`urn:casehub:vocab:disc`). DISC types
 answer "how does this agent behave in any context?" → disposition fields.
-⚠ **Implementation blocked on eidos#40** (axis-aware `equivalentValues()` for multi-axis
-DISC resolution) — the current `VocabularyRegistry.equivalentValues()` signature cannot
-resolve a DISC type to different Conscientiousness terms per axis. Do not implement
-`DiscVocabularyProducer` until eidos#40 is resolved.
+**eidos#40 resolved.** DISC is implemented as `DiscTerm` + `DiscVocabRegistrar` in `casehub-eidos-vocab`. `DiscTerm` uses `axisExactMatch` for axis-aware cross-vocabulary resolution (→ `ConscientiousnessTerm` for axes 1–4, → `ThomasKilmannTerm` for `CONFLICT_MODE`).
 
-| Dimension | socialOrient | ruleFollowing | riskAppetite | autonomy |
-|-----------|--------------|---------------|--------------|----------|
-| Dominance (D) | `independent` | `flexible` | `bold` | `autonomous` |
-| Influence (i) | `collaborative` | `flexible` | `measured` | `semi-autonomous` |
-| Steadiness (S) | `facilitative` | `principled` | `conservative` | `directed` |
-| Conscientiousness (C) | `independent` | `strict` | `conservative` | `semi-autonomous` |
+| Dimension | socialOrient | ruleFollowing | riskAppetite | autonomy | conflictMode |
+|-----------|--------------|---------------|--------------|----------|--------------|
+| Dominance (D) | `independent` | `flexible` | `bold` | `autonomous` | `competing` |
+| Influence (i) | `collaborative` | `flexible` | `measured` | `semi-autonomous` | `collaborating` |
+| Steadiness (S) | `facilitative` | `principled` | `conservative` | `directed` | `accommodating` |
+| Conscientiousness (C) | `independent` | `strict` | `conservative` | `semi-autonomous` | `avoiding` |
+
+COMPROMISING has no DISC equivalent — it occupies the center of TK's assertiveness×cooperativeness space, which DISC's four quadrant types do not cover.
 
 Note: DISC types do not predict `delegation`. Leave `delegation` at its role-specific
 default (from Belbin if a Belbin slot is set; `false` otherwise).
@@ -245,21 +244,9 @@ reasonable construct validity for conflict behavior; not predictive of stable tr
 
 **Workplace adoption:** Widespread in conflict resolution, negotiation, and team dynamics.
 
-**Vocabulary role:** Reference only. TK modes describe *conflict strategy* (situational),
-not social preference (stable trait). They do not map cleanly to the current four
-disposition axes. Only Collaborating maps unambiguously to `socialOrient`.
+**Vocabulary role:** Conflict mode disposition vocabulary (`urn:casehub:vocab:thomas-kilmann`). An agent's default conflict approach is treated as a stable prior — the same epistemological status as the other four disposition axes. Use the `conflictMode` field in `AgentDisposition`; see `ThomasKilmannTerm` in `casehub-eidos-vocab`.
 
-| Dimension | socialOrient | ruleFollowing | riskAppetite | autonomy |
-|-----------|--------------|---------------|--------------|----------|
-| Competing | `independent` (partial — assertive in conflict, not general preference) | — | — | — |
-| Collaborating | `collaborative` | — | — | — |
-| Compromising | — | — | — | — |
-| Avoiding | — | — | — | — |
-| Accommodating | — | — | — | — |
-
-The missing mappings (Avoiding, Accommodating, Compromising) are not gaps in the
-Conscientiousness vocabulary — they are a different construct. A `conflictMode` disposition
-axis would accommodate all five TK modes cleanly. See eidos#38.
+Implemented in eidos#38.
 
 ---
 
@@ -415,7 +402,7 @@ orthogonal.
 | Pair | Rating | Reasoning |
 |------|--------|-----------|
 | Belbin + Big Five | Additive | Role (Belbin slot) and stable trait (Conscientiousness vocabulary, which is Big Five-grounded) are orthogonal — this is the natural Belbin Profile |
-| Belbin + DISC | Additive | Role assignment (slot) and behavioral style (disposition) are orthogonal; an agent holds both simultaneously. Pending eidos#40 for full implementation |
+| Belbin + DISC | Additive | Role assignment (slot) and behavioral style (disposition) are orthogonal; an agent holds both simultaneously. Implemented in eidos#26 (eidos#40 CLOSED). |
 | Belbin + Margerison-McCann | Redundant | Same conceptual territory; contradictory terminology; pick Belbin |
 | DISC + Big Five (Conscientiousness vocabulary) | Redundant | DISC is a quadrant simplification of Big Five Extraversion × Agreeableness; no new signal; choose one |
 | Big Five + Thomas-Kilmann | Additive | Stable personality trait + situational conflict strategy are different constructs |
@@ -452,12 +439,7 @@ also a D-type (DISC: `independent` on socialOrient, `bold` on riskAppetite) dive
 both axes.
 The DISC type reveals behavioral style that the Belbin role does not predict.
 
-⚠ **API gap — eidos#40** (axis-aware `equivalentValues()` for multi-axis DISC
-resolution): `VocabularyRegistry.equivalentValues(fromVocab, value, toVocab)` has no
-axis parameter. A DISC type maps to *different* Conscientiousness terms on each axis
-(`dominance → independent` on socialOrient, `bold` on riskAppetite, etc.). The current
-signature cannot disambiguate. Do not implement `DiscVocabularyProducer` until eidos#40
-is resolved.
+**eidos#40 resolved.** `VocabularyRegistry.equivalentValues(fromVocab, value, toVocab, axis)` provides per-axis disambiguation. A DISC type correctly resolves to different Conscientiousness terms per axis (`dominance → independent` on socialOrient, `bold` on riskAppetite, etc.). Implemented in `DiscTerm` via `axisExactMatch`.
 
 ---
 
@@ -492,7 +474,7 @@ disposition.autonomy      = "semi-autonomous"
 disposition.delegation    = true
 ```
 
-*Belbin + DISC Profile* (pending eidos#40):
+*Belbin + DISC Profile*:
 ```
 slotVocabulary        = "urn:casehub:vocab:belbin"
 dispositionVocabulary = "urn:casehub:vocab:disc"
@@ -602,7 +584,7 @@ behavioral assessment may warrant deviation.
 
 ---
 
-### Belbin + DISC Profile *(implementation pending eidos#40)*
+### Belbin + DISC Profile
 
 *Belbin slot + DISC disposition*
 
@@ -622,7 +604,7 @@ disposition.delegation    = <bool from Belbin draft table — not from DISC>
 — a Co-ordinator (`facilitative`, `measured`) who is also a D-type (`independent` on
 socialOrient, `bold` on riskAppetite) diverges on both axes.
 Always populate `delegation` from the Belbin draft table; DISC types make no delegation claim.
-**Implementation blocked:** Requires axis-aware resolution from eidos#40.
+**Implemented** in `casehub-eidos-vocab` (eidos#26). Axis-aware resolution via `axisExactMatch` enabled by eidos#40 (CLOSED).
 
 ---
 
@@ -684,11 +666,10 @@ disposition value.
 
 ### Axis Assignment Errors
 
-**6. Thomas-Kilmann Competing mode → `riskAppetite`**
-TK Competing describes assertiveness in conflict (willingness to pursue one's position),
-not willingness to accept risk. Map only TK Collaborating to `socialOrient=collaborative`.
-Leave TK Competing, Avoiding, Accommodating, Compromising unmapped until eidos#38
-resolves the `conflictMode` axis question.
+**6. Thomas-Kilmann modes mapped to non-conflict axes**
+TK modes describe conflict strategy. Map TK Collaborating to `socialOrient=collaborative` only when no dedicated `conflictMode` is set. Once `conflictMode` is set via `urn:casehub:vocab:thomas-kilmann`, prefer the dedicated axis.
+
+Do not map TK Competing, Avoiding, Accommodating, or Compromising to any existing axis. All five modes map cleanly to `conflictMode`.
 
 **7. DISC Dominance → `delegation=true`**
 `delegation` means "can spawn sub-agents" — a platform-semantic boolean. DISC D-types
@@ -699,10 +680,9 @@ capability. DISC types make no delegation claim; leave it at its role-specific d
 
 ## Vocabulary Draft Tables
 
-These tables are the normative source for eidos#26 implementation. The
-`BelbinVocabularyProducer` implementation is mechanical — read the Belbin draft table,
-write the Java. `DiscVocabularyProducer` is blocked on eidos#40 and requires a design
-decision before implementation can begin.
+These tables are the normative source for eidos#26 implementation. Both `BelbinTerm` and
+`DiscTerm` are implemented in `casehub-eidos-vocab`. `DiscTerm` uses `axisExactMatch` for
+per-axis resolution; eidos#40 (axis-aware `equivalentValues()`) is CLOSED.
 
 `exactMatches` is `Map.of()` for all entries — neither Belbin Associates nor DISC
 framework publishers have released canonical semantic web URIs for their terms.
@@ -734,17 +714,19 @@ They are **not** fields in `VocabularyTerm`. `BelbinVocabularyProducer` writes o
 Implied disposition values per role (reference — use in combination pattern selection,
 not in VocabularyTerm entries):
 
-| Key | socialOrient | ruleFollowing | riskAppetite | autonomy | delegation |
-|-----|--------------|---------------|--------------|----------|------------|
-| `plant` | `independent` | `flexible` | `bold` | `autonomous` | `false` |
-| `resource-investigator` | `collaborative` | `flexible` | `measured` | `semi-autonomous` | `false` |
-| `co-ordinator` | `facilitative` | `principled` | `measured` | `semi-autonomous` | `true` |
-| `shaper` | `independent` | `flexible` | `bold` | `autonomous` | `false` |
-| `monitor-evaluator` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` |
-| `teamworker` | `collaborative` | `principled` | `conservative` | `directed` | `false` |
-| `implementer` | `collaborative` | `strict` | `conservative` | `directed` | `false` |
-| `completer-finisher` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` |
-| `specialist` | `independent` | `principled` | `measured` | `autonomous` | `false` |
+| Key | socialOrient | ruleFollowing | riskAppetite | autonomy | delegation | conflictMode |
+|-----|--------------|---------------|--------------|----------|------------|--------------|
+| `plant` | `independent` | `flexible` | `bold` | `autonomous` | `false` | — |
+| `resource-investigator` | `collaborative` | `flexible` | `measured` | `semi-autonomous` | `false` | — |
+| `co-ordinator` | `facilitative` | `principled` | `measured` | `semi-autonomous` | `true` | — |
+| `shaper` | `independent` | `flexible` | `bold` | `autonomous` | `false` | — |
+| `monitor-evaluator` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` | — |
+| `teamworker` | `collaborative` | `principled` | `conservative` | `directed` | `false` | — |
+| `implementer` | `collaborative` | `strict` | `conservative` | `directed` | `false` | — |
+| `completer-finisher` | `independent` | `strict` | `conservative` | `semi-autonomous` | `false` | — |
+| `specialist` | `independent` | `principled` | `measured` | `autonomous` | `false` | — |
+
+Note: Belbin roles describe team contribution; Belbin→TK conflict-mode cross-vocabulary mappings would conflate role semantics with conflict-mode semantics. No Belbin→TK mapping is defined.
 
 ---
 
@@ -755,11 +737,7 @@ not tied to any vendor assessment
 **Vocabulary version:** `"1.0"` (eidos vocabulary; not a vendor or framework version)
 **URI:** `"urn:casehub:vocab:disc"`
 
-**⚠ Blocked on eidos#40** (axis-aware `equivalentValues()` for multi-axis DISC
-resolution). The `→` columns show the Conscientiousness term that must be returned when
-resolving this DISC type on each specific axis. This is the mapping the
-`DiscVocabularyProducer` must implement — but the current `equivalentValues()` signature
-cannot express per-axis resolution. Resolve eidos#40 before writing this producer.
+**eidos#40 resolved.** The `→` columns show the Conscientiousness term returned when resolving this DISC type on each specific axis via `axisExactMatch`. `DiscTerm` implements this mapping in `casehub-eidos-vocab`; registered automatically via `DiscVocabRegistrar`. See eidos#26 for the implementation.
 
 DISC types are disposition vocabulary terms, not slot terms. An agent declares
 `dispositionVocabulary="urn:casehub:vocab:disc"` and uses DISC type keys as disposition
@@ -783,7 +761,8 @@ Note: `delegation` absent — DISC types make no claim about sub-agent spawning.
 | Gap | Source | What is missing | Note |
 |-----|--------|-----------------|------|
 | Co-ordinator autonomy | Belbin Co-ordinator | Orchestrates team decision-making; higher coordination intent than `semi-autonomous` but not independently agenda-driven like `autonomous` | Mapped to `semi-autonomous + delegation=true` — the combination may be sufficient; decision for eidos#26 |
-| Conflict modes (all 5) | Thomas-Kilmann | No `conflictMode` axis; TK Avoiding, Accommodating, Competing, Compromising have no current home | Tracked in eidos#38 — do not add these to `socialOrient` |
+
+The `conflictMode` axis and `urn:casehub:vocab:thomas-kilmann` vocabulary resolve all five TK modes (eidos#38, eidos#26). COMPROMISING has no DISC equivalent — it occupies the center of TK's two-dimensional space, which DISC's four quadrant types do not cover.
 
 Previously proposed gap terms (accommodating, deferring, compromising) are withdrawn.
 Adding them to `socialOrient` would mix conflict strategy with social preference, making
@@ -793,16 +772,15 @@ the axis semantically incoherent.
 
 ## Implementation Notes for eidos#26
 
-- Vocabulary URIs: `urn:casehub:vocab:<name>`
-- Each producer: `@ApplicationScoped` with `@Produces` returning a `Vocabulary`
-- Constructor: `Vocabulary(String uri, String name, String version, Map<String, VocabularyTerm> terms)`
-- Constructor: `VocabularyTerm(String value, String label, String description, List<String> aliases, Map<String, String> exactMatches)`
-  - `exactMatches` maps external URI → equivalent term value in that external vocabulary
-  - For Belbin and DISC: `Map.of()` (no published canonical URIs exist)
-- `CdiVocabularyRegistry` discovers all `Instance<Vocabulary>` CDI beans automatically — no registration step needed
-- `ConscientiousnessVocabularyProducer` is the model for `BelbinVocabularyProducer`
-- Keep Belbin and DISC as separate producer classes in the same `casehub-eidos-vocab` module
-- **`DiscVocabularyProducer` is blocked on eidos#40** — resolve the axis-aware resolution mechanism before writing it
+Each vocabulary is a Java enum implementing `VocabularyTerm`, annotated with
+`@VocabularyMetadata(uri = "...", name = "...", version = "...")`. A companion
+`@ApplicationScoped` class implementing `VocabularyRegistrar` returns the enum class
+via `vocabulary()`. `CdiVocabularyRegistry` discovers all registrars at startup via
+`Instance<VocabularyRegistrar>`.
+
+See `ConscientiousnessTerm` + `ConscientiousnessVocabRegistrar` as the canonical reference
+implementation. For vocabularies using `axisExactMatch`, see `DiscTerm` (anonymous subclass
+pattern, same as `SvoTerm`).
 
 ---
 
