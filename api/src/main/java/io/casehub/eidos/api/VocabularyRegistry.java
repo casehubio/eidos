@@ -7,7 +7,15 @@ public interface VocabularyRegistry {
 
     // --- Registration ---
 
-    /** Registers a vocabulary enum. The class must carry {@link VocabularyMetadata}. */
+    /**
+     * Registers a vocabulary enum. The class must carry {@link VocabularyMetadata}.
+     *
+     * @throws IllegalArgumentException if the vocabulary URI is blank (annotation
+     *         attributes cannot be null at runtime — blank is the only invalid state),
+     *         if the vocabulary has no constants, if value/alias conflicts exist within
+     *         the vocabulary, or if a different vocabulary is already registered under
+     *         the same URI.
+     */
     <T extends Enum<T> & VocabularyTerm> void register(Class<T> vocab);
 
     boolean isRegistered(String vocabUri);

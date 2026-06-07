@@ -75,8 +75,11 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
                 "Vocabulary enum " + vocab.getName() + " has no constants");
         }
         var uri = meta.uri();
-
-        // Validate URI before any map writes (fast-fail)
+        if (uri.isBlank()) {
+            throw new IllegalArgumentException(
+                "Vocabulary URI must not be blank in @VocabularyMetadata on " + vocab.getName());
+        }
+        // Validate URI and state before any map operations (fast-fail)
         var existing = byUri.get(uri);
         if (existing != null) {
             if (existing != vocab) {
