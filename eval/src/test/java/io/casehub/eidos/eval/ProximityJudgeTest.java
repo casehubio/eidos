@@ -102,7 +102,7 @@ class ProximityJudgeTest {
 
     private static ProfiledEvalCase minimalCase() {
         final var desc = new AgentDescriptor(
-            "id", "N", null, null, null, null, null, null, null, null,
+            "id", "N", null, null, null, null, null, null, null, null, null,
             "reviewer", List.of(), null, null, null, "t");
         final var profile = new AgentProfile(
             "sw-engineer-careful", "SW Eng", "sw", null, null,

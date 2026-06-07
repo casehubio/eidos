@@ -23,7 +23,7 @@ class SystemPromptRendererTest {
         registry.register(new AgentDescriptor(
             "planner-1", "Strategic Planner", "1.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null,
+            "urn:casehub:vocab:casehub-slot", null, null, null,
             "planner",
             List.of(new AgentCapability("planning", 0.9, 200L, "medium",
                 List.of("requirements"), List.of("plan"), List.of(),

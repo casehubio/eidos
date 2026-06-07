@@ -90,7 +90,7 @@ class PairContrastJudgeTest {
 
     private static ProfiledEvalCase profiledCase(final String profileName) {
         final var desc = new AgentDescriptor(
-            "id", "N", null, null, null, null, null, null, null, null,
+            "id", "N", null, null, null, null, null, null, null, null, null,
             "reviewer", List.of(), null, null, null, "t");
         final var profile = new AgentProfile(profileName, "R", "d", null, null,
             SourceType.PRACTITIONER, "prose", null, null, Map.of(), Map.of(), desc, List.of());

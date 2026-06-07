@@ -11,7 +11,7 @@ class AgentDescriptorTest {
         return new AgentDescriptor(
             agentId, "name", "1.0", "provider",
             "modelFamily", "modelVersion", null,
-            null, null, null,
+            null, null, null, null,
             "slot", List.of(),
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, tenancyId
@@ -51,7 +51,7 @@ class AgentDescriptorTest {
         // U+202E RIGHT-TO-LEFT OVERRIDE
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", "1.0‮", null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("version"));
@@ -61,7 +61,7 @@ class AgentDescriptorTest {
     void provider_blank_throws() {
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, "  ", null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("provider"));
@@ -71,7 +71,7 @@ class AgentDescriptorTest {
     void vocabulary_uri_exceeds_500_chars_throws() {
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, null,
-            "https://vocab.io/" + "x".repeat(490), null, null,
+            "https://vocab.io/" + "x".repeat(490), null, null, null,
             "worker", List.of(), null, null, null, "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
@@ -84,7 +84,7 @@ class AgentDescriptorTest {
         String jurisdictionWithC0 = "EU" + (char) 0x0001 + "inject";
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null,
+            null, null, null, null, "worker", List.of(), null,
             jurisdictionWithC0, null, "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
@@ -95,14 +95,14 @@ class AgentDescriptorTest {
     void data_handling_policy_null_is_allowed() {
         assertThatNoException().isThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant"));
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant"));
     }
 
     @Test
     void data_handling_policy_blank_throws() {
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, "  ", "tenant"))
+            null, null, null, null, "worker", List.of(), null, null, "  ", "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("dataHandlingPolicy"));
@@ -112,7 +112,7 @@ class AgentDescriptorTest {
     void data_handling_policy_exceeds_1000_chars_throws() {
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, "p".repeat(1001), "tenant"))
+            null, null, null, null, "worker", List.of(), null, null, "p".repeat(1001), "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("dataHandlingPolicy"));
@@ -122,14 +122,14 @@ class AgentDescriptorTest {
     void weights_fingerprint_at_255_chars_is_valid() {
         assertThatNoException().isThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, "f".repeat(255),
-            null, null, null, "worker", List.of(), null, null, null, "tenant"));
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant"));
     }
 
     @Test
     void weights_fingerprint_at_256_chars_throws() {
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, null, "f".repeat(256),
-            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("weightsFingerprint"));
@@ -139,7 +139,7 @@ class AgentDescriptorTest {
     void model_family_exceeds_200_chars_throws() {
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, "f".repeat(201), null, null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("modelFamily"));
@@ -149,9 +149,123 @@ class AgentDescriptorTest {
     void model_version_exceeds_200_chars_throws() {
         assertThatThrownBy(() -> new AgentDescriptor(
             "id", "Name", null, null, null, "v".repeat(201), null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant"))
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant"))
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("modelVersion"));
+    }
+
+    // ── axisVocabularies validation ─────────────────────────────────────────────
+
+    @Test
+    void axis_vocabularies_null_is_allowed() {
+        assertThatNoException().isThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .axisVocabularies(null)
+                .build());
+    }
+
+    @Test
+    void axis_vocabularies_null_value_throws_with_field_name() {
+        var map = new java.util.HashMap<DispositionAxis, String>();
+        map.put(DispositionAxis.CONFLICT_MODE, null);
+        assertThatThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .axisVocabularies(map)
+                .build())
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("axisVocabularies[CONFLICT_MODE]"));
+    }
+
+    @Test
+    void axis_vocabularies_blank_uri_throws() {
+        assertThatThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .axisVocabularies(Map.of(DispositionAxis.CONFLICT_MODE, "  "))
+                .build())
+            .isInstanceOf(AgentValidationException.class);
+    }
+
+    @Test
+    void axis_vocabularies_is_unmodifiable_after_construction() {
+        var mutable = new java.util.HashMap<DispositionAxis, String>();
+        mutable.put(DispositionAxis.CONFLICT_MODE, "urn:casehub:vocab:thomas-kilmann");
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .axisVocabularies(mutable)
+            .build();
+        assertThatThrownBy(() -> d.axisVocabularies().put(DispositionAxis.AUTONOMY, "urn:x"))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    // ── vocabUriForAxis ─────────────────────────────────────────────────────────
+
+    @Test
+    void vocabUri_returns_axis_override_when_present() {
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .dispositionVocabulary("urn:casehub:vocab:disc")
+            .axisVocabularies(Map.of(DispositionAxis.CONFLICT_MODE, "urn:casehub:vocab:thomas-kilmann"))
+            .build();
+        assertThat(d.vocabUriForAxis(DispositionAxis.CONFLICT_MODE))
+            .contains("urn:casehub:vocab:thomas-kilmann");
+        assertThat(d.vocabUriForAxis(DispositionAxis.SOCIAL_ORIENTATION))
+            .contains("urn:casehub:vocab:disc");
+    }
+
+    @Test
+    void vocabUri_falls_through_to_dispositionVocabulary_when_axis_absent() {
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .dispositionVocabulary("urn:casehub:vocab:disc")
+            .axisVocabularies(Map.of())
+            .build();
+        assertThat(d.vocabUriForAxis(DispositionAxis.CONFLICT_MODE))
+            .contains("urn:casehub:vocab:disc");
+    }
+
+    @Test
+    void vocabUri_falls_through_to_domainVocabulary_when_disposition_null() {
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .domainVocabulary("urn:casehub:vocab:conscientiousness")
+            .build();
+        assertThat(d.vocabUriForAxis(DispositionAxis.SOCIAL_ORIENTATION))
+            .contains("urn:casehub:vocab:conscientiousness");
+    }
+
+    @Test
+    void vocabUri_returns_empty_when_all_vocab_fields_null() {
+        var d = minimal("a", "t");
+        assertThat(d.vocabUriForAxis(DispositionAxis.SOCIAL_ORIENTATION)).isEmpty();
+    }
+
+    @Test
+    void vocabUri_returns_dispositionVocabulary_when_axisVocabularies_null() {
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .dispositionVocabulary("urn:casehub:vocab:disc")
+            .axisVocabularies(null)
+            .build();
+        assertThat(d.vocabUriForAxis(DispositionAxis.CONFLICT_MODE))
+            .contains("urn:casehub:vocab:disc");
+    }
+
+    @Test
+    void builder_produces_same_result_as_minimal_constructor() {
+        var fromCtor = minimal("agent-1", "default");
+        var fromBuilder = AgentDescriptor.builder()
+            .agentId("agent-1").name("name").version("1.0").provider("provider")
+            .modelFamily("modelFamily").modelVersion("modelVersion").weightsFingerprint(null)
+            .domainVocabulary(null).slotVocabulary(null).dispositionVocabulary(null)
+            .axisVocabularies(null).slot("slot").capabilities(List.of())
+            .disposition(new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false))
+            .jurisdiction(null).dataHandlingPolicy(null).tenancyId("default")
+            .build();
+        assertThat(fromBuilder).isEqualTo(fromCtor);
     }
 }

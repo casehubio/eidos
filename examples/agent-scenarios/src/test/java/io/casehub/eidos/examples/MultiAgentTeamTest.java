@@ -21,7 +21,7 @@ class MultiAgentTeamTest {
         registry.register(new AgentDescriptor(
             "planner-1", "Strategic Planner", "1.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null,
+            "urn:casehub:vocab:casehub-slot", null, null, null,
             "planner",
             List.of(new AgentCapability("planning", 0.9, 200L, "medium",
                 List.of("requirements"), List.of("plan"), List.of("orchestration"),
@@ -32,7 +32,7 @@ class MultiAgentTeamTest {
         registry.register(new AgentDescriptor(
             "reviewer-1", "Code Reviewer", "1.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null,
+            "urn:casehub:vocab:casehub-slot", null, null, null,
             "reviewer",
             List.of(
                 new AgentCapability("code-review", 0.95, 150L, "low",
@@ -47,7 +47,7 @@ class MultiAgentTeamTest {
         registry.register(new AgentDescriptor(
             "executor-1", "Task Executor", "1.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
-            "urn:casehub:vocab:casehub-slot", null, null,
+            "urn:casehub:vocab:casehub-slot", null, null, null,
             "executor",
             List.of(new AgentCapability("code-generation", 0.85, 500L, "high",
                 List.of("spec"), List.of("code"), List.of("implementation"),

@@ -13,7 +13,7 @@ class ValidatedRecordTest {
 
     static SyntheticEvalCase minimalCase() {
         final var desc = new AgentDescriptor(
-            "id", "N", null, null, null, null, null, null, null, null,
+            "id", "N", null, null, null, null, null, null, null, null, null,
             "worker", List.of(), null, null, null, "t");
         return new SyntheticEvalCase("c", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
     }

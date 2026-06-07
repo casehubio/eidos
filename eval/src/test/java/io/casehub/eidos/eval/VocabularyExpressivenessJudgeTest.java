@@ -87,7 +87,7 @@ class VocabularyExpressivenessJudgeTest {
 
     private static AgentProfile minimalProfile() {
         final var desc = new AgentDescriptor(
-            "id", "N", null, null, null, null, null, null, null, null,
+            "id", "N", null, null, null, null, null, null, null, null, null,
             "reviewer", List.of(), null, null, null, "t");
         return new AgentProfile("test-profile", "Test", "test", null, null,
             SourceType.PRACTITIONER, "You are a test agent.", null, null,

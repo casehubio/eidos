@@ -30,7 +30,7 @@ class JpaReactiveAgentRegistryTest {
         return new AgentDescriptor(
             agentId, "Agent " + agentId, "1.0", "anthropic",
             "claude", "claude-3-7", null,
-            null, null, null,
+            null, null, null, null,
             slot, caps,
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, tenancyId

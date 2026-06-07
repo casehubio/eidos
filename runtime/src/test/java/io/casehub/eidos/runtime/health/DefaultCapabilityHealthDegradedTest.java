@@ -49,7 +49,7 @@ class DefaultCapabilityHealthDegradedTest {
     static AgentDescriptor agent(final String agentId, final AgentCapability... capabilities) {
         return new AgentDescriptor(
             agentId, "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, "reviewer",
+            null, null, null, null, null, "reviewer",
             List.of(capabilities),
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, "default"

@@ -18,7 +18,7 @@ class InMemoryReactiveAgentRegistryTest {
     static AgentDescriptor descriptor(String agentId, String slot, String tenancyId) {
         return new AgentDescriptor(
             agentId, "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, slot,
+            null, null, null, null, null, slot,
             List.of(new AgentCapability("cap", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),

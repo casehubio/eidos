@@ -20,7 +20,7 @@ class DefaultReactiveCapabilityHealthDefaultProfileTest {
     void reactive_health_is_injectable_under_default_profile() {
         var descriptor = new AgentDescriptor(
             "agent-1", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, "reviewer",
+            null, null, null, null, null, "reviewer",
             List.of(new AgentCapability("code-review", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),

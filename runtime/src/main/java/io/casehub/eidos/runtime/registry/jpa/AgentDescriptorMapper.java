@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.registry.jpa;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.DispositionAxis;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
@@ -19,6 +20,7 @@ class AgentDescriptorMapper {
             e.agentId, e.name, e.version, e.provider,
             e.modelFamily, e.modelVersion, e.weightsFingerprint,
             e.domainVocabulary, e.slotVocabulary, e.dispositionVocabulary,
+            readJson(e.axisVocabularies, new TypeReference<Map<DispositionAxis, String>>() {}),
             e.slot,
             e.capabilities.stream().map(this::toCapability).toList(),
             readJson(e.disposition, AgentDisposition.class),
@@ -39,6 +41,7 @@ class AgentDescriptorMapper {
         e.domainVocabulary = d.domainVocabulary();
         e.slotVocabulary = d.slotVocabulary();
         e.dispositionVocabulary = d.dispositionVocabulary();
+        e.axisVocabularies = writeJson(d.axisVocabularies());
         e.slot = d.slot();
         e.jurisdiction = d.jurisdiction();
         e.dataHandlingPolicy = d.dataHandlingPolicy();

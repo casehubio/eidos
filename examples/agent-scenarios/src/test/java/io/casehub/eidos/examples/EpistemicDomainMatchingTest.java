@@ -20,7 +20,7 @@ class EpistemicDomainMatchingTest {
     final AgentDescriptor polyglotReviewer = new AgentDescriptor(
         "polyglot-1", "Polyglot Reviewer", "1.0", "anthropic",
         "claude", "claude-3-7-sonnet", null,
-        null, null, null, "reviewer",
+        null, null, null, null, "reviewer",
         List.of(new AgentCapability("code-review", 0.9, 150L, "low",
             List.of("code"), List.of("review"), List.of("quality"),
             Map.of("java", 0.95, "python", 0.8, "rust", 0.2))),

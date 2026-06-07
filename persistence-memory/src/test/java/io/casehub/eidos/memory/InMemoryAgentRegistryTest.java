@@ -30,7 +30,7 @@ class InMemoryAgentRegistryTest {
             .toList();
         return new AgentDescriptor(
             agentId, "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, slot, capabilities,
+            null, null, null, null, null, slot, capabilities,
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, tenancyId
         );
@@ -107,7 +107,7 @@ class InMemoryAgentRegistryTest {
             List.of(), List.of(), List.of(), Map.of());
         var descriptor = new AgentDescriptor(
             "m-8", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
-            null, null, null, null, "reviewer", List.of(cap),
+            null, null, null, null, null, "reviewer", List.of(cap),
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, "default"
         );

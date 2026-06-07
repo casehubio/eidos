@@ -19,7 +19,7 @@ class EvalResultCompletenessTest {
                 List.of(), List.of(), List.of(), Map.of()))
             .toList();
         return new AgentDescriptor("id", "Name", null, null, null, null, null,
-            null, null, null, "worker", caps, null, null, null, "tenant");
+            null, null, null, null, "worker", caps, null, null, null, "tenant");
     }
 
     static boolean computeCompleteness(final AgentDescriptor descriptor, final String renderedContent) {

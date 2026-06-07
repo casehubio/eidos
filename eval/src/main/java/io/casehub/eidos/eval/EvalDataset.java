@@ -24,7 +24,7 @@ public class EvalDataset {
             "planner-1", "Devtown Planner", "1.0", "anthropic",
             "claude", "claude-3-5-sonnet", null,
             "https://vocab.casehub.io/devtown",
-            "https://vocab.casehub.io/devtown", null,
+            "https://vocab.casehub.io/devtown", null, null,
             "planner",
             List.of(
                 new AgentCapability("sprint-planning", 0.9, 200L, "medium",
@@ -48,7 +48,7 @@ public class EvalDataset {
             "reviewer-1", "Code Reviewer", "2.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
             "https://vocab.casehub.io/svo",
-            "https://vocab.casehub.io/devtown", null,
+            "https://vocab.casehub.io/devtown", null, null,
             "reviewer",
             List.of(new AgentCapability("code-review", 0.95, 150L, "low",
                 List.of("pull-request"), List.of("review-comment"), List.of(),
@@ -62,7 +62,7 @@ public class EvalDataset {
     private static SyntheticEvalCase epistemicWeak() {
         final var descriptor = new AgentDescriptor(
             "ml-agent-1", "ML Researcher", "1.0", "openai",
-            "gpt", "gpt-4o", null, null, null, null,
+            "gpt", "gpt-4o", null, null, null, null, null,
             "researcher",
             List.of(new AgentCapability("literature-review", 0.6, 500L, "high",
                 List.of("papers"), List.of("summary"), List.of(),
@@ -77,7 +77,7 @@ public class EvalDataset {
     private static SyntheticEvalCase minimal() {
         final var descriptor = new AgentDescriptor(
             "min-1", "Minimal Agent", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant-1"
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant-1"
         );
         return new SyntheticEvalCase("minimal", descriptor, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
     }
@@ -88,7 +88,7 @@ public class EvalDataset {
             "claude", "claude-opus-4-7", "fp-abc123def456",
             "https://vocab.casehub.io/svo",
             "https://vocab.casehub.io/casehub-slot",
-            "https://vocab.casehub.io/conscientiousness",
+            "https://vocab.casehub.io/conscientiousness", null,
             "orchestrator",
             List.of(
                 new AgentCapability("planning", 0.95, 200L, "medium",
@@ -119,7 +119,7 @@ public class EvalDataset {
             "planner-1", "Devtown Planner", "1.0", "anthropic",
             "claude", "claude-3-5-sonnet", null,
             "https://vocab.casehub.io/devtown",
-            "https://vocab.casehub.io/devtown", null,
+            "https://vocab.casehub.io/devtown", null, null,
             "planner",
             List.of(
                 new AgentCapability("sprint-planning", 0.9, 200L, "medium",
@@ -144,7 +144,7 @@ public class EvalDataset {
             "claude", "claude-opus-4-7", "fp-abc123def456",
             "https://vocab.casehub.io/svo",
             "https://vocab.casehub.io/casehub-slot",
-            "https://vocab.casehub.io/conscientiousness",
+            "https://vocab.casehub.io/conscientiousness", null,
             "orchestrator",
             List.of(
                 new AgentCapability("planning", 0.95, 200L, "medium",
@@ -175,7 +175,7 @@ public class EvalDataset {
             "planner-1", "Devtown Planner", "1.0", "anthropic",
             "claude", "claude-3-5-sonnet", null,
             "https://vocab.casehub.io/devtown",
-            "https://vocab.casehub.io/devtown", null,
+            "https://vocab.casehub.io/devtown", null, null,
             "planner",
             List.of(
                 new AgentCapability("sprint-planning", 0.9, 200L, "medium",
@@ -195,7 +195,7 @@ public class EvalDataset {
     private static SyntheticEvalCase minimalA2a() {
         final var descriptor = new AgentDescriptor(
             "min-1", "Minimal Agent", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant-1"
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant-1"
         );
         return new SyntheticEvalCase("minimal-a2a", descriptor,
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));

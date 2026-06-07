@@ -150,7 +150,7 @@ class PersonalityPreservationReportTest {
     private static AgentProfile minimalProfile(final String name,
                                                 final Map<String, TraitPolarity> traits) {
         final var desc = new AgentDescriptor(
-            name + "-01", name, null, null, null, null, null, null, null, null,
+            name + "-01", name, null, null, null, null, null, null, null, null, null,
             "worker", List.of(), null, null, null, "t");
         return new AgentProfile(name, "R", "d", null, null, SourceType.PRACTITIONER,
             "prose", null, null, Map.of(), traits, desc, List.of());

@@ -27,7 +27,7 @@ class EidosRenderPipelineTest {
         return new AgentDescriptor(
             "reviewer-1", "Code Reviewer", "1.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
-            null, null, null,
+            null, null, null, null,
             "reviewer",
             List.of(new AgentCapability("code-review", 0.95, 150L, "low",
                 List.of("code"), List.of("review"), List.of(),
@@ -93,7 +93,7 @@ class EidosRenderPipelineTest {
     void descriptor_payload_includes_weights_fingerprint_when_set() {
         final var desc = new AgentDescriptor(
             "id", "Name", "1.0", null, null, null, "fp-abc123",
-            null, null, null, "slot", List.of(), null, null, null, "t"
+            null, null, null, null, "slot", List.of(), null, null, null, "t"
         );
         final var node = pipeline.buildDescriptorPayload(desc);
         assertThat(node.get("weightsFingerprint").asText()).isEqualTo("fp-abc123");

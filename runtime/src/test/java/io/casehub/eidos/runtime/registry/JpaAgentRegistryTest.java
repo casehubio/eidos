@@ -27,7 +27,7 @@ class JpaAgentRegistryTest {
         return new AgentDescriptor(
             agentId, "Agent " + agentId, "1.0", "anthropic",
             "claude", "claude-3-7", null,
-            null, null, null,
+            null, null, null, null,
             slot, caps,
             new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, tenancyId
@@ -140,5 +140,37 @@ class JpaAgentRegistryTest {
     void findById_with_null_tenancyId_throws() {
         assertThatThrownBy(() -> registry.findById("nonexistent", null))
             .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    @TestTransaction
+    void axis_vocabularies_round_trips_through_jpa() {
+        var d = new AgentDescriptor(
+            "agent-axis", "Axis Agent", "1.0", "anthropic",
+            "claude", "claude-3-7", null,
+            null, "urn:casehub:vocab:belbin",
+            "urn:casehub:vocab:disc",
+            Map.of(DispositionAxis.CONFLICT_MODE, "urn:casehub:vocab:thomas-kilmann"),
+            "co-ordinator",
+            List.of(),
+            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", "collaborating", true),
+            null, null, "default"
+        );
+        registry.register(d);
+        var found = registry.findById("agent-axis", "default").orElseThrow();
+        assertThat(found.axisVocabularies())
+            .containsEntry(DispositionAxis.CONFLICT_MODE, "urn:casehub:vocab:thomas-kilmann");
+        assertThat(found.vocabUriForAxis(DispositionAxis.CONFLICT_MODE))
+            .contains("urn:casehub:vocab:thomas-kilmann");
+        assertThat(found.vocabUriForAxis(DispositionAxis.SOCIAL_ORIENTATION))
+            .contains("urn:casehub:vocab:disc");
+    }
+
+    @Test
+    @TestTransaction
+    void null_axis_vocabularies_round_trips_as_null() {
+        registry.register(descriptor("agent-noaxis", "reviewer", "default"));
+        var found = registry.findById("agent-noaxis", "default").orElseThrow();
+        assertThat(found.axisVocabularies()).isNull();
     }
 }

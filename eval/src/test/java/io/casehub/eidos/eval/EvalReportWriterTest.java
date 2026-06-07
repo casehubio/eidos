@@ -29,7 +29,7 @@ class EvalReportWriterTest {
     static EvalResult sampleMarkdownResult() {
         final var desc = new AgentDescriptor(
             "a", "Agent", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "t");
+            null, null, null, null, "worker", List.of(), null, null, null, "t");
         final var ctx = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
         final var rendered = new RenderedPrompt("You are Agent.", RenderFormat.MARKDOWN, "dh", "ch");
         // MARKDOWN uses SECOND_PERSON, CONCISENESS, FACTUAL_FIDELITY, TONE
@@ -83,7 +83,7 @@ class EvalReportWriterTest {
         // A2A_CARD result
         final var desc = new AgentDescriptor(
             "b", "Bot", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "t");
+            null, null, null, null, "worker", List.of(), null, null, null, "t");
         final var ctx = AgentPromptContext.forFormat(RenderFormat.A2A_CARD);
         final var rendered = new RenderedPrompt(
             "{\"name\":\"Bot\"}", RenderFormat.A2A_CARD, "dh", "ch");
@@ -120,7 +120,7 @@ class EvalReportWriterTest {
     @Test
     void writeProximityJson_creates_valid_json(@TempDir final Path dir) throws IOException {
         final var desc = new AgentDescriptor(
-            "a", "Agent", null, null, null, null, null, null, null, null,
+            "a", "Agent", null, null, null, null, null, null, null, null, null,
             "worker", List.of(), null, null, null, "t");
         final var profile = sampleProfile(desc);
         final var evalCase = new ProfiledEvalCase("case", desc,
@@ -138,7 +138,7 @@ class EvalReportWriterTest {
     @Test
     void proximitySummaryTable_contains_mean_score() {
         final var desc = new AgentDescriptor(
-            "a", "Agent", null, null, null, null, null, null, null, null,
+            "a", "Agent", null, null, null, null, null, null, null, null, null,
             "worker", List.of(), null, null, null, "t");
         final var profile = sampleProfile(desc);
         final var evalCase = new ProfiledEvalCase("case", desc,

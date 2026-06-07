@@ -20,7 +20,7 @@ class TenancyIsolationTest {
     void registerAgentsInDifferentTenants() {
         registry.register(new AgentDescriptor(
             "tenant-a-agent", "Agent A", "1.0", "anthropic",
-            "claude", "claude-3-7", null, null, null, null,
+            "claude", "claude-3-7", null, null, null, null, null,
             "reviewer",
             List.of(new AgentCapability("code-review", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
@@ -29,7 +29,7 @@ class TenancyIsolationTest {
 
         registry.register(new AgentDescriptor(
             "tenant-b-agent", "Agent B", "1.0", "anthropic",
-            "claude", "claude-3-7", null, null, null, null,
+            "claude", "claude-3-7", null, null, null, null, null,
             "reviewer",
             List.of(new AgentCapability("code-review", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),

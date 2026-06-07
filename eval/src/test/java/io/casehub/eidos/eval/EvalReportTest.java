@@ -18,7 +18,7 @@ class EvalReportTest {
                                  final boolean complete) {
         final var desc = new AgentDescriptor(
             "id", "Name", null, null, null, null, null,
-            null, null, null, "worker", List.of(), null, null, null, "tenant");
+            null, null, null, null, "worker", List.of(), null, null, null, "tenant");
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(format));
         final var rendered = new RenderedPrompt("content", format, "dh", "ch");
         final double overall = scores.values().stream()

@@ -43,7 +43,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     static AgentDescriptor descriptor() {
         return new AgentDescriptor(
             "reviewer-1", "Code Reviewer", "1.0", "anthropic",
-            "claude", "claude-3-7-sonnet", null, null, null, null,
+            "claude", "claude-3-7-sonnet", null, null, null, null, null,
             "reviewer",
             List.of(new AgentCapability("code-review", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),

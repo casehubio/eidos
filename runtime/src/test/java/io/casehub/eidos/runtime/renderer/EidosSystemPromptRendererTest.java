@@ -61,7 +61,7 @@ class EidosSystemPromptRendererTest {
         return new AgentDescriptor(
             "reviewer-1", "Code Reviewer", "1.0", "anthropic",
             "claude", "claude-3-7-sonnet", null,
-            null, null, null,
+            null, null, null, null,
             "reviewer",
             List.of(new AgentCapability("code-review", 0.95, 150L, "low",
                 List.of("code"), List.of("review"), List.of(),
@@ -379,7 +379,7 @@ class EidosSystemPromptRendererTest {
     void different_descriptor_produces_different_descriptor_hash() {
         final var desc2 = new AgentDescriptor(
             "planner-1", "Planner", "1.0", "anthropic", "claude", "claude-3-7-sonnet",
-            null, null, null, null, "planner",
+            null, null, null, null, null, "planner",
             List.of(), null, null, null, "default"
         );
         final var r1 = rendererStructural.render(fullDescriptor(), fullContext());
