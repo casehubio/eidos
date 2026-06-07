@@ -80,4 +80,9 @@ class AgentDispositionTest {
         assertThat(d.get(DispositionAxis.RISK_APPETITE)).isEmpty();
         assertThat(d.get(DispositionAxis.AUTONOMY)).isEmpty();
     }
+
+    @Test
+    void disposition_axis_enum_has_five_values() {
+        assertThat(DispositionAxis.values()).hasSize(5);
+    }
 }

@@ -31,6 +31,7 @@ public record AgentDisposition(
             case RULE_FOLLOWING     -> Optional.ofNullable(ruleFollowing);
             case RISK_APPETITE      -> Optional.ofNullable(riskAppetite);
             case AUTONOMY           -> Optional.ofNullable(autonomy);
+            case CONFLICT_MODE      -> Optional.empty();   // field added in Task 2
         };
     }
 }
