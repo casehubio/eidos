@@ -26,7 +26,7 @@ class MultiAgentTeamTest {
             List.of(new AgentCapability("planning", 0.9, 200L, "medium",
                 List.of("requirements"), List.of("plan"), List.of("orchestration"),
                 Map.of("software", 0.95, "logistics", 0.4))),
-            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", true),
+            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", null, true),
             null, null, "default"));
 
         registry.register(new AgentDescriptor(
@@ -41,7 +41,7 @@ class MultiAgentTeamTest {
                 new AgentCapability("test-writing", 0.8, 300L, "medium",
                     List.of("code"), List.of("tests"), List.of("testing"),
                     Map.of("java", 0.9))),
-            new AgentDisposition("independent", "strict", "conservative", "directed", false),
+            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
             null, null, "default"));
 
         registry.register(new AgentDescriptor(
@@ -52,7 +52,7 @@ class MultiAgentTeamTest {
             List.of(new AgentCapability("code-generation", 0.85, 500L, "high",
                 List.of("spec"), List.of("code"), List.of("implementation"),
                 Map.of("java", 0.9, "python", 0.85, "rust", 0.6))),
-            new AgentDisposition("collaborative", "flexible", "bold", "autonomous", false),
+            new AgentDisposition("collaborative", "flexible", "bold", "autonomous", null, false),
             null, null, "default"));
     }
 

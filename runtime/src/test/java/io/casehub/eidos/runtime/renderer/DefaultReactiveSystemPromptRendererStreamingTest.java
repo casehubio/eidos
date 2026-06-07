@@ -47,7 +47,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
             "reviewer",
             List.of(new AgentCapability("code-review", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
-            new AgentDisposition("independent", "strict", "conservative", "directed", false),
+            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
             null, null, "default"
         );
     }

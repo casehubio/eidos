@@ -24,7 +24,7 @@ class TenancyIsolationTest {
             "reviewer",
             List.of(new AgentCapability("code-review", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, "tenant-a"));
 
         registry.register(new AgentDescriptor(
@@ -33,7 +33,7 @@ class TenancyIsolationTest {
             "reviewer",
             List.of(new AgentCapability("code-review", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, "tenant-b"));
     }
 

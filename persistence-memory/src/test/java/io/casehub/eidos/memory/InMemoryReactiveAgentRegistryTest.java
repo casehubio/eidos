@@ -21,7 +21,7 @@ class InMemoryReactiveAgentRegistryTest {
             null, null, null, null, slot,
             List.of(new AgentCapability("cap", 0.9, null, null,
                 List.of(), List.of(), List.of(), Map.of())),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, tenancyId
         );
     }

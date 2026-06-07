@@ -34,7 +34,7 @@ public class EvalDataset {
                     List.of("user-story"), List.of("story-points"), List.of(),
                     Map.of("agile", 0.85))
             ),
-            new AgentDisposition("collaborative", "adaptive", "moderate", "assisted", true),
+            new AgentDisposition("collaborative", "adaptive", "moderate", "assisted", null, true),
             null, null, "devtown-1"
         );
         final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN)
@@ -53,7 +53,7 @@ public class EvalDataset {
             List.of(new AgentCapability("code-review", 0.95, 150L, "low",
                 List.of("pull-request"), List.of("review-comment"), List.of(),
                 Map.of("java", 0.95, "rust", 0.4, "python", 0.7))),
-            new AgentDisposition("independent", "strict", "conservative", "directed", false),
+            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
             "EU", "gdpr-compliant", "devtown-1"
         );
         return new SyntheticEvalCase("cross-vocab", descriptor, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
@@ -98,7 +98,7 @@ public class EvalDataset {
                     List.of("task-spec"), List.of("assignment"), List.of(),
                     Map.of("team-management", 0.75))
             ),
-            new AgentDisposition("collaborative", "adaptive", "moderate", "autonomous", true),
+            new AgentDisposition("collaborative", "adaptive", "moderate", "autonomous", null, true),
             "US", "hipaa-compliant", "enterprise-1"
         );
         final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN)
@@ -129,7 +129,7 @@ public class EvalDataset {
                     List.of("user-story"), List.of("story-points"), List.of(),
                     Map.of("agile", 0.85))
             ),
-            new AgentDisposition("collaborative", "adaptive", "moderate", "assisted", true),
+            new AgentDisposition("collaborative", "adaptive", "moderate", "assisted", null, true),
             null, null, "devtown-1"
         );
         final var context = AgentPromptContext.forFormat(RenderFormat.PROSE)
@@ -154,7 +154,7 @@ public class EvalDataset {
                     List.of("task-spec"), List.of("assignment"), List.of(),
                     Map.of("team-management", 0.75))
             ),
-            new AgentDisposition("collaborative", "adaptive", "moderate", "autonomous", true),
+            new AgentDisposition("collaborative", "adaptive", "moderate", "autonomous", null, true),
             "US", "hipaa-compliant", "enterprise-1"
         );
         final var context = AgentPromptContext.forFormat(RenderFormat.PROSE)
@@ -185,7 +185,7 @@ public class EvalDataset {
                     List.of("user-story"), List.of("story-points"), List.of(),
                     Map.of("agile", 0.85))
             ),
-            new AgentDisposition("collaborative", "adaptive", "moderate", "assisted", true),
+            new AgentDisposition("collaborative", "adaptive", "moderate", "assisted", null, true),
             null, null, "devtown-1"
         );
         return new SyntheticEvalCase("devtown-planner-a2a", descriptor,

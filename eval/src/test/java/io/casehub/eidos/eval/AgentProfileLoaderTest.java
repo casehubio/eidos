@@ -70,7 +70,7 @@ class AgentProfileLoaderTest {
     @Test
     void stage0_fails_when_primaryAxis_same_value_in_both_profiles() {
         // Both profiles have riskAppetite=conservative (identical) — Stage 0 must reject
-        final var disp = new AgentDisposition("independent", "strict", "conservative", "directed", false);
+        final var disp = new AgentDisposition("independent", "strict", "conservative", "directed", null, false);
         final var desc1 = new AgentDescriptor(
             "p1", "P1", null, null, null, null, null,
             null, null, null, "worker", List.of(), disp, null, null, "t");

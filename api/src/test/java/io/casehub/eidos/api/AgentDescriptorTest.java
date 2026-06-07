@@ -13,7 +13,7 @@ class AgentDescriptorTest {
             "modelFamily", "modelVersion", null,
             null, null, null,
             "slot", List.of(),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, tenancyId
         );
     }

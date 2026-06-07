@@ -12,17 +12,15 @@ public record AgentDisposition(
         String ruleFollowing,
         String riskAppetite,
         String autonomy,
+        String conflictMode,
         boolean delegation
 ) {
     public AgentDisposition {
-        AgentDescriptorValidator.validateOptional("socialOrient", socialOrient,
-            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
-        AgentDescriptorValidator.validateOptional("ruleFollowing", ruleFollowing,
-            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
-        AgentDescriptorValidator.validateOptional("riskAppetite", riskAppetite,
-            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
-        AgentDescriptorValidator.validateOptional("autonomy", autonomy,
-            AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("socialOrient",  socialOrient,  AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("ruleFollowing", ruleFollowing, AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("riskAppetite",  riskAppetite,  AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("autonomy",      autonomy,      AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
+        AgentDescriptorValidator.validateOptional("conflictMode",  conflictMode,  AgentDescriptorValidator.MAX_DISPOSITION_AXIS);
     }
 
     public Optional<String> get(DispositionAxis axis) {
@@ -31,7 +29,26 @@ public record AgentDisposition(
             case RULE_FOLLOWING     -> Optional.ofNullable(ruleFollowing);
             case RISK_APPETITE      -> Optional.ofNullable(riskAppetite);
             case AUTONOMY           -> Optional.ofNullable(autonomy);
-            case CONFLICT_MODE      -> Optional.empty();   // field added in Task 2
+            case CONFLICT_MODE      -> Optional.ofNullable(conflictMode);
         };
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private String socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode;
+        private boolean delegation;
+
+        public Builder socialOrient(String v)  { this.socialOrient  = v; return this; }
+        public Builder ruleFollowing(String v) { this.ruleFollowing = v; return this; }
+        public Builder riskAppetite(String v)  { this.riskAppetite  = v; return this; }
+        public Builder autonomy(String v)      { this.autonomy      = v; return this; }
+        public Builder conflictMode(String v)  { this.conflictMode  = v; return this; }
+        public Builder delegation(boolean v)   { this.delegation    = v; return this; }
+
+        public AgentDisposition build() {
+            return new AgentDisposition(
+                    socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode, delegation);
+        }
     }
 }

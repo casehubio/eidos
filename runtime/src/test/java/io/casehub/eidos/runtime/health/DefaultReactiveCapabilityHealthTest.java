@@ -26,7 +26,7 @@ class DefaultReactiveCapabilityHealthTest {
             "agent-1", "Agent", "1.0", "anthropic", "claude", "claude-3-7",
             null, null, null, null, "reviewer",
             List.of(capabilities),
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, "default"
         );
     }

@@ -28,7 +28,7 @@ class SystemPromptRendererTest {
             List.of(new AgentCapability("planning", 0.9, 200L, "medium",
                 List.of("requirements"), List.of("plan"), List.of(),
                 Map.of("software", 0.95, "logistics", 0.4))),
-            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", true),
+            new AgentDisposition("facilitative", "principled", "measured", "semi-autonomous", null, true),
             "EU", "gdpr-compliant", "default"));
     }
 

@@ -60,6 +60,7 @@ class CdiVocabularyRegistryTest {
                     case SOCIAL_ORIENTATION -> Optional.empty();
                     case RULE_FOLLOWING     -> Optional.empty();
                     case AUTONOMY           -> Optional.empty();
+                    case CONFLICT_MODE      -> Optional.empty();
                 };
             }
         };

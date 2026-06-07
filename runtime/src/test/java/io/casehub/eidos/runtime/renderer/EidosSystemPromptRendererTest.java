@@ -66,7 +66,7 @@ class EidosSystemPromptRendererTest {
             List.of(new AgentCapability("code-review", 0.95, 150L, "low",
                 List.of("code"), List.of("review"), List.of(),
                 Map.of("java", 0.95, "rust", 0.3))),
-            new AgentDisposition("independent", "strict", "conservative", "directed", false),
+            new AgentDisposition("independent", "strict", "conservative", "directed", null, false),
             "EU", "gdpr-compliant", "default"
         );
     }

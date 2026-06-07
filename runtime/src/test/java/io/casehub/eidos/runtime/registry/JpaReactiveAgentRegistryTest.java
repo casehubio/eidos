@@ -32,7 +32,7 @@ class JpaReactiveAgentRegistryTest {
             "claude", "claude-3-7", null,
             null, null, null,
             slot, caps,
-            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", false),
+            new AgentDisposition("collaborative", "principled", "measured", "semi-autonomous", null, false),
             null, null, tenancyId
         );
     }

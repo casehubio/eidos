@@ -24,7 +24,7 @@ class EpistemicDomainMatchingTest {
         List.of(new AgentCapability("code-review", 0.9, 150L, "low",
             List.of("code"), List.of("review"), List.of("quality"),
             Map.of("java", 0.95, "python", 0.8, "rust", 0.2))),
-        new AgentDisposition("independent", "principled", "measured", "directed", false),
+        new AgentDisposition("independent", "principled", "measured", "directed", null, false),
         null, null, "default"
     );
 
