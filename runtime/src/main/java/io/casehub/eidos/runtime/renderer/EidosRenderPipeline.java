@@ -187,14 +187,26 @@ class EidosRenderPipeline {
             }
         }
 
-        // Disposition
+        // Disposition — per-axis nested objects with vocabulary context
         if (descriptor.disposition() != null) {
             final AgentDisposition d = descriptor.disposition();
             final ObjectNode dispNode = node.putObject("disposition");
-            addIfPresent(dispNode, "socialOrient",   d.socialOrient());
-            addIfPresent(dispNode, "ruleFollowing",  d.ruleFollowing());
-            addIfPresent(dispNode, "riskAppetite",   d.riskAppetite());
-            addIfPresent(dispNode, "autonomy",        d.autonomy());
+            for (DispositionAxis axis : DispositionAxis.values()) {
+                d.get(axis).ifPresent(rawValue -> {
+                    final ObjectNode axisNode = dispNode.putObject(axisJsonKey(axis));
+                    axisNode.put("value", rawValue);
+                    descriptor.vocabUriForAxis(axis).ifPresent(uri -> {
+                        vocab.resolve(uri, rawValue).ifPresent(term -> {
+                            addIfNonBlank(axisNode, "label",       term.label());
+                            addIfNonBlank(axisNode, "description", term.description());
+                        });
+                        vocab.vocabularyMetadata(uri).ifPresent(meta -> {
+                            addIfNonBlank(axisNode, "vocabularyName",        meta.name());
+                            addIfNonBlank(axisNode, "vocabularyDescription", meta.description());
+                        });
+                    });
+                });
+            }
             dispNode.put("canDelegate", d.delegation());
         }
 
@@ -507,6 +519,16 @@ class EidosRenderPipeline {
 
     private static void addIfNonBlank(final ObjectNode node, final String key, final String value) {
         if (value != null && !value.isEmpty()) node.put(key, value);
+    }
+
+    private static String axisJsonKey(final DispositionAxis axis) {
+        return switch (axis) {
+            case SOCIAL_ORIENTATION -> "socialOrient";
+            case RULE_FOLLOWING     -> "ruleFollowing";
+            case RISK_APPETITE      -> "riskAppetite";
+            case AUTONOMY           -> "autonomy";
+            case CONFLICT_MODE      -> "conflictMode";
+        };
     }
 
     /**

@@ -258,4 +258,67 @@ class EidosRenderPipelineTest {
         assertThat(node.has("slotVocabularyName")).isFalse();
         assertThat(node.has("slotVocabularyDescription")).isFalse();
     }
+
+    // ── Disposition payload (nested per-axis objects) ─────────────────────────
+
+    @Test
+    void disposition_payload_is_nested_object_per_axis() {
+        vocab.register(TestDispTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .dispositionVocabulary("urn:test:disp")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var dispNode = pipeline.buildDescriptorPayload(desc).get("disposition");
+        var socialOrient = dispNode.get("socialOrient");
+        assertThat(socialOrient.isObject()).isTrue();
+        assertThat(socialOrient.get("value").asText()).isEqualTo("independent");
+        assertThat(socialOrient.get("label").asText()).isEqualTo("Independent");
+        assertThat(socialOrient.get("vocabularyName").asText()).isEqualTo("Test Disposition Vocab");
+        assertThat(socialOrient.get("vocabularyDescription").asText()).isEqualTo("A test disposition vocabulary description");
+        assertThat(socialOrient.get("description").asText()).isEqualTo("Works alone by preference");
+    }
+
+    @Test
+    void conflict_mode_included_in_payload_when_set() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder().conflictMode("avoiding").build())
+            .tenancyId("t").build();
+        var dispNode = pipeline.buildDescriptorPayload(desc).get("disposition");
+        assertThat(dispNode.has("conflictMode")).isTrue();
+        assertThat(dispNode.get("conflictMode").get("value").asText()).isEqualTo("avoiding");
+        assertThat(dispNode.has("socialOrient")).isFalse();
+    }
+
+    @Test
+    void disposition_without_registered_vocab_has_value_only() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .dispositionVocabulary("urn:test:unregistered")
+            .disposition(AgentDisposition.builder().socialOrient("custom-value").build())
+            .tenancyId("t").build();
+        var axisNode = pipeline.buildDescriptorPayload(desc).get("disposition").get("socialOrient");
+        assertThat(axisNode.isObject()).isTrue();
+        assertThat(axisNode.get("value").asText()).isEqualTo("custom-value");
+        assertThat(axisNode.has("label")).isFalse();
+        assertThat(axisNode.has("vocabularyName")).isFalse();
+    }
+
+    @Test
+    void different_disposition_vocab_produces_different_descriptor_hash() {
+        vocab.register(TestDispTerm.class);
+        var descWithVocab = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .dispositionVocabulary("urn:test:disp")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var descWithout = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        assertThat(pipeline.buildStage1(descWithVocab, ctx).descriptorHash())
+            .isNotEqualTo(pipeline.buildStage1(descWithout, ctx).descriptorHash());
+    }
 }
