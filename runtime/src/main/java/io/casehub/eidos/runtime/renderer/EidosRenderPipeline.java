@@ -46,14 +46,24 @@ class EidosRenderPipeline {
             - identityNarrative (1-2 sentences): The agent's name, model, and version context.
             - roleNarrative (1-3 sentences): The role this agent plays and its purpose.
               If slotLabel and slotDescription are present, prefer them over the raw slot value.
+              If slotVocabularyName is present, use that framework's canonical language —
+              e.g., slotVocabularyName "Belbin Team Roles" → open with the Belbin archetype
+              framing ("You are the team's Monitor Evaluator...").
             - capabilityNarrative (2-4 sentences): What the agent can do.
               Include inputTypes and outputTypes when present.
               For epistemicDomains, use natural language confidence:
                 >= 0.7 -> "strong expertise", 0.4-0.69 -> "working knowledge", < 0.4 -> "limited familiarity".
 
             OPTIONAL FIELDS (use empty string "" if the source data is absent):
-            - dispositionNarrative (1-2 sentences): How the agent operates - autonomy,
-              rule-following orientation, delegation authority.
+            - dispositionNarrative (2-3 sentences): How the agent operates across all disposition
+              axes present in the payload. The disposition object contains one nested object per axis;
+              each has a "value" field and optionally "label", "description", and "vocabularyName".
+              Cover all axes that have values: socialOrient, ruleFollowing, riskAppetite, autonomy,
+              conflictMode. When "vocabularyName" is present, use that framework's canonical language
+              rather than generic phrasing — e.g., "vocabularyName: Thomas-Kilmann Conflict Modes"
+              → use TKI mode language; "vocabularyName: DISC Behavioral Styles" → use DISC canonical
+              phrasing. Include delegation intent if canDelegate is true.
+              Use "" if no disposition is present.
             - constraintNarrative (1-2 sentences): Data handling obligations - jurisdiction
               and compliance requirements the agent must observe.
             - goalNarrative (1-3 sentences): The agent's current task and objectives.
@@ -79,7 +89,10 @@ class EidosRenderPipeline {
                             .addStringProperty("capabilityNarrative",
                                     "What the agent can do, including domain confidence. Second person.")
                             .addStringProperty("dispositionNarrative",
-                                    "How the agent operates. Empty string if no disposition data.")
+                                    "How the agent operates across all disposition axes in the payload. " +
+                                    "Each axis object carries value, optional label, optional vocabularyName. " +
+                                    "Use framework canonical language when vocabularyName is present. " +
+                                    "2-3 sentences. Empty string if no disposition data.")
                             .addStringProperty("constraintNarrative",
                                     "Data handling obligations. Empty string if none.")
                             .addStringProperty("goalNarrative",
