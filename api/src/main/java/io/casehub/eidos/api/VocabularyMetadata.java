@@ -7,13 +7,14 @@ import java.lang.annotation.Target;
 
 /**
  * Vocabulary-level metadata for an enum implementing {@link VocabularyTerm}.
- * {@code name()} and {@code version()} default to {@code ""} meaning "not provided";
- * callers should treat {@code name().isEmpty()} as absent.
+ * {@code name()}, {@code version()}, and {@code description()} default to {@code ""}
+ * meaning "not provided"; callers should treat {@code isEmpty()} as absent.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface VocabularyMetadata {
     String uri();
-    String name()    default "";
-    String version() default "";
+    String name()        default "";
+    String version()     default "";
+    String description() default "";
 }
