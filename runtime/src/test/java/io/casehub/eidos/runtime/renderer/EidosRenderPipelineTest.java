@@ -9,18 +9,65 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EidosRenderPipelineTest {
 
+    // Scaffolded here for use in disposition payload tests (Task 4)
+    @VocabularyMetadata(uri = "urn:test:disp", name = "Test Disposition Vocab", version = "1.0",
+                        description = "A test disposition vocabulary description")
+    enum TestDispTerm implements VocabularyTerm {
+        INDEPENDENT("independent", "Independent", "Works alone by preference", List.of("alone"));
+        private final String value, label, description;
+        private final List<String> aliases;
+        TestDispTerm(String v, String l, String d, List<String> a) {
+            value = v; label = l; description = d; aliases = a;
+        }
+        @Override public String value()         { return value; }
+        @Override public String label()         { return label; }
+        @Override public String description()   { return description; }
+        @Override public List<String> aliases() { return aliases; }
+    }
+
+    @VocabularyMetadata(uri = "urn:test:slot", name = "Test Slot Vocab", version = "1.0",
+                        description = "A test slot vocabulary description")
+    enum TestSlotTerm implements VocabularyTerm {
+        REVIEWER("reviewer", "Reviewer", "Reviews the work", List.of());
+        private final String value, label, description;
+        private final List<String> aliases;
+        TestSlotTerm(String v, String l, String d, List<String> a) {
+            value = v; label = l; description = d; aliases = a;
+        }
+        @Override public String value()         { return value; }
+        @Override public String label()         { return label; }
+        @Override public String description()   { return description; }
+        @Override public List<String> aliases() { return aliases; }
+    }
+
+    @VocabularyMetadata(uri = "urn:test:noname")
+    enum TestNoNameTerm implements VocabularyTerm {
+        TERM("term", "Term", List.of());
+        private final String value, label;
+        private final List<String> aliases;
+        TestNoNameTerm(String v, String l, List<String> a) {
+            value = v; label = l; aliases = a;
+        }
+        @Override public String value()         { return value; }
+        @Override public String label()         { return label; }
+        @Override public List<String> aliases() { return aliases; }
+    }
+
     static final ObjectMapper MAPPER = new ObjectMapper();
+    CdiVocabularyRegistry vocab;
     EidosRenderPipeline pipeline;
 
     @BeforeEach
     void setUp() {
-        pipeline = new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER);
+        vocab = new CdiVocabularyRegistry();
+        pipeline = new EidosRenderPipeline(vocab, MAPPER);
     }
 
     static AgentDescriptor fullDescriptor() {
@@ -187,5 +234,28 @@ class EidosRenderPipelineTest {
         final var ctx  = EidosRenderPipelineTest.fullContext();
         assertThat(pipeline.buildStage1(desc, ctx).lookupKey())
             .isEqualTo(pipeline.buildStage1(desc, ctx).lookupKey());
+    }
+
+    // ── Slot vocabulary context ───────────────────────────────────────────────
+
+    @Test
+    void slot_payload_includes_vocabulary_name_and_description() {
+        vocab.register(TestSlotTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slotVocabulary("urn:test:slot").slot("reviewer").tenancyId("t").build();
+        var node = pipeline.buildDescriptorPayload(desc);
+        assertThat(node.get("slotVocabularyName").asText()).isEqualTo("Test Slot Vocab");
+        assertThat(node.get("slotVocabularyDescription").asText()).isEqualTo("A test slot vocabulary description");
+    }
+
+    @Test
+    void empty_vocab_name_not_emitted_in_payload() {
+        vocab.register(TestNoNameTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slotVocabulary("urn:test:noname").slot("term").tenancyId("t").build();
+        var node = pipeline.buildDescriptorPayload(desc);
+        // TestNoNameTerm has name="" and description="" — addIfNonBlank must suppress both keys
+        assertThat(node.has("slotVocabularyName")).isFalse();
+        assertThat(node.has("slotVocabularyDescription")).isFalse();
     }
 }

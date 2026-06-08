@@ -12,10 +12,13 @@ import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentPromptContext;
+import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
+import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyRegistry;
+import io.casehub.eidos.api.VocabularyTerm;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -148,11 +151,15 @@ class EidosRenderPipeline {
         addIfPresent(node, "weightsFingerprint", descriptor.weightsFingerprint());
         node.put("slot", descriptor.slot());
 
-        // Vocabulary-resolved slot labels
+        // Vocabulary-resolved slot labels and vocabulary context
         if (descriptor.slotVocabulary() != null) {
             vocab.resolve(descriptor.slotVocabulary(), descriptor.slot()).ifPresent(term -> {
-                addIfPresent(node, "slotLabel", term.label());
-                addIfPresent(node, "slotDescription", term.description());
+                addIfPresent(node,  "slotLabel",       term.label());
+                addIfNonBlank(node, "slotDescription", term.description());
+            });
+            vocab.vocabularyMetadata(descriptor.slotVocabulary()).ifPresent(meta -> {
+                addIfNonBlank(node, "slotVocabularyName",        meta.name());
+                addIfNonBlank(node, "slotVocabularyDescription", meta.description());
             });
         }
 
@@ -496,6 +503,10 @@ class EidosRenderPipeline {
 
     private static void addIfPresent(final ObjectNode node, final String key, final String value) {
         if (value != null) node.put(key, value);
+    }
+
+    private static void addIfNonBlank(final ObjectNode node, final String key, final String value) {
+        if (value != null && !value.isEmpty()) node.put(key, value);
     }
 
     /**
