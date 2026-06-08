@@ -87,6 +87,14 @@ https://raw.githubusercontent.com/casehubio/parent/main/docs/repos/casehub-eidos
 
 ---
 
+## Reference Documents (casehub-parent)
+
+| Document | What it covers |
+|----------|---------------|
+| `../garden/docs/protocols/casehub/FOUNDATION-INDEX.md` | CaseHub foundation protocols |
+
+---
+
 ## Project Type
 
 type: java
