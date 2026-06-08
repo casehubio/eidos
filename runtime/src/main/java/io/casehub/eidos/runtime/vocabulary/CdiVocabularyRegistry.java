@@ -176,4 +176,12 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
     Optional<T> equivalentValues(S from, Class<T> targetVocab, DispositionAxis axis) {
         return from.axisExactMatch(targetVocab, axis).map(targetVocab::cast);
     }
+
+    @Override
+    public Optional<VocabularyMetadata> vocabularyMetadata(String uri) {
+        var clazz = byUri.get(uri);
+        if (clazz == null) return Optional.empty();
+        // register() guarantees @VocabularyMetadata is present for anything in byUri
+        return Optional.of(clazz.getAnnotation(VocabularyMetadata.class));
+    }
 }

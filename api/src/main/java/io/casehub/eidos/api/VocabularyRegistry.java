@@ -52,4 +52,15 @@ public interface VocabularyRegistry {
      */
     <S extends Enum<S> & VocabularyTerm, T extends Enum<T> & VocabularyTerm>
         Optional<T> equivalentValues(S from, Class<T> targetVocab, DispositionAxis axis);
+
+    // --- Vocabulary-level metadata ---
+
+    /**
+     * Returns the vocabulary-level metadata annotation for the given URI.
+     * Empty if the URI is not registered.
+     * See {@link VocabularyMetadata} for field semantics — {@code name()},
+     * {@code version()}, and {@code description()} default to {@code ""},
+     * meaning "not provided"; callers should treat {@code isEmpty()} as absent.
+     */
+    Optional<VocabularyMetadata> vocabularyMetadata(String uri);
 }

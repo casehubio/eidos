@@ -400,4 +400,21 @@ class CdiVocabularyRegistryTest {
         assertThat(terms).extracting(VocabularyTerm::value)
             .doesNotContain("a", "one", "b");
     }
+
+    // --- vocabularyMetadata() tests ---
+
+    @Test
+    void vocabularyMetadata_registered_uri_returns_annotation() {
+        registry.register(SourceTerm.class);
+        var meta = registry.vocabularyMetadata("urn:test:source");
+        assertThat(meta).isPresent();
+        assertThat(meta.get().uri()).isEqualTo("urn:test:source");
+        assertThat(meta.get().name()).isEqualTo("Source Vocab");
+        assertThat(meta.get().version()).isEqualTo("1.0");
+    }
+
+    @Test
+    void vocabularyMetadata_unregistered_uri_returns_empty() {
+        assertThat(registry.vocabularyMetadata("urn:does-not-exist")).isEmpty();
+    }
 }
