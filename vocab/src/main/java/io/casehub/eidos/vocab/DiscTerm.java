@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 @VocabularyMetadata(uri = "urn:casehub:vocab:disc",
-                    name = "DISC Behavioral Styles", version = "1.0")
+                    name = "DISC Behavioral Styles", version = "1.0",
+                    description = "A four-quadrant behavioral style model (Dominance, Influence, Steadiness, Conscientiousness-DISC) used as a disposition shorthand. Correlates with Big Five Extraversion × Agreeableness. Low independent scientific validity, but bounded imprecision makes it usable in practice.")
 public enum DiscTerm implements VocabularyTerm {
 
     DOMINANCE("dominance", "Dominance",

@@ -6,7 +6,8 @@ import io.casehub.eidos.api.VocabularyTerm;
 import java.util.List;
 
 @VocabularyMetadata(uri = "urn:casehub:vocab:conscientiousness",
-                    name = "Conscientiousness Disposition Axes", version = "1.0")
+                    name = "Conscientiousness Disposition Axes", version = "1.0",
+                    description = "An operational axis vocabulary for agent behavioral disposition, grounded in Big Five Conscientiousness research. Covers four of the five disposition axes: rule-following, risk appetite, social orientation, and autonomy. Does not cover CONFLICT_MODE — use Thomas-Kilmann for that axis.")
 public enum ConscientiousnessTerm implements VocabularyTerm {
 
     // RULE_FOLLOWING axis

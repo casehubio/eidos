@@ -6,7 +6,8 @@ import io.casehub.eidos.api.VocabularyTerm;
 import java.util.List;
 import java.util.Optional;
 
-@VocabularyMetadata(uri = "urn:casehub:vocab:svo", name = "SVO Roles", version = "1.0")
+@VocabularyMetadata(uri = "urn:casehub:vocab:svo", name = "SVO Roles", version = "1.0",
+                    description = "A simplified three-role model (Coordinator, Performer, Evaluator) for agent function in multi-agent workflows. Derived from Subject-Verb-Object role theory. Intended as a lightweight slot vocabulary.")
 public enum SvoTerm implements VocabularyTerm {
 
     COORDINATOR("coordinator", "Coordinator", "Orchestrates other agents",

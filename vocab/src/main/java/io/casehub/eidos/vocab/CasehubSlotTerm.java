@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 @VocabularyMetadata(uri = "urn:casehub:vocab:casehub-slot",
-                    name = "CaseHub Slot Roles", version = "1.0")
+                    name = "CaseHub Slot Roles", version = "1.0",
+                    description = "CaseHub's native slot vocabulary defining four platform-standard roles: Planner, Executor, Reviewer, Supervisor. Use when an external team-role framework is not required.")
 public enum CasehubSlotTerm implements VocabularyTerm {
 
     PLANNER("planner", "Planner", "Plans and coordinates case execution",

@@ -6,7 +6,8 @@ import io.casehub.eidos.api.VocabularyTerm;
 import java.util.List;
 
 @VocabularyMetadata(uri = "urn:casehub:vocab:belbin",
-                    name = "Belbin Team Roles", version = "1.0")
+                    name = "Belbin Team Roles", version = "1.0",
+                    description = "Nine complementary team-role archetypes developed by Meredith Belbin from observational research at Henley Management College (1981). Roles describe what a person contributes to a team's function. Medium scientific validity; widely adopted in UK and EU management development.")
 public enum BelbinTerm implements VocabularyTerm {
 
     PLANT                ("plant",                "Plant",

@@ -6,7 +6,8 @@ import io.casehub.eidos.api.VocabularyTerm;
 import java.util.List;
 
 @VocabularyMetadata(uri = "urn:casehub:vocab:thomas-kilmann",
-                    name = "Thomas-Kilmann Conflict Modes", version = "1.0")
+                    name = "Thomas-Kilmann Conflict Modes", version = "1.0",
+                    description = "Five conflict-handling modes from the Thomas-Kilmann Conflict Mode Instrument, based on the assertiveness × cooperativeness framework. Widely adopted in management and applied psychology. Maps to the CONFLICT_MODE disposition axis.")
 public enum ThomasKilmannTerm implements VocabularyTerm {
 
     COMPETING     ("competing",     "Competing",
