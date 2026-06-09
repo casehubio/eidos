@@ -167,7 +167,7 @@ class EidosRenderPipeline {
         // Vocabulary-resolved slot labels and vocabulary context
         if (descriptor.slotVocabulary() != null) {
             vocab.resolve(descriptor.slotVocabulary(), descriptor.slot()).ifPresent(term -> {
-                addIfPresent(node,  "slotLabel",       term.label());
+                addIfNonBlank(node, "slotLabel",       term.label());
                 addIfNonBlank(node, "slotDescription", term.description());
             });
             vocab.vocabularyMetadata(descriptor.slotVocabulary()).ifPresent(meta -> {

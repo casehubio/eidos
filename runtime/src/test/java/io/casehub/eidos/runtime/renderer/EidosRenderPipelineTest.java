@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EidosRenderPipelineTest {
 
-    // Scaffolded here for use in disposition payload tests (Task 4)
+    // Used in disposition payload tests and structural renderer tests
     @VocabularyMetadata(uri = "urn:test:disp", name = "Test Disposition Vocab", version = "1.0",
                         description = "A test disposition vocabulary description")
     enum TestDispTerm implements VocabularyTerm {

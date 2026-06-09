@@ -17,6 +17,7 @@ class SystemPromptRendererTest {
 
     @Inject AgentRegistry registry;
     @Inject SystemPromptRenderer renderer;
+    @Inject VocabularyRegistry vocabularyRegistry;
 
     @BeforeEach
     void registerAgent() {
@@ -87,5 +88,72 @@ class SystemPromptRendererTest {
 
         assertThat(r1.descriptorHash()).isEqualTo(r2.descriptorHash());
         assertThat(r1.contextHash()).isNotEqualTo(r2.contextHash());
+    }
+
+    @Test
+    void conscientiousness_disposition_shows_vocab_resolved_labels() {
+        registry.register(AgentDescriptor.builder()
+            .agentId("cons-agent").name("Conscientiousness Agent")
+            .slot("reviewer")
+            .dispositionVocabulary("urn:casehub:vocab:conscientiousness")
+            .disposition(AgentDisposition.builder()
+                .socialOrient("facilitative")
+                .ruleFollowing("principled")
+                .build())
+            .tenancyId("default").build());
+
+        final var descriptor = registry.findById("cons-agent", "default").orElseThrow();
+        final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
+        final var result = renderer.render(descriptor, context);
+
+        assertThat(result.content()).contains("Facilitative (Conscientiousness Disposition Axes)");
+        assertThat(result.content()).contains("Principled (Conscientiousness Disposition Axes)");
+        // Raw values must not appear as plain text
+        assertThat(result.content()).doesNotContain("Social orientation: facilitative\n");
+    }
+
+    @Test
+    void thomas_kilmann_conflict_mode_appears_in_structural_output() {
+        registry.register(AgentDescriptor.builder()
+            .agentId("tk-agent").name("TK Agent")
+            .slot("reviewer")
+            .dispositionVocabulary("urn:casehub:vocab:thomas-kilmann")
+            .disposition(AgentDisposition.builder()
+                .conflictMode("collaborating")
+                .build())
+            .tenancyId("default").build());
+
+        final var descriptor = registry.findById("tk-agent", "default").orElseThrow();
+        final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
+        final var result = renderer.render(descriptor, context);
+
+        assertThat(result.content()).contains("Conflict mode:");
+        assertThat(result.content()).contains("Collaborating (Thomas-Kilmann Conflict Modes)");
+    }
+
+    @Test
+    void descriptor_with_vocab_uri_has_different_hash_from_descriptor_without() {
+        // Guard: if the vocab registrar didn't run, this test produces a misleading failure
+        assertThat(vocabularyRegistry.isRegistered("urn:casehub:vocab:conscientiousness"))
+            .as("Conscientiousness vocab must be CDI-registered via VocabularyRegistrar beans")
+            .isTrue();
+        registry.register(AgentDescriptor.builder()
+            .agentId("hash-vocab").name("Agent").slot("reviewer")
+            .dispositionVocabulary("urn:casehub:vocab:conscientiousness")
+            .disposition(AgentDisposition.builder().socialOrient("facilitative").build())
+            .tenancyId("default").build());
+        registry.register(AgentDescriptor.builder()
+            .agentId("hash-plain").name("Agent").slot("reviewer")
+            .disposition(AgentDisposition.builder().socialOrient("facilitative").build())
+            .tenancyId("default").build());
+
+        final var ctx = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
+        final var resultVocab = renderer.render(
+            registry.findById("hash-vocab", "default").orElseThrow(), ctx);
+        final var resultPlain = renderer.render(
+            registry.findById("hash-plain", "default").orElseThrow(), ctx);
+
+        // Registered vocab adds vocabularyName to payload → different descriptor hash
+        assertThat(resultVocab.descriptorHash()).isNotEqualTo(resultPlain.descriptorHash());
     }
 }
