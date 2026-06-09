@@ -321,4 +321,56 @@ class EidosRenderPipelineTest {
         assertThat(pipeline.buildStage1(descWithVocab, ctx).descriptorHash())
             .isNotEqualTo(pipeline.buildStage1(descWithout, ctx).descriptorHash());
     }
+
+    // ── Structural renderers ─────────────────────────────────────────────────
+
+    @Test
+    void structural_markdown_shows_axis_label_not_raw_value() {
+        vocab.register(TestDispTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .dispositionVocabulary("urn:test:disp")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("Independent (Test Disposition Vocab)");
+        assertThat(result.content()).doesNotContain("Social orientation: independent\n");
+        assertThat(result.content()).doesNotContain("independent");
+    }
+
+    @Test
+    void structural_markdown_includes_conflict_mode() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder().conflictMode("avoiding").build())
+            .tenancyId("t").build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("Conflict mode: avoiding");
+    }
+
+    @Test
+    void structural_prose_includes_all_disposition_axes() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent")
+                .ruleFollowing("strict")
+                .riskAppetite("conservative")
+                .autonomy("directed")
+                .conflictMode("avoiding")
+                .build())
+            .tenancyId("t").build();
+        var ctx = AgentPromptContext.forFormat(PROSE);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("Social orientation: independent");
+        assertThat(result.content()).contains("Rule following: strict");
+        assertThat(result.content()).contains("Risk appetite: conservative");
+        assertThat(result.content()).contains("Autonomy: directed");
+        assertThat(result.content()).contains("Conflict mode: avoiding");
+    }
 }

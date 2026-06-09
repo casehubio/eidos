@@ -397,10 +397,11 @@ class EidosRenderPipeline {
         if (descriptor.disposition() != null) {
             final AgentDisposition d = descriptor.disposition();
             sb.append("\n## How You Operate\n");
-            if (d.socialOrient() != null)  sb.append("- Social orientation: ").append(d.socialOrient()).append("\n");
-            if (d.ruleFollowing() != null) sb.append("- Rule following: ").append(d.ruleFollowing()).append("\n");
-            if (d.riskAppetite() != null)  sb.append("- Risk appetite: ").append(d.riskAppetite()).append("\n");
-            if (d.autonomy() != null)      sb.append("- Autonomy: ").append(d.autonomy()).append("\n");
+            for (DispositionAxis axis : DispositionAxis.values()) {
+                d.get(axis).ifPresent(raw ->
+                    sb.append("- ").append(axisLabel(axis)).append(": ")
+                      .append(resolveAxisDisplay(axis, raw, descriptor)).append("\n"));
+            }
             sb.append("- Can delegate: ").append(d.delegation() ? "yes" : "no").append("\n");
         }
 
@@ -455,8 +456,11 @@ class EidosRenderPipeline {
             if (descriptor.disposition() != null) {
                 final AgentDisposition d = descriptor.disposition();
                 sb.append("\nOperating style:");
-                if (d.ruleFollowing() != null) sb.append(" ").append(d.ruleFollowing()).append(" rule-following.");
-                if (d.autonomy() != null)      sb.append(" Autonomy: ").append(d.autonomy()).append(".");
+                for (DispositionAxis axis : DispositionAxis.values()) {
+                    d.get(axis).ifPresent(raw ->
+                        sb.append(" ").append(axisLabel(axis)).append(": ")
+                          .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
+                }
                 sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
             }
 
@@ -542,6 +546,32 @@ class EidosRenderPipeline {
             case AUTONOMY           -> "autonomy";
             case CONFLICT_MODE      -> "conflictMode";
         };
+    }
+
+    private static String axisLabel(final DispositionAxis axis) {
+        return switch (axis) {
+            case SOCIAL_ORIENTATION -> "Social orientation";
+            case RULE_FOLLOWING     -> "Rule following";
+            case RISK_APPETITE      -> "Risk appetite";
+            case AUTONOMY           -> "Autonomy";
+            case CONFLICT_MODE      -> "Conflict mode";
+        };
+    }
+
+    private String resolveAxisDisplay(final DispositionAxis axis, final String raw,
+                                       final AgentDescriptor descriptor) {
+        final Optional<String> vocabUri = descriptor.vocabUriForAxis(axis);
+        final String label = vocabUri
+            .flatMap(uri -> vocab.resolve(uri, raw))
+            .map(VocabularyTerm::label)
+            .filter(l -> !l.isEmpty())
+            .orElse(raw);
+        final String vocabName = vocabUri
+            .flatMap(uri -> vocab.vocabularyMetadata(uri))
+            .map(VocabularyMetadata::name)
+            .filter(n -> !n.isEmpty())
+            .orElse(null);
+        return vocabName != null ? label + " (" + vocabName + ")" : label;
     }
 
     /**
