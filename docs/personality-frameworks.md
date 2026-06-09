@@ -15,8 +15,9 @@ the fields of `AgentDescriptor`. It serves two purposes:
 
 ## How to read mapping tables
 
-Disposition column values (`socialOrient`, `ruleFollowing`, `riskAppetite`, `autonomy`)
-are exact keys from `urn:casehub:vocab:conscientiousness`:
+Disposition column values for `socialOrient`, `ruleFollowing`, `riskAppetite`, and `autonomy`
+are exact keys from `urn:casehub:vocab:conscientiousness`. Values for `conflictMode` are
+exact keys from `urn:casehub:vocab:thomas-kilmann`:
 
 | Term | Axis | Meaning |
 |------|------|---------|
@@ -32,6 +33,11 @@ are exact keys from `urn:casehub:vocab:conscientiousness`:
 | `directed` | autonomy | Follows explicit instructions |
 | `semi-autonomous` | autonomy | Acts within defined boundaries |
 | `autonomous` | autonomy | Acts on own judgment |
+| `competing` | conflictMode | Assertive, uncooperative — pursues own concerns at others' expense |
+| `collaborating` | conflictMode | Assertive and cooperative — seeks a solution that fully satisfies both parties |
+| `compromising` | conflictMode | Intermediate assertiveness and cooperativeness — partial satisfaction for both |
+| `avoiding` | conflictMode | Unassertive and uncooperative — sidesteps or postpones the conflict |
+| `accommodating` | conflictMode | Unassertive, cooperative — concedes own concerns to satisfy the other party |
 
 A dimension that maps strongly to a field gets a concrete term. Weak mappings are marked
 `(partial)` with a note. `—` means the framework makes no claim for that field.
@@ -383,10 +389,13 @@ Rows = AgentDescriptor fields. Columns = all frameworks except BDI (appendix onl
 | `ruleFollowing` | **disposition** | reference | partial | **disposition** | partial | — | — | partial | — | — |
 | `riskAppetite` | **disposition** | reference | partial | **disposition** | partial | — | — | partial | — | — |
 | `autonomy` | **disposition** | reference | partial | **disposition** | — | — | reference | — | partial | partial |
+| `conflictMode` | — | — | — | **disposition** | — | **disposition** | — | — | — | — |
 | `delegation` | **disposition** | — | — | — | — | — | — | — | — | — |
 
 Key: **bold** = primary vocabulary source for this field · `partial` = partial/approximate mapping ·
 `reference` = conceptual grounding only, no vocabulary terms · `Partial` (compatibility) = meaningful overlap but insufficient to justify dual vocabulary · `—` = no claim
+
+Note on DISC × conflictMode: DISC types resolve to TK conflict modes via `axisExactMatch` (D→competing, i→collaborating, S→accommodating, C→avoiding). They appear as `**disposition**` here because an agent using `dispositionVocabulary="urn:casehub:vocab:disc"` will have its `conflictMode` value axis-resolved to TK terms automatically — DISC is a usable vocabulary source for this field even though TK defines the underlying terms. COMPROMISING has no DISC equivalent.
 
 *O\*NET provides occupation codes that may be used as `slot` values when technical
 precision is needed over team-role vocabulary.
@@ -465,11 +474,13 @@ The DISC type reveals behavioral style that the Belbin role does not predict.
 ```
 slotVocabulary        = "urn:casehub:vocab:belbin"
 dispositionVocabulary = "urn:casehub:vocab:conscientiousness"
+axisVocabularies      = {CONFLICT_MODE: "urn:casehub:vocab:thomas-kilmann"}
 slot                  = "co-ordinator"
 disposition.socialOrient  = "facilitative"
 disposition.ruleFollowing = "principled"
 disposition.riskAppetite  = "measured"
 disposition.autonomy      = "semi-autonomous"
+disposition.conflictMode  = "collaborating"   ← TK term, axis-overridden
 disposition.delegation    = true
 ```
 
@@ -544,6 +555,13 @@ is complete. KAI and Big Five Openness support it. Do not use TK modes here.
 **`autonomy`:** Conscientiousness vocabulary (`directed`, `semi-autonomous`, `autonomous`)
 is complete. SL S1→S4 provides an intuitive mental model. Do not cite SL as authority.
 
+**`conflictMode`:** Thomas-Kilmann is the only primary vocabulary source — use
+`urn:casehub:vocab:thomas-kilmann` and its five terms (`competing`, `collaborating`,
+`compromising`, `avoiding`, `accommodating`). DISC types resolve to TK terms automatically
+via `axisExactMatch` when `dispositionVocabulary="urn:casehub:vocab:disc"` is set — no
+explicit TK vocabulary URI is needed in that case. Belbin roles have no defined TK mapping;
+do not infer conflict mode from a Belbin slot.
+
 **`delegation`:** Set to `true` for Belbin Co-ordinator. DISC types make no delegation
 claim (sub-agent spawning is platform-semantic, not personality-semantic). Default `false`
 unless the role explicitly involves empowering others.
@@ -572,14 +590,19 @@ disposition.socialOrient  = "<conscientiousness term>"
 disposition.ruleFollowing = "<conscientiousness term>"
 disposition.riskAppetite  = "<conscientiousness term>"
 disposition.autonomy      = "<conscientiousness term>"
+disposition.conflictMode  = "<thomas-kilmann term>"   ← requires axisVocabularies override (see note)
 disposition.delegation    = <bool from Belbin draft table>
 ```
 
+Note: `conflictMode` uses TK terms, not Conscientiousness terms. When `dispositionVocabulary`
+is set to Conscientiousness, set `axisVocabularies = {CONFLICT_MODE: "urn:casehub:vocab:thomas-kilmann"}`
+to override for that axis. Alternatively, omit `conflictMode` — it is not required.
+
 **What it expresses:** Team contribution role + full behavioral profile.
-**What it leaves unspecified:** Occupational domain; conflict mode (eidos#38).
-**When to use:** Agents defined primarily by team function. Populate all four disposition
+**What it leaves unspecified:** Occupational domain.
+**When to use:** Agents defined primarily by team function. Populate all four Conscientiousness
 axes — the Belbin vocabulary draft table shows typical implied values per role; actual
-behavioral assessment may warrant deviation.
+behavioral assessment may warrant deviation. Add `conflictMode` when conflict style is known.
 
 ---
 
@@ -595,11 +618,13 @@ disposition.socialOrient  = "<disc-type-key>"
 disposition.ruleFollowing = "<disc-type-key>"
 disposition.riskAppetite  = "<disc-type-key>"
 disposition.autonomy      = "<disc-type-key>"
+disposition.conflictMode  = "<disc-type-key>"   ← axis-resolved to TK term via axisExactMatch
 disposition.delegation    = <bool from Belbin draft table — not from DISC>
 ```
 
 **What it expresses:** Team role (Belbin) + independently-measured personality style
-(DISC). Additive when the DISC type diverges from the Belbin role's implied disposition
+(DISC), including conflict mode via DISC's axis-aware TK resolution.
+Additive when the DISC type diverges from the Belbin role's implied disposition
 — a Co-ordinator (`facilitative`, `measured`) who is also a D-type (`independent` on
 socialOrient, `bold` on riskAppetite) diverges on both axes.
 Always populate `delegation` from the Belbin draft table; DISC types make no delegation claim.
@@ -619,12 +644,14 @@ disposition.socialOrient  = "<conscientiousness term>"
 disposition.ruleFollowing = "<conscientiousness term>"
 disposition.riskAppetite  = "<conscientiousness term>"
 disposition.autonomy      = "<conscientiousness term>"
+disposition.conflictMode  = "<thomas-kilmann term>"   ← requires axisVocabularies override (see Belbin Profile note)
 ```
 
 **What it expresses:** Technical competence domain + behavioral traits.
-**What it leaves unspecified:** Team dynamic; conflict mode (eidos#38).
+**What it leaves unspecified:** Team dynamic.
 **When to use:** Agents defined primarily by technical skill (code review, data analysis,
-security analysis). Use O*NET for general roles; SFIA for IT-specific roles.
+security analysis). Use O*NET for general roles; SFIA for IT-specific roles. Add
+`conflictMode` when the agent's conflict handling style is a meaningful signal.
 
 ---
 
