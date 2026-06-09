@@ -131,6 +131,132 @@ class SystemPromptRendererTest {
         assertThat(result.content()).contains("Collaborating (Thomas-Kilmann Conflict Modes)");
     }
 
+    // ── A2A card framework references (eidos#45) ───────────────────────────────
+
+    private com.fasterxml.jackson.databind.JsonNode renderA2aCard(final AgentDescriptor descriptor) {
+        try {
+            final var result = renderer.render(descriptor, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
+            return new com.fasterxml.jackson.databind.ObjectMapper().readTree(result.content());
+        } catch (final Exception e) {
+            throw new IllegalStateException("A2A card is not valid JSON", e);
+        }
+    }
+
+    @Test
+    void a2a_card_belbin_slot_exposes_slot_and_framework() {
+        final var descriptor = AgentDescriptor.builder()
+            .agentId("belbin-1").name("Monitor Evaluator")
+            .slotVocabulary("urn:casehub:vocab:belbin")
+            .slot("monitor-evaluator")
+            .tenancyId("default").build();
+        registry.register(descriptor);
+
+        final var card = renderA2aCard(registry.findById("belbin-1", "default").orElseThrow());
+        final var slot = card.get("slot");
+        assertThat(slot.get("value").asText()).isEqualTo("monitor-evaluator");
+        assertThat(slot.get("label").asText()).isEqualTo("Monitor Evaluator");
+        assertThat(slot.get("vocabularyUri").asText()).isEqualTo("urn:casehub:vocab:belbin");
+        assertThat(slot.get("vocabularyName").asText()).isEqualTo("Belbin Team Roles");
+
+        final var frameworks = card.get("frameworks");
+        assertThat(frameworks.isArray()).isTrue();
+        assertThat(frameworks.get(0).get("uri").asText()).isEqualTo("urn:casehub:vocab:belbin");
+        assertThat(frameworks.get(0).get("name").asText()).isEqualTo("Belbin Team Roles");
+    }
+
+    @Test
+    void a2a_card_conscientiousness_disposition_exposes_framework() {
+        final var descriptor = AgentDescriptor.builder()
+            .agentId("cons-a2a-1").name("Conscientiousness Agent")
+            .slot("reviewer")
+            .dispositionVocabulary("urn:casehub:vocab:conscientiousness")
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent")
+                .ruleFollowing("strict")
+                .build())
+            .tenancyId("default").build();
+        registry.register(descriptor);
+
+        final var card = renderA2aCard(registry.findById("cons-a2a-1", "default").orElseThrow());
+        final var socialOrient = card.get("disposition").get("socialOrient");
+        assertThat(socialOrient.get("vocabularyUri").asText())
+            .isEqualTo("urn:casehub:vocab:conscientiousness");
+        assertThat(socialOrient.get("vocabularyName").asText())
+            .isEqualTo("Conscientiousness Disposition Axes");
+
+        final var frameworks = card.get("frameworks");
+        assertThat(frameworks.isArray()).isTrue();
+        assertThat(frameworks).anyMatch(f ->
+            "urn:casehub:vocab:conscientiousness".equals(f.get("uri").asText()));
+    }
+
+    @Test
+    void a2a_card_thomas_kilmann_conflict_mode_in_frameworks() {
+        final var descriptor = AgentDescriptor.builder()
+            .agentId("tk-a2a-1").name("TK Agent")
+            .slot("reviewer")
+            .axisVocabularies(Map.of(DispositionAxis.CONFLICT_MODE,
+                "urn:casehub:vocab:thomas-kilmann"))
+            .disposition(AgentDisposition.builder().conflictMode("collaborating").build())
+            .tenancyId("default").build();
+        registry.register(descriptor);
+
+        final var card = renderA2aCard(registry.findById("tk-a2a-1", "default").orElseThrow());
+        final var conflictMode = card.get("disposition").get("conflictMode");
+        assertThat(conflictMode.get("value").asText()).isEqualTo("collaborating");
+        assertThat(conflictMode.get("label").asText()).isEqualTo("Collaborating");
+        assertThat(conflictMode.get("vocabularyUri").asText())
+            .isEqualTo("urn:casehub:vocab:thomas-kilmann");
+        assertThat(conflictMode.get("vocabularyName").asText())
+            .isEqualTo("Thomas-Kilmann Conflict Modes");
+
+        final var frameworks = card.get("frameworks");
+        assertThat(frameworks.isArray()).isTrue();
+        assertThat(frameworks.get(0).get("uri").asText())
+            .isEqualTo("urn:casehub:vocab:thomas-kilmann");
+    }
+
+    @Test
+    void a2a_card_slot_no_vocab_disposition_has_vocab() {
+        final var descriptor = AgentDescriptor.builder()
+            .agentId("mixed-1").name("Mixed Agent")
+            .slot("reviewer") // no slotVocabulary
+            .dispositionVocabulary("urn:casehub:vocab:conscientiousness")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("default").build();
+        registry.register(descriptor);
+
+        final var card = renderA2aCard(registry.findById("mixed-1", "default").orElseThrow());
+        // slot has value only — no vocab fields
+        final var slot = card.get("slot");
+        assertThat(slot.get("value").asText()).isEqualTo("reviewer");
+        assertThat(slot.has("vocabularyUri")).isFalse();
+        assertThat(slot.has("label")).isFalse();
+        // disposition has vocab context
+        assertThat(card.get("disposition").get("socialOrient").get("vocabularyName").asText())
+            .isEqualTo("Conscientiousness Disposition Axes");
+        // frameworks sourced from disposition only
+        final var frameworks = card.get("frameworks");
+        assertThat(frameworks.isArray()).isTrue();
+        assertThat(frameworks.size()).isEqualTo(1);
+        assertThat(frameworks.get(0).get("uri").asText())
+            .isEqualTo("urn:casehub:vocab:conscientiousness");
+    }
+
+    @Test
+    void a2a_card_no_vocab_agent_has_no_frameworks_key() {
+        final var descriptor = AgentDescriptor.builder()
+            .agentId("plain-1").name("Plain Agent")
+            .slot("reviewer") // no vocabulary URIs configured at all
+            .tenancyId("default").build();
+        registry.register(descriptor);
+
+        final var card = renderA2aCard(registry.findById("plain-1", "default").orElseThrow());
+        assertThat(card.has("frameworks")).isFalse();
+        // slot has value but no vocab fields
+        assertThat(card.get("slot").has("vocabularyUri")).isFalse();
+    }
+
     @Test
     void descriptor_with_vocab_uri_has_different_hash_from_descriptor_without() {
         // Guard: if the vocab registrar didn't run, this test produces a misleading failure

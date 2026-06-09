@@ -112,7 +112,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 - **VocabularyRegistry** — pluggable domain vocabulary system; vocabularies are Java enums implementing `VocabularyTerm`; `CdiVocabularyRegistry` discovers `Instance<VocabularyRegistrar>` CDI beans at startup; axis-aware `equivalentValues()` with `DispositionAxis`
 - **AgentRegistry** — store and query descriptors (blocking + reactive)
 - **CapabilityHealth** — two-layer capability model: declared (descriptor) vs. operable now (runtime probe); `AgentStateStore` SPI records degradation state with TTL; `NoOpAgentStateStore` @DefaultBean, `InMemoryAgentStateStore` @Alternative in casehub-eidos-memory
-- **SystemPromptRenderer** — renders `AgentDescriptor + AgentPromptContext` (goal, resources, situational context) into a format-specific system prompt; `ClaudeMarkdownRenderer` @DefaultBean supports LLM path (LangChain4j `ChatModel`) and structural fallback
+- **SystemPromptRenderer** — renders `AgentDescriptor + AgentPromptContext` (goal, resources, situational context) into a format-specific system prompt; `EidosSystemPromptRenderer` @DefaultBean supports three formats: `MARKDOWN` (LLM or structural fallback), `PROSE` (LLM or structural fallback), `A2A_CARD` (JSON machine-readable card with slot, vocabulary-grounded disposition, and frameworks index)
 - **casehub-eidos-vocab** — optional well-known vocabularies: SVO, Conscientiousness, CasehubSlot, Belbin (team roles), DISC (behavioral styles), Thomas-Kilmann (conflict modes)
 
 ### Key Design Decisions
@@ -121,11 +121,11 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 
 **Nothing goes in casehub-platform-api** — `AgentDescriptor` et al. are Eidos domain types. Repos that need them depend on `casehub-eidos-api` (Tier 1, pure Java). See platform-api-scope protocol in the garden.
 
-**Domain vocabulary via domainVocabulary field** — `AgentDescriptor.domainVocabulary` sets the default vocabulary URI for all fields. Optional per-field overrides: `slotVocabulary`, `dispositionVocabulary`. Per-axis override: `axisVocabularies(Map<DispositionAxis, String>)` — most specific wins. `vocabUriForAxis(DispositionAxis)` implements the three-step resolution: `axisVocabularies.get(axis)` → `dispositionVocabulary` → `domainVocabulary`.
+**Domain vocabulary via domainVocabulary field** — `AgentDescriptor.domainVocabulary` sets the default vocabulary URI for all fields. Optional per-field overrides: `slotVocabulary`, `dispositionVocabulary`. Per-axis override: `axisVocabularies(Map<DispositionAxis, String>)` — most specific wins. `vocabUriForAxis(DispositionAxis)` implements the three-step resolution: `axisVocabularies.get(axis)` → `dispositionVocabulary` → `domainVocabulary`. `vocabUriForSlot()` implements the two-step resolution: `slotVocabulary` → `domainVocabulary` (`dispositionVocabulary` excluded — it grounds disposition axes, not slot).
 
 **Two-layer capability model** — `AgentDescriptor` (static, declared at registration) + `CapabilityHealth.probe()` (dynamic, checked at dispatch time by casehub-engine). `epistemicDomains` on `AgentCapability` qualifies declared capability by domain (e.g. `{"java": 0.95, "rust": 0.42}`).
 
-**Generative** — `SystemPromptRenderer` renders an `AgentDescriptor + AgentPromptContext` into LLM instructions. `ClaudeMarkdownRenderer` is the `@DefaultBean`: serializes to YAML, calls `ChatModel.chat()` when available, falls back to structural markdown. `AgentPromptContext` accumulates goal (`GoalContext`), resources (`Resource`), and situational context — re-renderable as the agent's context evolves.
+**Generative** — `SystemPromptRenderer` renders an `AgentDescriptor + AgentPromptContext` into LLM instructions. `EidosSystemPromptRenderer` is the `@DefaultBean`: two-step pipeline — structural assembly then optional LangChain4j `ChatModel` semantic pass for MARKDOWN/PROSE; separate `A2ASemanticEnrichmentStep` for capability descriptions in A2A_CARD. Falls back to structural output when no `ChatModel` is available. `AgentPromptContext` accumulates goal (`GoalContext`), resources (`Resource`), and situational context — re-renderable as the agent's context evolves.
 
 **Research backing:** `research/eidos.md` in the eidos workspace contains full research, rationale, and ecosystem position.
 

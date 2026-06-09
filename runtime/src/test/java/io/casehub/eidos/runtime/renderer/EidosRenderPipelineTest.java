@@ -47,6 +47,20 @@ class EidosRenderPipelineTest {
         @Override public List<String> aliases() { return aliases; }
     }
 
+    /** Non-blank name, blank description — for frameworks description-omission test. */
+    @VocabularyMetadata(uri = "urn:test:nodesc", name = "No Description Vocab")
+    enum TestNoDescTerm implements VocabularyTerm {
+        TERM("term", "Term", List.of());
+        private final String value, label;
+        private final List<String> aliases;
+        TestNoDescTerm(String v, String l, List<String> a) {
+            value = v; label = l; aliases = a;
+        }
+        @Override public String value()         { return value; }
+        @Override public String label()         { return label; }
+        @Override public List<String> aliases() { return aliases; }
+    }
+
     @VocabularyMetadata(uri = "urn:test:noname")
     enum TestNoNameTerm implements VocabularyTerm {
         TERM("term", "Term", List.of());
@@ -341,6 +355,22 @@ class EidosRenderPipelineTest {
     }
 
     @Test
+    void structural_markdown_slot_label_via_domain_vocabulary_fallback() {
+        vocab.register(TestSlotTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N")
+            .domainVocabulary("urn:test:slot") // no slotVocabulary — must fall through
+            .slot("reviewer")
+            .tenancyId("t").build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        // vocabUriForSlot() fallback should resolve label from TestSlotTerm
+        assertThat(result.content()).contains("Reviewer");
+        assertThat(result.content()).doesNotContain("## Role\nreviewer\n");
+    }
+
+    @Test
     void structural_markdown_includes_conflict_mode() {
         var desc = AgentDescriptor.builder()
             .agentId("a").name("N").slot("s")
@@ -350,6 +380,245 @@ class EidosRenderPipelineTest {
         var s1 = pipeline.buildStage1(desc, ctx);
         var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
         assertThat(result.content()).contains("Conflict mode: avoiding");
+    }
+
+    // ── A2A card assembly ────────────────────────────────────────────────────
+
+    private com.fasterxml.jackson.databind.JsonNode renderA2aCard(final AgentDescriptor desc) {
+        final var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        final var s1 = pipeline.buildStage1(desc, ctx);
+        final var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        try {
+            return MAPPER.readTree(result.content());
+        } catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new IllegalStateException("A2A card is not valid JSON: " + result.content(), e);
+        }
+    }
+
+    // buildDescriptorPayload — slot via domainVocabulary fallback
+
+    @Test
+    void descriptor_payload_slot_vocab_via_domain_vocabulary_fallback() {
+        vocab.register(TestSlotTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N")
+            .domainVocabulary("urn:test:slot") // no slotVocabulary — must fall through
+            .slot("reviewer")
+            .tenancyId("t").build();
+        var node = pipeline.buildDescriptorPayload(desc);
+        assertThat(node.get("slotVocabularyName").asText()).isEqualTo("Test Slot Vocab");
+        assertThat(node.get("slotLabel").asText()).isEqualTo("Reviewer");
+    }
+
+    // slot block
+
+    @Test
+    void a2a_card_slot_value_always_present() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("reviewer").tenancyId("t").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.get("slot").get("value").asText()).isEqualTo("reviewer");
+    }
+
+    @Test
+    void a2a_card_slot_includes_vocab_fields_when_slot_vocabulary_registered() {
+        vocab.register(TestSlotTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slotVocabulary("urn:test:slot").slot("reviewer").tenancyId("t").build();
+        var slot = renderA2aCard(desc).get("slot");
+        assertThat(slot.get("value").asText()).isEqualTo("reviewer");
+        assertThat(slot.get("label").asText()).isEqualTo("Reviewer");
+        assertThat(slot.get("vocabularyUri").asText()).isEqualTo("urn:test:slot");
+        assertThat(slot.get("vocabularyName").asText()).isEqualTo("Test Slot Vocab");
+    }
+
+    @Test
+    void a2a_card_slot_includes_vocab_fields_via_domain_vocabulary_fallback() {
+        vocab.register(TestSlotTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N")
+            .domainVocabulary("urn:test:slot") // no slotVocabulary — fallback via vocabUriForSlot()
+            .slot("reviewer").tenancyId("t").build();
+        var slot = renderA2aCard(desc).get("slot");
+        assertThat(slot.get("vocabularyUri").asText()).isEqualTo("urn:test:slot");
+        assertThat(slot.get("vocabularyName").asText()).isEqualTo("Test Slot Vocab");
+        assertThat(slot.get("label").asText()).isEqualTo("Reviewer");
+    }
+
+    @Test
+    void a2a_card_slot_omits_vocab_fields_when_no_vocabulary() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("reviewer").tenancyId("t").build();
+        var slot = renderA2aCard(desc).get("slot");
+        assertThat(slot.has("vocabularyUri")).isFalse();
+        assertThat(slot.has("vocabularyName")).isFalse();
+        assertThat(slot.has("label")).isFalse();
+    }
+
+    // disposition block
+
+    @Test
+    void a2a_card_disposition_axis_present_when_value_set() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var disp = renderA2aCard(desc).get("disposition");
+        assertThat(disp.has("socialOrient")).isTrue();
+        assertThat(disp.get("socialOrient").get("value").asText()).isEqualTo("independent");
+    }
+
+    @Test
+    void a2a_card_disposition_axis_omitted_when_value_null() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var disp = renderA2aCard(desc).get("disposition");
+        assertThat(disp.has("ruleFollowing")).isFalse();
+        assertThat(disp.has("riskAppetite")).isFalse();
+        assertThat(disp.has("conflictMode")).isFalse();
+    }
+
+    @Test
+    void a2a_card_disposition_with_delegation_only_emits_can_delegate_no_frameworks() {
+        // delegation is primitive boolean — always has a value; all String axes null
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder().build()) // all axes null, delegation=false
+            .tenancyId("t").build();
+        var card = renderA2aCard(desc);
+        var disp = card.get("disposition");
+        assertThat(disp.has("canDelegate")).isTrue();
+        assertThat(disp.get("canDelegate").asBoolean()).isFalse();
+        assertThat(disp.has("socialOrient")).isFalse();
+        assertThat(disp.has("ruleFollowing")).isFalse();
+        assertThat(card.has("frameworks")).isFalse();
+    }
+
+    @Test
+    void a2a_card_disposition_includes_vocab_uri_and_name_when_registered() {
+        vocab.register(TestDispTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .dispositionVocabulary("urn:test:disp")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var axis = renderA2aCard(desc).get("disposition").get("socialOrient");
+        assertThat(axis.get("vocabularyUri").asText()).isEqualTo("urn:test:disp");
+        assertThat(axis.get("vocabularyName").asText()).isEqualTo("Test Disposition Vocab");
+        assertThat(axis.get("label").asText()).isEqualTo("Independent");
+        // A2A excludes term-level description and vocabularyDescription (doc, not routing data)
+        assertThat(axis.has("description")).isFalse();
+        assertThat(axis.has("vocabularyDescription")).isFalse();
+    }
+
+    @Test
+    void a2a_card_disposition_omits_vocab_fields_when_no_uri() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .disposition(AgentDisposition.builder().socialOrient("custom-value").build())
+            .tenancyId("t").build();
+        var axis = renderA2aCard(desc).get("disposition").get("socialOrient");
+        assertThat(axis.get("value").asText()).isEqualTo("custom-value");
+        assertThat(axis.has("vocabularyUri")).isFalse();
+        assertThat(axis.has("vocabularyName")).isFalse();
+        assertThat(axis.has("label")).isFalse();
+    }
+
+    @Test
+    void a2a_card_disposition_null_produces_no_disposition_block() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s").tenancyId("t").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("disposition")).isFalse();
+    }
+
+    // frameworks array
+
+    @Test
+    void a2a_card_frameworks_lists_instantiated_vocabularies() {
+        vocab.register(TestSlotTerm.class);
+        vocab.register(TestDispTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N")
+            .slotVocabulary("urn:test:slot").slot("reviewer")
+            .dispositionVocabulary("urn:test:disp")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var frameworks = renderA2aCard(desc).get("frameworks");
+        assertThat(frameworks.isArray()).isTrue();
+        assertThat(frameworks.size()).isEqualTo(2);
+        // slot-first ordering
+        assertThat(frameworks.get(0).get("uri").asText()).isEqualTo("urn:test:slot");
+        assertThat(frameworks.get(1).get("uri").asText()).isEqualTo("urn:test:disp");
+    }
+
+    @Test
+    void a2a_card_frameworks_deduplicates_same_uri() {
+        vocab.register(TestDispTerm.class);
+        // same URI on slot vocab AND disposition vocab
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N")
+            .slotVocabulary("urn:test:disp").slot("reviewer")
+            .dispositionVocabulary("urn:test:disp")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var frameworks = renderA2aCard(desc).get("frameworks");
+        assertThat(frameworks.isArray()).isTrue();
+        assertThat(frameworks.size()).isEqualTo(1);
+        assertThat(frameworks.get(0).get("uri").asText()).isEqualTo("urn:test:disp");
+    }
+
+    @Test
+    void a2a_card_frameworks_omitted_when_no_vocabularies() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s").tenancyId("t").build();
+        assertThat(renderA2aCard(desc).has("frameworks")).isFalse();
+    }
+
+    @Test
+    void a2a_card_frameworks_excludes_unregistered_uri_present_in_axis() {
+        // unregistered URI → absent from frameworks but present as vocabularyUri in axis object
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .dispositionVocabulary("urn:test:unregistered")
+            .disposition(AgentDisposition.builder().socialOrient("custom").build())
+            .tenancyId("t").build();
+        var card = renderA2aCard(desc);
+        // not in frameworks
+        assertThat(card.has("frameworks")).isFalse();
+        // but IS present as vocabularyUri in the axis object
+        assertThat(card.get("disposition").get("socialOrient").get("vocabularyUri").asText())
+            .isEqualTo("urn:test:unregistered");
+    }
+
+    @Test
+    void a2a_card_frameworks_omits_description_when_blank() {
+        vocab.register(TestNoDescTerm.class);
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N")
+            .slotVocabulary("urn:test:nodesc").slot("term")
+            .tenancyId("t").build();
+        var frameworks = renderA2aCard(desc).get("frameworks");
+        assertThat(frameworks.size()).isEqualTo(1);
+        assertThat(frameworks.get(0).get("name").asText()).isEqualTo("No Description Vocab");
+        assertThat(frameworks.get(0).has("description")).isFalse();
+    }
+
+    @Test
+    void a2a_card_frameworks_includes_uri_from_domain_vocabulary_fallback() {
+        vocab.register(TestDispTerm.class);
+        // domainVocabulary only — no dispositionVocabulary, no slotVocabulary
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .domainVocabulary("urn:test:disp")
+            .disposition(AgentDisposition.builder().socialOrient("independent").build())
+            .tenancyId("t").build();
+        var frameworks = renderA2aCard(desc).get("frameworks");
+        assertThat(frameworks.isArray()).isTrue();
+        assertThat(frameworks.size()).isEqualTo(1);
+        assertThat(frameworks.get(0).get("uri").asText()).isEqualTo("urn:test:disp");
     }
 
     @Test

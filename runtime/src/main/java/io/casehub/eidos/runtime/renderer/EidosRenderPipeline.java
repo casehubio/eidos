@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -164,17 +165,18 @@ class EidosRenderPipeline {
         addIfPresent(node, "weightsFingerprint", descriptor.weightsFingerprint());
         node.put("slot", descriptor.slot());
 
-        // Vocabulary-resolved slot labels and vocabulary context
-        if (descriptor.slotVocabulary() != null) {
-            vocab.resolve(descriptor.slotVocabulary(), descriptor.slot()).ifPresent(term -> {
+        // Vocabulary-resolved slot labels and vocabulary context — uses vocabUriForSlot()
+        // so domainVocabulary is honoured as a fallback when slotVocabulary is absent.
+        descriptor.vocabUriForSlot().ifPresent(uri -> {
+            vocab.resolve(uri, descriptor.slot()).ifPresent(term -> {
                 addIfNonBlank(node, "slotLabel",       term.label());
                 addIfNonBlank(node, "slotDescription", term.description());
             });
-            vocab.vocabularyMetadata(descriptor.slotVocabulary()).ifPresent(meta -> {
+            vocab.vocabularyMetadata(uri).ifPresent(meta -> {
                 addIfNonBlank(node, "slotVocabularyName",        meta.name());
                 addIfNonBlank(node, "slotVocabularyDescription", meta.description());
             });
-        }
+        });
 
         // Capabilities — include name, qualityHint, latencyHintP50Ms, inputTypes, outputTypes,
         // epistemicDomains. Excluded: costHint (operational), tags (routing labels).
@@ -362,20 +364,20 @@ class EidosRenderPipeline {
                                              final AgentDescriptor descriptor,
                                              final AgentPromptContext context) {
         // Role — deliberate heading change from ## {slot_label} to ## Role
-        // (see spec behavioral delta note)
+        // (see spec behavioral delta note). Uses vocabUriForSlot() so domainVocabulary
+        // is honoured as a fallback when slotVocabulary is absent.
         if (descriptor.slot() != null) {
             sb.append("\n## Role\n");
-            if (descriptor.slotVocabulary() != null) {
-                vocab.resolve(descriptor.slotVocabulary(), descriptor.slot()).ifPresentOrElse(
+            descriptor.vocabUriForSlot().ifPresentOrElse(
+                uri -> vocab.resolve(uri, descriptor.slot()).ifPresentOrElse(
                     term -> {
                         if (term.label() != null)       sb.append(term.label()).append("\n");
                         if (term.description() != null) sb.append(term.description()).append("\n");
                     },
                     () -> sb.append(descriptor.slot()).append("\n")
-                );
-            } else {
-                sb.append(descriptor.slot()).append("\n");
-            }
+                ),
+                () -> sb.append(descriptor.slot()).append("\n")
+            );
         }
 
         // Capabilities
@@ -495,6 +497,70 @@ class EidosRenderPipeline {
         card.put("agentId", descriptor.agentId());
         addIfPresent(card, "version", descriptor.version());
 
+        // slot — always present (required field), vocab-enriched via vocabUriForSlot()
+        final ObjectNode slotNode = card.putObject("slot");
+        slotNode.put("value", descriptor.slot());
+        descriptor.vocabUriForSlot().ifPresent(uri -> {
+            slotNode.put("vocabularyUri", uri);
+            vocab.resolve(uri, descriptor.slot())
+                 .ifPresent(term -> addIfNonBlank(slotNode, "label", term.label()));
+            vocab.vocabularyMetadata(uri)
+                 .ifPresent(meta -> addIfNonBlank(slotNode, "vocabularyName", meta.name()));
+        });
+
+        // disposition — per-axis nested objects (axes in DispositionAxis declaration order),
+        // canDelegate last. Omitted entirely when descriptor.disposition() is null.
+        if (descriptor.disposition() != null) {
+            final AgentDisposition d = descriptor.disposition();
+            final ObjectNode dispNode = card.putObject("disposition");
+            for (final DispositionAxis axis : DispositionAxis.values()) {
+                d.get(axis).ifPresent(rawValue -> {
+                    final ObjectNode axisNode = dispNode.putObject(axisJsonKey(axis));
+                    axisNode.put("value", rawValue);
+                    descriptor.vocabUriForAxis(axis).ifPresent(uri -> {
+                        axisNode.put("vocabularyUri", uri);
+                        vocab.resolve(uri, rawValue)
+                             .ifPresent(term -> addIfNonBlank(axisNode, "label", term.label()));
+                        vocab.vocabularyMetadata(uri)
+                             .ifPresent(meta -> addIfNonBlank(axisNode, "vocabularyName", meta.name()));
+                        // A2A: vocabularyDescription excluded — documentation, not routing data;
+                        // described once in frameworks[].description, not repeated per-axis.
+                        // term.description() also excluded — machine consumers route on URIs/labels.
+                    });
+                });
+            }
+            dispNode.put("canDelegate", d.delegation());
+        }
+
+        // frameworks — deduplicated index of actively-instantiated vocabulary URIs.
+        // Invariant: contains exactly those URIs reachable by vocabUriForSlot() or
+        // vocabUriForAxis(axis) for an active axis, AND registered with a non-blank name().
+        final LinkedHashSet<String> frameworkUris = new LinkedHashSet<>();
+        descriptor.vocabUriForSlot().ifPresent(frameworkUris::add);
+        if (descriptor.disposition() != null) {
+            for (final DispositionAxis axis : DispositionAxis.values()) {
+                descriptor.disposition().get(axis).ifPresent(
+                    value -> descriptor.vocabUriForAxis(axis).ifPresent(frameworkUris::add));
+            }
+        }
+        if (!frameworkUris.isEmpty()) {
+            final ArrayNode frameworksArray = mapper.createArrayNode();
+            for (final String uri : frameworkUris) {
+                vocab.vocabularyMetadata(uri).ifPresent(meta -> {
+                    if (!meta.name().isEmpty()) {
+                        final ObjectNode fw = frameworksArray.addObject();
+                        fw.put("uri", uri);
+                        fw.put("name", meta.name());
+                        addIfNonBlank(fw, "description", meta.description());
+                    }
+                });
+            }
+            if (!frameworksArray.isEmpty()) {
+                card.set("frameworks", frameworksArray);
+            }
+        }
+
+        // capabilities — unchanged; enriched descriptions from A2AEnrichment when available
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             final Map<String, String> descriptionByName = enrichment
                 .map(e -> e.capabilityNarratives().stream()

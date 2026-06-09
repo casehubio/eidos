@@ -53,10 +53,23 @@ public record AgentDescriptor(
     }
 
     /**
+     * Resolves the vocabulary URI for the slot field.
+     * Precedence: slotVocabulary → domainVocabulary.
+     *
+     * Note: dispositionVocabulary is intentionally not in the fallback chain —
+     * it grounds disposition axes, not the slot.
+     */
+    public Optional<String> vocabUriForSlot() {
+        if (slotVocabulary != null)   return Optional.of(slotVocabulary);
+        if (domainVocabulary != null) return Optional.of(domainVocabulary);
+        return Optional.empty();
+    }
+
+    /**
      * Resolves the vocabulary URI for a given disposition axis.
      * Precedence: axisVocabularies.get(axis) → dispositionVocabulary → domainVocabulary.
      */
-    public Optional<String> vocabUriForAxis(DispositionAxis axis) {
+    public Optional<String> vocabUriForAxis(final DispositionAxis axis) {
         if (axisVocabularies != null) {
             String uri = axisVocabularies.get(axis);
             if (uri != null) return Optional.of(uri);

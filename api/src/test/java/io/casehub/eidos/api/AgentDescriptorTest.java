@@ -274,6 +274,33 @@ class AgentDescriptorTest {
             .contains("urn:casehub:vocab:disc");
     }
 
+    // ── vocabUriForSlot ─────────────────────────────────────────────────────────
+
+    @Test
+    void vocabUriForSlot_returns_slot_vocabulary_when_set() {
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .slotVocabulary("urn:casehub:vocab:belbin")
+            .domainVocabulary("urn:casehub:vocab:conscientiousness")
+            .build();
+        assertThat(d.vocabUriForSlot()).contains("urn:casehub:vocab:belbin");
+    }
+
+    @Test
+    void vocabUriForSlot_falls_through_to_domain_vocabulary_when_slot_null() {
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .domainVocabulary("urn:casehub:vocab:conscientiousness")
+            .build();
+        assertThat(d.vocabUriForSlot()).contains("urn:casehub:vocab:conscientiousness");
+    }
+
+    @Test
+    void vocabUriForSlot_returns_empty_when_both_null() {
+        var d = minimal("a", "t");
+        assertThat(d.vocabUriForSlot()).isEmpty();
+    }
+
     @Test
     void builder_with_explicit_nulls_equals_builder_with_nulls_omitted() {
         var explicit = AgentDescriptor.builder()
