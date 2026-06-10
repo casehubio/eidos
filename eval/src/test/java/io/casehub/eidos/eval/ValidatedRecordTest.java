@@ -3,6 +3,8 @@ package io.casehub.eidos.eval;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
+
+import static io.casehub.eidos.api.DispositionAxis.RISK_APPETITE;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -43,7 +45,7 @@ class ValidatedRecordTest {
 
     @Test
     void pairContrastResult_rejects_effectSize_below_1() {
-        assertThatThrownBy(() -> new PairContrastResult("hi", "lo", "riskAppetite",
+        assertThatThrownBy(() -> new PairContrastResult("hi", "lo", RISK_APPETITE,
             RenderFormat.MARKDOWN, true, 0, "r"))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("out of range");
@@ -51,14 +53,14 @@ class ValidatedRecordTest {
 
     @Test
     void pairContrastResult_rejects_effectSize_above_5() {
-        assertThatThrownBy(() -> new PairContrastResult("hi", "lo", "riskAppetite",
+        assertThatThrownBy(() -> new PairContrastResult("hi", "lo", RISK_APPETITE,
             RenderFormat.MARKDOWN, true, 6, "r"))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void pairContrastResult_accepts_boundary_values() {
-        new PairContrastResult("hi", "lo", "riskAppetite", RenderFormat.MARKDOWN, true, 1, "r");
-        new PairContrastResult("hi", "lo", "riskAppetite", RenderFormat.MARKDOWN, true, 5, "r");
+        new PairContrastResult("hi", "lo", RISK_APPETITE, RenderFormat.MARKDOWN, true, 1, "r");
+        new PairContrastResult("hi", "lo", RISK_APPETITE, RenderFormat.MARKDOWN, true, 5, "r");
     }
 }

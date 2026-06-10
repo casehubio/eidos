@@ -35,10 +35,10 @@ theoreticalFramework:
   belbin: monitor-evaluator
   disc: C
 expectedTraits:
-  riskAppetite: LOW
-  socialOrient: LOW
-  ruleFollowing: HIGH
-  autonomy: LOW
+  RISK_APPETITE: LOW
+  SOCIAL_ORIENTATION: LOW
+  RULE_FOLLOWING: HIGH
+  AUTONOMY: LOW
 descriptor:
   agentId: sw-engineer-careful-01
   name: Software Engineer — Careful

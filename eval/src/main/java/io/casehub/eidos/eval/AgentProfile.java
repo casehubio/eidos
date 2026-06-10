@@ -1,6 +1,7 @@
 package io.casehub.eidos.eval;
 
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.GoalContext;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public record AgentProfile(
     GoalContext evalGoal,
     String notes,
     Map<String, String> theoreticalFramework,
-    Map<String, TraitPolarity> expectedTraits,
+    Map<DispositionAxis, TraitPolarity> expectedTraits,
     AgentDescriptor descriptor,
     List<VocabularyGap> vocabularyGaps
 ) {}

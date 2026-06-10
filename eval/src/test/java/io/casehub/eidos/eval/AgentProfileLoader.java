@@ -3,6 +3,7 @@ package io.casehub.eidos.eval;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.DispositionAxis;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,14 +12,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 class AgentProfileLoader {
 
     private static final ObjectMapper YAML =
         new ObjectMapper(new YAMLFactory()).findAndRegisterModules();
-
-    private static final List<String> AXES =
-        List.of("socialOrient", "ruleFollowing", "riskAppetite", "autonomy");
 
     List<AgentProfile> load() {
         final VariantIndex index = loadIndex();
@@ -34,7 +33,12 @@ class AgentProfileLoader {
     VariantIndex loadIndex() {
         try (InputStream is = cl().getResourceAsStream("profiles/index.yaml")) {
             if (is == null) return new VariantIndex(List.of(), List.of());
-            return YAML.readValue(is, VariantIndex.class);
+            final VariantIndex raw = YAML.readValue(is, VariantIndex.class);
+            final List<VariantPair> normalized = raw.variants().stream()
+                .map(v -> new VariantPair(v.primaryAxis(), v.higher(), v.lower(),
+                    v.scenarioQuestions() != null ? v.scenarioQuestions() : List.of()))
+                .toList();
+            return new VariantIndex(raw.profiles(), normalized);
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to load profiles/index.yaml", e);
         }
@@ -63,35 +67,25 @@ class AgentProfileLoader {
             final AgentDisposition dh = hi.descriptor().disposition();
             final AgentDisposition dl = lo.descriptor().disposition();
 
-            final String axHi = axisValue(dh, pair.primaryAxis());
-            final String axLo = axisValue(dl, pair.primaryAxis());
+            final Optional<String> axHi = dh != null ? dh.get(pair.primaryAxis()) : Optional.empty();
+            final Optional<String> axLo = dl != null ? dl.get(pair.primaryAxis()) : Optional.empty();
             if (Objects.equals(axHi, axLo)) throw new IllegalStateException(
                 "Pair " + pair.higher() + " vs " + pair.lower()
-                + ": primaryAxis '" + pair.primaryAxis() + "' has same value: " + axHi);
+                + ": primaryAxis '" + pair.primaryAxis() + "' has same value: " + axHi.orElse("null"));
 
-            for (final String other : AXES) {
-                if (!other.equals(pair.primaryAxis())) {
-                    if (!Objects.equals(axisValue(dh, other), axisValue(dl, other)))
-                        throw new IllegalStateException(
-                            "Pair " + pair.higher() + " vs " + pair.lower()
-                            + ": non-primary axis '" + other + "' differs");
+            for (final DispositionAxis other : DispositionAxis.values()) {
+                if (other != pair.primaryAxis()) {
+                    final Optional<String> dhVal = dh != null ? dh.get(other) : Optional.empty();
+                    final Optional<String> dlVal = dl != null ? dl.get(other) : Optional.empty();
+                    if (!Objects.equals(dhVal, dlVal)) throw new IllegalStateException(
+                        "Pair " + pair.higher() + " vs " + pair.lower()
+                        + ": non-primary axis '" + other + "' differs");
                 }
             }
-            if ((dh != null ? dh.delegation() : false) != (dl != null ? dl.delegation() : false))
+            if ((dh != null && dh.delegation()) != (dl != null && dl.delegation()))
                 throw new IllegalStateException(
                     "Pair " + pair.higher() + " vs " + pair.lower() + ": delegation differs");
         }
-    }
-
-    private String axisValue(final AgentDisposition d, final String axis) {
-        if (d == null) return null;
-        return switch (axis) {
-            case "socialOrient" -> d.socialOrient();
-            case "ruleFollowing" -> d.ruleFollowing();
-            case "riskAppetite" -> d.riskAppetite();
-            case "autonomy" -> d.autonomy();
-            default -> throw new IllegalArgumentException("Unknown axis: " + axis);
-        };
     }
 
     // package-private for testing

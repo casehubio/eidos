@@ -1,12 +1,14 @@
 package io.casehub.eidos.eval;
 
 import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
+import static io.casehub.eidos.api.DispositionAxis.RISK_APPETITE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PersonalityPreservationReportTest {
@@ -28,7 +30,7 @@ class PersonalityPreservationReportTest {
             "profile-a", Map.of("riskAppetite", 4), List.of()));
         // TraitExpressionResult: direction mismatch (LOW declared, score 5 → match=false)
         final var profile = minimalProfile("profile-a",
-            Map.of("riskAppetite", TraitPolarity.LOW));
+            Map.of(RISK_APPETITE, TraitPolarity.LOW));
         final var evalCase = minimalCase(profile);
         final var traitResult = new TraitExpressionResult(
             evalCase, RenderFormat.MARKDOWN,
@@ -47,7 +49,7 @@ class PersonalityPreservationReportTest {
         final var exp = List.of(new VocabularyExpressivenessResult(
             "profile-a", Map.of("riskAppetite", 3), List.of()));
         final var profile = minimalProfile("profile-a",
-            Map.of("riskAppetite", TraitPolarity.LOW));
+            Map.of(RISK_APPETITE, TraitPolarity.LOW));
         final var evalCase = minimalCase(profile);
         final var traitResult = new TraitExpressionResult(
             evalCase, RenderFormat.MARKDOWN,
@@ -67,7 +69,7 @@ class PersonalityPreservationReportTest {
         final var exp = List.of(new VocabularyExpressivenessResult(
             "profile-a", Map.of("riskAppetite", 5), List.of()));
         final var profile = minimalProfile("profile-a",
-            Map.of("riskAppetite", TraitPolarity.LOW));
+            Map.of(RISK_APPETITE, TraitPolarity.LOW));
         final var evalCase = minimalCase(profile);
         final var traitResult = new TraitExpressionResult(
             evalCase, RenderFormat.MARKDOWN,
@@ -75,7 +77,7 @@ class PersonalityPreservationReportTest {
             Map.of("riskAppetite", true),
             "NO");
         final var contrastResult = new PairContrastResult(
-            "profile-a", "profile-b", "riskAppetite", RenderFormat.MARKDOWN, true, 4, "clearly different");
+            "profile-a", "profile-b", RISK_APPETITE, RenderFormat.MARKDOWN, true, 4, "clearly different");
 
         final var report = PersonalityPreservationReport.build(
             exp, List.of(traitResult), List.of(contrastResult));
@@ -89,7 +91,7 @@ class PersonalityPreservationReportTest {
         final var exp = List.of(new VocabularyExpressivenessResult(
             "profile-a", Map.of("riskAppetite", 3), List.of()));
         final var profile = minimalProfile("profile-a",
-            Map.of("riskAppetite", TraitPolarity.LOW));
+            Map.of(RISK_APPETITE, TraitPolarity.LOW));
         final var evalCase = minimalCase(profile);
         final var traitResult = new TraitExpressionResult(
             evalCase, RenderFormat.MARKDOWN,
@@ -97,7 +99,7 @@ class PersonalityPreservationReportTest {
             Map.of("riskAppetite", true),
             "NO");
         final var contrastResult = new PairContrastResult(
-            "profile-a", "profile-b", "riskAppetite", RenderFormat.MARKDOWN, true, 4, "different");
+            "profile-a", "profile-b", RISK_APPETITE, RenderFormat.MARKDOWN, true, 4, "different");
 
         final var report = PersonalityPreservationReport.build(
             exp, List.of(traitResult), List.of(contrastResult));
@@ -111,7 +113,7 @@ class PersonalityPreservationReportTest {
         final var exp = List.of(new VocabularyExpressivenessResult(
             "profile-a", Map.of("riskAppetite", 4), List.of()));
         final var profile = minimalProfile("profile-a",
-            Map.of("riskAppetite", TraitPolarity.LOW));
+            Map.of(RISK_APPETITE, TraitPolarity.LOW));
         final var evalCase = minimalCase(profile);
         final var traitResult = new TraitExpressionResult(
             evalCase, RenderFormat.MARKDOWN,
@@ -148,7 +150,7 @@ class PersonalityPreservationReportTest {
     }
 
     private static AgentProfile minimalProfile(final String name,
-                                                final Map<String, TraitPolarity> traits) {
+                                                final Map<DispositionAxis, TraitPolarity> traits) {
         final var desc = AgentDescriptor.builder()
             .agentId(name + "-01")
             .name(name)

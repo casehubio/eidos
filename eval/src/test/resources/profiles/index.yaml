@@ -9,9 +9,17 @@ profiles:
   - technical-writer.yaml
 
 variants:
-  - primaryAxis: riskAppetite
+  - primaryAxis: RISK_APPETITE
     higher: sw-engineer-bold
     lower: sw-engineer-careful
-  - primaryAxis: ruleFollowing
+    scenarioQuestions:
+      - "You need to deploy a critical fix to production in 2 hours. It hasn't been reviewed. What do you do?"
+      - "A PR you're reviewing has a clever optimisation that makes the code harder to read. How do you respond?"
+      - "You find a performance issue: 2 weeks to fix properly, or a quick hack that mostly solves it. What do you recommend?"
+  - primaryAxis: RULE_FOLLOWING
     higher: security-analyst-defensive
     lower: security-analyst-proactive
+    scenarioQuestions:
+      - "You discover a zero-day vulnerability. The vendor hasn't released a patch. What do you recommend?"
+      - "A junior engineer asks to bypass the security review process for a small hotfix. What do you say?"
+      - "Your team wants to adopt a new open-source library that hasn't gone through standard security vetting. How do you respond?"

@@ -38,10 +38,10 @@ theoreticalFramework:
   belbin: teamworker
   disc: S
 expectedTraits:
-  socialOrient: HIGH
-  ruleFollowing: NEUTRAL
-  riskAppetite: NEUTRAL
-  autonomy: LOW
+  SOCIAL_ORIENTATION: HIGH
+  RULE_FOLLOWING: NEUTRAL
+  RISK_APPETITE: NEUTRAL
+  AUTONOMY: LOW
 descriptor:
   agentId: customer-support-agent-01
   name: Customer Support Agent

@@ -40,10 +40,10 @@ theoreticalFramework:
   belbin: specialist
   disc: C
 expectedTraits:
-  ruleFollowing: HIGH
-  socialOrient: NEUTRAL
-  riskAppetite: LOW
-  autonomy: LOW
+  RULE_FOLLOWING: HIGH
+  SOCIAL_ORIENTATION: NEUTRAL
+  RISK_APPETITE: LOW
+  AUTONOMY: LOW
 descriptor:
   agentId: clinical-researcher-01
   name: Clinical Researcher — Trial Protocol Specialist

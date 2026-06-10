@@ -1,11 +1,12 @@
 package io.casehub.eidos.eval;
 
+import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 
 public record PairContrastResult(
     String profileHigh,
     String profileLow,
-    String primaryAxis,
+    DispositionAxis primaryAxis,
     RenderFormat format,
     boolean correctlyIdentified,
     int effectSize,

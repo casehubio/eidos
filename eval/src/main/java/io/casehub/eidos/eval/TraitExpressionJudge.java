@@ -10,6 +10,7 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
 import dev.langchain4j.model.chat.request.json.*;
+import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -21,11 +22,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.casehub.eidos.api.DispositionAxis.*;
+
 @ApplicationScoped
 public class TraitExpressionJudge {
 
-    static final List<String> NUMERIC_AXES =
-        List.of("socialOrient", "ruleFollowing", "riskAppetite", "autonomy");
+    static final List<DispositionAxis> NUMERIC_AXES =
+        List.of(SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY);
 
     static final String SYSTEM_PROMPT = """
         You are characterising an AI agent's personality based solely on the following
@@ -102,7 +105,7 @@ public class TraitExpressionJudge {
             final var request = ChatRequest.builder()
                 .messages(
                     SystemMessage.from(SYSTEM_PROMPT),
-                    UserMessage.from(rendered.content()))   // ONLY the rendered text
+                    UserMessage.from(rendered.content()))
                 .responseFormat(RESPONSE_FORMAT)
                 .build();
             final var response = model.chat(request);
@@ -119,10 +122,10 @@ public class TraitExpressionJudge {
                                          final String json) throws JsonProcessingException {
         final JsonNode root = mapper.readTree(json);
         final Map<String, Integer> scores = new LinkedHashMap<>();
-        for (final String axis : NUMERIC_AXES) {
-            final JsonNode n = root.get(axis);
+        for (final DispositionAxis axis : NUMERIC_AXES) {
+            final JsonNode n = root.get(axis.jsonKey());
             if (n == null) throw new MalformedJudgeResponseException("Missing axis: " + axis);
-            scores.put(axis, n.asInt());
+            scores.put(axis.jsonKey(), n.asInt());
         }
         final JsonNode del = root.get("delegation");
         if (del == null) throw new MalformedJudgeResponseException("Missing delegation");
@@ -135,11 +138,11 @@ public class TraitExpressionJudge {
                                                   final Map<String, Integer> scores) {
         final Map<String, Boolean> result = new LinkedHashMap<>();
         if (profile.expectedTraits() == null) return result;
-        for (final String axis : NUMERIC_AXES) {
+        for (final DispositionAxis axis : NUMERIC_AXES) {
             final TraitPolarity polarity = profile.expectedTraits().get(axis);
             if (polarity == null) continue;
-            final int score = scores.getOrDefault(axis, 3);
-            result.put(axis, switch (polarity) {
+            final int score = scores.getOrDefault(axis.jsonKey(), 3);
+            result.put(axis.jsonKey(), switch (polarity) {
                 case HIGH -> score >= 4;
                 case LOW -> score <= 2;
                 case NEUTRAL -> true;

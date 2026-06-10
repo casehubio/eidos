@@ -8,6 +8,8 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
+
+import static io.casehub.eidos.api.DispositionAxis.*;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import org.junit.jupiter.api.Test;
 
@@ -120,10 +122,10 @@ class TraitExpressionJudgeTest {
             "sw-engineer-careful", "SW Eng", "sw", null, null,
             SourceType.ANTHROPIC_LIBRARY, "You are careful.", null, null,
             Map.of(), Map.of(
-                "riskAppetite", TraitPolarity.LOW,
-                "socialOrient", TraitPolarity.LOW,
-                "ruleFollowing", TraitPolarity.HIGH,
-                "autonomy", TraitPolarity.LOW),
+                RISK_APPETITE, TraitPolarity.LOW,
+                SOCIAL_ORIENTATION, TraitPolarity.LOW,
+                RULE_FOLLOWING, TraitPolarity.HIGH,
+                AUTONOMY, TraitPolarity.LOW),
             desc, List.of());
         return new ProfiledEvalCase("test", desc,
             AgentPromptContext.forFormat(RenderFormat.MARKDOWN), profile);

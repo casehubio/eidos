@@ -1,7 +1,11 @@
 package io.casehub.eidos.eval;
 
+import io.casehub.eidos.api.DispositionAxis;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import static io.casehub.eidos.api.DispositionAxis.*;
 
 public record PersonalityPreservationReport(
     List<VocabularyExpressivenessResult> expressivenessResults,
@@ -14,20 +18,19 @@ public record PersonalityPreservationReport(
     double discriminationAccuracy,
     List<String> annotations
 ) {
-    private static final List<String> AXES =
-        List.of("socialOrient", "ruleFollowing", "riskAppetite", "autonomy");
+    private static final List<DispositionAxis> AXES = List.of(
+        SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY
+    );
 
     public static PersonalityPreservationReport build(
         final List<VocabularyExpressivenessResult> exp,
         final List<TraitExpressionResult> traits,
         final List<PairContrastResult> contrasts
     ) {
-        // meanExpressivenessScore: flat mean across all (profile × axis) cells
         final double meanExp = exp.stream()
             .flatMapToInt(r -> r.expressivenessScores().values().stream().mapToInt(Integer::intValue))
             .average().orElse(0.0);
 
-        // meanTraitMatchRate: flat mean across all (profile × format × axis) direction-match cells
         final long totalMatches = traits.stream()
             .flatMap(r -> r.directionMatches().values().stream())
             .filter(Boolean::booleanValue).count();
@@ -35,11 +38,9 @@ public record PersonalityPreservationReport(
             .mapToLong(r -> r.directionMatches().size()).sum();
         final double meanTraitMatchRate = totalCells > 0 ? (double) totalMatches / totalCells : 0.0;
 
-        // meanEffectSize: flat mean across all (pair × format) results
         final double meanEffectSize = contrasts.stream()
             .mapToInt(PairContrastResult::effectSize).average().orElse(0.0);
 
-        // discriminationAccuracy: % pairs correctly identified
         final double discAcc = contrasts.isEmpty() ? 0.0 :
             (double) contrasts.stream().filter(PairContrastResult::correctlyIdentified).count()
             / contrasts.size();
@@ -60,28 +61,30 @@ public record PersonalityPreservationReport(
     ) {
         final List<AttributionDiagnosis> result = new ArrayList<>();
         for (final VocabularyExpressivenessResult er : exp) {
-            for (final String axis : AXES) {
-                final int s1 = er.expressivenessScores().getOrDefault(axis, -1);
+            for (final DispositionAxis axis : AXES) {
+                // expressivenessScores is Map<String, Integer> — bridge via jsonKey()
+                final int s1 = er.expressivenessScores().getOrDefault(axis.jsonKey(), -1);
 
-                // Stage 2: mean direction match across all formats for this profile × axis
                 final List<TraitExpressionResult> profileTraits = traits.stream()
                     .filter(t -> t.evalCase().profile().name().equals(er.profileName()))
                     .toList();
+
+                // directionMatches is Map<String, Boolean> — bridge via jsonKey()
                 final double matchRate = profileTraits.isEmpty() ? -1.0 :
                     profileTraits.stream()
-                        .mapToInt(t -> Boolean.TRUE.equals(t.directionMatches().get(axis)) ? 1 : 0)
+                        .mapToInt(t -> Boolean.TRUE.equals(t.directionMatches().get(axis.jsonKey())) ? 1 : 0)
                         .average().orElse(-1.0);
 
-                // Stage 2 actual expression score (mean across formats for this profile × axis)
+                // expressionScores is Map<String, Integer> — bridge via jsonKey()
                 final double s2Score = profileTraits.isEmpty() ? -1.0 :
                     profileTraits.stream()
-                        .mapToInt(t -> t.expressionScores().getOrDefault(axis, -1))
+                        .mapToInt(t -> t.expressionScores().getOrDefault(axis.jsonKey(), -1))
                         .filter(s -> s >= 0)
                         .average().orElse(-1.0);
 
-                // Stage 3: mean effectSize for this profile × axis from variant pairs
+                // primaryAxis is DispositionAxis — enum equality
                 final double s3 = contrasts.stream()
-                    .filter(c -> c.primaryAxis().equals(axis)
+                    .filter(c -> c.primaryAxis() == axis
                         && (c.profileHigh().equals(er.profileName())
                             || c.profileLow().equals(er.profileName())))
                     .mapToInt(PairContrastResult::effectSize)
@@ -102,8 +105,9 @@ public record PersonalityPreservationReport(
                     attr = Attribution.INSUFFICIENT_DATA;
                 }
 
+                // AttributionDiagnosis.axis is String — bridge via jsonKey()
                 result.add(new AttributionDiagnosis(
-                    er.profileName(), axis, s1,
+                    er.profileName(), axis.jsonKey(), s1,
                     s2Score < 0 ? -1 : (int) Math.round(s2Score),
                     (int) Math.round(s3 < 0 ? -1 : s3),
                     attr));

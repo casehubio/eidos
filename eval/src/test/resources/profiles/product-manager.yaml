@@ -38,10 +38,10 @@ theoreticalFramework:
   belbin: co-ordinator
   disc: i
 expectedTraits:
-  socialOrient: HIGH
-  ruleFollowing: NEUTRAL
-  riskAppetite: NEUTRAL
-  autonomy: NEUTRAL
+  SOCIAL_ORIENTATION: HIGH
+  RULE_FOLLOWING: NEUTRAL
+  RISK_APPETITE: NEUTRAL
+  AUTONOMY: NEUTRAL
 descriptor:
   agentId: product-manager-01
   name: Product Manager

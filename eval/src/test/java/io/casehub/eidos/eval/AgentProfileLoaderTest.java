@@ -2,11 +2,13 @@ package io.casehub.eidos.eval;
 
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.DispositionAxis;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
+import static io.casehub.eidos.api.DispositionAxis.RISK_APPETITE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -46,10 +48,10 @@ class AgentProfileLoaderTest {
     }
 
     @Test
-    void load_deserializes_expectedTraits() {
+    void load_deserializes_expectedTraits_with_typed_keys() {
         final var profile = new AgentProfileLoader().load().stream()
             .filter(p -> p.name().equals("sw-engineer-careful")).findFirst().orElseThrow();
-        assertThat(profile.expectedTraits()).containsEntry("riskAppetite", TraitPolarity.LOW);
+        assertThat(profile.expectedTraits()).containsEntry(RISK_APPETITE, TraitPolarity.LOW);
     }
 
     @Test
@@ -60,16 +62,24 @@ class AgentProfileLoaderTest {
     }
 
     @Test
-    void loadIndex_returns_variant_pairs() {
+    void loadIndex_returns_typed_variant_pairs() {
         final var index = new AgentProfileLoader().loadIndex();
         assertThat(index.variants()).hasSize(2);
-        assertThat(index.variants().get(0).primaryAxis()).isEqualTo("riskAppetite");
+        assertThat(index.variants().get(0).primaryAxis()).isEqualTo(RISK_APPETITE);
         assertThat(index.variants().get(0).higher()).isEqualTo("sw-engineer-bold");
     }
 
     @Test
+    void loadIndex_populates_empty_scenarioQuestions_when_absent() {
+        final var index = new AgentProfileLoader().loadIndex();
+        // index.yaml has scenarioQuestions for both pairs after migration;
+        // this test confirms null → List.of() normalisation works for pairs without questions
+        assertThat(index.variants()).allSatisfy(p ->
+            assertThat(p.scenarioQuestions()).isNotNull());
+    }
+
+    @Test
     void stage0_fails_when_primaryAxis_same_value_in_both_profiles() {
-        // Both profiles have riskAppetite=conservative (identical) — Stage 0 must reject
         final var disp = AgentDisposition.builder()
             .socialOrient("independent")
             .ruleFollowing("strict")
@@ -101,7 +111,7 @@ class AgentProfileLoaderTest {
 
         final var index = new VariantIndex(
             List.of("p1.yaml", "p2.yaml"),
-            List.of(new VariantPair("riskAppetite", "p1", "p2")));
+            List.of(new VariantPair(RISK_APPETITE, "p1", "p2", List.of())));
         final var profiles = Map.of("p1", p1, "p2", p2);
 
         assertThatThrownBy(() -> new AgentProfileLoader().validatePairs(index, profiles))

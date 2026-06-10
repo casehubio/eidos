@@ -22,9 +22,6 @@ import java.util.Map;
 @ApplicationScoped
 public class PairContrastJudge {
 
-    // Share axis descriptions from VocabularyExpressivenessJudge (same AXIS_DESCRIPTIONS map)
-    static final Map<String, String> AXIS_DESCRIPTIONS = VocabularyExpressivenessJudge.AXIS_DESCRIPTIONS;
-
     static final String SYSTEM_TEMPLATE = """
         You are comparing two AI agent system prompts on a specific personality axis.
 
@@ -76,9 +73,8 @@ public class PairContrastJudge {
                                         final Map<ProfiledEvalCase, RenderedPrompt> renders) {
         final String higherText = findRender(renders, pair.higher(), format);
         final String lowerText = findRender(renders, pair.lower(), format);
-        final String axisDesc = AXIS_DESCRIPTIONS.getOrDefault(pair.primaryAxis(),
-            pair.primaryAxis());
-        final String systemPrompt = String.format(SYSTEM_TEMPLATE, axisDesc, higherText, lowerText);
+        final String systemPrompt = String.format(
+            SYSTEM_TEMPLATE, pair.primaryAxis().description(), higherText, lowerText);
         try {
             final var request = ChatRequest.builder()
                 .messages(
@@ -116,7 +112,6 @@ public class PairContrastJudge {
         final JsonNode reasoning = root.get("reasoning");
         if (higher == null || effectSize == null || reasoning == null)
             throw new MalformedJudgeResponseException("PairContrastJudge response missing fields");
-        // "A" = pair.higher() profile (passed as Prompt A in the system prompt)
         final boolean correct = "A".equals(higher.asText());
         return new PairContrastResult(
             pair.higher(), pair.lower(), pair.primaryAxis(),

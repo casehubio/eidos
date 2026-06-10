@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static io.casehub.eidos.api.DispositionAxis.RISK_APPETITE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -59,9 +60,9 @@ class PairContrastJudgeTest {
     }
 
     @Test
-    void evaluate_sets_primaryAxis_and_profiles() {
+    void evaluate_sets_typed_primaryAxis_and_profiles() {
         final var result = judge().evaluate(pair(), RenderFormat.MARKDOWN, renders());
-        assertThat(result.primaryAxis()).isEqualTo("riskAppetite");
+        assertThat(result.primaryAxis()).isEqualTo(RISK_APPETITE);
         assertThat(result.profileHigh()).isEqualTo("sw-engineer-bold");
         assertThat(result.profileLow()).isEqualTo("sw-engineer-careful");
     }
@@ -76,7 +77,7 @@ class PairContrastJudgeTest {
     }
 
     private static VariantPair pair() {
-        return new VariantPair("riskAppetite", "sw-engineer-bold", "sw-engineer-careful");
+        return new VariantPair(RISK_APPETITE, "sw-engineer-bold", "sw-engineer-careful", List.of());
     }
 
     private static Map<ProfiledEvalCase, RenderedPrompt> renders() {
