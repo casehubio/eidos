@@ -81,7 +81,10 @@ class BehavioralJudgeTest {
         assertThat(capturedSystem.get())
             .contains(RISK_APPETITE.description())
             .contains("response A text")
-            .contains("response B text");
+            .contains("response B text")
+            .doesNotContain("HIGH")
+            .doesNotContain("LOW")
+            .doesNotContain("NEUTRAL");
     }
 
     private static ChatModel stubModel(final String json) {

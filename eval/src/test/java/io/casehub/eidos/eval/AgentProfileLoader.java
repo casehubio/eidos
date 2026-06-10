@@ -35,13 +35,17 @@ class AgentProfileLoader {
             if (is == null) return new VariantIndex(List.of(), List.of());
             final VariantIndex raw = YAML.readValue(is, VariantIndex.class);
             final List<VariantPair> normalized = raw.variants().stream()
-                .map(v -> new VariantPair(v.primaryAxis(), v.higher(), v.lower(),
-                    v.scenarioQuestions() != null ? v.scenarioQuestions() : List.of()))
+                .map(AgentProfileLoader::normalize)
                 .toList();
             return new VariantIndex(raw.profiles(), normalized);
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to load profiles/index.yaml", e);
         }
+    }
+
+    static VariantPair normalize(final VariantPair v) {
+        return new VariantPair(v.primaryAxis(), v.higher(), v.lower(),
+            v.scenarioQuestions() != null ? v.scenarioQuestions() : List.of());
     }
 
     private AgentProfile loadProfile(final String filename) {

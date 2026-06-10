@@ -71,11 +71,18 @@ class AgentProfileLoaderTest {
 
     @Test
     void loadIndex_populates_empty_scenarioQuestions_when_absent() {
+        // Confirms the loader produces non-null lists for all pairs in the real index.yaml.
+        // null → List.of() normalization path is covered by loadIndex_normalizes_null_scenarioQuestions_to_empty_list.
         final var index = new AgentProfileLoader().loadIndex();
-        // index.yaml has scenarioQuestions for both pairs after migration;
-        // this test confirms null → List.of() normalisation works for pairs without questions
         assertThat(index.variants()).allSatisfy(p ->
             assertThat(p.scenarioQuestions()).isNotNull());
+    }
+
+    @Test
+    void loadIndex_normalizes_null_scenarioQuestions_to_empty_list() {
+        final var pairWithNull = new VariantPair(RISK_APPETITE, "a", "b", null);
+        final var normalized = AgentProfileLoader.normalize(pairWithNull);
+        assertThat(normalized.scenarioQuestions()).isNotNull().isEmpty();
     }
 
     @Test

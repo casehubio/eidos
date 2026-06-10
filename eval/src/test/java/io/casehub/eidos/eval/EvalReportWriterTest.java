@@ -116,6 +116,37 @@ class EvalReportWriterTest {
     }
 
     // ------------------------------------------------------------------ //
+    //  Behavioral report tests                                             //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    void writeBehavioralJson_creates_valid_json_file(@TempDir final Path dir) throws IOException {
+        final var pair = new VariantPair(
+            io.casehub.eidos.api.DispositionAxis.RISK_APPETITE, "a", "b", List.of());
+        final var result = new BehavioralPairResult(pair, "q?", "r-a", "r-b", true, 4, "clear diff");
+        final var report = new BehavioralReport(java.time.Instant.EPOCH, "test-model",
+            List.of(result), 1.0);
+        final Path out = dir.resolve("behavioral.json");
+
+        EvalReportWriter.writeBehavioralJson(report, out);
+
+        assertThat(out).exists();
+        new ObjectMapper().findAndRegisterModules().readTree(out.toFile());
+    }
+
+    @Test
+    void writeBehavioralJson_round_trips_accuracy(@TempDir final Path dir) throws IOException {
+        final var report = new BehavioralReport(java.time.Instant.EPOCH, "test-model",
+            List.of(), 0.75);
+        final Path out = dir.resolve("behavioral.json");
+
+        EvalReportWriter.writeBehavioralJson(report, out);
+
+        final var node = new ObjectMapper().findAndRegisterModules().readTree(out.toFile());
+        assertThat(node.get("accuracy").asDouble()).isEqualTo(0.75);
+    }
+
+    // ------------------------------------------------------------------ //
     //  Proximity + Preservation tests                                      //
     // ------------------------------------------------------------------ //
 

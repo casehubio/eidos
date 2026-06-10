@@ -214,10 +214,7 @@ class PromptEvalTest {
         final BehavioralReport report = new BehavioralReport(Instant.now(), modelLabel, results, accuracy);
 
         Files.createDirectories(Path.of("target"));
-        new com.fasterxml.jackson.databind.ObjectMapper()
-            .findAndRegisterModules()
-            .enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT)
-            .writeValue(Path.of("target/behavioral-report.json").toFile(), report);
+        EvalReportWriter.writeBehavioralJson(report, Path.of("target/behavioral-report.json"));
 
         System.out.printf("Behavioral accuracy: %.2f (%d/%d correct)%n", accuracy, correct, results.size());
         results.forEach(r -> System.out.printf("  %s | %s | correct=%b | effectSize=%d%n",

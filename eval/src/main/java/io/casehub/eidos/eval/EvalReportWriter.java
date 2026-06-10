@@ -71,6 +71,14 @@ public class EvalReportWriter {
         return sb.toString();
     }
 
+    public static void writeBehavioralJson(final BehavioralReport report, final Path path) {
+        try {
+            MAPPER.writeValue(path.toFile(), report);
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Failed to write behavioral report to " + path, e);
+        }
+    }
+
     public static void writePreservationJson(final PersonalityPreservationReport report,
                                               final Path path) {
         try {
