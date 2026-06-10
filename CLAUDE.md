@@ -143,6 +143,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 | In-memory artifactId | `casehub-eidos-memory` |
 | Deployment artifactId | `casehub-eidos-deployment` |
 | Vocabulary artifactId | `casehub-eidos-vocab` |
+| Eval artifactId | `casehub-eidos-eval` |
 | Root Java package | `io.casehub.eidos` |
 | API package | `io.casehub.eidos.api` |
 | Runtime package | `io.casehub.eidos.runtime` |
@@ -160,7 +161,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── AgentCapability.java         — capability with qualityHint (Double) + epistemicDomains
 │       ├── AgentDisposition.java        — open-String disposition axes + delegation boolean + get(DispositionAxis)
 │       ├── AgentQuery.java              — criteria record for find(): slot, capabilityName, tenancyId (required)
-│       ├── DispositionAxis.java         — enum: SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY, CONFLICT_MODE
+│       ├── DispositionAxis.java         — enum: SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY, CONFLICT_MODE; jsonKey() → camelCase JSON key; description() → axis description for LLM judge prompts
 │       ├── VocabularyMetadata.java      — annotation: uri (required), name, version on vocabulary enum classes
 │       ├── VocabularyTerm.java          — interface implemented by vocabulary enum constants; exactMatch + axisExactMatch
 │       ├── VocabularyRegistry.java      — SPI: register(Class<T>), isRegistered, resolve, allTerms, equivalentValues (typed + string-based + axis-aware)
@@ -185,6 +186,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 ├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryAgentStateStore
 ├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
 ├── vocab/                               — casehub-eidos-vocab: SvoTerm, ConscientiousnessTerm, CasehubSlotTerm, BelbinTerm, DiscTerm, ThomasKilmannTerm enums + VocabularyRegistrar beans
+├── eval/                                — casehub-eidos-eval: offline quality evaluation harness (not deployed); judges: PromptJudge, ProximityJudge, VocabularyExpressivenessJudge, TraitExpressionJudge, PairContrastJudge, BehavioralJudge; AgentProviderChatModel bridge (ChatModel → AgentProvider SPI); 8 YAML agent profiles; pair-contrast behavioral validation (Phase 3 — eidos#46)
 └── examples/
     └── agent-scenarios/                 — @QuarkusTest examples: team, cross-vocab, epistemic, tenancy, disposition
 ```

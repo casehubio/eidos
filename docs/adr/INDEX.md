@@ -6,3 +6,4 @@
 | 0002 | [Separate A2A enrichment from narrative enrichment](0002-separate-a2a-enrichment-from-narrative-enrichment.md) | Accepted | 2026-05-29 |
 | 0003 | [DISC types registered as disposition vocabulary, not slot vocabulary](0003-disc-vocabulary-disposition-not-slot.md) | Accepted | 2026-06-05 |
 | 0004 | [Disposition Axes: Fixed Fields, Not Open Map](0004-disposition-axes-fixed-fields-not-open-map.md) | Accepted | 2026-06-07 |
+| 0005 | [Behavioral Evaluation Methodology: Pair-Contrast over Per-Profile Scoring](0005-pair-contrast-behavioral-evaluation.md) | Accepted | 2026-06-10 |
