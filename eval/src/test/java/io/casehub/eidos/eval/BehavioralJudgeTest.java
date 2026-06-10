@@ -54,6 +54,15 @@ class BehavioralJudgeTest {
     }
 
     @Test
+    void evaluate_parses_json_wrapped_in_markdown_code_block() {
+        final String wrapped = "```json\n" + VALID_JSON + "\n```";
+        final var judge = new BehavioralJudge(stubModel(wrapped), new ObjectMapper());
+        final var result = judge.evaluate(PAIR, "What do you do?", "bold answer", "careful answer");
+        assertThat(result.correct()).isTrue();
+        assertThat(result.effectSize()).isEqualTo(4);
+    }
+
+    @Test
     void evaluate_throws_malformed_when_higher_field_missing() {
         final var badJson = """
             { "effectSize": 3, "reasoning": "ok" }

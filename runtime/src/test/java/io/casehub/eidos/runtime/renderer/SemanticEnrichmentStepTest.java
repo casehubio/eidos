@@ -126,6 +126,21 @@ class SemanticEnrichmentStepTest {
     }
 
     @Test
+    void json_wrapped_in_markdown_code_block_is_parsed() {
+        final String json = """
+            {"identityNarrative":"You are TestAgent.",
+             "roleNarrative":"Your role is testing.",
+             "capabilityNarrative":"You can test things.",
+             "dispositionNarrative":"","constraintNarrative":"","goalNarrative":""}""";
+        final String wrapped = "```json\n" + json + "\n```";
+
+        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(wrapped), payload("a1"));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().identityNarrative()).isEqualTo("You are TestAgent.");
+    }
+
+    @Test
     void user_message_contains_payload_fields() {
         final String[] captured = {"", ""};
         step.enrich(capturingMock(captured), payload("agent-42"));

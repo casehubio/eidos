@@ -69,7 +69,7 @@ class ReactiveSemanticEnrichmentStep {
 
     private Optional<SemanticEnrichment> parseOrEmpty(final String json) {
         try {
-            final JsonNode node = mapper.readTree(json);
+            final JsonNode node = mapper.readTree(SemanticEnrichmentStep.stripCodeFences(json));
             return Optional.of(new SemanticEnrichment(
                     node.get("identityNarrative").asText(),
                     node.get("roleNarrative").asText(),

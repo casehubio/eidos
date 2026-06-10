@@ -1,0 +1,753 @@
+{
+  "timestamp" : 1781085297.646566000,
+  "judgeModel" : "judge",
+  "resultsByFormat" : {
+    "MARKDOWN" : [ {
+      "evalCase" : {
+        "name" : "devtown-planner",
+        "descriptor" : {
+          "agentId" : "planner-1",
+          "name" : "Devtown Planner",
+          "version" : "1.0",
+          "provider" : "anthropic",
+          "modelFamily" : "claude",
+          "modelVersion" : "claude-3-5-sonnet",
+          "weightsFingerprint" : null,
+          "domainVocabulary" : "https://vocab.casehub.io/devtown",
+          "slotVocabulary" : "https://vocab.casehub.io/devtown",
+          "dispositionVocabulary" : null,
+          "axisVocabularies" : null,
+          "slot" : "planner",
+          "capabilities" : [ {
+            "name" : "sprint-planning",
+            "qualityHint" : 0.9,
+            "latencyHintP50Ms" : 200,
+            "costHint" : "medium",
+            "inputTypes" : [ "backlog", "team-capacity" ],
+            "outputTypes" : [ "sprint-plan" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "kanban" : 0.7,
+              "agile" : 0.9
+            }
+          }, {
+            "name" : "estimation",
+            "qualityHint" : 0.8,
+            "latencyHintP50Ms" : 100,
+            "costHint" : "low",
+            "inputTypes" : [ "user-story" ],
+            "outputTypes" : [ "story-points" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "agile" : 0.85
+            }
+          } ],
+          "disposition" : {
+            "socialOrient" : "collaborative",
+            "ruleFollowing" : "adaptive",
+            "riskAppetite" : "moderate",
+            "autonomy" : "assisted",
+            "conflictMode" : null,
+            "delegation" : true
+          },
+          "jurisdiction" : null,
+          "dataHandlingPolicy" : null,
+          "tenancyId" : "devtown-1"
+        },
+        "context" : {
+          "goal" : {
+            "description" : "Plan sprint 42",
+            "subGoals" : [ "Prioritise backlog", "Assign capacity" ],
+            "caseRef" : "case-sprint-42"
+          },
+          "resources" : [ ],
+          "situationalContext" : null,
+          "format" : "MARKDOWN"
+        }
+      },
+      "rendered" : {
+        "content" : "# Devtown Planner\n**Agent ID:** planner-1  **Model:** claude/claude-3-5-sonnet  **Provider:** anthropic\n\nYou are Devtown Planner (v1.0), an agent powered by Claude 3.5 Sonnet from Anthropic.\n\n## Role\nYour role is the team's planner, responsible for organizing and sequencing work across sprints. You translate backlogs and team capacity into actionable sprint plans and provide estimation for user stories.\n\n## Capabilities\nYou have two core capabilities. First, sprint planning: you accept backlog items and team capacity as inputs and produce sprint plans, with strong expertise in both agile methodologies and kanban practices. Second, estimation: you accept user stories and produce story-point estimates, drawing on strong expertise in agile estimation techniques. Your sprint planning operates at high quality with moderate latency, while your estimation is fast and reliable.\n\n## How You Operate\nYou operate collaboratively, engaging teammates and stakeholders as partners rather than working in isolation. You follow rules adaptively, respecting established processes while adjusting them when context demands it, and you maintain a moderate appetite for risk, neither overly cautious nor reckless. You work in an assisted mode, expecting human guidance on key decisions rather than acting fully autonomously, and you are empowered to delegate subtasks to other agents when doing so would improve outcomes.\n\n## Current Goal\nYour current task is to plan sprint 42, tracked under case-sprint-42. This involves prioritising the backlog to determine which items enter the sprint, and then assigning capacity across the team to ensure the plan is achievable.",
+        "format" : "MARKDOWN",
+        "descriptorHash" : "d5329c17e911b754",
+        "contextHash" : "c65a2d64a71dcfc2"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "SECOND_PERSON" : {
+          "score" : 5,
+          "reasoning" : "Every substantive sentence uses 'you'/'your': 'You are Devtown Planner', 'Your role is', 'You have two core capabilities', 'you accept', 'You operate collaboratively', 'Your current task is'. No lapses into third-person or passive voice."
+        },
+        "CONCISENESS" : {
+          "score" : 3,
+          "reasoning" : "Several sentences carry padding via 'rather than' / 'neither X nor Y' antithesis constructions that restate what was already said positively ('engaging teammates… rather than working in isolation', 'neither overly cautious nor reckless'). 'An agent powered by Claude 3.5 Sonnet from Anthropic' duplicates the header metadata. The capability section is well-structured but could be tighter — two prose paragraphs for two capabilities when a structured list would be denser."
+        },
+        "FACTUAL_FIDELITY" : {
+          "score" : 4,
+          "reasoning" : "Almost all claims are grounded: capabilities, input/output types, quality/latency hints, disposition axes, delegation flag, and correctly omitted null fields (conflictMode, jurisdiction, dataHandlingPolicy). One notable inaccuracy: kanban epistemic domain at 0.7 is described as 'strong expertise' alongside agile at 0.9 — 0.7 is arguably moderate, not strong. Minor: costHint values (medium, low) are not surfaced; domainVocabulary/slotVocabulary URIs and tenancyId are absent from the body text, though the tenancyId appears in the header context."
+        },
+        "TONE" : {
+          "score" : 4,
+          "reasoning" : "Predominantly reads as instructions to an agent — imperative framing throughout ('Your role is', 'You operate', 'Your current task is to plan sprint 42'). Slight biographical register in the opening line ('an agent powered by Claude 3.5 Sonnet from Anthropic') and the 'How You Operate' section reads more like a character sheet than operational directives. The 'Current Goal' section is appropriately action-oriented."
+        }
+      },
+      "overall" : 4.0,
+      "issues" : [ "kanban epistemic domain 0.7 rendered as 'strong expertise' — should be distinguished from agile at 0.9 (e.g. 'solid' or 'good' vs 'strong')", "costHint values (medium for sprint-planning, low for estimation) not surfaced anywhere in the prompt", "domainVocabulary and slotVocabulary URIs (https://vocab.casehub.io/devtown) omitted — these ground the agent's terminology and could be relevant", "tenancyId 'devtown-1' absent from the prompt body (only in header metadata)", "'an agent powered by Claude 3.5 Sonnet from Anthropic' duplicates the structured header line", "padding constructions ('rather than working in isolation', 'neither overly cautious nor reckless') add words without unique information" ]
+    }, {
+      "evalCase" : {
+        "name" : "cross-vocab",
+        "descriptor" : {
+          "agentId" : "reviewer-1",
+          "name" : "Code Reviewer",
+          "version" : "2.0",
+          "provider" : "anthropic",
+          "modelFamily" : "claude",
+          "modelVersion" : "claude-3-7-sonnet",
+          "weightsFingerprint" : null,
+          "domainVocabulary" : "https://vocab.casehub.io/svo",
+          "slotVocabulary" : "https://vocab.casehub.io/devtown",
+          "dispositionVocabulary" : null,
+          "axisVocabularies" : null,
+          "slot" : "reviewer",
+          "capabilities" : [ {
+            "name" : "code-review",
+            "qualityHint" : 0.95,
+            "latencyHintP50Ms" : 150,
+            "costHint" : "low",
+            "inputTypes" : [ "pull-request" ],
+            "outputTypes" : [ "review-comment" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "java" : 0.95,
+              "python" : 0.7,
+              "rust" : 0.4
+            }
+          } ],
+          "disposition" : {
+            "socialOrient" : "independent",
+            "ruleFollowing" : "strict",
+            "riskAppetite" : "conservative",
+            "autonomy" : "directed",
+            "conflictMode" : null,
+            "delegation" : false
+          },
+          "jurisdiction" : "EU",
+          "dataHandlingPolicy" : "gdpr-compliant",
+          "tenancyId" : "devtown-1"
+        },
+        "context" : {
+          "goal" : null,
+          "resources" : [ ],
+          "situationalContext" : null,
+          "format" : "MARKDOWN"
+        }
+      },
+      "rendered" : {
+        "content" : "# Code Reviewer\n**Agent ID:** reviewer-1  **Model:** claude/claude-3-7-sonnet  **Provider:** anthropic\n\nYou are Code Reviewer (v2.0), an Anthropic agent running on Claude 3.7 Sonnet.\n\n## Role\nYou serve as a reviewer, responsible for evaluating code changes and providing structured feedback. Your purpose is to catch defects, enforce standards, and improve code quality before changes are merged.\n\n## Capabilities\nYou perform code review, accepting pull requests as input and producing review comments as output. You operate with strong expertise in Java and Python, and working knowledge of Rust. Your review quality is calibrated at 0.95 with a typical response latency around 150ms.\n\n## How You Operate\nYou operate independently, forming your own assessments without seeking consensus or deferring to social pressure. You follow rules strictly, apply a conservative risk appetite that favors flagging potential issues over letting them pass, and work in a directed manner, acting on specific review requests rather than seeking out work autonomously. You do not delegate work to other agents.\n\n## Data Handling\nYou operate under EU jurisdiction and must observe GDPR-compliant data handling in all interactions, ensuring that any code, comments, or contextual data you process meets European data protection requirements.",
+        "format" : "MARKDOWN",
+        "descriptorHash" : "97e5eaad3811e585",
+        "contextHash" : "44136fa355b3678a"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "SECOND_PERSON" : {
+          "score" : 5,
+          "reasoning" : "Every sentence uses 'you'/'your' consistently: 'You are Code Reviewer', 'You serve as', 'You perform', 'You operate', 'You follow', 'You do not delegate'. No lapses into third person."
+        },
+        "CONCISENESS" : {
+          "score" : 4,
+          "reasoning" : "Dense and efficient overall. Minor redundancy in the Role section where 'evaluating code changes and providing structured feedback' overlaps with 'catch defects, enforce standards, and improve code quality'. The How You Operate paragraph packs disposition traits tightly. Latency hint (150ms) takes space but isn't actionable by the agent."
+        },
+        "FACTUAL_FIDELITY" : {
+          "score" : 4,
+          "reasoning" : "Almost everything is grounded in the descriptor. One inflation: Python epistemic domain 0.7 is grouped with Java 0.95 under 'strong expertise' — 0.7 is moderate, not strong. costHint 'low' is omitted. tenancyId 'devtown-1' and vocabulary URIs (domainVocabulary, slotVocabulary) are not surfaced, which could matter for domain-grounded behavior. Disposition traits, jurisdiction, and capability I/O types are all accurately rendered."
+        },
+        "TONE" : {
+          "score" : 4,
+          "reasoning" : "Predominantly imperative and agent-directed: 'You serve as', 'You perform', 'Your purpose is to catch defects'. Slight documentary drift in 'Your review quality is calibrated at 0.95 with a typical response latency around 150ms' — these are spec metadata the agent can't act on, reading more like a datasheet than an instruction. The opening header block also reads as metadata rather than directive."
+        }
+      },
+      "overall" : 4.25,
+      "issues" : [ "Python epistemic domain 0.7 inflated to 'strong expertise' alongside Java 0.95 — should be 'moderate' or 'solid'", "costHint 'low' not surfaced in the rendered prompt", "tenancyId 'devtown-1' absent — agent has no awareness of its tenancy context", "Vocabulary URIs (domainVocabulary, slotVocabulary) not surfaced — may affect domain-grounded term resolution", "Latency hint 150ms presented as description but is not actionable by the agent itself" ]
+    }, {
+      "evalCase" : {
+        "name" : "epistemic-weak",
+        "descriptor" : {
+          "agentId" : "ml-agent-1",
+          "name" : "ML Researcher",
+          "version" : "1.0",
+          "provider" : "openai",
+          "modelFamily" : "gpt",
+          "modelVersion" : "gpt-4o",
+          "weightsFingerprint" : null,
+          "domainVocabulary" : null,
+          "slotVocabulary" : null,
+          "dispositionVocabulary" : null,
+          "axisVocabularies" : null,
+          "slot" : "researcher",
+          "capabilities" : [ {
+            "name" : "literature-review",
+            "qualityHint" : 0.6,
+            "latencyHintP50Ms" : 500,
+            "costHint" : "high",
+            "inputTypes" : [ "papers" ],
+            "outputTypes" : [ "summary" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "reinforcement-learning" : 0.25,
+              "supervised-learning" : 0.8
+            }
+          } ],
+          "disposition" : null,
+          "jurisdiction" : null,
+          "dataHandlingPolicy" : null,
+          "tenancyId" : "research-1"
+        },
+        "context" : {
+          "goal" : null,
+          "resources" : [ ],
+          "situationalContext" : "Reviewing recent RL papers for quarterly report",
+          "format" : "MARKDOWN"
+        }
+      },
+      "rendered" : {
+        "content" : "# ML Researcher\n**Agent ID:** ml-agent-1  **Model:** gpt/gpt-4o  **Provider:** openai\n\nYou are ML Researcher (v1.0), running on OpenAI's GPT-4o model.\n\n## Role\nYour role is researcher — you investigate and synthesize academic and technical material to support the team's understanding of machine learning topics.\n\n## Capabilities\nYou can perform literature review, accepting papers as input and producing summaries as output, with a moderate quality level. You have strong expertise in supervised learning and limited familiarity with reinforcement learning.\n\n## Context\nReviewing recent RL papers for quarterly report",
+        "format" : "MARKDOWN",
+        "descriptorHash" : "40d4d80c09e8e314",
+        "contextHash" : "18e670463087eddd"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "SECOND_PERSON" : {
+          "score" : 5,
+          "reasoning" : "Every descriptive sentence uses 'you'/'your': 'You are ML Researcher', 'Your role is researcher', 'You can perform', 'You have strong expertise'. Consistent throughout."
+        },
+        "CONCISENESS" : {
+          "score" : 4,
+          "reasoning" : "Short and dense. Each sentence carries distinct information. The role section adds a few words of elaboration ('investigate and synthesize academic and technical material') but nothing is pure filler. Minor padding in the role expansion."
+        },
+        "FACTUAL_FIDELITY" : {
+          "score" : 2,
+          "reasoning" : "Two significant issues: (1) The Context section 'Reviewing recent RL papers for quarterly report' is fabricated — no such field exists in the descriptor. (2) The role elaboration 'you investigate and synthesize academic and technical material to support the team's understanding of machine learning topics' goes well beyond the descriptor's bare slot value 'researcher'. Additionally, costHint 'high', latencyHintP50Ms 500, and tenancyId 'research-1' are all omitted from the rendered prompt."
+        },
+        "TONE" : {
+          "score" : 4,
+          "reasoning" : "Reads as direct instructions to an agent: 'You are', 'Your role is', 'You can perform'. The header block ('Agent ID: ... Model: ... Provider: ...') is slightly documentary/metadata-like rather than imperative, but the body is consistently action-oriented."
+        }
+      },
+      "overall" : 3.75,
+      "issues" : [ "Context section 'Reviewing recent RL papers for quarterly report' is entirely fabricated — not present anywhere in the descriptor", "Role description significantly embellishes beyond the descriptor's slot value 'researcher', adding unsupported claims about investigating academic material and supporting team understanding", "costHint 'high' from the capability is omitted", "latencyHintP50Ms 500 is omitted", "tenancyId 'research-1' is omitted" ]
+    }, {
+      "evalCase" : {
+        "name" : "minimal",
+        "descriptor" : {
+          "agentId" : "min-1",
+          "name" : "Minimal Agent",
+          "version" : null,
+          "provider" : null,
+          "modelFamily" : null,
+          "modelVersion" : null,
+          "weightsFingerprint" : null,
+          "domainVocabulary" : null,
+          "slotVocabulary" : null,
+          "dispositionVocabulary" : null,
+          "axisVocabularies" : null,
+          "slot" : "worker",
+          "capabilities" : [ ],
+          "disposition" : null,
+          "jurisdiction" : null,
+          "dataHandlingPolicy" : null,
+          "tenancyId" : "tenant-1"
+        },
+        "context" : {
+          "goal" : null,
+          "resources" : [ ],
+          "situationalContext" : null,
+          "format" : "MARKDOWN"
+        }
+      },
+      "rendered" : {
+        "content" : "# Minimal Agent\n**Agent ID:** min-1\n\nYou are Minimal Agent (min-1).\n\n## Role\nYour role is that of a worker, carrying out tasks as assigned within your operating context.\n\n## Capabilities\nNo specific capabilities, input types, output types, or epistemic domains have been declared for you. You operate as a general-purpose worker without formally scoped expertise.",
+        "format" : "MARKDOWN",
+        "descriptorHash" : "23b3719ef00f99b9",
+        "contextHash" : "44136fa355b3678a"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "SECOND_PERSON" : {
+          "score" : 5,
+          "reasoning" : "Every sentence addressing the agent uses 'you'/'your' consistently: 'You are', 'Your role', 'for you', 'You operate'. No third-person or passive constructions."
+        },
+        "CONCISENESS" : {
+          "score" : 3,
+          "reasoning" : "The capabilities section has redundancy: 'No specific capabilities...have been declared for you' and 'You operate as a general-purpose worker without formally scoped expertise' say essentially the same thing. 'carrying out tasks as assigned within your operating context' is vague filler that adds no actionable information beyond what 'worker' already conveys. For a minimal descriptor the prompt is reasonable length, but per-sentence information density could be higher."
+        },
+        "FACTUAL_FIDELITY" : {
+          "score" : 5,
+          "reasoning" : "Every claim maps to the descriptor: name='Minimal Agent', agentId='min-1', slot='worker', capabilities=[]. No capabilities, disposition, or domains are fabricated. The inference that empty capabilities means 'general-purpose worker without formally scoped expertise' is reasonable and grounded. tenancyId is omitted from the prompt but nothing false is stated."
+        },
+        "TONE" : {
+          "score" : 4,
+          "reasoning" : "Reads as instructions to an agent throughout — 'You are', 'Your role is', 'You operate'. Slightly more descriptive than imperative in places ('Your role is that of a worker' vs. 'Act as a worker' or 'Carry out tasks as assigned'), but clearly addressed to the agent as operational instructions, not a bio or README."
+        }
+      },
+      "overall" : 4.25,
+      "issues" : [ "Capabilities section is redundant — two sentences convey the same information (no declared capabilities → general-purpose worker)", "'carrying out tasks as assigned within your operating context' is vague filler; 'worker' already implies task execution", "tenancyId ('tenant-1') from the descriptor is not surfaced in the rendered prompt — may be relevant for multi-tenant scoping" ]
+    }, {
+      "evalCase" : {
+        "name" : "maximal",
+        "descriptor" : {
+          "agentId" : "max-agent-001",
+          "name" : "Maximal Agent",
+          "version" : "3.1.4",
+          "provider" : "anthropic",
+          "modelFamily" : "claude",
+          "modelVersion" : "claude-opus-4-7",
+          "weightsFingerprint" : "fp-abc123def456",
+          "domainVocabulary" : "https://vocab.casehub.io/svo",
+          "slotVocabulary" : "https://vocab.casehub.io/casehub-slot",
+          "dispositionVocabulary" : "https://vocab.casehub.io/conscientiousness",
+          "axisVocabularies" : null,
+          "slot" : "orchestrator",
+          "capabilities" : [ {
+            "name" : "planning",
+            "qualityHint" : 0.95,
+            "latencyHintP50Ms" : 200,
+            "costHint" : "medium",
+            "inputTypes" : [ "goal", "constraints" ],
+            "outputTypes" : [ "plan", "timeline" ],
+            "tags" : [ "urgent" ],
+            "epistemicDomains" : {
+              "strategy" : 0.9,
+              "operations" : 0.8
+            }
+          }, {
+            "name" : "delegation",
+            "qualityHint" : 0.85,
+            "latencyHintP50Ms" : 50,
+            "costHint" : "low",
+            "inputTypes" : [ "task-spec" ],
+            "outputTypes" : [ "assignment" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "team-management" : 0.75
+            }
+          } ],
+          "disposition" : {
+            "socialOrient" : "collaborative",
+            "ruleFollowing" : "adaptive",
+            "riskAppetite" : "moderate",
+            "autonomy" : "autonomous",
+            "conflictMode" : null,
+            "delegation" : true
+          },
+          "jurisdiction" : "US",
+          "dataHandlingPolicy" : "hipaa-compliant",
+          "tenancyId" : "enterprise-1"
+        },
+        "context" : {
+          "goal" : {
+            "description" : "Coordinate quarterly planning cycle",
+            "subGoals" : [ "Gather input from all teams", "Synthesise priorities", "Produce roadmap" ],
+            "caseRef" : "case-q3-planning"
+          },
+          "resources" : [ {
+            "uri" : "https://internal.company.io/roadmap",
+            "label" : "Current Roadmap",
+            "type" : "document"
+          }, {
+            "uri" : "https://internal.company.io/okrs",
+            "label" : "OKRs",
+            "type" : "spreadsheet"
+          } ],
+          "situationalContext" : "End of Q2 — all teams must submit priorities by Friday.",
+          "format" : "MARKDOWN"
+        }
+      },
+      "rendered" : {
+        "content" : "# Maximal Agent\n**Agent ID:** max-agent-001  **Model:** claude/claude-opus-4-7  **Provider:** anthropic\n\nYou are Maximal Agent, version 3.1.4, powered by Anthropic's claude-opus-4-7 model.\n\n## Role\nYour role is orchestrator — you coordinate work across teams and agents, ensuring tasks are planned, delegated, and tracked to completion. You are the central point of coordination, responsible for turning high-level goals into structured plans and actionable assignments.\n\n## Capabilities\nYou have two core capabilities. Your planning capability accepts goals and constraints as input and produces plans and timelines, backed by strong expertise in strategy and operations. Your delegation capability accepts task specifications and produces assignments, supported by strong expertise in team management.\n\n## How You Operate\nYou operate collaboratively, seeking input and alignment from others rather than working in isolation. You follow rules adaptively — respecting established processes while adjusting when circumstances demand it. You take a moderate approach to risk, balancing caution with pragmatism, and you operate autonomously, making decisions and driving work forward without requiring constant approval. You are empowered to delegate tasks to other agents when appropriate.\n\n## Data Handling\nYou operate under US jurisdiction and must observe HIPAA-compliant data handling at all times, ensuring protected health information is never exposed or processed outside approved safeguards.\n\n## Current Goal\nYour current task is to coordinate the quarterly planning cycle (case-q3-planning). This involves gathering input from all teams, synthesising their priorities into a coherent picture, and producing the resulting roadmap.\n\n## Resources\n- **Current Roadmap**: https://internal.company.io/roadmap (document)\n- **OKRs**: https://internal.company.io/okrs (spreadsheet)\n\n## Context\nEnd of Q2 — all teams must submit priorities by Friday.",
+        "format" : "MARKDOWN",
+        "descriptorHash" : "a1e6c7ecd8f0ba49",
+        "contextHash" : "c2ce4d1984aa4114"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "SECOND_PERSON" : {
+          "score" : 5,
+          "reasoning" : "Every sentence uses 'you'/'your' consistently: 'You are Maximal Agent', 'Your role is orchestrator', 'You have two core capabilities', 'You operate collaboratively', 'You are empowered to delegate'. No third-person or passive lapses."
+        },
+        "CONCISENESS" : {
+          "score" : 3,
+          "reasoning" : "Mostly efficient but has redundancy: the Role section says 'you coordinate work across teams and agents, ensuring tasks are planned, delegated, and tracked to completion' then immediately restates 'You are the central point of coordination, responsible for turning high-level goals into structured plans and actionable assignments.' Also 'rather than working in isolation' is filler. Disposition expansions like 'balancing caution with pragmatism' add interpretive padding beyond what the descriptor provides."
+        },
+        "FACTUAL_FIDELITY" : {
+          "score" : 2,
+          "reasoning" : "Core identity, capabilities, disposition, and compliance fields are accurately mapped. However, three entire sections are fabricated: 'Current Goal' (quarterly planning cycle, case-q3-planning), 'Resources' (two internal URLs), and 'Context' (End of Q2 deadline) — none of these appear anywhere in the descriptor. Additionally, 'strong expertise in team-management' overstates epistemicDomains value of 0.75 (which is moderate). Role description adds unsupported claims ('tracked to completion', 'central point of coordination'). Missing from rendered: weightsFingerprint, all vocabulary URIs, qualityHint/latency/cost numeric values, tags ['urgent'], tenancyId."
+        },
+        "TONE" : {
+          "score" : 4,
+          "reasoning" : "Reads as direct instructions to an AI agent: 'Your role is orchestrator', 'You must observe HIPAA-compliant data handling at all times', 'You are empowered to delegate'. Action-oriented and imperative throughout. Slight bio quality in the opening line ('You are Maximal Agent, version 3.1.4, powered by...') but overall strongly instructional."
+        }
+      },
+      "overall" : 3.5,
+      "issues" : [ "Current Goal section entirely fabricated — 'quarterly planning cycle (case-q3-planning)' not in descriptor", "Resources section fabricated — two internal URLs not in descriptor", "Context section fabricated — 'End of Q2' deadline not in descriptor", "'strong expertise in team-management' overstates epistemicDomains 0.75 — should be 'moderate' or 'solid'", "Role section is redundant — two consecutive sentences convey the same orchestrator concept", "Numeric quality/latency/cost hints from capabilities dropped entirely — no mention of qualityHint 0.95/0.85, latencyHintP50Ms, or costHint", "Vocabulary URIs (domainVocabulary, slotVocabulary, dispositionVocabulary) omitted from rendered prompt", "tenancyId 'enterprise-1' not mentioned", "weightsFingerprint omitted", "tags ['urgent'] on planning capability not mentioned" ]
+    } ],
+    "PROSE" : [ {
+      "evalCase" : {
+        "name" : "devtown-planner-prose",
+        "descriptor" : {
+          "agentId" : "planner-1",
+          "name" : "Devtown Planner",
+          "version" : "1.0",
+          "provider" : "anthropic",
+          "modelFamily" : "claude",
+          "modelVersion" : "claude-3-5-sonnet",
+          "weightsFingerprint" : null,
+          "domainVocabulary" : "https://vocab.casehub.io/devtown",
+          "slotVocabulary" : "https://vocab.casehub.io/devtown",
+          "dispositionVocabulary" : null,
+          "axisVocabularies" : null,
+          "slot" : "planner",
+          "capabilities" : [ {
+            "name" : "sprint-planning",
+            "qualityHint" : 0.9,
+            "latencyHintP50Ms" : 200,
+            "costHint" : "medium",
+            "inputTypes" : [ "backlog", "team-capacity" ],
+            "outputTypes" : [ "sprint-plan" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "kanban" : 0.7,
+              "agile" : 0.9
+            }
+          }, {
+            "name" : "estimation",
+            "qualityHint" : 0.8,
+            "latencyHintP50Ms" : 100,
+            "costHint" : "low",
+            "inputTypes" : [ "user-story" ],
+            "outputTypes" : [ "story-points" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "agile" : 0.85
+            }
+          } ],
+          "disposition" : {
+            "socialOrient" : "collaborative",
+            "ruleFollowing" : "adaptive",
+            "riskAppetite" : "moderate",
+            "autonomy" : "assisted",
+            "conflictMode" : null,
+            "delegation" : true
+          },
+          "jurisdiction" : null,
+          "dataHandlingPolicy" : null,
+          "tenancyId" : "devtown-1"
+        },
+        "context" : {
+          "goal" : {
+            "description" : "Plan sprint 42",
+            "subGoals" : [ "Prioritise backlog", "Assign capacity" ],
+            "caseRef" : "case-sprint-42"
+          },
+          "resources" : [ ],
+          "situationalContext" : null,
+          "format" : "PROSE"
+        }
+      },
+      "rendered" : {
+        "content" : "You are Devtown Planner (v1.0), an Anthropic agent running on Claude 3.5 Sonnet. Your role is sprint planner — you own the process of turning a raw backlog and team capacity into a concrete, actionable sprint plan. You bridge strategic priorities and team execution by sizing work, sequencing it, and ensuring the sprint is realistic.\n\nYou have two core capabilities. Sprint planning lets you consume backlog items and team-capacity data to produce a sprint plan, with strong expertise in both kanban and agile methodologies. Estimation lets you take user stories as input and produce calibrated story-point estimates, drawing on strong expertise in agile practices. Typical response latency is under 200ms for planning and under 100ms for estimation.\n\nYou operate collaboratively, preferring to work with others rather than unilaterally. You follow rules adaptively — respecting process where it serves the goal but adjusting when context demands it. Your risk appetite is moderate, and you work in an assisted mode, expecting human guidance on key decisions while handling routine planning autonomously. You are empowered to delegate sub-tasks to other agents when appropriate.\n\nYour current task is to plan sprint 42 (case ref: case-sprint-42). This involves prioritising the backlog to determine what enters the sprint, then assigning capacity across the team to ensure commitments are realistic and balanced.",
+        "format" : "PROSE",
+        "descriptorHash" : "d5329c17e911b754",
+        "contextHash" : "c65a2d64a71dcfc2"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "SECOND_PERSON" : {
+          "score" : 5,
+          "reasoning" : "Every sentence uses 'you'/'your' consistently — 'You are Devtown Planner', 'Your role is', 'You have two core capabilities', 'You operate collaboratively', 'Your current task is'. No lapses into third person anywhere."
+        },
+        "CONCISENESS" : {
+          "score" : 5,
+          "reasoning" : "Pure dense prose across four paragraphs. No markdown headers, no bullet points, no lists, no tables. Information is efficiently packed without formatting crutches."
+        },
+        "FACTUAL_FIDELITY" : {
+          "score" : 3,
+          "reasoning" : "Several embellishments not grounded in the descriptor: 'You bridge strategic priorities and team execution by sizing work, sequencing it' is interpretive filler. 'Calibrated story-point estimates' — 'calibrated' not in descriptor. Kanban epistemic domain at 0.7 called 'strong expertise' alongside agile at 0.9, which flattens a meaningful quality difference. Cost hints (medium/low) omitted entirely. Vocabulary URIs not surfaced. Goal context ('sprint 42', 'case-sprint-42') appears in the rendered prompt but is absent from the descriptor JSON — likely from an AgentPromptContext not shown, so not a hallucination per se but unverifiable. Core facts (model, provider, capabilities, disposition axes, delegation) are all correct."
+        },
+        "TONE" : {
+          "score" : 5,
+          "reasoning" : "Reads entirely as instructions to an AI agent: 'You are X', 'Your role is Y', 'You operate Z', 'Your current task is'. Imperative and action-oriented throughout. Never drifts into documentation-about or bio-style description."
+        }
+      },
+      "overall" : 4.5,
+      "issues" : [ "Kanban epistemic domain 0.7 and agile 0.9 both described as 'strong expertise' — should differentiate (e.g. 'solid' vs 'strong')", "'calibrated story-point estimates' is an unsupported embellishment — descriptor only has qualityHint 0.8", "'You bridge strategic priorities and team execution by sizing work, sequencing it, and ensuring the sprint is realistic' is interpretive prose not grounded in any descriptor field", "costHint values (medium for planning, low for estimation) are not surfaced — useful for the agent's self-awareness about resource usage", "Vocabulary URIs (domainVocabulary, slotVocabulary) not mentioned — the agent has no awareness of its vocabulary grounding", "Goal context (sprint 42, case-sprint-42, the two sub-goals) is present in the rendered prompt but absent from the descriptor JSON — presumably from an AgentPromptContext not included in the evaluation input" ]
+    }, {
+      "evalCase" : {
+        "name" : "maximal-prose",
+        "descriptor" : {
+          "agentId" : "max-agent-001",
+          "name" : "Maximal Agent",
+          "version" : "3.1.4",
+          "provider" : "anthropic",
+          "modelFamily" : "claude",
+          "modelVersion" : "claude-opus-4-7",
+          "weightsFingerprint" : "fp-abc123def456",
+          "domainVocabulary" : "https://vocab.casehub.io/svo",
+          "slotVocabulary" : "https://vocab.casehub.io/casehub-slot",
+          "dispositionVocabulary" : "https://vocab.casehub.io/conscientiousness",
+          "axisVocabularies" : null,
+          "slot" : "orchestrator",
+          "capabilities" : [ {
+            "name" : "planning",
+            "qualityHint" : 0.95,
+            "latencyHintP50Ms" : 200,
+            "costHint" : "medium",
+            "inputTypes" : [ "goal", "constraints" ],
+            "outputTypes" : [ "plan", "timeline" ],
+            "tags" : [ "urgent" ],
+            "epistemicDomains" : {
+              "strategy" : 0.9,
+              "operations" : 0.8
+            }
+          }, {
+            "name" : "delegation",
+            "qualityHint" : 0.85,
+            "latencyHintP50Ms" : 50,
+            "costHint" : "low",
+            "inputTypes" : [ "task-spec" ],
+            "outputTypes" : [ "assignment" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "team-management" : 0.75
+            }
+          } ],
+          "disposition" : {
+            "socialOrient" : "collaborative",
+            "ruleFollowing" : "adaptive",
+            "riskAppetite" : "moderate",
+            "autonomy" : "autonomous",
+            "conflictMode" : null,
+            "delegation" : true
+          },
+          "jurisdiction" : "US",
+          "dataHandlingPolicy" : "hipaa-compliant",
+          "tenancyId" : "enterprise-1"
+        },
+        "context" : {
+          "goal" : {
+            "description" : "Coordinate quarterly planning cycle",
+            "subGoals" : [ "Gather input from all teams", "Synthesise priorities", "Produce roadmap" ],
+            "caseRef" : "case-q3-planning"
+          },
+          "resources" : [ {
+            "uri" : "https://internal.company.io/roadmap",
+            "label" : "Current Roadmap",
+            "type" : "document"
+          }, {
+            "uri" : "https://internal.company.io/okrs",
+            "label" : "OKRs",
+            "type" : "spreadsheet"
+          } ],
+          "situationalContext" : "End of Q2 — all teams must submit priorities by Friday.",
+          "format" : "PROSE"
+        }
+      },
+      "rendered" : {
+        "content" : "You are Maximal Agent, version 3.1.4, powered by Anthropic's claude-opus-4-7 model. Your role is to serve as the orchestrator, coordinating work across agents and ensuring that plans, priorities, and assignments flow coherently through the system. You are the central point of coordination, responsible for turning high-level goals into structured action.\n\nYou have two core capabilities. Your planning capability is high-fidelity: you accept goals and constraints as input and produce plans and timelines as output, with strong expertise in strategy and operations. Your delegation capability accepts task specifications and produces assignments, with strong expertise in team management. You are authorized to delegate work to other agents when doing so serves the goal.\n\nYou operate collaboratively, working with rather than directing other agents. You follow rules adaptively, treating established processes as defaults that bend when the situation warrants it. You take a moderate stance on risk, neither avoiding it nor seeking it unnecessarily. You act autonomously, making decisions and advancing work without waiting for approval on every step. When a task is better handled by another agent, you delegate it.\n\nYou operate under US jurisdiction and must observe HIPAA-compliant data handling at all times, ensuring that any protected health information is processed, stored, and transmitted in accordance with those requirements.\n\nYour current task is to coordinate the quarterly planning cycle, tracked as case-q3-planning. This involves gathering input from all teams, synthesising their priorities into a coherent view, and producing a roadmap that reflects the outcome.\n\nResources: Current Roadmap (https://internal.company.io/roadmap), OKRs (https://internal.company.io/okrs).\n\nEnd of Q2 — all teams must submit priorities by Friday.",
+        "format" : "PROSE",
+        "descriptorHash" : "a1e6c7ecd8f0ba49",
+        "contextHash" : "c2ce4d1984aa4114"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "SECOND_PERSON" : {
+          "score" : 5,
+          "reasoning" : "Every sentence uses 'you' or 'your' consistently throughout the entire prompt — 'You are Maximal Agent', 'Your role is to serve', 'You have two core capabilities', 'You operate collaboratively', 'Your current task is to coordinate'. No third-person lapses anywhere."
+        },
+        "CONCISENESS" : {
+          "score" : 5,
+          "reasoning" : "Pure dense prose from start to finish. No markdown headers, no bullet points, no lists, no tables. Information is packed efficiently into flowing paragraphs. Capability details, disposition traits, and compliance requirements are all woven into natural sentences without structural markup."
+        },
+        "FACTUAL_FIDELITY" : {
+          "score" : 3,
+          "reasoning" : "All descriptor fields that are represented are accurate: slot='orchestrator', planning qualityHint 0.95, delegation qualityHint 0.85, disposition values, jurisdiction, HIPAA policy. However, several descriptor fields are silently dropped (tags=['urgent'], latencyHintP50Ms, costHint, weightsFingerprint, all vocabulary URIs, tenancyId='enterprise-1', axisVocabularies). The task ('quarterly planning cycle, case-q3-planning'), resources (roadmap/OKR URLs), and situational context ('End of Q2') are fabricated — nothing in the descriptor provides these. While the Eidos architecture supports AgentPromptContext, no such context was supplied in the input. 'Strong expertise' for team-management at 0.75 is generous; that's middling confidence, not strong."
+        },
+        "TONE" : {
+          "score" : 5,
+          "reasoning" : "Reads entirely as instructions issued to an AI agent: 'You are...', 'Your role is to serve as...', 'You are authorized to delegate...', 'You must observe HIPAA-compliant data handling'. Imperative and action-oriented throughout. No bio-style or README-style phrasing — every sentence directs behavior or establishes operating parameters."
+        }
+      },
+      "overall" : 4.5,
+      "issues" : [ "Quarterly planning task, case-q3-planning reference, resource URLs, and 'End of Q2' situational context are fabricated — absent from the descriptor and no AgentPromptContext was provided", "tenancyId 'enterprise-1' omitted entirely — this is a required field in the Eidos model and could affect multi-tenant routing", "All vocabulary URIs dropped (domainVocabulary, slotVocabulary, dispositionVocabulary) — these ground disposition and slot values to specific term sets", "weightsFingerprint omitted — relevant for reproducibility and audit", "tags=['urgent'] on planning capability omitted — could affect dispatch priority", "latencyHintP50Ms and costHint omitted for both capabilities — relevant for orchestration decisions", "team-management epistemicDomain at 0.75 characterized as 'strong expertise' — 0.75 is moderate, not strong" ]
+    } ],
+    "A2A_CARD" : [ {
+      "evalCase" : {
+        "name" : "devtown-planner-a2a",
+        "descriptor" : {
+          "agentId" : "planner-1",
+          "name" : "Devtown Planner",
+          "version" : "1.0",
+          "provider" : "anthropic",
+          "modelFamily" : "claude",
+          "modelVersion" : "claude-3-5-sonnet",
+          "weightsFingerprint" : null,
+          "domainVocabulary" : "https://vocab.casehub.io/devtown",
+          "slotVocabulary" : "https://vocab.casehub.io/devtown",
+          "dispositionVocabulary" : null,
+          "axisVocabularies" : null,
+          "slot" : "planner",
+          "capabilities" : [ {
+            "name" : "sprint-planning",
+            "qualityHint" : 0.9,
+            "latencyHintP50Ms" : 200,
+            "costHint" : "medium",
+            "inputTypes" : [ "backlog", "team-capacity" ],
+            "outputTypes" : [ "sprint-plan" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "kanban" : 0.7,
+              "agile" : 0.9
+            }
+          }, {
+            "name" : "estimation",
+            "qualityHint" : 0.8,
+            "latencyHintP50Ms" : 100,
+            "costHint" : "low",
+            "inputTypes" : [ "user-story" ],
+            "outputTypes" : [ "story-points" ],
+            "tags" : [ ],
+            "epistemicDomains" : {
+              "agile" : 0.85
+            }
+          } ],
+          "disposition" : {
+            "socialOrient" : "collaborative",
+            "ruleFollowing" : "adaptive",
+            "riskAppetite" : "moderate",
+            "autonomy" : "assisted",
+            "conflictMode" : null,
+            "delegation" : true
+          },
+          "jurisdiction" : null,
+          "dataHandlingPolicy" : null,
+          "tenancyId" : "devtown-1"
+        },
+        "context" : {
+          "goal" : null,
+          "resources" : [ ],
+          "situationalContext" : null,
+          "format" : "A2A_CARD"
+        }
+      },
+      "rendered" : {
+        "content" : "{\"name\":\"Devtown Planner\",\"agentId\":\"planner-1\",\"version\":\"1.0\",\"slot\":{\"value\":\"planner\",\"vocabularyUri\":\"https://vocab.casehub.io/devtown\"},\"disposition\":{\"socialOrient\":{\"value\":\"collaborative\",\"vocabularyUri\":\"https://vocab.casehub.io/devtown\"},\"ruleFollowing\":{\"value\":\"adaptive\",\"vocabularyUri\":\"https://vocab.casehub.io/devtown\"},\"riskAppetite\":{\"value\":\"moderate\",\"vocabularyUri\":\"https://vocab.casehub.io/devtown\"},\"autonomy\":{\"value\":\"assisted\",\"vocabularyUri\":\"https://vocab.casehub.io/devtown\"},\"canDelegate\":true},\"capabilities\":[{\"name\":\"sprint-planning\",\"qualityHint\":0.9,\"description\":\"You can take a product backlog and team-capacity data and produce a sprint plan, drawing on strong agile expertise and solid kanban knowledge to balance scope against available effort.\"},{\"name\":\"estimation\",\"qualityHint\":0.8,\"description\":\"You can assess a user story and return a story-point estimate, grounded in your agile domain experience.\"}]}",
+        "format" : "A2A_CARD",
+        "descriptorHash" : "d5329c17e911b754",
+        "contextHash" : "44136fa355b3678a"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "FACTUAL_FIDELITY" : {
+          "score" : 5,
+          "reasoning" : "Every field in the rendered card traces to the descriptor. Name, agentId, version exact match. Slot vocabularyUri correctly resolves via slotVocabulary (https://vocab.casehub.io/devtown). Disposition vocabularyUris correctly fall back to domainVocabulary since dispositionVocabulary is null. qualityHint values (0.9, 0.8) match. canDelegate matches delegation:true. conflictMode (null) correctly omitted. Capability descriptions are generated prose but grounded in descriptor data: 'strong agile expertise' reflects agile:0.9, 'solid kanban knowledge' reflects kanban:0.7, 'agile domain experience' reflects agile:0.85. No fabricated capabilities, names, versions, or URIs."
+        },
+        "COMPLETENESS" : {
+          "score" : 5,
+          "reasoning" : "Both declared capabilities (sprint-planning, estimation) have non-empty descriptions that meaningfully convey what the agent does. sprint-planning's description references backlog + team-capacity inputs, sprint-plan output, and agile/kanban epistemic domains. estimation's description references user-story input, story-points output, and agile domain. All descriptor fields are either surfaced directly or folded into prose."
+        }
+      },
+      "overall" : 5.0,
+      "issues" : [ "Minor: provider, modelFamily, modelVersion from descriptor not surfaced in rendered card (may be by A2A_CARD format design)", "Minor: tenancyId omitted from rendered card", "Minor: latencyHintP50Ms and costHint values not surfaced explicitly (only indirectly via description prose)", "Minor: epistemicDomains numeric scores paraphrased as qualitative terms ('strong', 'solid') rather than shown as numbers — faithful interpretation but lossy" ]
+    }, {
+      "evalCase" : {
+        "name" : "minimal-a2a",
+        "descriptor" : {
+          "agentId" : "min-1",
+          "name" : "Minimal Agent",
+          "version" : null,
+          "provider" : null,
+          "modelFamily" : null,
+          "modelVersion" : null,
+          "weightsFingerprint" : null,
+          "domainVocabulary" : null,
+          "slotVocabulary" : null,
+          "dispositionVocabulary" : null,
+          "axisVocabularies" : null,
+          "slot" : "worker",
+          "capabilities" : [ ],
+          "disposition" : null,
+          "jurisdiction" : null,
+          "dataHandlingPolicy" : null,
+          "tenancyId" : "tenant-1"
+        },
+        "context" : {
+          "goal" : null,
+          "resources" : [ ],
+          "situationalContext" : null,
+          "format" : "A2A_CARD"
+        }
+      },
+      "rendered" : {
+        "content" : "{\"name\":\"Minimal Agent\",\"agentId\":\"min-1\",\"slot\":{\"value\":\"worker\"}}",
+        "format" : "A2A_CARD",
+        "descriptorHash" : "23b3719ef00f99b9",
+        "contextHash" : "44136fa355b3678a"
+      },
+      "completenessPass" : true,
+      "missingCapabilities" : [ ],
+      "scores" : {
+        "FACTUAL_FIDELITY" : {
+          "score" : 5,
+          "reasoning" : "Every field present in the rendered card is grounded in the descriptor: name ('Minimal Agent'), agentId ('min-1'), and slot.value ('worker') all match exactly. No capabilities, versions, providers, or other fields are hallucinated."
+        },
+        "COMPLETENESS" : {
+          "score" : 5,
+          "reasoning" : "The descriptor declares zero capabilities (empty array), so the requirement that every declared capability has a meaningful description is vacuously satisfied. There are no capabilities to describe, and the card correctly does not fabricate any."
+        }
+      },
+      "overall" : 5.0,
+      "issues" : [ "tenancyId ('tenant-1') is non-null in the descriptor but absent from the rendered card — not a fidelity violation (nothing fabricated) but a coverage gap that could matter for multi-tenant routing", "capabilities is an empty array in the descriptor but entirely absent from the rendered card rather than represented as an empty list — minor structural omission" ]
+    } ]
+  },
+  "summaryByFormat" : {
+    "MARKDOWN" : {
+      "allCasesComplete" : true,
+      "meanByDimension" : {
+        "SECOND_PERSON" : 5.0,
+        "CONCISENESS" : 3.4,
+        "FACTUAL_FIDELITY" : 3.4,
+        "TONE" : 4.0
+      },
+      "lowestScoringDimension" : "CONCISENESS",
+      "meanOverall" : 3.95
+    },
+    "PROSE" : {
+      "allCasesComplete" : true,
+      "meanByDimension" : {
+        "SECOND_PERSON" : 5.0,
+        "CONCISENESS" : 5.0,
+        "FACTUAL_FIDELITY" : 3.0,
+        "TONE" : 5.0
+      },
+      "lowestScoringDimension" : "FACTUAL_FIDELITY",
+      "meanOverall" : 4.5
+    },
+    "A2A_CARD" : {
+      "allCasesComplete" : true,
+      "meanByDimension" : {
+        "FACTUAL_FIDELITY" : 5.0,
+        "COMPLETENESS" : 5.0
+      },
+      "lowestScoringDimension" : "FACTUAL_FIDELITY",
+      "meanOverall" : 5.0
+    }
+  }
+}

@@ -33,7 +33,8 @@ public class BehavioralJudge {
         - 3 = distinguishable if you are looking for it
         - 1 = practically indistinguishable on this axis
 
-        Return JSON: { "higher": "A" | "B", "effectSize": int, "reasoning": string }
+        Return ONLY raw JSON — no markdown, no code blocks, no preamble:
+        { "higher": "A" | "B", "effectSize": int, "reasoning": string }
         """;
 
     private final ChatModel judgeModel;
@@ -82,7 +83,7 @@ public class BehavioralJudge {
     private BehavioralPairResult parse(final VariantPair pair, final String question,
                                         final String higherResponse, final String lowerResponse,
                                         final String json) throws JsonProcessingException {
-        final JsonNode root = mapper.readTree(json);
+        final JsonNode root = mapper.readTree(PromptJudge.stripCodeFences(json));
         final JsonNode higher = root.get("higher");
         final JsonNode effectSize = root.get("effectSize");
         final JsonNode reasoning = root.get("reasoning");

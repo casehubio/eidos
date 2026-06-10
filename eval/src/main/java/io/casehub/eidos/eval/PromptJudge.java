@@ -44,8 +44,8 @@ public class PromptJudge {
         - TONE (0-5): Reads as instructions to an AI agent, not documentation about one.
           5 = imperative, action-oriented. 0 = reads like a bio or README.
 
-        Return JSON with keys SECOND_PERSON, CONCISENESS, FACTUAL_FIDELITY, TONE
-        (each with "score" int 0-5 and "reasoning" string) and an "issues" string array.
+        Return ONLY raw JSON — no markdown, no code blocks, no preamble:
+        {"SECOND_PERSON":{"score":int,"reasoning":str},"CONCISENESS":{...},"FACTUAL_FIDELITY":{...},"TONE":{...},"issues":[str,...]}
         """;
 
     static final String PROSE_SYSTEM_PROMPT = """
@@ -64,8 +64,8 @@ public class PromptJudge {
         - TONE (0-5): Reads as instructions to an AI agent, not documentation about one.
           5 = imperative, action-oriented. 0 = reads like a bio or README.
 
-        Return JSON with keys SECOND_PERSON, CONCISENESS, FACTUAL_FIDELITY, TONE
-        (each with "score" int 0-5 and "reasoning" string) and an "issues" string array.
+        Return ONLY raw JSON — no markdown, no code blocks, no preamble:
+        {"SECOND_PERSON":{"score":int,"reasoning":str},"CONCISENESS":{...},"FACTUAL_FIDELITY":{...},"TONE":{...},"issues":[str,...]}
         """;
 
     static final String A2A_SYSTEM_PROMPT = """
@@ -82,8 +82,8 @@ public class PromptJudge {
           No hallucinated capabilities, no fabricated names or versions.
           5 = every field grounded in descriptor data. 0 = significant hallucinations.
 
-        Return JSON with keys COMPLETENESS, FACTUAL_FIDELITY
-        (each with "score" int 0-5 and "reasoning" string) and an "issues" string array.
+        Return ONLY raw JSON — no markdown, no code blocks, no preamble:
+        {"COMPLETENESS":{"score":int,"reasoning":str},"FACTUAL_FIDELITY":{"score":int,"reasoning":str},"issues":[str,...]}
         """;
 
     static final ResponseFormat STANDARD_JUDGE_RESPONSE_FORMAT = ResponseFormat.builder()
@@ -212,9 +212,11 @@ public class PromptJudge {
         if (evalCase.context().format() == RenderFormat.A2A_CARD) {
             return computeA2aMissingDescriptions(evalCase, rendered.content());
         }
+        final String lowerContent = rendered.content().toLowerCase();
         return evalCase.descriptor().capabilities().stream()
             .map(AgentCapability::name)
-            .filter(n -> !rendered.content().contains(n))
+            .filter(n -> !rendered.content().contains(n)
+                      && !lowerContent.contains(n.replace('-', ' ').replace('_', ' ')))
             .toList();
     }
 
@@ -251,11 +253,21 @@ public class PromptJudge {
 
     private record ParsedResponse(Map<EvalDimension, EvalScore> scores, List<String> issues) {}
 
+    static String stripCodeFences(final String text) {
+        String s = text.strip();
+        if (s.startsWith("```")) {
+            final int nl = s.indexOf('\n');
+            if (nl != -1) s = s.substring(nl + 1);
+            if (s.endsWith("```")) s = s.substring(0, s.length() - 3).stripTrailing();
+        }
+        return s;
+    }
+
     private ParsedResponse parseResponse(final String json,
                                           final Set<EvalDimension> applicable) {
         final JsonNode root;
         try {
-            root = mapper.readTree(json);
+            root = mapper.readTree(stripCodeFences(json));
         } catch (final JsonProcessingException e) {
             throw new MalformedJudgeResponseException("Judge returned non-JSON response: " + e.getMessage());
         }

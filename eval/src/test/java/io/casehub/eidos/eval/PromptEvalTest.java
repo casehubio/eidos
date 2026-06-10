@@ -38,10 +38,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("eval")
 class PromptEvalTest {
 
+    // Calibrated 2026-06-10 from first successful Opus 4.6 baseline run.
+    // MARKDOWN: observed 3.95 → floor 3.0 (5 cases, wider variance expected)
+    // PROSE:    observed 4.50 → floor 4.0
+    // A2A_CARD: observed 5.00 → floor 4.5
     private static final Map<RenderFormat, Double> SCORE_FLOORS = Map.of(
-        RenderFormat.MARKDOWN,  3.5,
-        RenderFormat.PROSE,     3.5,
-        RenderFormat.A2A_CARD,  3.5
+        RenderFormat.MARKDOWN,  3.0,
+        RenderFormat.PROSE,     4.0,
+        RenderFormat.A2A_CARD,  4.5
     );
 
     private static final double PROXIMITY_FLOOR = 3.0;

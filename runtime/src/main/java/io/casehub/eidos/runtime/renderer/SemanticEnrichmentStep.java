@@ -42,8 +42,18 @@ class SemanticEnrichmentStep {
         }
     }
 
+    static String stripCodeFences(final String text) {
+        String s = text.strip();
+        if (s.startsWith("```")) {
+            final int nl = s.indexOf('\n');
+            if (nl != -1) s = s.substring(nl + 1);
+            if (s.endsWith("```")) s = s.substring(0, s.length() - 3).stripTrailing();
+        }
+        return s;
+    }
+
     private SemanticEnrichment parse(final String json) throws JsonProcessingException {
-        final JsonNode node = mapper.readTree(json);
+        final JsonNode node = mapper.readTree(stripCodeFences(json));
         return new SemanticEnrichment(
                 node.get("identityNarrative").asText(),
                 node.get("roleNarrative").asText(),

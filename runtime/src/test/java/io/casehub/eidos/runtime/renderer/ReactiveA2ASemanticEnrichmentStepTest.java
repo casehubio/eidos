@@ -78,6 +78,25 @@ class ReactiveA2ASemanticEnrichmentStepTest {
     }
 
     @Test
+    void parses_json_wrapped_in_markdown_code_fence() {
+        final String wrapped = "```json\n" + VALID_A2A_JSON + "\n```";
+        final StreamingChatModel wrappedMock = new StreamingChatModel() {
+            @Override
+            public void doChat(ChatRequest request, StreamingChatResponseHandler handler) {
+                handler.onCompleteResponse(
+                    ChatResponse.builder().aiMessage(AiMessage.from(wrapped)).build());
+            }
+        };
+
+        final Optional<A2AEnrichment> result =
+            step.enrich(wrappedMock, descriptorNode()).await().indefinitely();
+
+        assertThat(result).isPresent();
+        assertThat(result.get().capabilityNarratives()).hasSize(1);
+        assertThat(result.get().capabilityNarratives().get(0).name()).isEqualTo("code-review");
+    }
+
+    @Test
     void falls_back_to_empty_when_parse_fails() {
         final StreamingChatModel malformedMock = new StreamingChatModel() {
             @Override

@@ -92,6 +92,15 @@ class PromptJudgeTest {
     }
 
     @Test
+    void evaluate_completeness_passes_when_cap_name_appears_hyphen_normalized() {
+        // LLM enrichment writes "code review" (spaces), not "code-review" (hyphen slug)
+        final RenderedPrompt hyphenNormed = new RenderedPrompt("You can do code review.", RenderFormat.MARKDOWN, "dh", "ch");
+        final EvalResult result = judge.evaluate(evalCase, hyphenNormed);
+        assertThat(result.completenessPass()).isTrue();
+        assertThat(result.missingCapabilities()).isEmpty();
+    }
+
+    @Test
     void evaluate_always_calls_judge_regardless_of_completeness() {
         final boolean[] called = {false};
         final ChatModel trackingJudge = new ChatModel() {
@@ -248,6 +257,30 @@ class PromptJudgeTest {
 
         assertThat(result.completenessPass()).isTrue();
         assertThat(result.missingCapabilities()).isEmpty();
+    }
+
+    @Test
+    void evaluate_parses_json_wrapped_in_markdown_code_block() {
+        final String wrapped = "```json\n" + VALID_JUDGE_JSON + "\n```";
+        final ChatModel stub = new ChatModel() {
+            @Override public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(wrapped)).build();
+            }
+        };
+        final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered);
+        assertThat(result.scores().get(EvalDimension.SECOND_PERSON).score()).isEqualTo(5);
+    }
+
+    @Test
+    void evaluate_parses_json_wrapped_in_plain_code_block() {
+        final String wrapped = "```\n" + VALID_JUDGE_JSON + "\n```";
+        final ChatModel stub = new ChatModel() {
+            @Override public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(wrapped)).build();
+            }
+        };
+        final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered);
+        assertThat(result.scores().get(EvalDimension.SECOND_PERSON).score()).isEqualTo(5);
     }
 
     @Test
