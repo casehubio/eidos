@@ -10,6 +10,7 @@ import io.casehub.platform.agent.AgentEvent;
 import io.casehub.platform.agent.AgentProvider;
 import io.casehub.platform.agent.AgentSessionConfig;
 import io.quarkus.arc.DefaultBean;
+import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
  */
 @DefaultBean
 @ApplicationScoped
+@IfBuildProperty(name = "casehub.eval.claude-provider.enabled", stringValue = "true", enableIfMissing = true)
 class AgentProviderChatModel implements ChatModel {
 
     private final AgentProvider fixedProvider;

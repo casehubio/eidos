@@ -82,11 +82,12 @@
             </build>
         </profile>
         <profile>
-            <id>eval-jlama</id>
+            <id>eval-gpullama3</id>
             <dependencies>
                 <dependency>
                     <groupId>io.quarkiverse.langchain4j</groupId>
-                    <artifactId>quarkus-langchain4j-jlama</artifactId>
+                    <artifactId>quarkus-langchain4j-gpu-llama3</artifactId>
+                    <version>1.11.0.CR2</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -96,8 +97,34 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <!-- exact flags determined at first run from the Jlama bootstrap error -->
-                            <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                            <!-- TornadoVM argfile must be generated first:
+                                 sed "s|\${TORNADOVM_HOME}|$TORNADOVM_HOME|g" $TORNADOVM_HOME/tornado-argfile.template > $TORNADOVM_HOME/tornado-argfile
+                                 Requires TORNADOVM_HOME to be set. -->
+                            <argLine>@${env.TORNADOVM_HOME}/tornado-argfile</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>eval-jlama</id>
+            <dependencies>
+                <dependency>
+                    <groupId>io.quarkiverse.langchain4j</groupId>
+                    <artifactId>quarkus-langchain4j-jlama</artifactId>
+                    <version>1.9.1</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <!-- Bootstrap error fixed via .mvn/maven.config (JOS serialization).
+                                 These flags enable the Vector API used by Jlama inference. -->
+                            <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.vector</argLine>
                         </configuration>
                     </plugin>
                 </plugins>

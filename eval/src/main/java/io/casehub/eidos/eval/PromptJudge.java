@@ -187,7 +187,6 @@ public class PromptJudge {
                 .messages(
                     SystemMessage.from(systemPrompt),
                     UserMessage.from(userPayloadJson))
-                .responseFormat(responseFormat)
                 .build();
             final var response = judgeModel.chat(request);
             final var parsed = parseResponse(response.aiMessage().text(), applicable);
@@ -253,21 +252,31 @@ public class PromptJudge {
 
     private record ParsedResponse(Map<EvalDimension, EvalScore> scores, List<String> issues) {}
 
-    static String stripCodeFences(final String text) {
+    static String extractJson(final String text) {
         String s = text.strip();
+        // Strip markdown code fences (```json ... ``` or ``` ... ```)
         if (s.startsWith("```")) {
             final int nl = s.indexOf('\n');
-            if (nl != -1) s = s.substring(nl + 1);
+            if (nl != -1) s = s.substring(nl + 1).strip();
             if (s.endsWith("```")) s = s.substring(0, s.length() - 3).stripTrailing();
         }
+        // Strip any prose preamble before the first { (e.g. "Here is the JSON:")
+        final int first = s.indexOf('{');
+        final int last = s.lastIndexOf('}');
+        if (first > 0 && last > first) s = s.substring(first, last + 1);
         return s;
+    }
+
+    /** @deprecated use extractJson */
+    static String stripCodeFences(final String text) {
+        return extractJson(text);
     }
 
     private ParsedResponse parseResponse(final String json,
                                           final Set<EvalDimension> applicable) {
         final JsonNode root;
         try {
-            root = mapper.readTree(stripCodeFences(json));
+            root = mapper.readTree(extractJson(json));
         } catch (final JsonProcessingException e) {
             throw new MalformedJudgeResponseException("Judge returned non-JSON response: " + e.getMessage());
         }

@@ -83,7 +83,7 @@ public class BehavioralJudge {
     private BehavioralPairResult parse(final VariantPair pair, final String question,
                                         final String higherResponse, final String lowerResponse,
                                         final String json) throws JsonProcessingException {
-        final JsonNode root = mapper.readTree(PromptJudge.stripCodeFences(json));
+        final JsonNode root = mapper.readTree(PromptJudge.extractJson(json));
         final JsonNode higher = root.get("higher");
         final JsonNode effectSize = root.get("effectSize");
         final JsonNode reasoning = root.get("reasoning");

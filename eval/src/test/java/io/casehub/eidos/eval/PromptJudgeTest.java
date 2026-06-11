@@ -272,6 +272,18 @@ class PromptJudgeTest {
     }
 
     @Test
+    void evaluate_parses_json_with_prose_preamble() {
+        final String withPreamble = "Here is the evaluation:\n" + VALID_JUDGE_JSON;
+        final ChatModel stub = new ChatModel() {
+            @Override public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(withPreamble)).build();
+            }
+        };
+        final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered);
+        assertThat(result.scores().get(EvalDimension.SECOND_PERSON).score()).isEqualTo(5);
+    }
+
+    @Test
     void evaluate_parses_json_wrapped_in_plain_code_block() {
         final String wrapped = "```\n" + VALID_JUDGE_JSON + "\n```";
         final ChatModel stub = new ChatModel() {
