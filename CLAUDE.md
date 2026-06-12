@@ -209,6 +209,35 @@ JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl runtime
 
 **Use `mvn` not `./mvnw`** — maven wrapper not configured on this machine.
 
+```bash
+# Run eval harness — Claude CLI (default, requires claude CLI configured)
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl eval -Peval \
+  -Dtest=PromptEvalTest#evaluateAllScenarios
+
+# Run eval harness — Ollama (requires Ollama running on localhost:11434)
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl eval -Peval,eval-ollama \
+  -Dtest=PromptEvalTest#evaluateAllScenarios \
+  -Dcasehub.eval.claude-provider.enabled=false \
+  "-Dquarkus.langchain4j.ollama.chat-model.model-name=<model>" \
+  "-Dquarkus.langchain4j.ollama.chat-model.format=json"
+
+# Run eval harness — GPULlama3 via TornadoVM Metal (Apple Silicon)
+# Requires: export TORNADOVM_HOME=~/tornadovm-metal/tornadovm-4.0.0-jdk25-metal
+#           Generate argfile: sed "s|\${TORNADOVM_HOME}|$TORNADOVM_HOME|g" $TORNADOVM_HOME/tornado-argfile.template > $TORNADOVM_HOME/tornado-argfile
+JAVA_HOME=$(/usr/libexec/java_home -v 25) mvn test -pl eval -Peval,eval-gpullama3 \
+  -Dtest=PromptEvalTest#evaluateAllScenarios \
+  -Dcasehub.eval.claude-provider.enabled=false \
+  "-Dquarkus.langchain4j.gpu-llama3.chat-model.model-name=<model>" \
+  "-Dquarkus.langchain4j.gpu-llama3.chat-model.format=json"
+
+# Run eval harness — Jlama NEON (Apple Silicon, Q4 models via native NEON)
+# Requires jlama-native osx-aarch_64 classifier on classpath (eval-jlama profile)
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl eval -Peval,eval-jlama \
+  -Dtest=PromptEvalTest#evaluateAllScenarios \
+  -Dcasehub.eval.claude-provider.enabled=false \
+  "-Dquarkus.langchain4j.jlama.chat-model.model-name=tjake/Llama-3.2-3B-Instruct-JQ4"
+```
+
 ---
 
 ## Java and GraalVM on This Machine
