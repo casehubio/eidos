@@ -82,6 +82,17 @@
             </build>
         </profile>
         <profile>
+            <id>eval-ollama</id>
+            <dependencies>
+                <dependency>
+                    <groupId>io.quarkiverse.langchain4j</groupId>
+                    <artifactId>quarkus-langchain4j-ollama</artifactId>
+                    <version>1.9.2</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>eval-gpullama3</id>
             <dependencies>
                 <dependency>
@@ -100,7 +111,7 @@
                             <!-- TornadoVM argfile must be generated first:
                                  sed "s|\${TORNADOVM_HOME}|$TORNADOVM_HOME|g" $TORNADOVM_HOME/tornado-argfile.template > $TORNADOVM_HOME/tornado-argfile
                                  Requires TORNADOVM_HOME to be set. -->
-                            <argLine>@${env.TORNADOVM_HOME}/tornado-argfile</argLine>
+                            <argLine>@${env.TORNADOVM_HOME}/tornado-argfile -Dtornado.device.memory=32GB</argLine>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -113,6 +124,17 @@
                     <groupId>io.quarkiverse.langchain4j</groupId>
                     <artifactId>quarkus-langchain4j-jlama</artifactId>
                     <version>1.9.1</version>
+                    <scope>test</scope>
+                </dependency>
+                <!-- Native NEON library for macOS ARM64 — activates NativeSimdTensorOperations
+                     which has gemm_f32_q4 implemented, bypassing the PanamaTensorOperations
+                     ARM_128 gap for F32xQ4. Without this, Jlama falls back to Panama
+                     which throws UnsupportedOperationException: ARM_128 on Apple Silicon. -->
+                <dependency>
+                    <groupId>com.github.tjake</groupId>
+                    <artifactId>jlama-native</artifactId>
+                    <version>0.8.4</version>
+                    <classifier>osx-aarch_64</classifier>
                     <scope>test</scope>
                 </dependency>
             </dependencies>

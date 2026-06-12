@@ -282,11 +282,13 @@ public class PromptJudge {
         }
         final Map<EvalDimension, EvalScore> scores = new EnumMap<>(EvalDimension.class);
 
-        // Iterate applicable dimensions only — extra keys in response are ignored
+        // Iterate applicable dimensions only — extra keys in response are ignored.
+        // Missing dimensions score 0 with a note — small models sometimes omit keys.
         for (final EvalDimension d : applicable) {
             final JsonNode dimNode = root.get(d.name());
             if (dimNode == null) {
-                throw new MalformedJudgeResponseException("Judge response missing dimension: " + d.name());
+                scores.put(d, new EvalScore(0, "dimension omitted by model"));
+                continue;
             }
             final JsonNode scoreNode = dimNode.get("score");
             final JsonNode reasoningNode = dimNode.get("reasoning");
