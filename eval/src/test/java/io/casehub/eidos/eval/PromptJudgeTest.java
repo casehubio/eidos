@@ -320,7 +320,9 @@ class PromptJudgeTest {
     }
 
     @Test
-    void parseResponse_throws_when_applicable_dimension_missing() {
+    void parseResponse_scores_zero_when_applicable_dimension_missing() {
+        // Missing dimensions now score 0 rather than throwing — resilient to small models
+        // that omit JSON keys. The eval completes with penalised scores.
         final String incompleteJson = """
             {
               "SECOND_PERSON": { "score": 4, "reasoning": "ok" },
@@ -343,8 +345,10 @@ class PromptJudgeTest {
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
         final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
 
-        assertThatThrownBy(() -> new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered))
-            .isInstanceOf(MalformedJudgeResponseException.class)
-            .hasMessageContaining("missing dimension");
+        final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered);
+        assertThat(result.scores().get(EvalDimension.SECOND_PERSON).score()).isEqualTo(4);
+        assertThat(result.scores().get(EvalDimension.CONCISENESS).score()).isEqualTo(0);
+        assertThat(result.scores().get(EvalDimension.FACTUAL_FIDELITY).score()).isEqualTo(0);
+        assertThat(result.scores().get(EvalDimension.TONE).score()).isEqualTo(0);
     }
 }
