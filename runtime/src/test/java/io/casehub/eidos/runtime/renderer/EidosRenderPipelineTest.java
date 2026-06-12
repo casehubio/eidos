@@ -119,20 +119,59 @@ class EidosRenderPipelineTest {
 
     @Test
     void descriptor_payload_includes_agent_id_and_name() {
-        final var node = pipeline.buildDescriptorPayload(fullDescriptor());
+        final var node = pipeline.buildDescriptorPayload(fullDescriptor(), MARKDOWN);
         assertThat(node.get("agentId").asText()).isEqualTo("reviewer-1");
         assertThat(node.get("name").asText()).isEqualTo("Code Reviewer");
     }
 
     @Test
+    void descriptor_payload_prose_omits_numeric_capability_metadata() {
+        final var cap = pipeline.buildDescriptorPayload(fullDescriptor(), PROSE)
+                .get("capabilities").get(0);
+        assertThat(cap.has("qualityHint")).isFalse();
+        assertThat(cap.has("latencyHintP50Ms")).isFalse();
+        assertThat(cap.has("costHint")).isFalse();
+        assertThat(cap.has("epistemicDomains")).isFalse();
+        assertThat(cap.get("name").asText()).isEqualTo("code-review");
+        assertThat(cap.get("inputTypes").get(0).asText()).isEqualTo("code");
+        assertThat(cap.get("outputTypes").get(0).asText()).isEqualTo("review");
+    }
+
+    @Test
+    void descriptor_payload_a2a_includes_all_numeric_capability_metadata() {
+        final var cap = pipeline.buildDescriptorPayload(fullDescriptor(), A2A_CARD)
+                .get("capabilities").get(0);
+        assertThat(cap.get("qualityHint").asDouble()).isEqualTo(0.95);
+        assertThat(cap.get("latencyHintP50Ms").asLong()).isEqualTo(150L);
+        assertThat(cap.get("costHint").asText()).isEqualTo("low");
+        assertThat(cap.get("epistemicDomains").get("java").asDouble()).isEqualTo(0.95);
+        assertThat(cap.get("inputTypes").get(0).asText()).isEqualTo("code");
+        assertThat(cap.get("outputTypes").get(0).asText()).isEqualTo("review");
+    }
+
+    @Test
+    void descriptor_payload_format_differences_produce_different_descriptor_hash() {
+        final var s1Prose = pipeline.buildStage1(fullDescriptor(), AgentPromptContext.forFormat(PROSE));
+        final var s1A2a  = pipeline.buildStage1(fullDescriptor(), AgentPromptContext.forFormat(A2A_CARD));
+        assertThat(s1Prose.descriptorHash()).isNotEqualTo(s1A2a.descriptorHash());
+    }
+
+    @Test
+    void descriptor_payload_prose_and_markdown_produce_same_descriptor_hash() {
+        final var s1Prose    = pipeline.buildStage1(fullDescriptor(), AgentPromptContext.forFormat(PROSE));
+        final var s1Markdown = pipeline.buildStage1(fullDescriptor(), AgentPromptContext.forFormat(MARKDOWN));
+        assertThat(s1Prose.descriptorHash()).isEqualTo(s1Markdown.descriptorHash());
+    }
+
+    @Test
     void descriptor_payload_excludes_tenancy_id() {
-        final var node = pipeline.buildDescriptorPayload(fullDescriptor());
+        final var node = pipeline.buildDescriptorPayload(fullDescriptor(), MARKDOWN);
         assertThat(node.has("tenancyId")).isFalse();
     }
 
     @Test
     void descriptor_payload_excludes_vocabulary_uris() {
-        final var node = pipeline.buildDescriptorPayload(fullDescriptor());
+        final var node = pipeline.buildDescriptorPayload(fullDescriptor(), MARKDOWN);
         assertThat(node.has("slotVocabulary")).isFalse();
         assertThat(node.has("domainVocabulary")).isFalse();
         assertThat(node.has("dispositionVocabulary")).isFalse();
@@ -140,23 +179,26 @@ class EidosRenderPipelineTest {
 
     @Test
     void descriptor_payload_combines_model_family_and_version() {
-        final var node = pipeline.buildDescriptorPayload(fullDescriptor());
+        final var node = pipeline.buildDescriptorPayload(fullDescriptor(), MARKDOWN);
         assertThat(node.get("model").asText()).isEqualTo("claude/claude-3-7-sonnet");
     }
 
     @Test
     void descriptor_payload_capability_includes_input_and_output_types() {
-        final var node = pipeline.buildDescriptorPayload(fullDescriptor());
+        final var node = pipeline.buildDescriptorPayload(fullDescriptor(), MARKDOWN);
         final var cap = node.get("capabilities").get(0);
         assertThat(cap.get("inputTypes").get(0).asText()).isEqualTo("code");
         assertThat(cap.get("outputTypes").get(0).asText()).isEqualTo("review");
     }
 
     @Test
-    void descriptor_payload_capability_excludes_cost_hint_and_tags() {
-        final var node = pipeline.buildDescriptorPayload(fullDescriptor());
-        final var cap = node.get("capabilities").get(0);
+    void descriptor_payload_markdown_capability_excludes_numeric_signals_and_tags() {
+        final var cap = pipeline.buildDescriptorPayload(fullDescriptor(), MARKDOWN)
+                .get("capabilities").get(0);
         assertThat(cap.has("costHint")).isFalse();
+        assertThat(cap.has("qualityHint")).isFalse();
+        assertThat(cap.has("latencyHintP50Ms")).isFalse();
+        assertThat(cap.has("epistemicDomains")).isFalse();
         assertThat(cap.has("tags")).isFalse();
     }
 
@@ -171,7 +213,7 @@ class EidosRenderPipelineTest {
             .capabilities(List.of())
             .tenancyId("t")
             .build();
-        final var node = pipeline.buildDescriptorPayload(desc);
+        final var node = pipeline.buildDescriptorPayload(desc, MARKDOWN);
         assertThat(node.get("weightsFingerprint").asText()).isEqualTo("fp-abc123");
     }
 
@@ -257,7 +299,7 @@ class EidosRenderPipelineTest {
         vocab.register(TestSlotTerm.class);
         var desc = AgentDescriptor.builder()
             .agentId("a").name("N").slotVocabulary("urn:test:slot").slot("reviewer").tenancyId("t").build();
-        var node = pipeline.buildDescriptorPayload(desc);
+        var node = pipeline.buildDescriptorPayload(desc, MARKDOWN);
         assertThat(node.get("slotVocabularyName").asText()).isEqualTo("Test Slot Vocab");
         assertThat(node.get("slotVocabularyDescription").asText()).isEqualTo("A test slot vocabulary description");
     }
@@ -267,7 +309,7 @@ class EidosRenderPipelineTest {
         vocab.register(TestNoNameTerm.class);
         var desc = AgentDescriptor.builder()
             .agentId("a").name("N").slotVocabulary("urn:test:noname").slot("term").tenancyId("t").build();
-        var node = pipeline.buildDescriptorPayload(desc);
+        var node = pipeline.buildDescriptorPayload(desc, MARKDOWN);
         // TestNoNameTerm has name="" and description="" — addIfNonBlank must suppress both keys
         assertThat(node.has("slotVocabularyName")).isFalse();
         assertThat(node.has("slotVocabularyDescription")).isFalse();
@@ -283,7 +325,7 @@ class EidosRenderPipelineTest {
             .dispositionVocabulary("urn:test:disp")
             .disposition(AgentDisposition.builder().socialOrient("independent").build())
             .tenancyId("t").build();
-        var dispNode = pipeline.buildDescriptorPayload(desc).get("disposition");
+        var dispNode = pipeline.buildDescriptorPayload(desc, MARKDOWN).get("disposition");
         var socialOrient = dispNode.get("socialOrient");
         assertThat(socialOrient.isObject()).isTrue();
         assertThat(socialOrient.get("value").asText()).isEqualTo("independent");
@@ -299,7 +341,7 @@ class EidosRenderPipelineTest {
             .agentId("a").name("N").slot("s")
             .disposition(AgentDisposition.builder().conflictMode("avoiding").build())
             .tenancyId("t").build();
-        var dispNode = pipeline.buildDescriptorPayload(desc).get("disposition");
+        var dispNode = pipeline.buildDescriptorPayload(desc, MARKDOWN).get("disposition");
         assertThat(dispNode.has("conflictMode")).isTrue();
         assertThat(dispNode.get("conflictMode").get("value").asText()).isEqualTo("avoiding");
         assertThat(dispNode.has("socialOrient")).isFalse();
@@ -312,7 +354,7 @@ class EidosRenderPipelineTest {
             .dispositionVocabulary("urn:test:unregistered")
             .disposition(AgentDisposition.builder().socialOrient("custom-value").build())
             .tenancyId("t").build();
-        var axisNode = pipeline.buildDescriptorPayload(desc).get("disposition").get("socialOrient");
+        var axisNode = pipeline.buildDescriptorPayload(desc, MARKDOWN).get("disposition").get("socialOrient");
         assertThat(axisNode.isObject()).isTrue();
         assertThat(axisNode.get("value").asText()).isEqualTo("custom-value");
         assertThat(axisNode.has("label")).isFalse();
@@ -337,6 +379,17 @@ class EidosRenderPipelineTest {
     }
 
     // ── Structural renderers ─────────────────────────────────────────────────
+
+    @Test
+    void structural_markdown_capability_shows_name_and_io_types_no_numeric() {
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1  = pipeline.buildStage1(fullDescriptor(), ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), fullDescriptor(), ctx);
+        assertThat(result.content()).contains("**code-review**: accepts code → review");
+        assertThat(result.content()).doesNotContain(": quality 0.95");
+        assertThat(result.content()).doesNotContain(", p50 150ms");
+        assertThat(result.content()).doesNotContain("Domains: {");
+    }
 
     @Test
     void structural_markdown_shows_axis_label_not_raw_value() {
@@ -405,12 +458,42 @@ class EidosRenderPipelineTest {
             .domainVocabulary("urn:test:slot") // no slotVocabulary — must fall through
             .slot("reviewer")
             .tenancyId("t").build();
-        var node = pipeline.buildDescriptorPayload(desc);
+        var node = pipeline.buildDescriptorPayload(desc, MARKDOWN);
         assertThat(node.get("slotVocabularyName").asText()).isEqualTo("Test Slot Vocab");
         assertThat(node.get("slotLabel").asText()).isEqualTo("Reviewer");
     }
 
     // slot block
+
+    @Test
+    void a2a_card_capability_includes_all_numeric_and_type_fields() {
+        var card = renderA2aCard(fullDescriptor());
+        var cap  = card.get("capabilities").get(0);
+        assertThat(cap.get("qualityHint").asDouble()).isEqualTo(0.95);
+        assertThat(cap.get("latencyHintP50Ms").asLong()).isEqualTo(150L);
+        assertThat(cap.get("costHint").asText()).isEqualTo("low");
+        assertThat(cap.get("epistemicDomains").get("java").asDouble()).isEqualTo(0.95);
+        assertThat(cap.get("inputTypes").get(0).asText()).isEqualTo("code");
+        assertThat(cap.get("outputTypes").get(0).asText()).isEqualTo("review");
+    }
+
+    @Test
+    void a2a_card_capability_numeric_fields_absent_when_null() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a").name("N").slot("s")
+            .capabilities(List.of(new AgentCapability(
+                "simple-cap", null, null, null,
+                List.of(), List.of(), List.of(), null)))
+            .tenancyId("t").build();
+        var cap = renderA2aCard(desc).get("capabilities").get(0);
+        assertThat(cap.get("name").asText()).isEqualTo("simple-cap");
+        assertThat(cap.has("qualityHint")).isFalse();
+        assertThat(cap.has("latencyHintP50Ms")).isFalse();
+        assertThat(cap.has("costHint")).isFalse();
+        assertThat(cap.has("epistemicDomains")).isFalse();
+        assertThat(cap.has("inputTypes")).isFalse();
+        assertThat(cap.has("outputTypes")).isFalse();
+    }
 
     @Test
     void a2a_card_slot_value_always_present() {

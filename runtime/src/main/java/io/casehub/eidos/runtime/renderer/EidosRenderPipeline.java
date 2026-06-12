@@ -51,9 +51,8 @@ class EidosRenderPipeline {
               e.g., slotVocabularyName "Belbin Team Roles" → open with the Belbin archetype
               framing ("You are the team's Monitor Evaluator...").
             - capabilityNarrative (2-4 sentences): What the agent can do.
-              Include inputTypes and outputTypes when present.
-              For epistemicDomains, use natural language confidence:
-                >= 0.7 -> "strong expertise", 0.4-0.69 -> "working knowledge", < 0.4 -> "limited familiarity".
+              List capabilities by name only. Include inputTypes and outputTypes when present
+              to describe what the agent accepts and produces.
 
             OPTIONAL FIELDS (use empty string "" if the source data is absent):
             - dispositionNarrative (2-3 sentences): How the agent operates across all disposition
@@ -88,7 +87,7 @@ class EidosRenderPipeline {
                             .addStringProperty("roleNarrative",
                                     "The agent's role and purpose. Second person.")
                             .addStringProperty("capabilityNarrative",
-                                    "What the agent can do, including domain confidence. Second person.")
+                                    "What the agent can do, including input and output types when present. Second person.")
                             .addStringProperty("dispositionNarrative",
                                     "How the agent operates across all disposition axes in the payload. " +
                                     "Each axis object carries value, optional label, optional vocabularyName. " +
@@ -151,7 +150,7 @@ class EidosRenderPipeline {
 
     // ── Stage 1: payload building ─────────────────────────────────────────────
 
-    ObjectNode buildDescriptorPayload(final AgentDescriptor descriptor) {
+    ObjectNode buildDescriptorPayload(final AgentDescriptor descriptor, final RenderFormat format) {
         final ObjectNode node = mapper.createObjectNode();
         node.put("agentId", descriptor.agentId());
         node.put("name", descriptor.name());
@@ -178,15 +177,25 @@ class EidosRenderPipeline {
             });
         });
 
-        // Capabilities — include name, qualityHint, latencyHintP50Ms, inputTypes, outputTypes,
-        // epistemicDomains. Excluded: costHint (operational), tags (routing labels).
+        // Capabilities — format-discriminated for the LLM payload and cache key.
+        // Numeric routing signals (A2A_CARD only): qualityHint, latencyHintP50Ms, costHint,
+        // epistemicDomains. These are engine dispatch signals, not behavioural instructions.
+        // inputTypes/outputTypes are qualitative descriptors included in all formats.
+        // Excluded always: tags (internal routing labels).
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             final ArrayNode capsArray = node.putArray("capabilities");
             for (final AgentCapability cap : descriptor.capabilities()) {
                 final ObjectNode capNode = capsArray.addObject();
                 capNode.put("name", cap.name());
-                if (cap.qualityHint() != null)       capNode.put("qualityHint", cap.qualityHint());
-                if (cap.latencyHintP50Ms() != null)  capNode.put("latencyHintP50Ms", cap.latencyHintP50Ms());
+                if (format == RenderFormat.A2A_CARD) {
+                    if (cap.qualityHint() != null)      capNode.put("qualityHint", cap.qualityHint());
+                    if (cap.latencyHintP50Ms() != null) capNode.put("latencyHintP50Ms", cap.latencyHintP50Ms());
+                    if (cap.costHint() != null)         capNode.put("costHint", cap.costHint());
+                    if (cap.epistemicDomains() != null && !cap.epistemicDomains().isEmpty()) {
+                        final ObjectNode domains = capNode.putObject("epistemicDomains");
+                        cap.epistemicDomains().forEach(domains::put);
+                    }
+                }
                 if (cap.inputTypes() != null && !cap.inputTypes().isEmpty()) {
                     final ArrayNode arr = capNode.putArray("inputTypes");
                     cap.inputTypes().forEach(arr::add);
@@ -194,10 +203,6 @@ class EidosRenderPipeline {
                 if (cap.outputTypes() != null && !cap.outputTypes().isEmpty()) {
                     final ArrayNode arr = capNode.putArray("outputTypes");
                     cap.outputTypes().forEach(arr::add);
-                }
-                if (cap.epistemicDomains() != null && !cap.epistemicDomains().isEmpty()) {
-                    final ObjectNode domains = capNode.putObject("epistemicDomains");
-                    cap.epistemicDomains().forEach(domains::put);
                 }
             }
         }
@@ -273,7 +278,7 @@ class EidosRenderPipeline {
     // ── Stage 1: build + fingerprint ─────────────────────────────────────────
 
     StageOneResult buildStage1(final AgentDescriptor descriptor, final AgentPromptContext context) {
-        final ObjectNode descriptorNode = buildDescriptorPayload(descriptor);
+        final ObjectNode descriptorNode = buildDescriptorPayload(descriptor, context.format());
         final ObjectNode contextNode    = buildContextPayload(context);
         final String descriptorHash     = fingerprint(descriptorNode.toString());
         final String contextHash        = fingerprint(contextNode.toString());
@@ -380,18 +385,16 @@ class EidosRenderPipeline {
             );
         }
 
-        // Capabilities
+        // Capabilities — name + qualitative type descriptors only (numeric signals excluded)
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             sb.append("\n## Capabilities\n");
             for (final AgentCapability cap : descriptor.capabilities()) {
                 sb.append("- **").append(cap.name()).append("**");
-                if (cap.qualityHint() != null) sb.append(": quality ").append(cap.qualityHint());
-                if (cap.latencyHintP50Ms() != null)
-                    sb.append(", p50 ").append(cap.latencyHintP50Ms()).append("ms");
+                if (cap.inputTypes() != null && !cap.inputTypes().isEmpty())
+                    sb.append(": accepts ").append(String.join(", ", cap.inputTypes()));
+                if (cap.outputTypes() != null && !cap.outputTypes().isEmpty())
+                    sb.append(" → ").append(String.join(", ", cap.outputTypes()));
                 sb.append("\n");
-                if (cap.epistemicDomains() != null && !cap.epistemicDomains().isEmpty()) {
-                    sb.append("  Domains: ").append(cap.epistemicDomains()).append("\n");
-                }
             }
         }
 
@@ -560,7 +563,7 @@ class EidosRenderPipeline {
             }
         }
 
-        // capabilities — unchanged; enriched descriptions from A2AEnrichment when available
+        // capabilities — full numeric + type schema; descriptions enriched via A2AEnrichment when available
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             final Map<String, String> descriptionByName = enrichment
                 .map(e -> e.capabilityNarratives().stream()
@@ -574,7 +577,21 @@ class EidosRenderPipeline {
             for (final AgentCapability cap : descriptor.capabilities()) {
                 final ObjectNode capNode = capsArray.addObject();
                 capNode.put("name", cap.name());
-                if (cap.qualityHint() != null) capNode.put("qualityHint", cap.qualityHint());
+                if (cap.qualityHint() != null)      capNode.put("qualityHint", cap.qualityHint());
+                if (cap.latencyHintP50Ms() != null) capNode.put("latencyHintP50Ms", cap.latencyHintP50Ms());
+                if (cap.costHint() != null)         capNode.put("costHint", cap.costHint());
+                if (cap.epistemicDomains() != null && !cap.epistemicDomains().isEmpty()) {
+                    final ObjectNode domains = capNode.putObject("epistemicDomains");
+                    cap.epistemicDomains().forEach(domains::put);
+                }
+                if (cap.inputTypes() != null && !cap.inputTypes().isEmpty()) {
+                    final ArrayNode arr = capNode.putArray("inputTypes");
+                    cap.inputTypes().forEach(arr::add);
+                }
+                if (cap.outputTypes() != null && !cap.outputTypes().isEmpty()) {
+                    final ArrayNode arr = capNode.putArray("outputTypes");
+                    cap.outputTypes().forEach(arr::add);
+                }
                 final String desc = descriptionByName.get(cap.name());
                 if (desc != null) capNode.put("description", desc);
             }
