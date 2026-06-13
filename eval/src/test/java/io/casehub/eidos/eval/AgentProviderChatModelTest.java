@@ -5,19 +5,18 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import io.casehub.eidos.api.AgentDescriptor;
-import io.casehub.eidos.api.AgentPromptContext;
-import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.platform.agent.AgentEvent;
 import io.casehub.platform.agent.AgentProvider;
 import io.casehub.platform.agent.AgentSessionConfig;
 import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.TimeoutException;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AgentProviderChatModelTest {
 
@@ -53,6 +52,18 @@ class AgentProviderChatModelTest {
             .build());
 
         assertThat(response.aiMessage().text()).isEqualTo("ABC");
+    }
+
+    @Test
+    void chat_times_out_when_provider_never_completes() {
+        final AgentProvider hangingProvider = config ->
+            Multi.createFrom().emitter(e -> { /* never emit or complete */ });
+        final var model = new AgentProviderChatModel(hangingProvider, Duration.ofMillis(50));
+
+        assertThatThrownBy(() -> model.doChat(ChatRequest.builder()
+                .messages(SystemMessage.from("s"), UserMessage.from("u"))
+                .build()))
+            .isInstanceOf(TimeoutException.class);
     }
 
     @Test
