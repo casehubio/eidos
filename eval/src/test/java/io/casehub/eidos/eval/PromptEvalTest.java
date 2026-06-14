@@ -1,5 +1,6 @@
 package io.casehub.eidos.eval;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.model.chat.ChatModel;
 import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.SystemPromptRenderer;
@@ -17,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -48,6 +50,8 @@ class PromptEvalTest {
         RenderFormat.A2A_CARD,  4.5
     );
 
+    // Calibrated 2026-06-14 from Qwen 3 8B baseline (structural rendering, 16 real-world cases).
+    // Observed: min=3, mean=3.5, max=4. Floor at observed minimum catches identity mismatches.
     private static final double PROXIMITY_FLOOR = 3.0;
 
     /** Set after first run: max(0.5, observed_accuracy − 0.1). Initial value allows first run to pass. */
@@ -86,6 +90,9 @@ class PromptEvalTest {
 
     @Inject
     BehavioralJudge behavioralJudge;
+
+    @Inject
+    ObjectMapper mapper;
 
     @ConfigProperty(name = "casehub.eval.model.label", defaultValue = "claude")
     String modelLabel;
@@ -162,6 +169,15 @@ class PromptEvalTest {
             Path.of("target/personality-preservation-report.json"));
         System.out.println(EvalReportWriter.preservationSummaryTable(preservationReport));
 
+        final List<RenderCacheEntry> cacheEntries = renders.entrySet().stream()
+            .map(e -> new RenderCacheEntry(
+                e.getKey().name(),
+                e.getKey().context().format().name(),
+                e.getValue().content()))
+            .toList();
+        mapper.writerWithDefaultPrettyPrinter()
+            .writeValue(Path.of("target/renders-cache.json").toFile(), cacheEntries);
+
         qualityReport.summaryByFormat().forEach((format, summary) -> {
             assertThat(summary.allCasesComplete())
                 .as("All %s real-world cases complete", format).isTrue();
@@ -172,6 +188,64 @@ class PromptEvalTest {
 
         assertThat(proximityReport.meanScore())
             .as("Mean proximity score").isGreaterThanOrEqualTo(PROXIMITY_FLOOR);
+    }
+
+    /**
+     * Phase 2b: independent judge comparison. Loads Claude-rendered outputs from
+     * target/renders-cache.json (written by evaluateRealWorldScenarios) and re-judges them
+     * with whatever ChatModel is active — run with Ollama/Qwen to eliminate self-evaluation bias.
+     *
+     * <p>Diagnostic only — no assertion. Compare scores against real-world-eval-report.json.
+     *
+     * <p>Run sequence: (1) evaluateRealWorldScenarios with Claude, (2) this with Ollama:
+     * {@code mvn clean test -pl eval -Peval,eval-ollama -Dtest=PromptEvalTest#evaluateWithIndependentJudge
+     *   -Dcasehub.eval.claude-provider.enabled=false
+     *   -Dquarkus.langchain4j.ollama.chat-model.model-name=qwen3.6:35b-a3b
+     *   -Dquarkus.langchain4j.ollama.chat-model.format=json
+     *   -Dquarkus.langchain4j.ollama.timeout=300s
+     *   -Dcasehub.eval.model.label=qwen3-35b}
+     */
+    @Test
+    @Tag("eval")
+    void evaluateWithIndependentJudge() throws Exception {
+        final Path cachePath = Path.of("target/renders-cache.json");
+        assertThat(cachePath).as("renders-cache.json must exist — run evaluateRealWorldScenarios first")
+            .exists();
+
+        final List<RenderCacheEntry> cache =
+            Arrays.asList(mapper.readValue(cachePath.toFile(), RenderCacheEntry[].class));
+
+        final Map<String, ProfiledEvalCase> caseByName = realWorldCases.stream()
+            .collect(Collectors.toMap(ProfiledEvalCase::name, Function.identity()));
+
+        final Map<ProfiledEvalCase, RenderedPrompt> savedRenders = cache.stream()
+            .filter(e -> caseByName.containsKey(e.caseName()))
+            .collect(Collectors.toMap(
+                e -> caseByName.get(e.caseName()),
+                RenderCacheEntry::toRenderedPrompt));
+
+        final List<EvalResult> qualityResults = savedRenders.entrySet().stream()
+            .map(e -> judge.evaluate(e.getKey(), e.getValue())).toList();
+
+        final List<ProximityResult> proximityResults = savedRenders.entrySet().stream()
+            .map(e -> proximityJudge.evaluate(e.getKey(), e.getValue())).toList();
+
+        Files.createDirectories(Path.of("target"));
+
+        final EvalReport report =
+            EvalReport.build(qualityResults, modelLabel + "-judging-claude-renders");
+        EvalReportWriter.writeJson(report, Path.of("target/independent-judge-report.json"));
+
+        final ProximityReport proximityReport =
+            ProximityReport.build(proximityResults, PROXIMITY_FLOOR);
+        EvalReportWriter.writeProximityJson(
+            proximityReport, Path.of("target/independent-proximity-report.json"));
+
+        System.out.println("=== Independent judge: " + modelLabel + " judging Claude renders ===");
+        System.out.println(EvalReportWriter.summaryTable(report));
+        System.out.println(EvalReportWriter.proximitySummaryTable(proximityReport));
+        System.out.printf("Independent proximity mean: %.2f (Claude baseline: check proximity-report.json)%n",
+            proximityReport.meanScore());
     }
 
     @Test

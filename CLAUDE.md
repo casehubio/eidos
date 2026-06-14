@@ -215,11 +215,24 @@ JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl eval -Peval \
   -Dtest=PromptEvalTest#evaluateAllScenarios
 
 # Run eval harness — Ollama (requires Ollama running on localhost:11434)
-JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl eval -Peval,eval-ollama \
+# Note: first Ollama run requires mvn clean to force Quarkus re-augmentation with the Ollama extension.
+# -Dquarkus.langchain4j.ollama.timeout=300s is required — default 10s is too short for local LLMs.
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn clean test -pl eval -Peval,eval-ollama \
   -Dtest=PromptEvalTest#evaluateAllScenarios \
   -Dcasehub.eval.claude-provider.enabled=false \
   "-Dquarkus.langchain4j.ollama.chat-model.model-name=<model>" \
-  "-Dquarkus.langchain4j.ollama.chat-model.format=json"
+  "-Dquarkus.langchain4j.ollama.chat-model.format=json" \
+  "-Dquarkus.langchain4j.ollama.timeout=300s"
+
+# Independent judge comparison — Phase 2b (run AFTER evaluateRealWorldScenarios with Claude)
+# Uses saved target/renders-cache.json; judges Claude's renders with Qwen to check self-evaluation bias.
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn clean test -pl eval -Peval,eval-ollama \
+  -Dtest=PromptEvalTest#evaluateWithIndependentJudge \
+  -Dcasehub.eval.claude-provider.enabled=false \
+  "-Dquarkus.langchain4j.ollama.chat-model.model-name=qwen3.6:35b-a3b" \
+  "-Dquarkus.langchain4j.ollama.chat-model.format=json" \
+  "-Dquarkus.langchain4j.ollama.timeout=300s" \
+  -Dcasehub.eval.model.label=qwen3-35b
 
 # Run eval harness — GPULlama3 via TornadoVM Metal (Apple Silicon)
 # Requires: export TORNADOVM_HOME=~/tornadovm-metal/tornadovm-4.0.0-jdk25-metal
