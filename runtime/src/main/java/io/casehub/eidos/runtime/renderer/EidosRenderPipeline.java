@@ -27,6 +27,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -75,34 +76,6 @@ class EidosRenderPipeline {
             - Be concise. Every sentence must carry information the agent needs to act on.
             - Return ONLY the JSON object. No explanation, no preamble, no code fences.""";
 
-    private static final String TEMPLATE_HASH = fingerprint(PROMPT_TEMPLATE).substring(0, 8);
-
-    static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
-            .type(ResponseFormatType.JSON)
-            .jsonSchema(JsonSchema.builder()
-                    .name("SemanticEnrichment")
-                    .rootElement(JsonObjectSchema.builder()
-                            .addStringProperty("identityNarrative",
-                                    "Who this agent is — name, model, version context. Second person.")
-                            .addStringProperty("roleNarrative",
-                                    "The agent's role and purpose. Second person.")
-                            .addStringProperty("capabilityNarrative",
-                                    "What the agent can do, including input and output types when present. Second person.")
-                            .addStringProperty("dispositionNarrative",
-                                    "How the agent operates across all disposition axes in the payload. " +
-                                    "Each axis object carries value, optional label, optional vocabularyName. " +
-                                    "Use framework canonical language when vocabularyName is present. " +
-                                    "2-3 sentences. Empty string if no disposition data.")
-                            .addStringProperty("constraintNarrative",
-                                    "Data handling obligations. Empty string if none.")
-                            .addStringProperty("goalNarrative",
-                                    "Current task and objectives. Empty string if no goal.")
-                            .required("identityNarrative", "roleNarrative", "capabilityNarrative",
-                                    "dispositionNarrative", "constraintNarrative", "goalNarrative")
-                            .build())
-                    .build())
-            .build();
-
     static final String A2A_PROMPT_TEMPLATE = """
             You are writing per-capability descriptions for an AI agent's A2A (agent-to-agent) card.
 
@@ -116,18 +89,67 @@ class EidosRenderPipeline {
             - Return ONLY the JSON object. No explanation, no preamble, no code fences.
             - If no capabilities are declared, return {"capabilityNarratives": []}.""";
 
+    // Schema descriptions extracted as constants so TEMPLATE_HASH can include them.
+    // Changing any description changes the LLM output contract — cache must invalidate.
+    static final List<String> RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
+            "Who this agent is — name, model, version context. Second person.",
+            "The agent's role and purpose. Second person.",
+            "What the agent can do, including input and output types when present. Second person.",
+            "How the agent operates across all disposition axes in the payload. " +
+            "Each axis object carries value, optional label, optional vocabularyName. " +
+            "Use framework canonical language when vocabularyName is present. " +
+            "2-3 sentences. Empty string if no disposition data.",
+            "Data handling obligations. Empty string if none.",
+            "Current task and objectives. Empty string if no goal."
+    );
+
+    static final List<String> A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
+            "One entry per declared capability. Empty array [] if none.",
+            "Capability name — must match exactly as given.",
+            "1-2 sentences, second person, what this agent can do with this capability."
+    );
+
+    private static final String TEMPLATE_HASH = fingerprint(
+            PROMPT_TEMPLATE + A2A_PROMPT_TEMPLATE
+            + String.join("", RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
+            + String.join("", A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
+    ).substring(0, 8);
+
+    static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
+            .type(ResponseFormatType.JSON)
+            .jsonSchema(JsonSchema.builder()
+                    .name("SemanticEnrichment")
+                    .rootElement(JsonObjectSchema.builder()
+                            .addStringProperty("identityNarrative",
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(0))
+                            .addStringProperty("roleNarrative",
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(1))
+                            .addStringProperty("capabilityNarrative",
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(2))
+                            .addStringProperty("dispositionNarrative",
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(3))
+                            .addStringProperty("constraintNarrative",
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(4))
+                            .addStringProperty("goalNarrative",
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(5))
+                            .required("identityNarrative", "roleNarrative", "capabilityNarrative",
+                                    "dispositionNarrative", "constraintNarrative", "goalNarrative")
+                            .build())
+                    .build())
+            .build();
+
     static final ResponseFormat A2A_RESPONSE_FORMAT = ResponseFormat.builder()
             .type(ResponseFormatType.JSON)
             .jsonSchema(JsonSchema.builder()
                     .name("A2AEnrichment")
                     .rootElement(JsonObjectSchema.builder()
                             .addProperty("capabilityNarratives", JsonArraySchema.builder()
-                                    .description("One entry per declared capability. Empty array [] if none.")
+                                    .description(A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(0))
                                     .items(JsonObjectSchema.builder()
                                             .addStringProperty("name",
-                                                    "Capability name — must match exactly as given.")
+                                                    A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(1))
                                             .addStringProperty("description",
-                                                    "1-2 sentences, second person, what this agent can do with this capability.")
+                                                    A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(2))
                                             .required("name", "description")
                                             .build())
                                     .build())

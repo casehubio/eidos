@@ -258,6 +258,32 @@ class EidosRenderPipelineTest {
         assertThat(a).isNotEqualTo(b);
     }
 
+    // ── TEMPLATE_HASH scope ───────────────────────────────────────────────────
+
+    @Test
+    void template_hash_covers_prompt_template_and_all_schema_descriptions() {
+        // TEMPLATE_HASH must be fingerprint(PROMPT_TEMPLATE + A2A_PROMPT_TEMPLATE
+        //   + all RESPONSE_FORMAT schema descriptions + all A2A_RESPONSE_FORMAT schema descriptions).
+        // If any of these change without TEMPLATE_HASH updating, cache serves stale enriched prompts.
+        final String expectedInput = EidosRenderPipeline.PROMPT_TEMPLATE
+                + EidosRenderPipeline.A2A_PROMPT_TEMPLATE
+                + String.join("", EidosRenderPipeline.RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
+                + String.join("", EidosRenderPipeline.A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS);
+        final String expectedHash = EidosRenderPipeline.fingerprint(expectedInput).substring(0, 8);
+        final String key = pipeline.cacheKey("x", "y", MARKDOWN);
+        assertThat(key).endsWith(":" + expectedHash);
+    }
+
+    @Test
+    void template_hash_differs_from_prompt_template_only_hash() {
+        // Before fix: TEMPLATE_HASH = fingerprint(PROMPT_TEMPLATE). After fix: includes more.
+        // This test guards against regression to the old single-input hash.
+        final String promptOnlyHash = EidosRenderPipeline.fingerprint(
+                EidosRenderPipeline.PROMPT_TEMPLATE).substring(0, 8);
+        final String key = pipeline.cacheKey("x", "y", MARKDOWN);
+        assertThat(key).doesNotEndWith(":" + promptOnlyHash);
+    }
+
     // ── usesEnrichment predicate ──────────────────────────────────────────────
 
     @Test
