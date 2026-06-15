@@ -128,7 +128,7 @@ public class ProximityJudge {
 
     private ProximityResult parse(final ProfiledEvalCase evalCase, final String json)
             throws JsonProcessingException {
-        final JsonNode root = mapper.readTree(json);
+        final JsonNode root = mapper.readTree(PromptJudge.extractJson(json));
         final JsonNode score = root.get("score");
         final JsonNode reasoning = root.get("reasoning");
         if (score == null || reasoning == null)

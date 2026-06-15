@@ -94,8 +94,14 @@ public class VocabularyExpressivenessJudge {
                 .messages(SystemMessage.from(systemPrompt), UserMessage.from(prose))
                 .responseFormat(RESPONSE_FORMAT)
                 .build();
-            final var response = model.chat(request);
-            return parseScore(response.aiMessage().text(), axis);
+            int score;
+            try {
+                score = parseScore(model.chat(request).aiMessage().text(), axis);
+            } catch (final MalformedJudgeResponseException first) {
+                System.err.printf("[WARN] VocabularyExpressivenessJudge non-JSON response, retrying (%s)%n", first.getMessage());
+                score = parseScore(model.chat(request).aiMessage().text(), axis);
+            }
+            return score;
         } catch (final MalformedJudgeResponseException e) {
             throw e;
         } catch (final Exception e) {
@@ -105,7 +111,7 @@ public class VocabularyExpressivenessJudge {
     }
 
     private int parseScore(final String json, final DispositionAxis axis) throws JsonProcessingException {
-        final JsonNode root = mapper.readTree(json);
+        final JsonNode root = mapper.readTree(PromptJudge.extractJson(json));
         final JsonNode score = root.get("score");
         if (score == null) throw new MalformedJudgeResponseException(
             "VocabularyExpressivenessJudge: missing score for axis " + axis);

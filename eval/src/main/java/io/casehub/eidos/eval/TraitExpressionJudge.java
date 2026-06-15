@@ -108,8 +108,14 @@ public class TraitExpressionJudge {
                     UserMessage.from(rendered.content()))
                 .responseFormat(RESPONSE_FORMAT)
                 .build();
-            final var response = model.chat(request);
-            return parse(evalCase, rendered.format(), response.aiMessage().text());
+            TraitExpressionResult result;
+            try {
+                result = parse(evalCase, rendered.format(), model.chat(request).aiMessage().text());
+            } catch (final MalformedJudgeResponseException first) {
+                System.err.printf("[WARN] TraitExpressionJudge non-JSON response, retrying (%s)%n", first.getMessage());
+                result = parse(evalCase, rendered.format(), model.chat(request).aiMessage().text());
+            }
+            return result;
         } catch (final MalformedJudgeResponseException e) {
             throw e;
         } catch (final Exception e) {
@@ -120,7 +126,7 @@ public class TraitExpressionJudge {
     private TraitExpressionResult parse(final ProfiledEvalCase evalCase,
                                          final RenderFormat format,
                                          final String json) throws JsonProcessingException {
-        final JsonNode root = mapper.readTree(json);
+        final JsonNode root = mapper.readTree(PromptJudge.extractJson(json));
         final Map<String, Integer> scores = new LinkedHashMap<>();
         for (final DispositionAxis axis : NUMERIC_AXES) {
             final JsonNode n = root.get(axis.jsonKey());

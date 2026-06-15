@@ -82,8 +82,14 @@ public class PairContrastJudge {
                     UserMessage.from("Compare the two prompts."))
                 .responseFormat(RESPONSE_FORMAT)
                 .build();
-            final var response = model.chat(request);
-            return parse(pair, format, response.aiMessage().text());
+            PairContrastResult result;
+            try {
+                result = parse(pair, format, model.chat(request).aiMessage().text());
+            } catch (final MalformedJudgeResponseException first) {
+                System.err.printf("[WARN] PairContrastJudge non-JSON response, retrying (%s)%n", first.getMessage());
+                result = parse(pair, format, model.chat(request).aiMessage().text());
+            }
+            return result;
         } catch (final MalformedJudgeResponseException e) {
             throw e;
         } catch (final Exception e) {
@@ -106,7 +112,7 @@ public class PairContrastJudge {
     private PairContrastResult parse(final VariantPair pair,
                                       final RenderFormat format,
                                       final String json) throws JsonProcessingException {
-        final JsonNode root = mapper.readTree(json);
+        final JsonNode root = mapper.readTree(PromptJudge.extractJson(json));
         final JsonNode higher = root.get("higher");
         final JsonNode effectSize = root.get("effectSize");
         final JsonNode reasoning = root.get("reasoning");

@@ -188,8 +188,14 @@ public class PromptJudge {
                     SystemMessage.from(systemPrompt),
                     UserMessage.from(userPayloadJson))
                 .build();
-            final var response = judgeModel.chat(request);
-            final var parsed = parseResponse(response.aiMessage().text(), applicable);
+            ParsedResponse parsed;
+            try {
+                parsed = parseResponse(judgeModel.chat(request).aiMessage().text(), applicable);
+            } catch (final MalformedJudgeResponseException first) {
+                // Claude occasionally returns prose on first attempt — retry once.
+                System.err.printf("[WARN] Judge non-JSON response, retrying (%s)%n", first.getMessage());
+                parsed = parseResponse(judgeModel.chat(request).aiMessage().text(), applicable);
+            }
             scores = parsed.scores();
             issues = parsed.issues();
         } catch (final MalformedJudgeResponseException e) {

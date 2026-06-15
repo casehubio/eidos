@@ -176,7 +176,7 @@ class PromptEvalTest {
                 e.getValue().content()))
             .toList();
         mapper.writerWithDefaultPrettyPrinter()
-            .writeValue(Path.of("target/renders-cache.json").toFile(), cacheEntries);
+            .writeValue(rendersCache().toFile(), cacheEntries);
 
         qualityReport.summaryByFormat().forEach((format, summary) -> {
             assertThat(summary.allCasesComplete())
@@ -208,7 +208,7 @@ class PromptEvalTest {
     @Test
     @Tag("eval")
     void evaluateWithIndependentJudge() throws Exception {
-        final Path cachePath = Path.of("target/renders-cache.json");
+        final Path cachePath = rendersCache();
         assertThat(cachePath).as("renders-cache.json must exist — run evaluateRealWorldScenarios first")
             .exists();
 
@@ -300,6 +300,11 @@ class PromptEvalTest {
 
         assertThat(accuracy)
             .as("Behavioral pair-contrast accuracy").isGreaterThanOrEqualTo(ACCURACY_FLOOR);
+    }
+
+    /** Resolves the renders-cache path — override with -Dcasehub.eval.renders-cache.path to survive mvn clean. */
+    private static Path rendersCache() {
+        return Path.of(System.getProperty("casehub.eval.renders-cache.path", "target/renders-cache.json"));
     }
 
     private List<String> runReliabilityCheck(
