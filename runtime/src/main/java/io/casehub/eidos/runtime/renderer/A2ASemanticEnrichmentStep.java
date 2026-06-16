@@ -45,7 +45,7 @@ class A2ASemanticEnrichmentStep {
     }
 
     private A2AEnrichment parse(final String json) throws JsonProcessingException {
-        final JsonNode node = mapper.readTree(SemanticEnrichmentStep.stripCodeFences(json));
+        final JsonNode node = mapper.readTree(JsonExtractionUtil.extractJson(json));
         final JsonNode narrativesNode = node.get("capabilityNarratives");
         if (narrativesNode == null || !narrativesNode.isArray()) {
             return new A2AEnrichment(List.of());

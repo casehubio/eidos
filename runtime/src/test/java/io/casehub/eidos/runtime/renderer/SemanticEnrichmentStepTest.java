@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.renderer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -24,152 +25,123 @@ class SemanticEnrichmentStepTest {
         step = new SemanticEnrichmentStep(MAPPER);
     }
 
-    static ObjectNode payload(String agentId) {
+    static ObjectNode payload() {
         final ObjectNode node = MAPPER.createObjectNode();
-        node.put("agentId", agentId);
         node.put("name", "Test Agent");
-        node.put("slot", "tester");
+        node.put("slot", "reviewer");
+        final ObjectNode disp = node.putObject("disposition");
+        disp.put("riskAppetite", "bold");
+        disp.put("canDelegate", false);
         return node;
     }
 
-    static ChatModel mockReturning(String json) {
+    static ChatModel mockReturning(final String json) {
         return new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
-                return ChatResponse.builder()
-                        .aiMessage(AiMessage.from(json))
-                        .build();
-            }
-        };
-    }
-
-    static ChatModel capturingMock(String[] captured) {
-        return new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
-                captured[0] = request.messages().stream()
-                        .filter(m -> m instanceof UserMessage)
-                        .map(m -> ((UserMessage) m).singleText())
-                        .findFirst().orElse("");
-                captured[1] = request.messages().stream()
-                        .filter(m -> m instanceof dev.langchain4j.data.message.SystemMessage)
-                        .map(m -> ((dev.langchain4j.data.message.SystemMessage) m).text())
-                        .findFirst().orElse("");
-                return ChatResponse.builder()
-                        .aiMessage(AiMessage.from("""
-                            {"identityNarrative":"id","roleNarrative":"role",
-                             "capabilityNarrative":"cap","dispositionNarrative":"",
-                             "constraintNarrative":"","goalNarrative":""}"""))
-                        .build();
+            @Override public ChatResponse doChat(final ChatRequest r) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(json)).build();
             }
         };
     }
 
     @Test
-    void parse_valid_json_populates_required_fields() {
-        final String json = """
-            {"identityNarrative":"You are TestAgent.",
-             "roleNarrative":"Your role is testing.",
-             "capabilityNarrative":"You can test things.",
-             "dispositionNarrative":"You are strict.",
-             "constraintNarrative":"",
-             "goalNarrative":""}""";
+    void parses_disposition_and_goal() {
+        final String json = "{\"dispositionNarrative\":\"You approve boldly.\",\"goalNarrative\":\"Review PR #42.\"}";
 
-        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(json), payload("a1"));
+        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(json), payload());
 
         assertThat(result).isPresent();
-        assertThat(result.get().identityNarrative()).isEqualTo("You are TestAgent.");
-        assertThat(result.get().roleNarrative()).isEqualTo("Your role is testing.");
-        assertThat(result.get().capabilityNarrative()).isEqualTo("You can test things.");
-        assertThat(result.get().dispositionNarrative()).contains("You are strict.");
+        assertThat(result.get().dispositionNarrative()).contains("You approve boldly.");
+        assertThat(result.get().goalNarrative()).contains("Review PR #42.");
     }
 
     @Test
     void blank_optional_fields_become_empty() {
-        final String json = """
-            {"identityNarrative":"id","roleNarrative":"role","capabilityNarrative":"cap",
-             "dispositionNarrative":"","constraintNarrative":"  ","goalNarrative":""}""";
+        final String json = "{\"dispositionNarrative\":\"\",\"goalNarrative\":\"  \"}";
 
-        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(json), payload("a1"));
+        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(json), payload());
 
         assertThat(result.get().dispositionNarrative()).isEmpty();
-        assertThat(result.get().constraintNarrative()).isEmpty();
         assertThat(result.get().goalNarrative()).isEmpty();
     }
 
     @Test
-    void non_blank_optional_field_is_present() {
-        final String json = """
-            {"identityNarrative":"id","roleNarrative":"role","capabilityNarrative":"cap",
-             "dispositionNarrative":"","constraintNarrative":"","goalNarrative":"Review PR #42."}""";
+    void json_wrapped_in_markdown_code_block_is_parsed() {
+        final String json = "{\"dispositionNarrative\":\"You approve boldly.\",\"goalNarrative\":\"\"}";
+        final String wrapped = "```json\n" + json + "\n```";
 
-        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(json), payload("a1"));
+        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(wrapped), payload());
 
-        assertThat(result.get().goalNarrative()).contains("Review PR #42.");
+        assertThat(result).isPresent();
+        assertThat(result.get().dispositionNarrative()).contains("You approve boldly.");
+    }
+
+    @Test
+    void prose_preamble_before_json_is_stripped() {
+        final String response = "Here is the JSON:\n{\"dispositionNarrative\":\"Bold.\",\"goalNarrative\":\"\"}";
+
+        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(response), payload());
+
+        assertThat(result).isPresent();
+        assertThat(result.get().dispositionNarrative()).contains("Bold.");
     }
 
     @Test
     void exception_from_llm_returns_empty() {
         final ChatModel throwing = new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
+            @Override public ChatResponse doChat(final ChatRequest r) {
                 throw new RuntimeException("Model unavailable");
             }
         };
-
-        assertThat(step.enrich(throwing, payload("a1"))).isEmpty();
+        assertThat(step.enrich(throwing, payload())).isEmpty();
     }
 
     @Test
-    void malformed_json_returns_empty() {
-        assertThat(step.enrich(mockReturning("not json at all"), payload("a1"))).isEmpty();
+    void malformed_json_retries_then_falls_back_to_empty() {
+        assertThat(step.enrich(mockReturning("not json at all"), payload())).isEmpty();
     }
 
     @Test
-    void json_wrapped_in_markdown_code_block_is_parsed() {
-        final String json = """
-            {"identityNarrative":"You are TestAgent.",
-             "roleNarrative":"Your role is testing.",
-             "capabilityNarrative":"You can test things.",
-             "dispositionNarrative":"","constraintNarrative":"","goalNarrative":""}""";
-        final String wrapped = "```json\n" + json + "\n```";
-
-        final Optional<SemanticEnrichment> result = step.enrich(mockReturning(wrapped), payload("a1"));
-
-        assertThat(result).isPresent();
-        assertThat(result.get().identityNarrative()).isEqualTo("You are TestAgent.");
-    }
-
-    @Test
-    void user_message_contains_payload_fields() {
-        final String[] captured = {"", ""};
-        step.enrich(capturingMock(captured), payload("agent-42"));
-        assertThat(captured[0]).contains("agent-42");
+    void malformed_json_causes_exactly_two_llm_calls_then_fallback() {
+        final int[] callCount = {0};
+        final ChatModel countingMock = new ChatModel() {
+            @Override public ChatResponse doChat(final ChatRequest r) {
+                callCount[0]++;
+                return ChatResponse.builder().aiMessage(AiMessage.from("not json")).build();
+            }
+        };
+        final Optional<SemanticEnrichment> result = step.enrich(countingMock, payload());
+        assertThat(result).isEmpty();
+        assertThat(callCount[0]).isEqualTo(2); // first attempt + one retry
     }
 
     @Test
     void system_message_equals_prompt_template() {
-        final String[] captured = {"", ""};
-        step.enrich(capturingMock(captured), payload("x"));
-        assertThat(captured[1]).isEqualTo(EidosRenderPipeline.PROMPT_TEMPLATE);
+        final String[] captured = {""};
+        final ChatModel capturingMock = new ChatModel() {
+            @Override public ChatResponse doChat(final ChatRequest r) {
+                r.messages().stream()
+                    .filter(m -> m instanceof SystemMessage)
+                    .map(m -> ((SystemMessage) m).text())
+                    .findFirst().ifPresent(t -> captured[0] = t);
+                return ChatResponse.builder().aiMessage(AiMessage.from(
+                    "{\"dispositionNarrative\":\"\",\"goalNarrative\":\"\"}")).build();
+            }
+        };
+        step.enrich(capturingMock, payload());
+        assertThat(captured[0]).isEqualTo(EidosRenderPipeline.PROMPT_TEMPLATE);
     }
 
     @Test
     void chat_request_has_response_format() {
         final boolean[] hasFormat = {false};
         final ChatModel checkingMock = new ChatModel() {
-            @Override
-            public ChatResponse doChat(final ChatRequest request) {
-                hasFormat[0] = request.parameters() != null
-                        && request.parameters().responseFormat() != null;
-                return ChatResponse.builder()
-                        .aiMessage(AiMessage.from("""
-                            {"identityNarrative":"id","roleNarrative":"r","capabilityNarrative":"c",
-                             "dispositionNarrative":"","constraintNarrative":"","goalNarrative":""}"""))
-                        .build();
+            @Override public ChatResponse doChat(final ChatRequest r) {
+                hasFormat[0] = r.parameters() != null && r.parameters().responseFormat() != null;
+                return ChatResponse.builder().aiMessage(AiMessage.from(
+                    "{\"dispositionNarrative\":\"\",\"goalNarrative\":\"\"}")).build();
             }
         };
-        step.enrich(checkingMock, payload("x"));
+        step.enrich(checkingMock, payload());
         assertThat(hasFormat[0]).isTrue();
     }
 }

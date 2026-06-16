@@ -93,7 +93,7 @@ public class DefaultReactiveSystemPromptRenderer implements ReactiveSystemPrompt
         final boolean needsA2A          = format == RenderFormat.A2A_CARD;
 
         final ObjectNode llmPayload = needsEnrichment
-                ? pipeline.buildLlmPayload(s1.descriptorNode(), s1.contextNode())
+                ? pipeline.buildEnrichmentPayload(s1.descriptorNode(), s1.contextNode())
                 : null;
 
         final Uni<Optional<SemanticEnrichment>> enrichUni = needsEnrichment

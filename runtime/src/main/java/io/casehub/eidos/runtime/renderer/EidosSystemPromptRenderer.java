@@ -77,7 +77,7 @@ public class EidosSystemPromptRenderer implements SystemPromptRenderer {
         // Stage 2a: optional semantic enrichment
         Optional<SemanticEnrichment> enrichment = Optional.empty();
         if (llm != null && EidosRenderPipeline.usesEnrichment(context.format())) {
-            final var llmPayload = pipeline.buildLlmPayload(s1.descriptorNode(), s1.contextNode());
+            final var llmPayload = pipeline.buildEnrichmentPayload(s1.descriptorNode(), s1.contextNode());
             enrichment = enrichmentStep.enrich(llm, llmPayload);
         }
 

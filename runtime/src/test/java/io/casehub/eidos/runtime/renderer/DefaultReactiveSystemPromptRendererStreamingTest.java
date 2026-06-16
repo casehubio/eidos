@@ -22,13 +22,9 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
 
     static final ObjectMapper MAPPER = new ObjectMapper();
 
-    static final String VALID_ENRICHMENT_JSON = """
-            {"identityNarrative":"You are a code reviewer.",
-             "roleNarrative":"Your role is to review code.",
-             "capabilityNarrative":"You can review Java and Rust code.",
-             "dispositionNarrative":"You operate independently.",
-             "constraintNarrative":"",
-             "goalNarrative":""}""";
+    static final String VALID_ENRICHMENT_JSON =
+            "{\"dispositionNarrative\":\"You operate independently.\","
+            + "\"goalNarrative\":\"\"}";
 
     EidosRenderPipeline pipeline;
     SystemPromptRenderer blockingDelegate;

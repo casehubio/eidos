@@ -71,7 +71,7 @@ class ReactiveA2ASemanticEnrichmentStep {
 
     private Optional<A2AEnrichment> parseOrEmpty(final String json) {
         try {
-            final JsonNode node = mapper.readTree(SemanticEnrichmentStep.stripCodeFences(json));
+            final JsonNode node = mapper.readTree(JsonExtractionUtil.extractJson(json));
             final JsonNode narrativesNode = node.get("capabilityNarratives");
             if (narrativesNode == null || !narrativesNode.isArray()) {
                 return Optional.of(new A2AEnrichment(List.of()));

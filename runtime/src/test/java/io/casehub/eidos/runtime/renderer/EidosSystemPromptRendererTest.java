@@ -23,13 +23,10 @@ class EidosSystemPromptRendererTest {
     static final String LLM_RESPONSE = "You are a code reviewer specialising in Java.";
     static final ObjectMapper MAPPER = new ObjectMapper();
 
-    /** JSON that SemanticEnrichmentStep can parse, with LLM_RESPONSE embedded in identityNarrative. */
-    static final String LLM_JSON_RESPONSE = "{\"identityNarrative\":\"" + LLM_RESPONSE + "\","
-            + "\"roleNarrative\":\"Your role is to review code.\","
-            + "\"capabilityNarrative\":\"You can review Java and Rust code.\","
-            + "\"dispositionNarrative\":\"You operate independently.\","
-            + "\"constraintNarrative\":\"You must comply with GDPR.\","
-            + "\"goalNarrative\":\"\"}";
+    /** JSON that SemanticEnrichmentStep can parse with narrowed 2-field schema. */
+    static final String LLM_JSON_RESPONSE =
+        "{\"dispositionNarrative\":\"You operate independently.\","
+        + "\"goalNarrative\":\"\"}";
 
     /** JSON in A2A enrichment format — capabilityNarratives array keyed by name. */
     static final String A2A_LLM_JSON_RESPONSE =
@@ -109,14 +106,11 @@ class EidosSystemPromptRendererTest {
                 captured[0] = request.messages().stream()
                         .filter(m -> m instanceof UserMessage)
                         .map(m -> ((UserMessage) m).singleText())
-                        .reduce("", (a, b) -> a + b);
+                        .findFirst().orElse("");
                 return ChatResponse.builder()
-                        .aiMessage(AiMessage.from("""
-                            {"identityNarrative":"You are TestAgent.",
-                             "roleNarrative":"Your role is testing.",
-                             "capabilityNarrative":"You can review code.",
-                             "dispositionNarrative":"You are strict.",
-                             "constraintNarrative":"","goalNarrative":""}"""))
+                        .aiMessage(AiMessage.from(
+                            "{\"dispositionNarrative\":\"You are strict.\","
+                            + "\"goalNarrative\":\"\"}"))
                         .build();
             }
         };
@@ -129,24 +123,26 @@ class EidosSystemPromptRendererTest {
     // ── LLM path ──────────────────────────────────────────────────────────────
 
     @Test
-    void llm_path_uses_llm_response_as_content() {
+    void llm_path_uses_enriched_disposition_narrative() {
         final var result = rendererWithLlm.render(fullDescriptor(), fullContext());
-        assertThat(result.content()).contains(LLM_RESPONSE);
+        // dispositionNarrative from LLM_JSON_RESPONSE replaces structural disposition section
+        assertThat(result.content()).contains("You operate independently.");
     }
 
     @Test
-    void llm_path_payload_contains_agent_id() {
-        assertThat(capturePayload(fullDescriptor(), fullContext())).contains("reviewer-1");
+    void llm_path_payload_contains_name() {
+        assertThat(capturePayload(fullDescriptor(), fullContext())).contains("Code Reviewer");
     }
 
     @Test
-    void llm_path_payload_contains_capability_name() {
-        assertThat(capturePayload(fullDescriptor(), fullContext())).contains("code-review");
+    void llm_path_payload_contains_slot() {
+        assertThat(capturePayload(fullDescriptor(), fullContext())).contains("reviewer");
     }
 
     @Test
-    void llm_path_payload_contains_input_types() {
-        assertThat(capturePayload(fullDescriptor(), fullContext())).contains("code");
+    void llm_path_payload_excludes_capabilities() {
+        // enrichment payload is focused: capabilities rendered structurally, not sent to LLM
+        assertThat(capturePayload(fullDescriptor(), fullContext())).doesNotContain("code-review");
     }
 
     @Test
@@ -164,6 +160,12 @@ class EidosSystemPromptRendererTest {
         assertThat(capturePayload(fullDescriptor(), fullContext()))
                 .doesNotContain("/src/main/java")
                 .doesNotContain("Critical release branch");
+    }
+
+    @Test
+    void llm_path_payload_excludes_agent_id() {
+        // agentId is an identity field — not in the focused enrichment payload
+        assertThat(capturePayload(fullDescriptor(), fullContext())).doesNotContain("reviewer-1");
     }
 
     // ── Structural MARKDOWN path ──────────────────────────────────────────────
@@ -312,7 +314,7 @@ class EidosSystemPromptRendererTest {
                 capturedPayload[0] = request.messages().stream()
                     .filter(m -> m instanceof UserMessage)
                     .map(m -> ((UserMessage) m).singleText())
-                    .reduce("", (a, b) -> a + b);
+                    .findFirst().orElse("");
                 return ChatResponse.builder().aiMessage(AiMessage.from(A2A_LLM_JSON_RESPONSE)).build();
             }
         };
@@ -415,5 +417,82 @@ class EidosSystemPromptRendererTest {
     void rendered_prompt_has_correct_format() {
         final var result = rendererStructural.render(fullDescriptor(), fullContext());
         assertThat(result.format()).isEqualTo(MARKDOWN);
+    }
+
+    // ── Selective override ────────────────────────────────────────────────────
+
+    @Test
+    void enriched_disposition_structural_goal_in_markdown() {
+        // LLM returns disposition narrative but no goal narrative
+        // Goal should fall back to structural rendering from context
+        final ChatModel dispositionOnlyLlm = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(
+                    "{\"dispositionNarrative\":\"You approve boldly.\",\"goalNarrative\":\"\"}")).build();
+            }
+        };
+        final EidosSystemPromptRenderer renderer = new EidosSystemPromptRenderer(
+            dispositionOnlyLlm,
+            new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+            new TestReactiveRenderedPromptCache(), MAPPER);
+
+        final String content = renderer.render(fullDescriptor(), fullContext()).content();
+
+        // Enriched disposition present
+        assertThat(content).contains("You approve boldly.");
+        // Structural goal rendered (from fullContext() which has "Review PR #42")
+        assertThat(content).contains("Review PR #42");
+    }
+
+    @Test
+    void structural_disposition_enriched_goal_in_markdown() {
+        // LLM returns goal narrative but empty disposition narrative
+        // Disposition should fall back to structural bullet list
+        final ChatModel goalOnlyLlm = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(
+                    "{\"dispositionNarrative\":\"\",\"goalNarrative\":\"Your task: review PR #42 thoroughly.\"}")).build();
+            }
+        };
+        final EidosSystemPromptRenderer renderer = new EidosSystemPromptRenderer(
+            goalOnlyLlm,
+            new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+            new TestReactiveRenderedPromptCache(), MAPPER);
+
+        final String content = renderer.render(fullDescriptor(), fullContext()).content();
+
+        // Enriched goal present
+        assertThat(content).contains("Your task: review PR #42 thoroughly.");
+        // Structural disposition rendered (bullet list style)
+        assertThat(content).contains("## How You Operate");
+        assertThat(content).contains("Risk appetite");
+    }
+
+    @Test
+    void selective_override_works_in_prose_format() {
+        // PROSE format with enriched disposition
+        final ChatModel proseLlm = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest request) {
+                return ChatResponse.builder().aiMessage(AiMessage.from(
+                    "{\"dispositionNarrative\":\"You approve boldly in prose.\",\"goalNarrative\":\"\"}")).build();
+            }
+        };
+        final EidosSystemPromptRenderer renderer = new EidosSystemPromptRenderer(
+            proseLlm,
+            new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
+            new TestReactiveRenderedPromptCache(), MAPPER);
+
+        final AgentPromptContext proseCtx = AgentPromptContext.forFormat(PROSE)
+            .withGoal(new GoalContext("Review PR #42", List.of(), null));
+        final String content = renderer.render(fullDescriptor(), proseCtx).content();
+
+        // Enriched disposition prose present
+        assertThat(content).contains("You approve boldly in prose.");
+        // No markdown headers in PROSE format
+        assertThat(content).doesNotContain("## How You Operate");
+        assertThat(content).doesNotContain("##");
     }
 }

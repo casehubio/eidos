@@ -17,13 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ReactiveSemanticEnrichmentStepTest {
 
     static final ObjectMapper MAPPER = new ObjectMapper();
-    static final String VALID_JSON = """
-            {"identityNarrative":"You are TestAgent.",
-             "roleNarrative":"Your role is testing.",
-             "capabilityNarrative":"You can test things.",
-             "dispositionNarrative":"You are strict.",
-             "constraintNarrative":"",
-             "goalNarrative":""}""";
+    static final String VALID_JSON =
+        "{\"dispositionNarrative\":\"You approve boldly.\",\"goalNarrative\":\"Review PR #42.\"}";
 
     ReactiveSemanticEnrichmentStep step;
 
@@ -34,15 +29,15 @@ class ReactiveSemanticEnrichmentStepTest {
 
     static ObjectNode payload() {
         final ObjectNode node = MAPPER.createObjectNode();
-        node.put("agentId", "agent-1");
         node.put("name", "Test Agent");
+        node.put("slot", "reviewer");
         return node;
     }
 
     static StreamingChatModel successMock() {
         return new StreamingChatModel() {
             @Override
-            public void doChat(ChatRequest request, StreamingChatResponseHandler handler) {
+            public void doChat(final ChatRequest request, final StreamingChatResponseHandler handler) {
                 handler.onCompleteResponse(
                     ChatResponse.builder().aiMessage(AiMessage.from(VALID_JSON)).build());
             }
@@ -52,7 +47,7 @@ class ReactiveSemanticEnrichmentStepTest {
     static StreamingChatModel errorMock() {
         return new StreamingChatModel() {
             @Override
-            public void doChat(ChatRequest request, StreamingChatResponseHandler handler) {
+            public void doChat(final ChatRequest request, final StreamingChatResponseHandler handler) {
                 handler.onError(new RuntimeException("model unavailable"));
             }
         };
@@ -61,7 +56,7 @@ class ReactiveSemanticEnrichmentStepTest {
     static StreamingChatModel malformedJsonMock() {
         return new StreamingChatModel() {
             @Override
-            public void doChat(ChatRequest request, StreamingChatResponseHandler handler) {
+            public void doChat(final ChatRequest request, final StreamingChatResponseHandler handler) {
                 handler.onCompleteResponse(
                     ChatResponse.builder().aiMessage(AiMessage.from("not valid json")).build());
             }
@@ -69,29 +64,23 @@ class ReactiveSemanticEnrichmentStepTest {
     }
 
     @Test
-    void completes_with_enrichment_when_llm_succeeds() {
+    void completes_with_disposition_and_goal_when_llm_succeeds() {
         final Optional<SemanticEnrichment> result =
             step.enrich(successMock(), payload()).await().indefinitely();
 
         assertThat(result).isPresent();
-        assertThat(result.get().identityNarrative()).isEqualTo("You are TestAgent.");
-        assertThat(result.get().roleNarrative()).isEqualTo("Your role is testing.");
+        assertThat(result.get().dispositionNarrative()).contains("You approve boldly.");
+        assertThat(result.get().goalNarrative()).contains("Review PR #42.");
     }
 
     @Test
     void falls_back_to_empty_when_llm_fires_on_error() {
-        final Optional<SemanticEnrichment> result =
-            step.enrich(errorMock(), payload()).await().indefinitely();
-
-        assertThat(result).isEmpty();
+        assertThat(step.enrich(errorMock(), payload()).await().indefinitely()).isEmpty();
     }
 
     @Test
     void falls_back_to_empty_when_parse_fails() {
-        final Optional<SemanticEnrichment> result =
-            step.enrich(malformedJsonMock(), payload()).await().indefinitely();
-
-        assertThat(result).isEmpty();
+        assertThat(step.enrich(malformedJsonMock(), payload()).await().indefinitely()).isEmpty();
     }
 
     @Test
@@ -99,15 +88,13 @@ class ReactiveSemanticEnrichmentStepTest {
         final boolean[] streamingCalled = {false};
         final StreamingChatModel trackingMock = new StreamingChatModel() {
             @Override
-            public void doChat(ChatRequest request, StreamingChatResponseHandler handler) {
+            public void doChat(final ChatRequest request, final StreamingChatResponseHandler handler) {
                 streamingCalled[0] = true;
                 handler.onCompleteResponse(
                     ChatResponse.builder().aiMessage(AiMessage.from(VALID_JSON)).build());
             }
         };
-
         step.enrich(trackingMock, payload()).await().indefinitely();
-
         assertThat(streamingCalled[0]).isTrue();
     }
 
@@ -115,12 +102,10 @@ class ReactiveSemanticEnrichmentStepTest {
     void returns_non_null_uni_for_hanging_provider() {
         final StreamingChatModel hangingMock = new StreamingChatModel() {
             @Override
-            public void doChat(ChatRequest request, StreamingChatResponseHandler handler) {
+            public void doChat(final ChatRequest request, final StreamingChatResponseHandler handler) {
                 // never fires — simulates hung provider
             }
         };
-        // Just verify the Uni is returned without synchronous error.
-        // Full 30s timeout test is impractical in CI.
         assertThat(step.enrich(hangingMock, payload())).isNotNull();
     }
 }

@@ -41,7 +41,7 @@ class ReactiveSemanticEnrichmentStep {
                     .responseFormat(EidosRenderPipeline.RESPONSE_FORMAT)
                     .build();
         } catch (final Exception e) {
-            log.warn("Reactive enrichment: request build failed (" + e.getMessage() + "), falling back");
+            log.warnf("Reactive enrichment: request build failed (%s), falling back", e.getMessage());
             return Uni.createFrom().item(Optional.empty());
         }
 
@@ -61,33 +61,22 @@ class ReactiveSemanticEnrichmentStep {
         return Uni.createFrom().completionStage(
                         future.orTimeout(EidosRenderPipeline.STREAMING_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .onFailure().recoverWithItem(e -> {
-                    log.warn("Reactive semantic enrichment failed (" + e.getMessage()
-                            + "), falling back to structural rendering");
+                    log.warnf("Reactive semantic enrichment failed (%s), falling back to structural rendering",
+                            e.getMessage());
                     return Optional.empty();
                 });
     }
 
     private Optional<SemanticEnrichment> parseOrEmpty(final String json) {
         try {
-            final JsonNode node = mapper.readTree(SemanticEnrichmentStep.stripCodeFences(json));
+            final JsonNode node = mapper.readTree(JsonExtractionUtil.extractJson(json));
             return Optional.of(new SemanticEnrichment(
-                    node.get("identityNarrative").asText(),
-                    node.get("roleNarrative").asText(),
-                    node.get("capabilityNarrative").asText(),
-                    optional(node, "dispositionNarrative"),
-                    optional(node, "constraintNarrative"),
-                    optional(node, "goalNarrative")
+                    SemanticEnrichment.parseOptional(node, "dispositionNarrative"),
+                    SemanticEnrichment.parseOptional(node, "goalNarrative")
             ));
         } catch (final Exception e) {
-            log.warn("Reactive enrichment: parse failed (" + e.getMessage() + "), falling back");
+            log.warnf("Reactive enrichment: parse failed (%s), falling back", e.getMessage());
             return Optional.empty();
         }
-    }
-
-    private static Optional<String> optional(final JsonNode node, final String field) {
-        final JsonNode n = node.get(field);
-        if (n == null || n.isNull()) return Optional.empty();
-        final String v = n.asText("").strip();
-        return v.isEmpty() ? Optional.empty() : Optional.of(v);
     }
 }

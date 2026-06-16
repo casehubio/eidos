@@ -31,43 +31,23 @@ class SemanticEnrichmentStep {
                     )
                     .responseFormat(EidosRenderPipeline.RESPONSE_FORMAT)
                     .build();
-
-            final var response = llm.chat(request);
-            return Optional.of(parse(response.aiMessage().text()));
-
+            try {
+                return Optional.of(parse(llm.chat(request).aiMessage().text()));
+            } catch (final JsonProcessingException first) {
+                log.warnf("Enrichment: non-JSON response, retrying (%s)", first.getMessage());
+                return Optional.of(parse(llm.chat(request).aiMessage().text()));
+            }
         } catch (final Exception e) {
-            log.warn("Semantic enrichment failed (" + e.getMessage()
-                    + "), falling back to structural rendering");
+            log.warnf("Semantic enrichment failed (%s), falling back to structural", e.getMessage());
             return Optional.empty();
         }
     }
 
-    static String stripCodeFences(final String text) {
-        String s = text.strip();
-        if (s.startsWith("```")) {
-            final int nl = s.indexOf('\n');
-            if (nl != -1) s = s.substring(nl + 1);
-            if (s.endsWith("```")) s = s.substring(0, s.length() - 3).stripTrailing();
-        }
-        return s;
-    }
-
     private SemanticEnrichment parse(final String json) throws JsonProcessingException {
-        final JsonNode node = mapper.readTree(stripCodeFences(json));
+        final JsonNode node = mapper.readTree(JsonExtractionUtil.extractJson(json));
         return new SemanticEnrichment(
-                node.get("identityNarrative").asText(),
-                node.get("roleNarrative").asText(),
-                node.get("capabilityNarrative").asText(),
-                optional(node, "dispositionNarrative"),
-                optional(node, "constraintNarrative"),
-                optional(node, "goalNarrative")
+                SemanticEnrichment.parseOptional(node, "dispositionNarrative"),
+                SemanticEnrichment.parseOptional(node, "goalNarrative")
         );
-    }
-
-    private static Optional<String> optional(final JsonNode node, final String field) {
-        final JsonNode n = node.get(field);
-        if (n == null || n.isNull()) return Optional.empty();
-        final String v = n.asText("").strip();
-        return v.isEmpty() ? Optional.empty() : Optional.of(v);
     }
 }

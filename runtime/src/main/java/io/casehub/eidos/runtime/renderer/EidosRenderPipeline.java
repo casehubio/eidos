@@ -39,36 +39,28 @@ class EidosRenderPipeline {
     // in declaration order. Reversing them causes fingerprint(null) at class load:
     // NullPointerException wrapped in ExceptionInInitializerError, not a quiet wrong value.
     static final String PROMPT_TEMPLATE = """
-            You are writing narrative descriptions for an AI agent's system prompt.
+            You are writing disposition and goal narratives for an AI agent's system prompt.
 
-            Given the agent definition in JSON, produce a JSON object with prose descriptions
-            for each field. Write in second person, addressing the agent directly.
+            Given the agent context in JSON, produce a JSON object with prose for two fields.
+            Write in second person, addressing the agent directly.
 
-            REQUIRED FIELDS (always populate):
-            - identityNarrative (1-2 sentences): The agent's name, model, and version context.
-            - roleNarrative (1-3 sentences): The role this agent plays and its purpose.
-              If slotLabel and slotDescription are present, prefer them over the raw slot value.
-              If slotVocabularyName is present, use that framework's canonical language —
-              e.g., slotVocabularyName "Belbin Team Roles" → open with the Belbin archetype
-              framing ("You are the team's Monitor Evaluator...").
-            - capabilityNarrative (2-4 sentences): What the agent can do.
-              List capabilities by name only. Include inputTypes and outputTypes when present
-              to describe what the agent accepts and produces.
+            The payload may contain:
+            - name: the agent's name
+            - slot: the agent's role type
+            - slotLabel, slotDescription, slotVocabularyName: vocabulary-resolved role context (when present)
+            - disposition: an object with one key per axis, each having a "value" field and optionally \
+            "label", "vocabularyName"
+            - goal: the current task (when present)
+            - briefing: additional behavioral principles not expressible as structured axes (when present)
 
-            OPTIONAL FIELDS (use empty string "" if the source data is absent):
-            - dispositionNarrative (2-3 sentences): How the agent operates across all disposition
-              axes present in the payload. The disposition object contains one nested object per axis;
-              each has a "value" field and optionally "label", "description", and "vocabularyName".
-              Cover all axes that have values: socialOrient, ruleFollowing, riskAppetite, autonomy,
-              conflictMode. When "vocabularyName" is present, use that framework's canonical language
-              rather than generic phrasing — e.g., "vocabularyName: Thomas-Kilmann Conflict Modes"
-              → use TKI mode language; "vocabularyName: DISC Behavioral Styles" → use DISC canonical
-              phrasing. Include delegation intent if canDelegate is true.
-              Use "" if no disposition is present.
-            - constraintNarrative (1-2 sentences): Data handling obligations - jurisdiction
-              and compliance requirements the agent must observe.
-            - goalNarrative (1-3 sentences): The agent's current task and objectives.
-              Include sub-goals as a natural continuation, not a bullet list.
+            FIELDS:
+            - dispositionNarrative (2-4 sentences): Use name and slot to frame the narrative for this \
+            agent's specific role. Cover ALL disposition axes present in the payload — omitting any \
+            present axis is incorrect. Use vocabulary framework language when vocabularyName is present \
+            on an axis. Weave briefing principles naturally when present — do not quote verbatim. \
+            Empty string if no disposition object is in the payload.
+            - goalNarrative (1-3 sentences): The agent's current task and objectives in flowing prose. \
+            Sub-goals as natural continuation, not bullets. Empty string if no goal is present.
 
             RULES:
             - Second person only: "You are...", "Your role is...", "You have...".
@@ -92,15 +84,9 @@ class EidosRenderPipeline {
     // Schema descriptions extracted as constants so TEMPLATE_HASH can include them.
     // Changing any description changes the LLM output contract — cache must invalidate.
     static final List<String> RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
-            "Who this agent is — name, model, version context. Second person.",
-            "The agent's role and purpose. Second person.",
-            "What the agent can do, including input and output types when present. Second person.",
-            "How the agent operates across all disposition axes in the payload. " +
-            "Each axis object carries value, optional label, optional vocabularyName. " +
-            "Use framework canonical language when vocabularyName is present. " +
-            "2-3 sentences. Empty string if no disposition data.",
-            "Data handling obligations. Empty string if none.",
-            "Current task and objectives. Empty string if no goal."
+            "How the agent operates — role-specific, covering all declared disposition axes. " +
+            "Use vocabulary framework language when present. 2-4 sentences. Empty string if no disposition.",
+            "Current task and objectives in flowing prose. Empty string if no goal."
     );
 
     static final List<String> A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
@@ -120,20 +106,11 @@ class EidosRenderPipeline {
             .jsonSchema(JsonSchema.builder()
                     .name("SemanticEnrichment")
                     .rootElement(JsonObjectSchema.builder()
-                            .addStringProperty("identityNarrative",
-                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(0))
-                            .addStringProperty("roleNarrative",
-                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(1))
-                            .addStringProperty("capabilityNarrative",
-                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(2))
                             .addStringProperty("dispositionNarrative",
-                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(3))
-                            .addStringProperty("constraintNarrative",
-                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(4))
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(0))
                             .addStringProperty("goalNarrative",
-                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(5))
-                            .required("identityNarrative", "roleNarrative", "capabilityNarrative",
-                                    "dispositionNarrative", "constraintNarrative", "goalNarrative")
+                                    RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS.get(1))
+                            .required("dispositionNarrative", "goalNarrative")
                             .build())
                     .build())
             .build();
@@ -269,9 +246,8 @@ class EidosRenderPipeline {
             }
             addIfPresent(goalNode, "caseRef", goal.caseRef());
         });
-        // situationalContext and resources are structural-only (not sent to LLM) but
-        // they affect the rendered output, so they must be part of the context hash
-        // to ensure cache correctness.
+        // situationalContext and resources affect rendered output, so they must be
+        // part of the context hash to ensure cache correctness.
         if (context.situationalContext() != null) {
             node.put("situationalContext", context.situationalContext());
         }
@@ -287,14 +263,31 @@ class EidosRenderPipeline {
         return node;
     }
 
-    /** Goal-only payload for the LLM call. situationalContext and resources are excluded — structural-only fields rendered in Stage 3. */
-    ObjectNode buildLlmPayload(final ObjectNode descriptorNode,
-                               final ObjectNode contextNode) {
-        final ObjectNode full = descriptorNode.deepCopy();
-        if (contextNode.has("goal")) {
-            full.set("goal", contextNode.get("goal").deepCopy());
-        }
-        return full;
+    /**
+     * Focused payload for enrichment — name/slot/disposition/goal/briefing only.
+     * Role context (name, slot, vocab labels) improves disposition prose quality.
+     *
+     * Intentionally excluded: identity details (agentId, model, weightsFingerprint),
+     * capabilities, jurisdiction, dataHandlingPolicy, situationalContext, resources.
+     * Those sections render structurally always — sending them to the LLM is noise.
+     * They are included in descriptorNode/contextNode for cache-key correctness only.
+     */
+    ObjectNode buildEnrichmentPayload(final ObjectNode descriptorNode,
+                                       final ObjectNode contextNode) {
+        final ObjectNode payload = mapper.createObjectNode();
+        copyIfPresent(payload, descriptorNode, "name");
+        copyIfPresent(payload, descriptorNode, "slot");
+        copyIfPresent(payload, descriptorNode, "slotLabel");
+        copyIfPresent(payload, descriptorNode, "slotDescription");
+        copyIfPresent(payload, descriptorNode, "slotVocabularyName");
+        copyIfPresent(payload, descriptorNode, "disposition");
+        copyIfPresent(payload, contextNode,    "goal");
+        copyIfPresent(payload, descriptorNode, "briefing");
+        return payload;
+    }
+
+    private static void copyIfPresent(final ObjectNode dest, final ObjectNode src, final String key) {
+        if (src != null && src.has(key)) dest.set(key, src.get(key).deepCopy());
     }
 
     // ── Stage 1: build + fingerprint ─────────────────────────────────────────
@@ -341,6 +334,70 @@ class EidosRenderPipeline {
 
     // ── Format-specific assembly ─────────────────────────────────────────────
 
+    private void assembleMarkdownRole(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.slot() != null) {
+            sb.append("\n## Role\n");
+            descriptor.vocabUriForSlot().ifPresentOrElse(
+                uri -> vocab.resolve(uri, descriptor.slot()).ifPresentOrElse(
+                    term -> {
+                        if (term.label() != null)       sb.append(term.label()).append("\n");
+                        if (term.description() != null) sb.append(term.description()).append("\n");
+                    },
+                    () -> sb.append(descriptor.slot()).append("\n")
+                ),
+                () -> sb.append(descriptor.slot()).append("\n")
+            );
+        }
+    }
+
+    private void assembleMarkdownCapabilities(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
+            sb.append("\n## Capabilities\n");
+            for (final AgentCapability cap : descriptor.capabilities()) {
+                sb.append("- **").append(cap.name()).append("**");
+                if (cap.inputTypes() != null && !cap.inputTypes().isEmpty())
+                    sb.append(": accepts ").append(String.join(", ", cap.inputTypes()));
+                if (cap.outputTypes() != null && !cap.outputTypes().isEmpty())
+                    sb.append(" → ").append(String.join(", ", cap.outputTypes()));
+                sb.append("\n");
+            }
+        }
+    }
+
+    private void assembleMarkdownDisposition(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.disposition() != null) {
+            final AgentDisposition d = descriptor.disposition();
+            sb.append("\n## How You Operate\n");
+            for (DispositionAxis axis : DispositionAxis.values()) {
+                d.get(axis).ifPresent(raw ->
+                    sb.append("- ").append(axisLabel(axis)).append(": ")
+                      .append(resolveAxisDisplay(axis, raw, descriptor)).append("\n"));
+            }
+            sb.append("- Can delegate: ").append(d.delegation() ? "yes" : "no").append("\n");
+        }
+    }
+
+    private void assembleMarkdownDataHandling(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.jurisdiction() != null || descriptor.dataHandlingPolicy() != null) {
+            sb.append("\n## Data Handling\n");
+            if (descriptor.jurisdiction() != null)
+                sb.append("Jurisdiction: ").append(descriptor.jurisdiction()).append("\n");
+            if (descriptor.dataHandlingPolicy() != null)
+                sb.append("Policy: ").append(descriptor.dataHandlingPolicy()).append("\n");
+        }
+    }
+
+    private void assembleMarkdownGoal(final StringBuilder sb, final AgentPromptContext context) {
+        context.goal().ifPresent(goal -> {
+            sb.append("\n## Current Goal\n");
+            sb.append(goal.description()).append("\n");
+            if (!goal.subGoals().isEmpty()) {
+                goal.subGoals().forEach(sub -> sb.append("- ").append(sub).append("\n"));
+            }
+            if (goal.caseRef() != null) sb.append("Case: ").append(goal.caseRef()).append("\n");
+        });
+    }
+
     private String assembleMarkdown(final Optional<SemanticEnrichment> enrichment,
                                      final AgentDescriptor descriptor,
                                      final AgentPromptContext context) {
@@ -354,19 +411,29 @@ class EidosRenderPipeline {
         if (descriptor.provider() != null)   sb.append("  **Provider:** ").append(descriptor.provider());
         sb.append("\n");
 
-        if (enrichment.isPresent()) {
-            final SemanticEnrichment e = enrichment.get();
-            sb.append("\n").append(e.identityNarrative()).append("\n");
-            sb.append("\n## Role\n").append(e.roleNarrative()).append("\n");
-            sb.append("\n## Capabilities\n").append(e.capabilityNarrative()).append("\n");
-            e.dispositionNarrative().ifPresent(d ->
-                sb.append("\n## How You Operate\n").append(d).append("\n"));
-            e.constraintNarrative().ifPresent(c ->
-                sb.append("\n## Data Handling\n").append(c).append("\n"));
-            e.goalNarrative().ifPresent(g ->
-                sb.append("\n## Current Goal\n").append(g).append("\n"));
+        // Role — always structural
+        assembleMarkdownRole(sb, descriptor);
+
+        // Capabilities — always structural
+        assembleMarkdownCapabilities(sb, descriptor);
+
+        // Disposition — enriched OR structural (selective override)
+        if (enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent()) {
+            sb.append("\n## How You Operate\n")
+              .append(enrichment.get().dispositionNarrative().get()).append("\n");
         } else {
-            assembleMarkdownStructural(sb, descriptor, context);
+            assembleMarkdownDisposition(sb, descriptor);
+        }
+
+        // Data Handling — always structural
+        assembleMarkdownDataHandling(sb, descriptor);
+
+        // Goal — enriched OR structural (selective override)
+        if (enrichment.isPresent() && enrichment.get().goalNarrative().isPresent()) {
+            sb.append("\n## Current Goal\n")
+              .append(enrichment.get().goalNarrative().get()).append("\n");
+        } else {
+            assembleMarkdownGoal(sb, context);
         }
 
         // Resources — always structural
@@ -387,110 +454,45 @@ class EidosRenderPipeline {
         return sb.toString().trim();
     }
 
-    private void assembleMarkdownStructural(final StringBuilder sb,
-                                             final AgentDescriptor descriptor,
-                                             final AgentPromptContext context) {
-        // Role — deliberate heading change from ## {slot_label} to ## Role
-        // (see spec behavioral delta note). Uses vocabUriForSlot() so domainVocabulary
-        // is honoured as a fallback when slotVocabulary is absent.
-        if (descriptor.slot() != null) {
-            sb.append("\n## Role\n");
-            descriptor.vocabUriForSlot().ifPresentOrElse(
-                uri -> vocab.resolve(uri, descriptor.slot()).ifPresentOrElse(
-                    term -> {
-                        if (term.label() != null)       sb.append(term.label()).append("\n");
-                        if (term.description() != null) sb.append(term.description()).append("\n");
-                    },
-                    () -> sb.append(descriptor.slot()).append("\n")
-                ),
-                () -> sb.append(descriptor.slot()).append("\n")
-            );
-        }
-
-        // Capabilities — name + qualitative type descriptors only (numeric signals excluded)
-        if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
-            sb.append("\n## Capabilities\n");
-            for (final AgentCapability cap : descriptor.capabilities()) {
-                sb.append("- **").append(cap.name()).append("**");
-                if (cap.inputTypes() != null && !cap.inputTypes().isEmpty())
-                    sb.append(": accepts ").append(String.join(", ", cap.inputTypes()));
-                if (cap.outputTypes() != null && !cap.outputTypes().isEmpty())
-                    sb.append(" → ").append(String.join(", ", cap.outputTypes()));
-                sb.append("\n");
-            }
-        }
-
-        // Disposition
-        if (descriptor.disposition() != null) {
-            final AgentDisposition d = descriptor.disposition();
-            sb.append("\n## How You Operate\n");
-            for (DispositionAxis axis : DispositionAxis.values()) {
-                d.get(axis).ifPresent(raw ->
-                    sb.append("- ").append(axisLabel(axis)).append(": ")
-                      .append(resolveAxisDisplay(axis, raw, descriptor)).append("\n"));
-            }
-            sb.append("- Can delegate: ").append(d.delegation() ? "yes" : "no").append("\n");
-        }
-
-        // Data handling
-        if (descriptor.jurisdiction() != null || descriptor.dataHandlingPolicy() != null) {
-            sb.append("\n## Data Handling\n");
-            if (descriptor.jurisdiction() != null)
-                sb.append("Jurisdiction: ").append(descriptor.jurisdiction()).append("\n");
-            if (descriptor.dataHandlingPolicy() != null)
-                sb.append("Policy: ").append(descriptor.dataHandlingPolicy()).append("\n");
-        }
-
-        // Goal
-        context.goal().ifPresent(goal -> {
-            sb.append("\n## Current Goal\n");
-            sb.append(goal.description()).append("\n");
-            if (!goal.subGoals().isEmpty()) {
-                goal.subGoals().forEach(sub -> sb.append("- ").append(sub).append("\n"));
-            }
-            if (goal.caseRef() != null) sb.append("Case: ").append(goal.caseRef()).append("\n");
-        });
-    }
-
     private String assembleProse(final Optional<SemanticEnrichment> enrichment,
                                   final AgentDescriptor descriptor,
                                   final AgentPromptContext context) {
         final var sb = new StringBuilder();
 
-        if (enrichment.isPresent()) {
-            final SemanticEnrichment e = enrichment.get();
-            sb.append(e.identityNarrative()).append(" ").append(e.roleNarrative()).append("\n");
-            sb.append("\n").append(e.capabilityNarrative()).append("\n");
-            e.dispositionNarrative().ifPresent(d -> sb.append("\n").append(d).append("\n"));
-            e.constraintNarrative().ifPresent(c -> sb.append("\n").append(c).append("\n"));
-            e.goalNarrative().ifPresent(g -> sb.append("\n").append(g).append("\n"));
+        // Identity + Role — always structural (dense prose, no headers)
+        sb.append(descriptor.name());
+        if (descriptor.slot() != null) sb.append(", ").append(descriptor.slot());
+        sb.append(".");
+        if (descriptor.version() != null) sb.append(" Version ").append(descriptor.version()).append(".");
+        sb.append("\n");
+
+        // Capabilities — always structural
+        if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
+            sb.append("\nCapabilities: ");
+            final var names = descriptor.capabilities().stream()
+                    .map(AgentCapability::name)
+                    .collect(Collectors.joining(", "));
+            sb.append(names).append(".\n");
+        }
+
+        // Disposition — enriched OR structural (selective override)
+        if (enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent()) {
+            sb.append("\n").append(enrichment.get().dispositionNarrative().get()).append("\n");
+        } else if (descriptor.disposition() != null) {
+            final AgentDisposition d = descriptor.disposition();
+            sb.append("\nOperating style:");
+            for (DispositionAxis axis : DispositionAxis.values()) {
+                d.get(axis).ifPresent(raw ->
+                    sb.append(" ").append(axisLabel(axis)).append(": ")
+                      .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
+            }
+            sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
+        }
+
+        // Goal — enriched OR structural (selective override)
+        if (enrichment.isPresent() && enrichment.get().goalNarrative().isPresent()) {
+            sb.append("\n").append(enrichment.get().goalNarrative().get()).append("\n");
         } else {
-            // Structural PROSE — dense prose, no headers
-            sb.append(descriptor.name());
-            if (descriptor.slot() != null) sb.append(", ").append(descriptor.slot());
-            sb.append(".");
-            if (descriptor.version() != null) sb.append(" Version ").append(descriptor.version()).append(".");
-            sb.append("\n");
-
-            if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
-                sb.append("\nCapabilities: ");
-                final var names = descriptor.capabilities().stream()
-                        .map(AgentCapability::name)
-                        .collect(Collectors.joining(", "));
-                sb.append(names).append(".\n");
-            }
-
-            if (descriptor.disposition() != null) {
-                final AgentDisposition d = descriptor.disposition();
-                sb.append("\nOperating style:");
-                for (DispositionAxis axis : DispositionAxis.values()) {
-                    d.get(axis).ifPresent(raw ->
-                        sb.append(" ").append(axisLabel(axis)).append(": ")
-                          .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
-                }
-                sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
-            }
-
             context.goal().ifPresent(goal -> {
                 sb.append("\nGoal: ").append(goal.description()).append(".\n");
                 if (!goal.subGoals().isEmpty()) {
