@@ -263,7 +263,7 @@ public class PromptJudge {
         // Strip any prose preamble before the first { (e.g. "Here is the JSON:")
         final int first = s.indexOf('{');
         final int last = s.lastIndexOf('}');
-        if (first > 0 && last > first) s = s.substring(first, last + 1);
+        if (first != -1 && last > first) s = s.substring(first, last + 1);
         return s;
     }
 

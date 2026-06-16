@@ -544,6 +544,25 @@ class EidosSystemPromptRendererTest {
     }
 
     @Test
+    void briefing_does_not_appear_in_a2a_card() {
+        // briefing is a human-interpretable instruction — not an A2A routing signal
+        final var desc = AgentDescriptor.builder()
+            .agentId("a").name("Bold Engineer").slot("reviewer")
+            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
+                List.of(), List.of(), List.of(), Map.of())))
+            .briefing("Speed is a feature.")
+            .tenancyId("t")
+            .build();
+        final var ctx = AgentPromptContext.forFormat(A2A_CARD);
+
+        final String content = rendererStructural.render(desc, ctx).content();
+
+        // A2A card is JSON — briefing should not appear in the rendered output
+        assertThat(content).doesNotContain("Speed is a feature.");
+        assertThat(content).doesNotContain("briefing");
+    }
+
+    @Test
     void briefing_in_descriptor_payload_affects_cache_key() {
         // Two descriptors identical except briefing should produce different cache keys.
         // Verify by checking that the descriptorNode for the briefing descriptor contains "briefing".

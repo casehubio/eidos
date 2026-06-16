@@ -7,7 +7,9 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import io.casehub.platform.agent.AgentEvent;
 import io.casehub.platform.agent.AgentProvider;
+import io.casehub.platform.agent.AgentSession;
 import io.casehub.platform.agent.AgentSessionConfig;
+import io.casehub.platform.agent.AgentSessionInit;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.TimeoutException;
 import org.junit.jupiter.api.Test;
@@ -23,9 +25,16 @@ class AgentProviderChatModelTest {
     @Test
     void chat_routes_system_and_user_messages_to_agentProvider() {
         final AtomicReference<AgentSessionConfig> captured = new AtomicReference<>();
-        final AgentProvider provider = config -> {
-            captured.set(config);
-            return Multi.createFrom().items(new AgentEvent.TextDelta("hello "), new AgentEvent.TextDelta("world"));
+        final AgentProvider provider = new AgentProvider() {
+            @Override
+            public Multi<AgentEvent> invoke(final AgentSessionConfig config) {
+                captured.set(config);
+                return Multi.createFrom().items(new AgentEvent.TextDelta("hello "), new AgentEvent.TextDelta("world"));
+            }
+            @Override
+            public AgentSession openSession(final AgentSessionInit init) {
+                throw new UnsupportedOperationException("not used in this test");
+            }
         };
         final var model = new AgentProviderChatModel(provider);
 
@@ -41,10 +50,19 @@ class AgentProviderChatModelTest {
 
     @Test
     void chat_concatenates_all_text_deltas() {
-        final AgentProvider provider = config -> Multi.createFrom().items(
-            new AgentEvent.TextDelta("A"),
-            new AgentEvent.TextDelta("B"),
-            new AgentEvent.TextDelta("C"));
+        final AgentProvider provider = new AgentProvider() {
+            @Override
+            public Multi<AgentEvent> invoke(final AgentSessionConfig config) {
+                return Multi.createFrom().items(
+                    new AgentEvent.TextDelta("A"),
+                    new AgentEvent.TextDelta("B"),
+                    new AgentEvent.TextDelta("C"));
+            }
+            @Override
+            public AgentSession openSession(final AgentSessionInit init) {
+                throw new UnsupportedOperationException("not used in this test");
+            }
+        };
         final var model = new AgentProviderChatModel(provider);
 
         final var response = model.doChat(ChatRequest.builder()
@@ -56,8 +74,16 @@ class AgentProviderChatModelTest {
 
     @Test
     void chat_times_out_when_provider_never_completes() {
-        final AgentProvider hangingProvider = config ->
-            Multi.createFrom().emitter(e -> { /* never emit or complete */ });
+        final AgentProvider hangingProvider = new AgentProvider() {
+            @Override
+            public Multi<AgentEvent> invoke(final AgentSessionConfig config) {
+                return Multi.createFrom().emitter(e -> { /* never emit or complete */ });
+            }
+            @Override
+            public AgentSession openSession(final AgentSessionInit init) {
+                throw new UnsupportedOperationException("not used in this test");
+            }
+        };
         final var model = new AgentProviderChatModel(hangingProvider, Duration.ofMillis(50));
 
         assertThatThrownBy(() -> model.doChat(ChatRequest.builder()
@@ -68,8 +94,16 @@ class AgentProviderChatModelTest {
 
     @Test
     void chat_ignores_responseFormat() {
-        final AgentProvider provider = config ->
-            Multi.createFrom().item(new AgentEvent.TextDelta("{\"answer\":42}"));
+        final AgentProvider provider = new AgentProvider() {
+            @Override
+            public Multi<AgentEvent> invoke(final AgentSessionConfig config) {
+                return Multi.createFrom().item(new AgentEvent.TextDelta("{\"answer\":42}"));
+            }
+            @Override
+            public AgentSession openSession(final AgentSessionInit init) {
+                throw new UnsupportedOperationException("not used in this test");
+            }
+        };
         final var model = new AgentProviderChatModel(provider);
 
         // ResponseFormat can't be expressed via Claude CLI — bridge silently ignores it

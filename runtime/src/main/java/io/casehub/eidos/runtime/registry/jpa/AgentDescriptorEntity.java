@@ -47,7 +47,7 @@ public class AgentDescriptorEntity {
     @Column(name = "data_handling_policy", columnDefinition = "TEXT")
     String dataHandlingPolicy;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "briefing", columnDefinition = "TEXT")
     String briefing;
 
     @Column(columnDefinition = "TEXT")
