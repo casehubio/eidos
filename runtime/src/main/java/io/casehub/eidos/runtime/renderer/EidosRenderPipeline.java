@@ -231,6 +231,7 @@ class EidosRenderPipeline {
 
         addIfPresent(node, "jurisdiction",       descriptor.jurisdiction());
         addIfPresent(node, "dataHandlingPolicy", descriptor.dataHandlingPolicy());
+        addIfPresent(node, "briefing",           descriptor.briefing());
 
         return node;
     }
@@ -425,6 +426,13 @@ class EidosRenderPipeline {
             assembleMarkdownDisposition(sb, descriptor);
         }
 
+        // Briefing structural fallback — only when enrichment absent or disposition not enriched,
+        // and briefing is non-null. When enrichment succeeds, briefing is woven into dispositionNarrative.
+        if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())
+                && descriptor.briefing() != null) {
+            sb.append("\n## Operating Principles\n").append(descriptor.briefing()).append("\n");
+        }
+
         // Data Handling — always structural
         assembleMarkdownDataHandling(sb, descriptor);
 
@@ -487,6 +495,12 @@ class EidosRenderPipeline {
                       .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
             }
             sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
+        }
+
+        // Briefing structural fallback in PROSE — paragraph, no header
+        if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())
+                && descriptor.briefing() != null) {
+            sb.append("\n").append(descriptor.briefing()).append("\n");
         }
 
         // Goal — enriched OR structural (selective override)

@@ -301,6 +301,23 @@ class AgentDescriptorTest {
         assertThat(d.vocabUriForSlot()).isEmpty();
     }
 
+    // ── briefing field ─────────────────────────────────────────────────────────
+
+    @Test
+    void briefing_null_by_default() {
+        var d = minimal("a", "t");
+        assertThat(d.briefing()).isNull();
+    }
+
+    @Test
+    void briefing_round_trips_through_builder() {
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .briefing("Speed is a feature. Review latency is a cost.")
+            .build();
+        assertThat(d.briefing()).isEqualTo("Speed is a feature. Review latency is a cost.");
+    }
+
     @Test
     void builder_with_explicit_nulls_equals_builder_with_nulls_omitted() {
         var explicit = AgentDescriptor.builder()
@@ -315,6 +332,7 @@ class AgentDescriptorTest {
                 .riskAppetite("measured").autonomy("semi-autonomous")
                 .build())
             .jurisdiction(null).dataHandlingPolicy(null).tenancyId("default")
+            .briefing(null)
             .build();
         var omitted = AgentDescriptor.builder()
             .agentId("agent-1").name("name").version("1.0").provider("provider")

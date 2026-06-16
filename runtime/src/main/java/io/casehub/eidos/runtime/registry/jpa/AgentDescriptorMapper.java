@@ -24,7 +24,8 @@ class AgentDescriptorMapper {
             e.slot,
             e.capabilities.stream().map(this::toCapability).toList(),
             readJson(e.disposition, AgentDisposition.class),
-            e.jurisdiction, e.dataHandlingPolicy, e.tenancyId
+            e.jurisdiction, e.dataHandlingPolicy, e.tenancyId,
+            e.briefing
         );
     }
 
@@ -45,6 +46,7 @@ class AgentDescriptorMapper {
         e.slot = d.slot();
         e.jurisdiction = d.jurisdiction();
         e.dataHandlingPolicy = d.dataHandlingPolicy();
+        e.briefing = d.briefing();
         e.disposition = writeJson(d.disposition());
         d.capabilities().stream()
             .map(c -> toCapabilityEntity(c, e))

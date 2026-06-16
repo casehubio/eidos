@@ -495,4 +495,73 @@ class EidosSystemPromptRendererTest {
         assertThat(content).doesNotContain("## How You Operate");
         assertThat(content).doesNotContain("##");
     }
+
+    // ── Briefing structural fallback ──────────────────────────────────────────
+
+    @Test
+    void structural_markdown_includes_operating_principles_when_briefing_set() {
+        final var desc = AgentDescriptor.builder()
+            .agentId("a").name("Bold Engineer").slot("reviewer")
+            .disposition(AgentDisposition.builder().riskAppetite("bold").delegation(false).build())
+            .briefing("Speed is a feature. 90% elegant beats perfect.")
+            .tenancyId("t")
+            .build();
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
+
+        final String content = rendererStructural.render(desc, ctx).content();
+
+        assertThat(content).contains("## Operating Principles");
+        assertThat(content).contains("Speed is a feature.");
+    }
+
+    @Test
+    void structural_prose_includes_briefing_paragraph_when_set() {
+        final var desc = AgentDescriptor.builder()
+            .agentId("a").name("Bold Engineer").slot("reviewer")
+            .disposition(AgentDisposition.builder().riskAppetite("bold").delegation(false).build())
+            .briefing("Speed is a feature.")
+            .tenancyId("t")
+            .build();
+        final var ctx = AgentPromptContext.forFormat(PROSE);
+
+        final String content = rendererStructural.render(desc, ctx).content();
+
+        assertThat(content).contains("Speed is a feature.");
+        assertThat(content).doesNotContain("## Operating Principles"); // PROSE has no headers
+    }
+
+    @Test
+    void no_operating_principles_section_when_briefing_null() {
+        final var desc = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .disposition(AgentDisposition.builder().riskAppetite("bold").delegation(false).build())
+            .build();
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
+
+        final String content = rendererStructural.render(desc, ctx).content();
+
+        assertThat(content).doesNotContain("Operating Principles");
+    }
+
+    @Test
+    void briefing_in_descriptor_payload_affects_cache_key() {
+        // Two descriptors identical except briefing should produce different cache keys.
+        // Verify by checking that the descriptorNode for the briefing descriptor contains "briefing".
+        final var vocabRegistry = new CdiVocabularyRegistry();
+        final var pipeline = new EidosRenderPipeline(vocabRegistry, MAPPER);
+        final var descWithBriefing = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .briefing("Speed is a feature.").build();
+        final var descWithout = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t").build();
+
+        final var nodeWith = pipeline.buildDescriptorPayload(descWithBriefing, MARKDOWN);
+        final var nodeWithout = pipeline.buildDescriptorPayload(descWithout, MARKDOWN);
+
+        assertThat(nodeWith.has("briefing")).isTrue();
+        assertThat(nodeWith.get("briefing").asText()).isEqualTo("Speed is a feature.");
+        assertThat(nodeWithout.has("briefing")).isFalse();
+        // Different JSON means different fingerprint means different cache key
+        assertThat(nodeWith.toString()).isNotEqualTo(nodeWithout.toString());
+    }
 }

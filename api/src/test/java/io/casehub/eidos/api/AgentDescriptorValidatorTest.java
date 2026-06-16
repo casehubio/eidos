@@ -162,6 +162,59 @@ class AgentDescriptorValidatorTest {
             .isInstanceOf(AgentValidationException.class);
     }
 
+    // ── briefing field ────────────────────────────────────────────────────────
+
+    @Test
+    void briefing_accepts_null() {
+        assertThatNoException().isThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .briefing(null)
+                .build());
+    }
+
+    @Test
+    void briefing_accepts_500_chars() {
+        assertThatNoException().isThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .briefing("x".repeat(500))
+                .build());
+    }
+
+    @Test
+    void briefing_rejects_501_chars() {
+        assertThatThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .briefing("x".repeat(501))
+                .build())
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("briefing"));
+    }
+
+    @Test
+    void briefing_accepts_typical_principles() {
+        assertThatNoException().isThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .briefing("Speed is a feature. Review latency is a cost. 90% elegant beats perfect.")
+                .build());
+    }
+
+    @Test
+    void briefing_rejects_blank() {
+        assertThatThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .briefing("   ")
+                .build())
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("briefing"));
+    }
+
     // ── validateMapKeys ────────────────────────────────────────────────────────
 
     @Test

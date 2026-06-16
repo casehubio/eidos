@@ -28,7 +28,8 @@ public record AgentDescriptor(
         AgentDisposition disposition,
         String jurisdiction,
         String dataHandlingPolicy,
-        String tenancyId
+        String tenancyId,
+        String briefing   // nullable — behavioral principles the structured axes cannot express
 ) {
     public AgentDescriptor {
         capabilities = capabilities != null ? List.copyOf(capabilities) : List.of();
@@ -50,6 +51,7 @@ public record AgentDescriptor(
         AgentDescriptorValidator.validateOptional("dispositionVocabulary", dispositionVocabulary, AgentDescriptorValidator.MAX_VOCABULARY_URI);
         AgentDescriptorValidator.validateOptional("jurisdiction",          jurisdiction,          AgentDescriptorValidator.MAX_JURISDICTION);
         AgentDescriptorValidator.validateOptional("dataHandlingPolicy",    dataHandlingPolicy,    AgentDescriptorValidator.MAX_DATA_HANDLING_POLICY);
+        AgentDescriptorValidator.validateOptional("briefing",              briefing,              AgentDescriptorValidator.MAX_BRIEFING);
     }
 
     /**
@@ -89,7 +91,7 @@ public record AgentDescriptor(
         private String slot;
         private List<AgentCapability> capabilities = List.of();
         private AgentDisposition disposition;
-        private String jurisdiction, dataHandlingPolicy, tenancyId;
+        private String jurisdiction, dataHandlingPolicy, tenancyId, briefing;
 
         public Builder agentId(String v)               { this.agentId               = v; return this; }
         public Builder name(String v)                  { this.name                  = v; return this; }
@@ -108,6 +110,7 @@ public record AgentDescriptor(
         public Builder jurisdiction(String v)          { this.jurisdiction          = v; return this; }
         public Builder dataHandlingPolicy(String v)    { this.dataHandlingPolicy    = v; return this; }
         public Builder tenancyId(String v)             { this.tenancyId             = v; return this; }
+        public Builder briefing(String v)              { this.briefing              = v; return this; }
 
         public AgentDescriptor build() {
             return new AgentDescriptor(
@@ -115,7 +118,7 @@ public record AgentDescriptor(
                 modelFamily, modelVersion, weightsFingerprint,
                 domainVocabulary, slotVocabulary, dispositionVocabulary,
                 axisVocabularies, slot, capabilities, disposition,
-                jurisdiction, dataHandlingPolicy, tenancyId);
+                jurisdiction, dataHandlingPolicy, tenancyId, briefing);
         }
     }
 }

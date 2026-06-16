@@ -18,6 +18,7 @@ CREATE TABLE agent_descriptor (
     slot                   VARCHAR(255),
     jurisdiction           VARCHAR(255),
     data_handling_policy   TEXT,
+    briefing               TEXT          NULL,
     disposition            TEXT,
     CONSTRAINT uq_agent UNIQUE (agent_id, tenancy_id)
 );

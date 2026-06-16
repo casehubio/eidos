@@ -48,6 +48,9 @@ public class AgentDescriptorEntity {
     String dataHandlingPolicy;
 
     @Column(columnDefinition = "TEXT")
+    String briefing;
+
+    @Column(columnDefinition = "TEXT")
     String disposition;
 
     @OneToMany(mappedBy = "descriptor", cascade = CascadeType.ALL,
