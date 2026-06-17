@@ -13,6 +13,7 @@ Run `add-dir /Users/mdproctor/claude/public/casehub/eidos` before any other work
 | Skill | Writes to |
 |-------|-----------|
 | brainstorming (specs) | `specs/` (workspace staging) |
+| update-design / arc42stories | `ARC42STORIES.MD` (workspace staging) |
 | writing-plans (plans) | `plans/` |
 | handover | `HANDOFF.md` |
 | idea-log | `IDEAS.md` |
@@ -57,6 +58,7 @@ Before any git operation, run `git rev-parse --show-toplevel` to confirm which r
 |------------|-------------|-------|
 | adr        | project     | lands in `docs/adr/` — promoted at epic close |
 | specs      | project     | lands in `docs/specs/` — promoted at epic close |
+| arc42stories | project   | `ARC42STORIES.MD` at project root — promoted at epic close |
 | blog       | workspace   | staged here; published to mdproctor.github.io via publish-blog |
 | plans      | workspace   | stay in workspace permanently |
 | design     | workspace   | epic journal stays in workspace |
