@@ -83,9 +83,9 @@ class PairContrastJudgeTest {
     private static Map<ProfiledEvalCase, RenderedPrompt> renders() {
         return Map.of(
             profiledCase("sw-engineer-bold"),
-                new RenderedPrompt("You are bold.", RenderFormat.MARKDOWN, "dh", "ch"),
+                new RenderedPrompt("You are bold.", RenderFormat.MARKDOWN, "dh", "ch", false),
             profiledCase("sw-engineer-careful"),
-                new RenderedPrompt("You are careful.", RenderFormat.MARKDOWN, "dh", "ch")
+                new RenderedPrompt("You are careful.", RenderFormat.MARKDOWN, "dh", "ch", false)
         );
     }
 

@@ -9,5 +9,5 @@ public interface SystemPromptRenderer {
         A2A_CARD    // JSON — machine-readable agent identity card
     }
 
-    record RenderedPrompt(String content, RenderFormat format, String descriptorHash, String contextHash) {}
+    record RenderedPrompt(String content, RenderFormat format, String descriptorHash, String contextHash, boolean enriched) {}
 }

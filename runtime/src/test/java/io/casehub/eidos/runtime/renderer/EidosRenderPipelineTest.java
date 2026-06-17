@@ -450,6 +450,26 @@ class EidosRenderPipelineTest {
     }
 
     @Test
+    void assemble_sets_enriched_true_when_semantic_enrichment_applied() {
+        final var enrichment = Optional.of(
+            new SemanticEnrichment(Optional.of("You are independent."), Optional.empty()));
+        final var desc = fullDescriptor();
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        final var s1 = pipeline.buildStage1(desc, ctx);
+        final var result = pipeline.assemble(s1, enrichment, Optional.empty(), desc, ctx);
+        assertThat(result.enriched()).isTrue();
+    }
+
+    @Test
+    void assemble_sets_enriched_false_when_no_enrichment() {
+        final var desc = fullDescriptor();
+        final var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        final var s1 = pipeline.buildStage1(desc, ctx);
+        final var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.enriched()).isFalse();
+    }
+
+    @Test
     void structural_markdown_includes_conflict_mode() {
         var desc = AgentDescriptor.builder()
             .agentId("a").name("N").slot("s")

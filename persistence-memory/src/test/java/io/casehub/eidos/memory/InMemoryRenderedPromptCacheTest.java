@@ -19,7 +19,7 @@ class InMemoryRenderedPromptCacheTest {
     }
 
     static RenderedPrompt prompt(String content) {
-        return new RenderedPrompt(content, RenderFormat.MARKDOWN, "dh", "ch");
+        return new RenderedPrompt(content, RenderFormat.MARKDOWN, "dh", "ch", false);
     }
 
     @Test

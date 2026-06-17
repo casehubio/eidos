@@ -35,7 +35,7 @@ class EvalReportWriterTest {
             .tenancyId("t")
             .build();
         final var ctx = AgentPromptContext.forFormat(RenderFormat.MARKDOWN);
-        final var rendered = new RenderedPrompt("You are Agent.", RenderFormat.MARKDOWN, "dh", "ch");
+        final var rendered = new RenderedPrompt("You are Agent.", RenderFormat.MARKDOWN, "dh", "ch", false);
         // MARKDOWN uses SECOND_PERSON, CONCISENESS, FACTUAL_FIDELITY, TONE
         final Map<EvalDimension, EvalScore> scores = new EnumMap<>(EvalDimension.class);
         scores.put(EvalDimension.SECOND_PERSON,    new EvalScore(4, "good"));
@@ -94,7 +94,7 @@ class EvalReportWriterTest {
             .build();
         final var ctx = AgentPromptContext.forFormat(RenderFormat.A2A_CARD);
         final var rendered = new RenderedPrompt(
-            "{\"name\":\"Bot\"}", RenderFormat.A2A_CARD, "dh", "ch");
+            "{\"name\":\"Bot\"}", RenderFormat.A2A_CARD, "dh", "ch", false);
         final Map<EvalDimension, EvalScore> a2aScores = new EnumMap<>(EvalDimension.class);
         a2aScores.put(EvalDimension.COMPLETENESS,     new EvalScore(4, "good"));
         a2aScores.put(EvalDimension.FACTUAL_FIDELITY, new EvalScore(4, "good"));

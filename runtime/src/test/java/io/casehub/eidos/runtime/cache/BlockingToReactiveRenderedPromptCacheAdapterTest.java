@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlockingToReactiveRenderedPromptCacheAdapterTest {
 
-    static final RenderedPrompt PROMPT = new RenderedPrompt("content", RenderFormat.MARKDOWN, "dh", "ch");
+    static final RenderedPrompt PROMPT = new RenderedPrompt("content", RenderFormat.MARKDOWN, "dh", "ch", false);
 
     ReactiveRenderedPromptCache adapter;
 

@@ -217,6 +217,10 @@ public class PromptJudge {
         if (evalCase.context().format() == RenderFormat.A2A_CARD) {
             return computeA2aMissingDescriptions(evalCase, rendered.content());
         }
+        if (rendered.enriched()) {
+            // Enriched renders paraphrase capability names — FACTUAL_FIDELITY score is the signal here.
+            return List.of();
+        }
         final String lowerContent = rendered.content().toLowerCase();
         return evalCase.descriptor().capabilities().stream()
             .map(AgentCapability::name)

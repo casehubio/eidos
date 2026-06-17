@@ -24,7 +24,7 @@ class EvalReportTest {
             .tenancyId("tenant")
             .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(format));
-        final var rendered = new RenderedPrompt("content", format, "dh", "ch");
+        final var rendered = new RenderedPrompt("content", format, "dh", "ch", false);
         final double overall = scores.values().stream()
             .mapToInt(EvalScore::score).average().orElse(0.0);
         return new EvalResult(evalCase, rendered, complete, List.of(), scores, overall, List.of());

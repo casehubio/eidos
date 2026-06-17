@@ -33,7 +33,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
     void setUp() {
         pipeline = new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER);
         blockingDelegate = (descriptor, context) ->
-            new RenderedPrompt("blocking:" + descriptor.name(), context.format(), "dh", "ch");
+            new RenderedPrompt("blocking:" + descriptor.name(), context.format(), "dh", "ch", false);
     }
 
     static AgentDescriptor descriptor() {
@@ -137,7 +137,7 @@ class DefaultReactiveSystemPromptRendererStreamingTest {
         final var ctx = AgentPromptContext.forFormat(MARKDOWN);
         final StageOneResult s1 = pipeline.buildStage1(descriptor(), ctx);
         final RenderedPrompt cachedResult = new RenderedPrompt(
-            "cached-content", MARKDOWN, s1.descriptorHash(), s1.contextHash());
+            "cached-content", MARKDOWN, s1.descriptorHash(), s1.contextHash(), false);
 
         final TestReactiveRenderedPromptCache prePopulated = new TestReactiveRenderedPromptCache();
         prePopulated.store.put(s1.lookupKey(), cachedResult);

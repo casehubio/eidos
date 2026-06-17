@@ -330,7 +330,9 @@ class EidosRenderPipeline {
             case PROSE     -> assembleProse(enrichment, descriptor, context);
             case A2A_CARD  -> assembleA2aCard(a2aEnrichment, descriptor);
         };
-        return new RenderedPrompt(content, context.format(), s1.descriptorHash(), s1.contextHash());
+        final boolean enriched = enrichment.map(e -> e.dispositionNarrative().isPresent()).orElse(false)
+            || a2aEnrichment.isPresent();
+        return new RenderedPrompt(content, context.format(), s1.descriptorHash(), s1.contextHash(), enriched);
     }
 
     // ── Format-specific assembly ─────────────────────────────────────────────

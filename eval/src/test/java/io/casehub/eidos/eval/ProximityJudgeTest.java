@@ -37,7 +37,7 @@ class ProximityJudgeTest {
         }, new ObjectMapper());
         evalCase = caseWithDisposition(
             AgentDisposition.builder().riskAppetite("bold").ruleFollowing("strict").build());
-        rendered = new RenderedPrompt("You approve boldly.", RenderFormat.MARKDOWN, "dh", "ch");
+        rendered = new RenderedPrompt("You approve boldly.", RenderFormat.MARKDOWN, "dh", "ch", false);
     }
 
     @Test

@@ -58,7 +58,7 @@ class PromptJudgeTest {
             .tenancyId("tenant")
             .build();
         evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
-        rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
+        rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch", false);
     }
 
     @Test
@@ -85,16 +85,24 @@ class PromptJudgeTest {
 
     @Test
     void evaluate_detects_missing_cap() {
-        final RenderedPrompt noCaps = new RenderedPrompt("no caps here", RenderFormat.MARKDOWN, "dh", "ch");
+        final RenderedPrompt noCaps = new RenderedPrompt("no caps here", RenderFormat.MARKDOWN, "dh", "ch", false);
         final EvalResult result = judge.evaluate(evalCase, noCaps);
         assertThat(result.completenessPass()).isFalse();
         assertThat(result.missingCapabilities()).containsExactly("code-review");
     }
 
     @Test
+    void evaluate_completeness_always_passes_for_enriched_renders_even_when_cap_name_absent() {
+        final RenderedPrompt enriched = new RenderedPrompt("no caps here", RenderFormat.MARKDOWN, "dh", "ch", true);
+        final EvalResult result = judge.evaluate(evalCase, enriched);
+        assertThat(result.completenessPass()).isTrue();
+        assertThat(result.missingCapabilities()).isEmpty();
+    }
+
+    @Test
     void evaluate_completeness_passes_when_cap_name_appears_hyphen_normalized() {
         // LLM enrichment writes "code review" (spaces), not "code-review" (hyphen slug)
-        final RenderedPrompt hyphenNormed = new RenderedPrompt("You can do code review.", RenderFormat.MARKDOWN, "dh", "ch");
+        final RenderedPrompt hyphenNormed = new RenderedPrompt("You can do code review.", RenderFormat.MARKDOWN, "dh", "ch", false);
         final EvalResult result = judge.evaluate(evalCase, hyphenNormed);
         assertThat(result.completenessPass()).isTrue();
         assertThat(result.missingCapabilities()).isEmpty();
@@ -110,7 +118,7 @@ class PromptJudgeTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(VALID_JUDGE_JSON)).build();
             }
         };
-        final RenderedPrompt noCaps = new RenderedPrompt("no caps here", RenderFormat.MARKDOWN, "dh", "ch");
+        final RenderedPrompt noCaps = new RenderedPrompt("no caps here", RenderFormat.MARKDOWN, "dh", "ch", false);
         new PromptJudge(trackingJudge, new ObjectMapper()).evaluate(evalCase, noCaps);
         assertThat(called[0]).isTrue();
     }
@@ -143,7 +151,7 @@ class PromptJudgeTest {
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final var a2aRendered = new RenderedPrompt(
             "{\"name\":\"Name\",\"agentId\":\"id\",\"capabilities\":[{\"name\":\"code-review\",\"description\":\"You can review code.\"}]}",
-            RenderFormat.A2A_CARD, "dh", "ch");
+            RenderFormat.A2A_CARD, "dh", "ch", false);
 
         final EvalResult result = new PromptJudge(a2aStub, new ObjectMapper()).evaluate(a2aCase, a2aRendered);
 
@@ -173,7 +181,7 @@ class PromptJudgeTest {
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final String cardWithDesc =
             "{\"capabilities\":[{\"name\":\"sprint-planning\",\"description\":\"You plan sprints.\"}]}";
-        final var rendered = new RenderedPrompt(cardWithDesc, RenderFormat.A2A_CARD, "dh", "ch");
+        final var rendered = new RenderedPrompt(cardWithDesc, RenderFormat.A2A_CARD, "dh", "ch", false);
 
         final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(a2aCase, rendered);
 
@@ -199,7 +207,7 @@ class PromptJudgeTest {
             .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final String cardNoDesc = "{\"capabilities\":[{\"name\":\"sprint-planning\"}]}";
-        final var rendered = new RenderedPrompt(cardNoDesc, RenderFormat.A2A_CARD, "dh", "ch");
+        final var rendered = new RenderedPrompt(cardNoDesc, RenderFormat.A2A_CARD, "dh", "ch", false);
 
         final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(a2aCase, rendered);
 
@@ -226,7 +234,7 @@ class PromptJudgeTest {
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         // description field is present but blank
         final String cardBlankDesc = "{\"capabilities\":[{\"name\":\"sprint-planning\",\"description\":\"\"}]}";
-        final var rendered = new RenderedPrompt(cardBlankDesc, RenderFormat.A2A_CARD, "dh", "ch");
+        final var rendered = new RenderedPrompt(cardBlankDesc, RenderFormat.A2A_CARD, "dh", "ch", false);
 
         final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(a2aCase, rendered);
 
@@ -251,7 +259,7 @@ class PromptJudgeTest {
             .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
         final var rendered = new RenderedPrompt(
-            "{\"name\":\"Name\",\"agentId\":\"id\"}", RenderFormat.A2A_CARD, "dh", "ch");
+            "{\"name\":\"Name\",\"agentId\":\"id\"}", RenderFormat.A2A_CARD, "dh", "ch", false);
 
         final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(a2aCase, rendered);
 
@@ -312,7 +320,7 @@ class PromptJudgeTest {
             .tenancyId("tenant")
             .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
-        final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
+        final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch", false);
 
         assertThatThrownBy(() -> new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered))
             .isInstanceOf(MalformedJudgeResponseException.class)
@@ -343,7 +351,7 @@ class PromptJudgeTest {
             .tenancyId("tenant")
             .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
-        final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch");
+        final var rendered = new RenderedPrompt("- **code-review**", RenderFormat.MARKDOWN, "dh", "ch", false);
 
         final EvalResult result = new PromptJudge(stub, new ObjectMapper()).evaluate(evalCase, rendered);
         assertThat(result.scores().get(EvalDimension.SECOND_PERSON).score()).isEqualTo(4);

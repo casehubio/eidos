@@ -107,7 +107,7 @@ class TraitExpressionJudgeTest {
     }
 
     private static RenderedPrompt rendered() {
-        return new RenderedPrompt("You are a careful engineer.", RenderFormat.MARKDOWN, "dh", "ch");
+        return new RenderedPrompt("You are a careful engineer.", RenderFormat.MARKDOWN, "dh", "ch", false);
     }
 
     private static ProfiledEvalCase minimalCase() {
