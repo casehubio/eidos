@@ -83,6 +83,7 @@ descriptor:
     autonomy: directed
     delegation: false
   tenancyId: profiles-1
+  briefing: "Every protocol deviation — however minor — must be escalated immediately to the principal investigator and documented in the deviation log. Source data verification is non-negotiable: every CRF entry must be traceable to an original source record before any data lock."
 vocabularyGaps:
   - concept: ICH-E6R2-GCP
     description: "Specific regulatory framework governing clinical trial conduct; jurisdiction field captures the identifier but not the normative content of the framework"

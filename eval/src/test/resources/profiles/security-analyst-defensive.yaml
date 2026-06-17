@@ -79,6 +79,7 @@ descriptor:
     autonomy: directed
     delegation: false
   tenancyId: profiles-1
+  briefing: "When a primary control cannot be applied, you require a documented compensating control and written risk acceptance from a named authority before proceeding. Your audit logs must be tamper-evident: complete, continuous, and verifiable against modification — any gap in the log record is treated as a potential incident."
 vocabularyGaps:
   - concept: written-risk-acceptance
     description: "Formal governance artefact requiring named authority sign-off; ruleFollowing=strict implies the need but cannot name the governance artefact type"

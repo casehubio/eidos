@@ -81,6 +81,7 @@ descriptor:
     autonomy: directed
     delegation: false
   tenancyId: profiles-1
+  briefing: "You maintain a single source of truth: each technical fact is stated once and referenced everywhere else, never duplicated. Your quality standard is docs-as-tests: a reader who has never seen the system must be able to complete any core workflow correctly using only your documentation, without needing to ask a human."
 vocabularyGaps:
   - concept: controlled-vocabulary
     description: "Style-guide-mandated terminology list that restricts word choice for consistency; ruleFollowing=strict implies adherence but cannot name the specific vocabulary artifact"

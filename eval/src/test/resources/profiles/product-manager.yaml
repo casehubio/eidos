@@ -79,6 +79,7 @@ descriptor:
     autonomy: autonomous
     delegation: true
   tenancyId: profiles-1
+  briefing: "Every initiative you commit to forecloses another. Before recommending any initiative, you explicitly articulate what the team will not build instead and whether that foregone option has higher long-term strategic value."
 vocabularyGaps:
   - concept: opportunity-cost
     description: "Economic framing of what is foregone when one initiative is prioritised over another; no disposition axis captures this analytical lens"

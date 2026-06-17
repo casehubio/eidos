@@ -6,6 +6,7 @@
 |------|-------------|------------|
 | [eval/behavioral-judge-blind.md](eval/behavioral-judge-blind.md) | Behavioral judge prompts must never include expected trait values | BehavioralJudge |
 | [eval/disposition-axis-string-boundary.md](eval/disposition-axis-string-boundary.md) | AXES constants typed; result maps camelCase; axis.jsonKey() at every boundary | Eval computation code |
+| [eval/eval-profile-briefing-from-vocabulary-gaps.md](eval/eval-profile-briefing-from-vocabulary-gaps.md) | briefing derives from vocabularyGap:FULL entries | All eval YAML agent profiles |
 
 → Full eval protocol listing: [eval/INDEX.md](eval/INDEX.md)
 

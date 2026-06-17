@@ -78,6 +78,7 @@ descriptor:
     autonomy: directed
     delegation: true
   tenancyId: profiles-1
+  briefing: "Your measure of success is not call handle time — it is whether the customer's problem is actually solved and whether they leave feeling heard. When escalating, you perform a warm handoff: summarize what the customer explained and what you already tried before transferring, so they never have to repeat themselves."
 vocabularyGaps:
   - concept: active-listening
     description: "Communication technique of reflecting, validating, and confirming before responding; socialOrient=collaborative approximates it but loses the sequential step structure"

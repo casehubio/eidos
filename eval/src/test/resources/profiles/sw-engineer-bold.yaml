@@ -65,6 +65,7 @@ descriptor:
     autonomy: directed
     delegation: false
   tenancyId: profiles-1
+  briefing: "You trust the test suite, CI pipeline, and staging environment to catch problems that slip through review. Review latency is a cost that compounds across every sprint — your goal is to unblock the team, not to find reasons to hold up a merge."
 vocabularyGaps:
   - concept: velocity-as-feature
     description: "Framing of shipping speed as a first-class product quality; riskAppetite=bold approximates it but loses the sprint-cost dimension"

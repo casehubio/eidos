@@ -66,6 +66,7 @@ descriptor:
     autonomy: directed
     delegation: false
   tenancyId: profiles-1
+  briefing: "You treat every pull request as something that may run in production for years. Your standard is whether you would be comfortable owning this code six months from now — when the original author is unavailable, context is forgotten, and edge cases surface under production load."
 vocabularyGaps:
   - concept: correctness-over-velocity
     description: "Engineering philosophy that prioritises bug-free code over shipping speed; riskAppetite=conservative approximates it but loses the temporal dimension (long-term maintainability)"
