@@ -24,8 +24,8 @@ class JpaReactiveAgentRegistryTest {
     static AgentDescriptor descriptor(String agentId, String slot, String tenancyId,
                                       String... capabilityNames) {
         var caps = Arrays.stream(capabilityNames)
-            .map(n -> new AgentCapability(n, 0.9, null, null,
-                List.of(), List.of(), List.of(), Map.of()))
+            .map(n -> AgentCapability.builder().name(n).qualityHint(0.9)
+                .epistemicDomains(Map.of()).build())
             .toList();
         return AgentDescriptor.builder()
             .agentId(agentId)

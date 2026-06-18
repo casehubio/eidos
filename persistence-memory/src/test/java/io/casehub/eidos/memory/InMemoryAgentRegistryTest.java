@@ -25,8 +25,8 @@ class InMemoryAgentRegistryTest {
 
     static AgentDescriptor descriptor(String agentId, String slot, String tenancyId, String... caps) {
         var capabilities = Arrays.stream(caps)
-            .map(n -> new AgentCapability(n, 0.9, null, null,
-                List.of(), List.of(), List.of(), Map.of()))
+            .map(n -> AgentCapability.builder().name(n).qualityHint(0.9)
+                .epistemicDomains(Map.of()).build())
             .toList();
         return AgentDescriptor.builder()
             .agentId(agentId)
@@ -114,8 +114,9 @@ class InMemoryAgentRegistryTest {
     @Test
     void capability_with_empty_types_lists_is_valid() {
         // Empty inputTypes/outputTypes/tags are allowed; name is required.
-        var cap = new AgentCapability("empty-types", 0.9, null, null,
-            List.of(), List.of(), List.of(), Map.of());
+        var cap = AgentCapability.builder().name("empty-types").qualityHint(0.9)
+            .inputTypes(List.of()).outputTypes(List.of()).tags(List.of())
+            .epistemicDomains(Map.of()).build();
         var descriptor = AgentDescriptor.builder()
             .agentId("m-8")
             .name("Agent")

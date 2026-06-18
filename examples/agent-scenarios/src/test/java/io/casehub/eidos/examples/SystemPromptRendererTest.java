@@ -30,9 +30,10 @@ class SystemPromptRendererTest {
             .modelVersion("claude-3-7-sonnet")
             .slotVocabulary("urn:casehub:vocab:casehub-slot")
             .slot("planner")
-            .capabilities(List.of(new AgentCapability("planning", 0.9, 200L, "medium",
-                List.of("requirements"), List.of("plan"), List.of(),
-                Map.of("software", 0.95, "logistics", 0.4))))
+            .capabilities(List.of(AgentCapability.builder()
+                .name("planning").qualityHint(0.9).latencyHintP50Ms(200L).costHint("medium")
+                .inputTypes(List.of("requirements")).outputTypes(List.of("plan")).tags(List.of())
+                .epistemicDomains(Map.of("software", 0.95, "logistics", 0.4)).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("facilitative")
                 .ruleFollowing("principled")

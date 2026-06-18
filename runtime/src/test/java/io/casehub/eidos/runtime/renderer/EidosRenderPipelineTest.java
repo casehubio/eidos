@@ -93,9 +93,10 @@ class EidosRenderPipelineTest {
             .modelFamily("claude")
             .modelVersion("claude-3-7-sonnet")
             .slot("reviewer")
-            .capabilities(List.of(new AgentCapability("code-review", 0.95, 150L, "low",
-                List.of("code"), List.of("review"), List.of(),
-                Map.of("java", 0.95, "rust", 0.3))))
+            .capabilities(List.of(AgentCapability.builder()
+                .name("code-review").qualityHint(0.95).latencyHintP50Ms(150L).costHint("low")
+                .inputTypes(List.of("code")).outputTypes(List.of("review")).tags(List.of())
+                .epistemicDomains(Map.of("java", 0.95, "rust", 0.3)).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("independent")
                 .ruleFollowing("strict")
@@ -527,9 +528,7 @@ class EidosRenderPipelineTest {
     void a2a_card_capability_numeric_fields_absent_when_null() {
         var desc = AgentDescriptor.builder()
             .agentId("a").name("N").slot("s")
-            .capabilities(List.of(new AgentCapability(
-                "simple-cap", null, null, null,
-                List.of(), List.of(), List.of(), null)))
+            .capabilities(List.of(AgentCapability.builder().name("simple-cap").build()))
             .tenancyId("t").build();
         var cap = renderA2aCard(desc).get("capabilities").get(0);
         assertThat(cap.get("name").asText()).isEqualTo("simple-cap");

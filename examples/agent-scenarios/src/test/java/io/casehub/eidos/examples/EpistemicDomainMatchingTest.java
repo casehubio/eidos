@@ -25,9 +25,10 @@ class EpistemicDomainMatchingTest {
         .modelFamily("claude")
         .modelVersion("claude-3-7-sonnet")
         .slot("reviewer")
-        .capabilities(List.of(new AgentCapability("code-review", 0.9, 150L, "low",
-            List.of("code"), List.of("review"), List.of("quality"),
-            Map.of("java", 0.95, "python", 0.8, "rust", 0.2))))
+        .capabilities(List.of(AgentCapability.builder()
+            .name("code-review").qualityHint(0.9).latencyHintP50Ms(150L).costHint("low")
+            .inputTypes(List.of("code")).outputTypes(List.of("review")).tags(List.of("quality"))
+            .epistemicDomains(Map.of("java", 0.95, "python", 0.8, "rust", 0.2)).build()))
         .disposition(AgentDisposition.builder()
             .socialOrient("independent")
             .ruleFollowing("principled")

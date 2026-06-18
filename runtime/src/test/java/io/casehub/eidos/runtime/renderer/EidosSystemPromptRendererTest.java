@@ -63,9 +63,10 @@ class EidosSystemPromptRendererTest {
             .modelFamily("claude")
             .modelVersion("claude-3-7-sonnet")
             .slot("reviewer")
-            .capabilities(List.of(new AgentCapability("code-review", 0.95, 150L, "low",
-                List.of("code"), List.of("review"), List.of(),
-                Map.of("java", 0.95, "rust", 0.3))))
+            .capabilities(List.of(AgentCapability.builder()
+                .name("code-review").qualityHint(0.95).latencyHintP50Ms(150L).costHint("low")
+                .inputTypes(List.of("code")).outputTypes(List.of("review")).tags(List.of())
+                .epistemicDomains(Map.of("java", 0.95, "rust", 0.3)).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("independent")
                 .ruleFollowing("strict")
@@ -548,8 +549,8 @@ class EidosSystemPromptRendererTest {
         // briefing is a human-interpretable instruction — not an A2A routing signal
         final var desc = AgentDescriptor.builder()
             .agentId("a").name("Bold Engineer").slot("reviewer")
-            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("code-review")
+                .epistemicDomains(Map.of()).build()))
             .briefing("Speed is a feature.")
             .tenancyId("t")
             .build();

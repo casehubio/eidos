@@ -43,8 +43,8 @@ class DefaultReactiveCapabilityHealthTest {
 
     @Test
     void reactive_probe_returns_ready_when_capability_declared() {
-        var descriptor = agent(new AgentCapability("code-review", 0.9, null, null,
-            List.of(), List.of(), List.of(), Map.of()));
+        var descriptor = agent(AgentCapability.builder().name("code-review").qualityHint(0.9)
+            .epistemicDomains(Map.of()).build());
 
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null))
             .await().indefinitely();
@@ -64,8 +64,8 @@ class DefaultReactiveCapabilityHealthTest {
 
     @Test
     void reactive_probe_returns_epistemically_weak() {
-        var descriptor = agent(new AgentCapability("code-review", 0.9, null, null,
-            List.of(), List.of(), List.of(), Map.of("rust", 0.1)));
+        var descriptor = agent(AgentCapability.builder().name("code-review").qualityHint(0.9)
+            .epistemicDomains(Map.of("rust", 0.1)).build());
 
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"))
             .await().indefinitely();

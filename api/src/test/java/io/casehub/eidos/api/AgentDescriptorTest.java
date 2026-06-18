@@ -38,8 +38,10 @@ class AgentDescriptorTest {
 
     @Test
     void capability_fields_accessible() {
-        var cap = new AgentCapability("code-review", 0.9, 500L, "low",
-            List.of("java"), List.of("review"), List.of("quality"), Map.of("java", 0.95));
+        var cap = AgentCapability.builder()
+            .name("code-review").qualityHint(0.9).latencyHintP50Ms(500L).costHint("low")
+            .inputTypes(List.of("java")).outputTypes(List.of("review")).tags(List.of("quality"))
+            .epistemicDomains(Map.of("java", 0.95)).build();
         assertThat(cap.name()).isEqualTo("code-review");
         assertThat(cap.qualityHint()).isEqualTo(0.9);
         assertThat(cap.latencyHintP50Ms()).isEqualTo(500L);

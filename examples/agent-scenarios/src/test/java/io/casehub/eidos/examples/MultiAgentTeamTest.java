@@ -27,9 +27,10 @@ class MultiAgentTeamTest {
             .modelVersion("claude-3-7-sonnet")
             .slotVocabulary("urn:casehub:vocab:casehub-slot")
             .slot("planner")
-            .capabilities(List.of(new AgentCapability("planning", 0.9, 200L, "medium",
-                List.of("requirements"), List.of("plan"), List.of("orchestration"),
-                Map.of("software", 0.95, "logistics", 0.4))))
+            .capabilities(List.of(AgentCapability.builder()
+                .name("planning").qualityHint(0.9).latencyHintP50Ms(200L).costHint("medium")
+                .inputTypes(List.of("requirements")).outputTypes(List.of("plan")).tags(List.of("orchestration"))
+                .epistemicDomains(Map.of("software", 0.95, "logistics", 0.4)).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("facilitative")
                 .ruleFollowing("principled")
@@ -50,12 +51,12 @@ class MultiAgentTeamTest {
             .slotVocabulary("urn:casehub:vocab:casehub-slot")
             .slot("reviewer")
             .capabilities(List.of(
-                new AgentCapability("code-review", 0.95, 150L, "low",
-                    List.of("code"), List.of("review"), List.of("quality"),
-                    Map.of("java", 0.95, "python", 0.8, "rust", 0.3)),
-                new AgentCapability("test-writing", 0.8, 300L, "medium",
-                    List.of("code"), List.of("tests"), List.of("testing"),
-                    Map.of("java", 0.9))))
+                AgentCapability.builder().name("code-review").qualityHint(0.95).latencyHintP50Ms(150L).costHint("low")
+                    .inputTypes(List.of("code")).outputTypes(List.of("review")).tags(List.of("quality"))
+                    .epistemicDomains(Map.of("java", 0.95, "python", 0.8, "rust", 0.3)).build(),
+                AgentCapability.builder().name("test-writing").qualityHint(0.8).latencyHintP50Ms(300L).costHint("medium")
+                    .inputTypes(List.of("code")).outputTypes(List.of("tests")).tags(List.of("testing"))
+                    .epistemicDomains(Map.of("java", 0.9)).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("independent")
                 .ruleFollowing("strict")
@@ -74,9 +75,10 @@ class MultiAgentTeamTest {
             .modelVersion("claude-3-7-sonnet")
             .slotVocabulary("urn:casehub:vocab:casehub-slot")
             .slot("executor")
-            .capabilities(List.of(new AgentCapability("code-generation", 0.85, 500L, "high",
-                List.of("spec"), List.of("code"), List.of("implementation"),
-                Map.of("java", 0.9, "python", 0.85, "rust", 0.6))))
+            .capabilities(List.of(AgentCapability.builder()
+                .name("code-generation").qualityHint(0.85).latencyHintP50Ms(500L).costHint("high")
+                .inputTypes(List.of("spec")).outputTypes(List.of("code")).tags(List.of("implementation"))
+                .epistemicDomains(Map.of("java", 0.9, "python", 0.85, "rust", 0.6)).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("collaborative")
                 .ruleFollowing("flexible")

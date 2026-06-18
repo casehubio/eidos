@@ -39,8 +39,8 @@ class DefaultCapabilityHealthTest {
     }
 
     static AgentCapability capability(String name, Map<String, Double> epistemicDomains) {
-        return new AgentCapability(name, 0.9, null, null,
-            List.of(), List.of(), List.of(), epistemicDomains);
+        return AgentCapability.builder().name(name).qualityHint(0.9)
+            .epistemicDomains(epistemicDomains).build();
     }
 
     @Test

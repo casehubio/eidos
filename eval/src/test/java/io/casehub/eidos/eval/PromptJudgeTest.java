@@ -53,8 +53,7 @@ class PromptJudgeTest {
             .agentId("id")
             .name("Name")
             .slot("worker")
-            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("code-review").build()))
             .tenancyId("tenant")
             .build();
         evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
@@ -143,8 +142,7 @@ class PromptJudgeTest {
             .agentId("id")
             .name("Name")
             .slot("worker")
-            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("code-review").build()))
             .tenancyId("tenant")
             .build();
         final var a2aCase = new SyntheticEvalCase("a2a-test", desc,
@@ -174,8 +172,7 @@ class PromptJudgeTest {
             .agentId("id")
             .name("Name")
             .slot("worker")
-            .capabilities(List.of(new AgentCapability("sprint-planning", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("sprint-planning").build()))
             .tenancyId("tenant")
             .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
@@ -201,8 +198,7 @@ class PromptJudgeTest {
             .agentId("id")
             .name("Name")
             .slot("worker")
-            .capabilities(List.of(new AgentCapability("sprint-planning", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("sprint-planning").build()))
             .tenancyId("tenant")
             .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
@@ -227,8 +223,7 @@ class PromptJudgeTest {
             .agentId("id")
             .name("Name")
             .slot("worker")
-            .capabilities(List.of(new AgentCapability("sprint-planning", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("sprint-planning").build()))
             .tenancyId("tenant")
             .build();
         final var a2aCase = new SyntheticEvalCase("a2a", desc, AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
@@ -315,8 +310,7 @@ class PromptJudgeTest {
             .agentId("id")
             .name("Name")
             .slot("worker")
-            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("code-review").build()))
             .tenancyId("tenant")
             .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
@@ -346,8 +340,7 @@ class PromptJudgeTest {
             .agentId("id")
             .name("Name")
             .slot("worker")
-            .capabilities(List.of(new AgentCapability("code-review", null, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("code-review").build()))
             .tenancyId("tenant")
             .build();
         final var evalCase = new SyntheticEvalCase("test", desc, AgentPromptContext.forFormat(RenderFormat.MARKDOWN));

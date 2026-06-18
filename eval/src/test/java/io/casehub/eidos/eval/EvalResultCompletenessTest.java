@@ -15,8 +15,7 @@ class EvalResultCompletenessTest {
 
     static AgentDescriptor descriptorWithCaps(final String... capNames) {
         final var caps = Arrays.stream(capNames)
-            .map(n -> new AgentCapability(n, null, null, null,
-                List.of(), List.of(), List.of(), Map.of()))
+            .map(n -> AgentCapability.builder().name(n).build())
             .toList();
         return AgentDescriptor.builder()
             .agentId("id")

@@ -26,8 +26,8 @@ class DefaultReactiveCapabilityHealthDefaultProfileTest {
             .modelFamily("claude")
             .modelVersion("claude-3-7")
             .slot("reviewer")
-            .capabilities(List.of(new AgentCapability("code-review", 0.9, null, null,
-                List.of(), List.of(), List.of(), Map.of())))
+            .capabilities(List.of(AgentCapability.builder().name("code-review").qualityHint(0.9)
+                .epistemicDomains(Map.of()).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("collaborative")
                 .ruleFollowing("principled")

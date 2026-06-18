@@ -31,12 +31,12 @@ public class EvalDataset {
             .slotVocabulary("https://vocab.casehub.io/devtown")
             .slot("planner")
             .capabilities(List.of(
-                new AgentCapability("sprint-planning", 0.9, 200L, "medium",
-                    List.of("backlog", "team-capacity"), List.of("sprint-plan"), List.of(),
-                    Map.of("agile", 0.9, "kanban", 0.7)),
-                new AgentCapability("estimation", 0.8, 100L, "low",
-                    List.of("user-story"), List.of("story-points"), List.of(),
-                    Map.of("agile", 0.85))
+                AgentCapability.builder().name("sprint-planning").qualityHint(0.9).latencyHintP50Ms(200L).costHint("medium")
+                    .inputTypes(List.of("backlog", "team-capacity")).outputTypes(List.of("sprint-plan")).tags(List.of())
+                    .epistemicDomains(Map.of("agile", 0.9, "kanban", 0.7)).build(),
+                AgentCapability.builder().name("estimation").qualityHint(0.8).latencyHintP50Ms(100L).costHint("low")
+                    .inputTypes(List.of("user-story")).outputTypes(List.of("story-points")).tags(List.of())
+                    .epistemicDomains(Map.of("agile", 0.85)).build()
             ))
             .disposition(AgentDisposition.builder()
                 .socialOrient("collaborative")
@@ -64,9 +64,10 @@ public class EvalDataset {
             .domainVocabulary("https://vocab.casehub.io/svo")
             .slotVocabulary("https://vocab.casehub.io/devtown")
             .slot("reviewer")
-            .capabilities(List.of(new AgentCapability("code-review", 0.95, 150L, "low",
-                List.of("pull-request"), List.of("review-comment"), List.of(),
-                Map.of("java", 0.95, "rust", 0.4, "python", 0.7))))
+            .capabilities(List.of(AgentCapability.builder()
+                .name("code-review").qualityHint(0.95).latencyHintP50Ms(150L).costHint("low")
+                .inputTypes(List.of("pull-request")).outputTypes(List.of("review-comment")).tags(List.of())
+                .epistemicDomains(Map.of("java", 0.95, "rust", 0.4, "python", 0.7)).build()))
             .disposition(AgentDisposition.builder()
                 .socialOrient("independent")
                 .ruleFollowing("strict")
@@ -89,9 +90,10 @@ public class EvalDataset {
             .modelFamily("gpt")
             .modelVersion("gpt-4o")
             .slot("researcher")
-            .capabilities(List.of(new AgentCapability("literature-review", 0.6, 500L, "high",
-                List.of("papers"), List.of("summary"), List.of(),
-                Map.of("reinforcement-learning", 0.25, "supervised-learning", 0.8))))
+            .capabilities(List.of(AgentCapability.builder()
+                .name("literature-review").qualityHint(0.6).latencyHintP50Ms(500L).costHint("high")
+                .inputTypes(List.of("papers")).outputTypes(List.of("summary")).tags(List.of())
+                .epistemicDomains(Map.of("reinforcement-learning", 0.25, "supervised-learning", 0.8)).build()))
             .tenancyId("research-1")
             .build();
         final var context = AgentPromptContext.forFormat(RenderFormat.MARKDOWN)
@@ -124,12 +126,12 @@ public class EvalDataset {
             .dispositionVocabulary("https://vocab.casehub.io/conscientiousness")
             .slot("orchestrator")
             .capabilities(List.of(
-                new AgentCapability("planning", 0.95, 200L, "medium",
-                    List.of("goal", "constraints"), List.of("plan", "timeline"), List.of("urgent"),
-                    Map.of("strategy", 0.9, "operations", 0.8)),
-                new AgentCapability("delegation", 0.85, 50L, "low",
-                    List.of("task-spec"), List.of("assignment"), List.of(),
-                    Map.of("team-management", 0.75))
+                AgentCapability.builder().name("planning").qualityHint(0.95).latencyHintP50Ms(200L).costHint("medium")
+                    .inputTypes(List.of("goal", "constraints")).outputTypes(List.of("plan", "timeline")).tags(List.of("urgent"))
+                    .epistemicDomains(Map.of("strategy", 0.9, "operations", 0.8)).build(),
+                AgentCapability.builder().name("delegation").qualityHint(0.85).latencyHintP50Ms(50L).costHint("low")
+                    .inputTypes(List.of("task-spec")).outputTypes(List.of("assignment")).tags(List.of())
+                    .epistemicDomains(Map.of("team-management", 0.75)).build()
             ))
             .disposition(AgentDisposition.builder()
                 .socialOrient("collaborative")
@@ -167,12 +169,12 @@ public class EvalDataset {
             .slotVocabulary("https://vocab.casehub.io/devtown")
             .slot("planner")
             .capabilities(List.of(
-                new AgentCapability("sprint-planning", 0.9, 200L, "medium",
-                    List.of("backlog", "team-capacity"), List.of("sprint-plan"), List.of(),
-                    Map.of("agile", 0.9, "kanban", 0.7)),
-                new AgentCapability("estimation", 0.8, 100L, "low",
-                    List.of("user-story"), List.of("story-points"), List.of(),
-                    Map.of("agile", 0.85))
+                AgentCapability.builder().name("sprint-planning").qualityHint(0.9).latencyHintP50Ms(200L).costHint("medium")
+                    .inputTypes(List.of("backlog", "team-capacity")).outputTypes(List.of("sprint-plan")).tags(List.of())
+                    .epistemicDomains(Map.of("agile", 0.9, "kanban", 0.7)).build(),
+                AgentCapability.builder().name("estimation").qualityHint(0.8).latencyHintP50Ms(100L).costHint("low")
+                    .inputTypes(List.of("user-story")).outputTypes(List.of("story-points")).tags(List.of())
+                    .epistemicDomains(Map.of("agile", 0.85)).build()
             ))
             .disposition(AgentDisposition.builder()
                 .socialOrient("collaborative")
@@ -203,12 +205,12 @@ public class EvalDataset {
             .dispositionVocabulary("https://vocab.casehub.io/conscientiousness")
             .slot("orchestrator")
             .capabilities(List.of(
-                new AgentCapability("planning", 0.95, 200L, "medium",
-                    List.of("goal", "constraints"), List.of("plan", "timeline"), List.of("urgent"),
-                    Map.of("strategy", 0.9, "operations", 0.8)),
-                new AgentCapability("delegation", 0.85, 50L, "low",
-                    List.of("task-spec"), List.of("assignment"), List.of(),
-                    Map.of("team-management", 0.75))
+                AgentCapability.builder().name("planning").qualityHint(0.95).latencyHintP50Ms(200L).costHint("medium")
+                    .inputTypes(List.of("goal", "constraints")).outputTypes(List.of("plan", "timeline")).tags(List.of("urgent"))
+                    .epistemicDomains(Map.of("strategy", 0.9, "operations", 0.8)).build(),
+                AgentCapability.builder().name("delegation").qualityHint(0.85).latencyHintP50Ms(50L).costHint("low")
+                    .inputTypes(List.of("task-spec")).outputTypes(List.of("assignment")).tags(List.of())
+                    .epistemicDomains(Map.of("team-management", 0.75)).build()
             ))
             .disposition(AgentDisposition.builder()
                 .socialOrient("collaborative")
@@ -246,12 +248,12 @@ public class EvalDataset {
             .slotVocabulary("https://vocab.casehub.io/devtown")
             .slot("planner")
             .capabilities(List.of(
-                new AgentCapability("sprint-planning", 0.9, 200L, "medium",
-                    List.of("backlog", "team-capacity"), List.of("sprint-plan"), List.of(),
-                    Map.of("agile", 0.9, "kanban", 0.7)),
-                new AgentCapability("estimation", 0.8, 100L, "low",
-                    List.of("user-story"), List.of("story-points"), List.of(),
-                    Map.of("agile", 0.85))
+                AgentCapability.builder().name("sprint-planning").qualityHint(0.9).latencyHintP50Ms(200L).costHint("medium")
+                    .inputTypes(List.of("backlog", "team-capacity")).outputTypes(List.of("sprint-plan")).tags(List.of())
+                    .epistemicDomains(Map.of("agile", 0.9, "kanban", 0.7)).build(),
+                AgentCapability.builder().name("estimation").qualityHint(0.8).latencyHintP50Ms(100L).costHint("low")
+                    .inputTypes(List.of("user-story")).outputTypes(List.of("story-points")).tags(List.of())
+                    .epistemicDomains(Map.of("agile", 0.85)).build()
             ))
             .disposition(AgentDisposition.builder()
                 .socialOrient("collaborative")
