@@ -632,6 +632,10 @@ class EidosRenderPipeline {
                     final ArrayNode arr = capNode.putArray("outputTypes");
                     cap.outputTypes().forEach(arr::add);
                 }
+                if (cap.excludedDomains() != null && !cap.excludedDomains().isEmpty()) {
+                    final ArrayNode arr = capNode.putArray("excludedDomains");
+                    cap.excludedDomains().forEach(arr::add);
+                }
                 final String desc = descriptionByName.get(cap.name());
                 if (desc != null) capNode.put("description", desc);
             }

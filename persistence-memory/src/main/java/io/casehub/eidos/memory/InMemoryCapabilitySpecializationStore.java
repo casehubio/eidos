@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class InMemoryCapabilitySpecializationStore implements CapabilitySpecializationStore {
 
     @ConfigProperty(name = "casehub.eidos.specialization.decline-ttl-days", defaultValue = "30")
-    int declineTtlDays;
+    private int declineTtlDays;
 
     private final ConcurrentHashMap<AgentCapKey, ConcurrentHashMap<String, ConcurrentLinkedQueue<Instant>>>
         store = new ConcurrentHashMap<>();

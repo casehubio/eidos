@@ -12,11 +12,11 @@ public interface CapabilityHealth {
     }
 
     sealed interface CapabilityStatus permits
-            CapabilityStatus.Ready,
-            CapabilityStatus.EpistemicallyWeak,
-            CapabilityStatus.Excluded,
             CapabilityStatus.Degraded,
-            CapabilityStatus.Unavailable {
+            CapabilityStatus.Unavailable,
+            CapabilityStatus.Excluded,
+            CapabilityStatus.EpistemicallyWeak,
+            CapabilityStatus.Ready {
 
         record Ready() implements CapabilityStatus {}
         record Degraded(DegradationReason reason, String detail) implements CapabilityStatus {}

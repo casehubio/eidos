@@ -770,4 +770,48 @@ class EidosRenderPipelineTest {
         assertThat(result.content()).contains("Autonomy: directed");
         assertThat(result.content()).contains("Conflict mode: avoiding");
     }
+
+    @Test
+    void a2a_card_capability_includes_excluded_domains_when_populated() {
+        var desc = AgentDescriptor.builder()
+            .agentId("renderer-excl").name("Agent").slot("reviewer").tenancyId("t1")
+            .capabilities(List.of(AgentCapability.builder()
+                .name("security-review")
+                .excludedDomains(java.util.Set.of("rust", "go"))
+                .build()))
+            .build();
+        var card = renderA2aCard(desc);
+        var capNode = card.get("capabilities").get(0);
+        assertThat(capNode.get("excludedDomains")).isNotNull();
+        var excluded = new java.util.HashSet<String>();
+        capNode.get("excludedDomains").forEach(n -> excluded.add(n.asText()));
+        assertThat(excluded).containsExactlyInAnyOrder("rust", "go");
+    }
+
+    @Test
+    void a2a_card_capability_excludes_domains_absent_when_null() {
+        var desc = AgentDescriptor.builder()
+            .agentId("renderer-no-excl").name("Agent").slot("reviewer").tenancyId("t1")
+            .capabilities(List.of(AgentCapability.builder().name("code-review").build()))
+            .build();
+        var card = renderA2aCard(desc);
+        var capNode = card.get("capabilities").get(0);
+        assertThat(capNode.has("excludedDomains")).isFalse();
+    }
+
+    @Test
+    void markdown_render_does_not_include_excluded_domains() {
+        var desc = AgentDescriptor.builder()
+            .agentId("renderer-md-excl").name("Agent").slot("reviewer").tenancyId("t1")
+            .capabilities(List.of(AgentCapability.builder()
+                .name("code-review")
+                .excludedDomains(java.util.Set.of("rust"))
+                .build()))
+            .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).doesNotContain("excludedDomains");
+        assertThat(result.content()).doesNotContain("rust");
+    }
 }

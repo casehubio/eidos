@@ -170,6 +170,17 @@ class AgentCapabilityTest {
     }
 
     @Test
+    void excluded_domains_entry_with_bidi_control_throws() {
+        // U+202E RIGHT-TO-LEFT OVERRIDE — a banned BiDi character
+        assertThatThrownBy(() ->
+            AgentCapability.builder()
+                .name("review")
+                .excludedDomains(java.util.Set.of("rust‮lang"))
+                .build())
+            .isInstanceOf(AgentValidationException.class);
+    }
+
+    @Test
     void excluded_domains_defensive_copy_prevents_external_mutation() {
         var domains = new java.util.HashSet<>(java.util.Set.of("rust"));
         var cap = AgentCapability.builder().name("review").excludedDomains(domains).build();
