@@ -8,6 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @ApplicationScoped
 class AgentDescriptorMapper {
@@ -64,6 +65,7 @@ class AgentDescriptorMapper {
             .outputTypes(readJson(c.outputTypes, new TypeReference<List<String>>() {}))
             .tags(readJson(c.tags, new TypeReference<List<String>>() {}))
             .epistemicDomains(readJson(c.epistemicDomains, new TypeReference<Map<String, Double>>() {}))
+            .excludedDomains(readJson(c.excludedDomains, new TypeReference<Set<String>>() {}))
             .build();
     }
 
@@ -80,6 +82,7 @@ class AgentDescriptorMapper {
         e.outputTypes = writeJson(c.outputTypes());
         e.tags = writeJson(c.tags());
         e.epistemicDomains = writeJson(c.epistemicDomains());
+        e.excludedDomains = writeJson(c.excludedDomains());
         return e;
     }
 

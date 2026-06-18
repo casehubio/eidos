@@ -35,4 +35,5 @@ public class AgentCapabilityEntity {
     @Column(name = "output_types",      columnDefinition = "TEXT") String outputTypes;
     @Column(columnDefinition = "TEXT")                              String tags;
     @Column(name = "epistemic_domains", columnDefinition = "TEXT") String epistemicDomains;
+    @Column(name = "excluded_domains",  columnDefinition = "TEXT") String excludedDomains;
 }
