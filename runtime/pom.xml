@@ -33,6 +33,12 @@
       <artifactId>casehub-ledger-api</artifactId>
     </dependency>
 
+    <!-- Platform preferences SPI — PreferenceProvider, PreferenceKey, SettingsScope -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform-api</artifactId>
+    </dependency>
+
     <!-- CDI -->
     <dependency>
       <groupId>io.quarkus</groupId>

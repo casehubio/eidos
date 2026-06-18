@@ -3,17 +3,23 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
+import io.casehub.platform.api.preferences.PreferenceProvider;
+import jakarta.enterprise.inject.Instance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 class DefaultCapabilityHealthDegradedTest {
 
     static class StubStateStore implements AgentStateStore {
@@ -37,13 +43,24 @@ class DefaultCapabilityHealthDegradedTest {
         }
     }
 
+    static class NoOpSpecializationStore implements CapabilitySpecializationStore {
+        @Override public void recordDecline(String a, String t, String c, String d) {}
+        @Override public void clearDeclines(String a, String t, String c) {}
+        @Override public Map<String, Integer> learnedExclusions(String a, String t, String c) { return Map.of(); }
+        @Override public int declineCount(String a, String t, String c, String d) { return 0; }
+    }
+
     StubStateStore stateStore;
+    @SuppressWarnings("unchecked")
+    Instance<PreferenceProvider> preferenceProviderInstance;
     DefaultCapabilityHealth health;
 
     @BeforeEach
     void setUp() {
         stateStore = new StubStateStore();
-        health = new DefaultCapabilityHealth(0.3, stateStore);
+        preferenceProviderInstance = org.mockito.Mockito.mock(Instance.class);
+        org.mockito.Mockito.lenient().when(preferenceProviderInstance.isUnsatisfied()).thenReturn(true);
+        health = new DefaultCapabilityHealth(0.3, stateStore, new NoOpSpecializationStore(), preferenceProviderInstance);
     }
 
     static AgentDescriptor agent(final String agentId, final AgentCapability... capabilities) {
@@ -113,5 +130,15 @@ class DefaultCapabilityHealthDegradedTest {
         final var degraded = (CapabilityStatus.Degraded) status;
         assertThat(degraded.reason()).isEqualTo(DegradationReason.CONTEXT_EXHAUSTED);
         assertThat(degraded.detail()).isNotBlank();
+    }
+
+    @Test
+    void degraded_state_takes_precedence_over_declared_exclusion() {
+        stateStore.record("agent-x", "default", DegradationReason.RATE_LIMITED, Instant.now().plusSeconds(60));
+        final var descriptor = agent("agent-x",
+            AgentCapability.builder().name("code-review").qualityHint(0.9)
+                .excludedDomains(Set.of("rust")).build());
+        final var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
+        assertThat(status).isInstanceOf(CapabilityStatus.Degraded.class);
     }
 }
