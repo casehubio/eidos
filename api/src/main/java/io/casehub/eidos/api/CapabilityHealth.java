@@ -13,13 +13,17 @@ public interface CapabilityHealth {
 
     sealed interface CapabilityStatus permits
             CapabilityStatus.Ready,
+            CapabilityStatus.EpistemicallyWeak,
+            CapabilityStatus.Excluded,
             CapabilityStatus.Degraded,
-            CapabilityStatus.Unavailable,
-            CapabilityStatus.EpistemicallyWeak {
+            CapabilityStatus.Unavailable {
 
         record Ready() implements CapabilityStatus {}
         record Degraded(DegradationReason reason, String detail) implements CapabilityStatus {}
         record Unavailable(String reason) implements CapabilityStatus {}
         record EpistemicallyWeak(String domain, double confidence) implements CapabilityStatus {}
+        record Excluded(String domain, ExclusionSource source, int declineCount) implements CapabilityStatus {}
+
+        enum ExclusionSource { DECLARED, LEARNED }
     }
 }
