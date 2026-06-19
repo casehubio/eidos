@@ -113,7 +113,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 - **AgentDescriptor** — four-layer structured description (identity, slot, capabilities, disposition)
 - **VocabularyRegistry** — pluggable domain vocabulary system; vocabularies are Java enums implementing `VocabularyTerm`; `CdiVocabularyRegistry` discovers `Instance<VocabularyRegistrar>` CDI beans at startup; axis-aware `equivalentValues()` with `DispositionAxis`
 - **AgentRegistry** — store and query descriptors (blocking + reactive)
-- **CapabilityHealth** — two-layer capability model: declared (descriptor) vs. operable now (runtime probe); `AgentStateStore` SPI records degradation state with TTL; `NoOpAgentStateStore` @DefaultBean, `InMemoryAgentStateStore` @Alternative in casehub-eidos-memory
+- **CapabilityHealth** — two-layer capability model: declared (descriptor) vs. operable now (runtime probe); `AgentStateStore` SPI records degradation state with TTL; `CapabilitySpecializationStore` SPI accumulates learned domain exclusions from DECLINE patterns (store-owned TTL). `NoOpAgentStateStore` @DefaultBean, `NoOpCapabilitySpecializationStore` @DefaultBean, `InMemoryAgentStateStore` + `InMemoryCapabilitySpecializationStore` @Alternative in casehub-eidos-memory
 - **SystemPromptRenderer** — renders `AgentDescriptor + AgentPromptContext` (goal, resources, situational context) into a format-specific system prompt; `EidosSystemPromptRenderer` @DefaultBean supports three formats: `MARKDOWN` (LLM or structural fallback), `PROSE` (LLM or structural fallback), `A2A_CARD` (JSON machine-readable card with slot, vocabulary-grounded disposition, frameworks index, and full capability routing signals — `qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains` — plus `inputTypes`/`outputTypes` type schema)
 - **casehub-eidos-vocab** — optional well-known vocabularies: SVO, Conscientiousness, CasehubSlot, Belbin (team roles), DISC (behavioral styles), Thomas-Kilmann (conflict modes)
 
@@ -125,7 +125,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 
 **Domain vocabulary via domainVocabulary field** — `AgentDescriptor.domainVocabulary` sets the default vocabulary URI for all fields. Optional per-field overrides: `slotVocabulary`, `dispositionVocabulary`. Per-axis override: `axisVocabularies(Map<DispositionAxis, String>)` — most specific wins. `vocabUriForAxis(DispositionAxis)` implements the three-step resolution: `axisVocabularies.get(axis)` → `dispositionVocabulary` → `domainVocabulary`. `vocabUriForSlot()` implements the two-step resolution: `slotVocabulary` → `domainVocabulary` (`dispositionVocabulary` excluded — it grounds disposition axes, not slot).
 
-**Two-layer capability model** — `AgentDescriptor` (static, declared at registration) + `CapabilityHealth.probe()` (dynamic, checked at dispatch time by casehub-engine). `epistemicDomains` on `AgentCapability` qualifies declared capability by domain (e.g. `{"java": 0.95, "rust": 0.42}`).
+**Two-layer capability model** — `AgentDescriptor` (static, declared at registration) + `CapabilityHealth.probe()` (dynamic, checked at dispatch time by casehub-engine). `epistemicDomains` on `AgentCapability` qualifies declared capability by domain (e.g. `{"java": 0.95, "rust": 0.42}`). `excludedDomains: Set<String>` declares categorical exclusions. `CapabilitySpecializationStore` SPI accumulates learned exclusions from DECLINE patterns (TTL-based, store-owned via `@ConfigProperty decline-ttl-days=30`); probe steps: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → Ready.
 
 **Generative** — `SystemPromptRenderer` renders an `AgentDescriptor + AgentPromptContext` into LLM instructions. `EidosSystemPromptRenderer` is the `@DefaultBean`: two-step pipeline — structural assembly then optional LangChain4j `ChatModel` semantic pass for MARKDOWN/PROSE; separate `A2ASemanticEnrichmentStep` for capability descriptions in A2A_CARD. Falls back to structural output when no `ChatModel` is available. `AgentPromptContext` accumulates goal (`GoalContext`), resources (`Resource`), and situational context — re-renderable as the agent's context evolves. Capability rendering is format-discriminated: PROSE/MARKDOWN surface names + `inputTypes`/`outputTypes` only; numeric routing signals (`qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains`) appear in A2A_CARD only — protocol PP-20260611-228599.
 
@@ -160,7 +160,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 ├── api/
 │   └── src/main/java/io/casehub/eidos/api/
 │       ├── AgentDescriptor.java         — four-layer agent description record (tenancyId always required)
-│       ├── AgentCapability.java         — capability with qualityHint (Double) + epistemicDomains
+│       ├── AgentCapability.java         — capability with qualityHint (Double) + epistemicDomains + excludedDomains (Set<String>, declared negative specialization); Builder inner class
 │       ├── AgentDisposition.java        — open-String disposition axes + delegation boolean + get(DispositionAxis)
 │       ├── AgentQuery.java              — criteria record for find(): slot, capabilityName, tenancyId (required)
 │       ├── DispositionAxis.java         — enum: SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY, CONFLICT_MODE; jsonKey() → camelCase JSON key; description() → axis description for LLM judge prompts
@@ -173,7 +173,8 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── ReactiveAgentRegistry.java   — SPI: Uni<T> reactive mirror
 │       ├── AgentPromptContext.java      — render-time context: Optional<GoalContext>, List<Resource>, situationalContext, RenderFormat
 │       ├── AgentStateStore.java         — SPI: record/query/clear degradation state with TTL
-│       ├── CapabilityHealth.java        — SPI: probe(AgentDescriptor, capabilityTag, ProbeContext); returns Ready/Degraded/Unavailable/EpistemicallyWeak
+│       ├── CapabilityHealth.java        — SPI: probe(AgentDescriptor, capabilityTag, ProbeContext); returns Ready/Degraded/Unavailable/EpistemicallyWeak/Excluded; ExclusionSource { DECLARED, LEARNED }
+│       ├── CapabilitySpecializationStore.java — SPI: recordDecline/clearDeclines/learnedExclusions/declineCount; store-owned TTL via @ConfigProperty
 │       ├── DegradationReason.java       — top-level enum: RATE_LIMITED, CONTEXT_EXHAUSTED, OVERLOADED, DOMAIN_MISMATCH
 │       ├── GoalContext.java             — structured goal: description, subGoals, caseRef
 │       ├── ReactiveCapabilityHealth.java — SPI: Uni<CapabilityStatus> probe(...)
@@ -183,9 +184,10 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │   └── src/main/java/io/casehub/eidos/runtime/
 │       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)
 │       ├── vocabulary/                  — CdiVocabularyRegistry (@DefaultBean, discovers Instance<VocabularyRegistrar>; three-map: byUri/byClass/byClassOrdered)
-│       ├── health/                      — DefaultCapabilityHealth (checks AgentStateStore first), DefaultReactiveCapabilityHealth, NoOpAgentStateStore (@DefaultBean)
+│       ├── health/                      — DefaultCapabilityHealth (checks AgentStateStore + CapabilitySpecializationStore; Instance<PreferenceProvider> for per-tenancy exclude threshold), DefaultReactiveCapabilityHealth, NoOpAgentStateStore (@DefaultBean), NoOpCapabilitySpecializationStore (@DefaultBean)
+│       ├── preferences/                 — EidosPreferenceKeys (EXCLUDE_THRESHOLD PreferenceKey), ExcludeThresholdPreference (SingleValuePreference, default 3)
 │       └── renderer/                    — ClaudeMarkdownRenderer (@DefaultBean, LangChain4j ChatModel optional)
-├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryAgentStateStore
+├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryAgentStateStore, InMemoryCapabilitySpecializationStore (TTL via @ConfigProperty decline-ttl-days=30)
 ├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
 ├── vocab/                               — casehub-eidos-vocab: SvoTerm, ConscientiousnessTerm, CasehubSlotTerm, BelbinTerm, DiscTerm, ThomasKilmannTerm enums + VocabularyRegistrar beans
 ├── eval/                                — casehub-eidos-eval: offline quality evaluation harness (not deployed); judges: PromptJudge, ProximityJudge, VocabularyExpressivenessJudge, TraitExpressionJudge, PairContrastJudge, BehavioralJudge; AgentProviderChatModel bridge (ChatModel → AgentProvider SPI); 8 YAML agent profiles; pair-contrast behavioral validation (Phase 3 — eidos#46)

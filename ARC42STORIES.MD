@@ -585,9 +585,9 @@ What this layer adds:
 - **`AgentDescriptor.briefing`** — optional freeform text field for per-agent narrative context; rendered in MARKDOWN+PROSE structural fallback; `briefingHash` included in cache key; populated in eval profiles via `vocabularyGap:FULL` entries
 - **`RenderedPrompt.enriched` flag** — set `true` when Stage 2 semantic enrichment ran successfully; `ProximityJudge` skips substring completeness check when `enriched = true` (prevents false negatives on rich LLM-generated content)
 - **Open-String slot** — `slot` is a plain `String`, not an enum; domain apps define their own vocabulary via `Vocabulary` CDI beans; the platform never constrains slot values
-- **Capability with epistemic domain confidence** — `AgentCapability(name, qualityHint, latencyHintP50Ms, epistemicDomains Map<String,Double>)` qualifies declared capability by domain (e.g. `{"java": 0.95, "rust": 0.42}`)
+- **Capability with epistemic domain confidence** — `AgentCapability(name, qualityHint, latencyHintP50Ms, epistemicDomains Map<String,Double>, excludedDomains Set<String>)` qualifies declared capability by domain confidence and explicit negative specialization (e.g. `epistemicDomains: {"java": 0.95}`, `excludedDomains: {"rust"}`)
 - **Mandatory tenancyId** — `AgentQuery` compact constructor requires non-null `tenancyId`; `findById(agentId, tenancyId)` is the only signature — single-parameter overloads do not exist
-- **Sealed CapabilityStatus** — `Ready` / `Unavailable` / `Degraded(reason, msg)` / `EpistemicallyWeak(domain, confidence)` — exhaustive probe result; callers must handle all four in a switch
+- **Sealed CapabilityStatus** — `Ready` / `Unavailable` / `Degraded(reason, msg)` / `EpistemicallyWeak(domain, confidence)` / `Excluded(domain, ExclusionSource, declineCount)` — exhaustive probe result; callers must handle all five in a switch; probe order: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → Ready
 - **Structure-named RenderFormat** — `MARKDOWN` / `PROSE` / `A2A_CARD`; adding an LLM provider requires no new enum member; sub-labels deferred until concrete structural differences emerge
 - **AgentPromptContext** — single accumulation point: `Optional<GoalContext>`, `List<Resource>`, `situationalContext`, `RenderFormat`; wither methods support incremental construction; re-renderable at any point
 
@@ -604,7 +604,8 @@ Not closed here: L4 (`DefaultCapabilityHealth` implementation, `AgentStateStore`
 ##### Key files
 
 - `api/src/main/java/io/casehub/eidos/api/AgentDescriptor.java` — four-layer agent identity record; compact constructor delegates to `AgentDescriptorValidator`
-- `api/src/main/java/io/casehub/eidos/api/AgentCapability.java` — capability record with `qualityHint` (Double), `epistemicDomains` (Map), and validated string fields
+- `api/src/main/java/io/casehub/eidos/api/AgentCapability.java` — capability record with `qualityHint` (Double), `epistemicDomains` (Map), `excludedDomains` (Set<String>, overlap invariant with epistemicDomains), and validated string fields; Builder inner class
+- `api/src/main/java/io/casehub/eidos/api/CapabilitySpecializationStore.java` — SPI: `recordDecline`, `clearDeclines`, `learnedExclusions`, `declineCount`; TTL owned by store implementation
 - `api/src/main/java/io/casehub/eidos/api/AgentDisposition.java` — four open-string disposition axes (socialOrient, ruleFollowing, riskAppetite, autonomy) + `canDelegate` boolean
 - `api/src/main/java/io/casehub/eidos/api/AgentQuery.java` — criteria record; compact constructor enforces non-null `tenancyId`
 - `api/src/main/java/io/casehub/eidos/api/AgentDescriptorValidator.java` — validates required fields, optional fields, list items, and map keys against character-set rules
@@ -1227,14 +1228,15 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | Term | Definition |
 |---|---|
 | `AgentDescriptor` | Four-layer pure-Java record carrying agent identity: agentId, name, model/provider, slot (open-string role), capabilities, disposition, tenancyId, and optional vocabulary URIs |
-| `AgentCapability` | A declared capability with name, qualityHint (0.0–1.0), latencyHintP50Ms, epistemicDomains map (domain → confidence), inputTypes, outputTypes, tags |
+| `AgentCapability` | A declared capability with name, qualityHint (0.0–1.0), latencyHintP50Ms, epistemicDomains map (domain → confidence), excludedDomains set (categorical negative specialization), inputTypes, outputTypes, tags; Builder inner class |
 | `AgentDisposition` | Four open-string disposition axes (socialOrient, ruleFollowing, riskAppetite, autonomy) plus `canDelegate` boolean |
 | `AgentQuery` | Criteria record for `AgentRegistry.find()`; tenancyId is required (compact constructor guard); slot and capabilityName are optional filters |
 | `AgentRegistry` / `ReactiveAgentRegistry` | SPI for registering and discovering `AgentDescriptor` instances; `AgentQuery` drives all find operations |
 | `VocabularyRegistry` / `CdiVocabularyRegistry` | SPI + default CDI implementation; discovers `Vocabulary` CDI beans; supports `find`, `resolve`, and `equivalentValues` with cross-vocabulary `exactMatches` traversal |
 | `Vocabulary` / `VocabularyTerm` | Named versioned vocabulary; each term carries `aliases` and `exactMatches` pairs for cross-vocabulary equivalence |
 | `CapabilityHealth` / `ReactiveCapabilityHealth` | SPI for probing whether a declared capability is operable at dispatch time; returns sealed `CapabilityStatus` |
-| `CapabilityStatus` | Sealed hierarchy: `Ready`, `Unavailable(message)`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)` |
+| `CapabilityStatus` | Sealed hierarchy: `Ready`, `Unavailable(message)`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)` |
+| `CapabilitySpecializationStore` | SPI accumulating learned domain exclusions from DECLINE patterns; store-owned TTL (30d default via `@ConfigProperty`); `declineCount` targeted query for probe efficiency |
 | `DegradationReason` | Top-level enum: `RATE_LIMITED`, `CONTEXT_EXHAUSTED`, `OVERLOADED`, `DOMAIN_MISMATCH` |
 | `AgentStateStore` | SPI for recording and querying runtime degradation state with TTL; `tenancyId` required on all operations |
 | `AgentPromptContext` | Render-time accumulation record: `Optional<GoalContext>`, `List<Resource>`, `situationalContext`, `RenderFormat`; wither methods support incremental build; re-renderable as context evolves |
