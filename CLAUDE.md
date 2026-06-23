@@ -185,7 +185,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 ├── runtime/
 │   └── src/main/java/io/casehub/eidos/runtime/
 │       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)
-│       ├── vocabulary/                  — CdiVocabularyRegistry (@DefaultBean, discovers Instance<VocabularyRegistrar>; three-map: byUri/byClass/byClassOrdered)
+│       ├── vocabulary/                  — CdiVocabularyRegistry (@ApplicationScoped, discovers Instance<VocabularyRegistrar>; three-map: byUri/byClass/byClassOrdered)
 │       ├── health/                      — DefaultCapabilityHealth (checks AgentStateStore + CapabilitySpecializationStore; Instance<PreferenceProvider> for per-tenancy exclude threshold), DefaultReactiveCapabilityHealth, NoOpAgentStateStore (@DefaultBean), NoOpCapabilitySpecializationStore (@DefaultBean)
 │       ├── preferences/                 — EidosPreferenceKeys (EXCLUDE_THRESHOLD PreferenceKey), ExcludeThresholdPreference (SingleValuePreference, default 3)
 │       ├── registrar/                   — AgentDescriptorBootstrap (@Observes StartupEvent, @IfBuildProperty), ClasspathYamlDescriptorRegistrar (META-INF/eidos/descriptors.yaml)

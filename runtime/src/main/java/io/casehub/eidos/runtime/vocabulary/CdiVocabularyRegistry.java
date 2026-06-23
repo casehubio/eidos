@@ -5,7 +5,6 @@ import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
 import io.casehub.eidos.api.spi.VocabularyRegistrar;
-import io.quarkus.arc.DefaultBean;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
@@ -26,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * initialization. The internal maps are {@code ConcurrentHashMap} for safe concurrent reads
  * after {@code @PostConstruct} completes.
  */
-@DefaultBean
 @ApplicationScoped
 public class CdiVocabularyRegistry implements VocabularyRegistry {
 
