@@ -1,0 +1,133 @@
+package io.casehub.eidos.runtime.registrar;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@ApplicationScoped
+public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistrar {
+
+    private static final String RESOURCE_PATH = "META-INF/eidos/descriptors.yaml";
+    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+
+    @Override
+    public List<AgentDescriptor> descriptors() {
+        final Enumeration<URL> urls;
+        try {
+            urls = Thread.currentThread().getContextClassLoader().getResources(RESOURCE_PATH);
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to scan classpath for " + RESOURCE_PATH, e);
+        }
+
+        final var all = new ArrayList<AgentDescriptor>();
+        while (urls.hasMoreElements()) {
+            final var url = urls.nextElement();
+            try (final var stream = url.openStream()) {
+                all.addAll(loadFrom(stream));
+            } catch (final Exception e) {
+                throw new IllegalStateException(
+                    "Failed to load descriptors from " + url + ": " + e.getMessage(), e);
+            }
+        }
+        return List.copyOf(all);
+    }
+
+    List<AgentDescriptor> loadFrom(final InputStream yaml) {
+        if (yaml == null) return List.of();
+        final DescriptorFile file;
+        try {
+            file = YAML_MAPPER.readValue(yaml, DescriptorFile.class);
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to parse YAML: " + e.getMessage(), e);
+        }
+        if (file.descriptors == null || file.descriptors.isEmpty()) return List.of();
+
+        final var result = new ArrayList<AgentDescriptor>(file.descriptors.size());
+        for (final var cfg : file.descriptors) {
+            result.add(toDescriptor(cfg));
+        }
+        return result;
+    }
+
+    private static AgentDescriptor toDescriptor(final DescriptorConfig cfg) {
+        final var builder = AgentDescriptor.builder()
+            .agentId(cfg.agentId).name(cfg.name).slot(cfg.slot).tenancyId(cfg.tenancyId)
+            .version(cfg.version).provider(cfg.provider)
+            .modelFamily(cfg.modelFamily).modelVersion(cfg.modelVersion)
+            .weightsFingerprint(cfg.weightsFingerprint)
+            .domainVocabulary(cfg.domainVocabulary)
+            .slotVocabulary(cfg.slotVocabulary)
+            .dispositionVocabulary(cfg.dispositionVocabulary)
+            .jurisdiction(cfg.jurisdiction)
+            .dataHandlingPolicy(cfg.dataHandlingPolicy)
+            .briefing(cfg.briefing);
+
+        if (cfg.axisVocabularies != null && !cfg.axisVocabularies.isEmpty()) {
+            final var axisMap = new LinkedHashMap<DispositionAxis, String>();
+            cfg.axisVocabularies.forEach((key, uri) -> axisMap.put(DispositionAxis.valueOf(key), uri));
+            builder.axisVocabularies(axisMap);
+        }
+
+        if (cfg.disposition != null) {
+            builder.disposition(new AgentDisposition(
+                cfg.disposition.socialOrient, cfg.disposition.ruleFollowing,
+                cfg.disposition.riskAppetite, cfg.disposition.autonomy,
+                cfg.disposition.conflictMode, cfg.disposition.delegation));
+        }
+
+        if (cfg.capabilities != null) {
+            builder.capabilities(cfg.capabilities.stream().map(c ->
+                new AgentCapability(c.name, c.qualityHint, c.latencyHintP50Ms, c.costHint,
+                    c.inputTypes, c.outputTypes, c.tags, c.epistemicDomains, c.excludedDomains)
+            ).toList());
+        }
+
+        return builder.build();
+    }
+
+    static class DescriptorFile {
+        public List<DescriptorConfig> descriptors;
+    }
+
+    static class DescriptorConfig {
+        public String agentId, name, slot, tenancyId, version, provider,
+                      modelFamily, modelVersion, weightsFingerprint,
+                      domainVocabulary, slotVocabulary, dispositionVocabulary,
+                      jurisdiction, dataHandlingPolicy, briefing;
+        public Map<String, String> axisVocabularies;
+        public DispositionConfig disposition;
+        public List<CapabilityConfig> capabilities;
+    }
+
+    static class DispositionConfig {
+        public String socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode;
+        public boolean delegation;
+    }
+
+    static class CapabilityConfig {
+        public String name;
+        public Double qualityHint;
+        public Long latencyHintP50Ms;
+        public String costHint;
+        public List<String> inputTypes, outputTypes, tags;
+        public Map<String, Double> epistemicDomains;
+        public Set<String> excludedDomains;
+    }
+}

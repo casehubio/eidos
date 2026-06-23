@@ -183,11 +183,11 @@ class AgentDescriptorValidatorTest {
     }
 
     @Test
-    void briefing_rejects_501_chars() {
+    void briefing_rejects_2001_chars() {
         assertThatThrownBy(() ->
             AgentDescriptor.builder()
                 .agentId("a").name("n").slot("s").tenancyId("t")
-                .briefing("x".repeat(501))
+                .briefing("x".repeat(2001))
                 .build())
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
@@ -213,6 +213,26 @@ class AgentDescriptorValidatorTest {
             .isInstanceOf(AgentValidationException.class)
             .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
                 .isEqualTo("briefing"));
+    }
+
+    @Test
+    void briefing_at_1500_chars_is_valid() {
+        final String briefing = "A".repeat(1500);
+        assertThatNoException().isThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId(VALID_ID).name(VALID_NAME).slot(VALID_SLOT).tenancyId(VALID_TID)
+                .briefing(briefing)
+                .build());
+    }
+
+    @Test
+    void briefing_accepts_exactly_2000_chars() {
+        final String briefing = "A".repeat(2000);
+        assertThatNoException().isThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId(VALID_ID).name(VALID_NAME).slot(VALID_SLOT).tenancyId(VALID_TID)
+                .briefing(briefing)
+                .build());
     }
 
     // ── validateMapKeys ────────────────────────────────────────────────────────

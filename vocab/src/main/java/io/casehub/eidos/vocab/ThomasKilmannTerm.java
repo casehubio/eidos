@@ -15,7 +15,7 @@ public enum ThomasKilmannTerm implements VocabularyTerm {
         List.of("competitive")),
     COLLABORATING ("collaborating", "Collaborating",
         "High assertiveness, high cooperativeness; seeks joint problem-solving",
-        List.of("cooperative")),
+        List.of("cooperative", "collaborative")),
     COMPROMISING  ("compromising",  "Compromising",
         "Moderate assertiveness and cooperativeness; neither fully assertive nor yielding",
         List.of("compromise")),

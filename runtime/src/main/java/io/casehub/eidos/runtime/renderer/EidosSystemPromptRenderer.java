@@ -6,7 +6,6 @@ import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.ReactiveRenderedPromptCache;
 import io.casehub.eidos.api.SystemPromptRenderer;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
-import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
@@ -16,7 +15,6 @@ import dev.langchain4j.model.chat.ChatModel;
 import java.time.Duration;
 import java.util.Optional;
 
-@DefaultBean
 @ApplicationScoped
 public class EidosSystemPromptRenderer implements SystemPromptRenderer {
 

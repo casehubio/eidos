@@ -68,6 +68,12 @@
       <artifactId>quarkus-jackson</artifactId>
     </dependency>
 
+    <!-- YAML descriptor loading -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+
     <!-- Mutiny for reactive variants -->
     <dependency>
       <groupId>io.smallrye.reactive</groupId>
