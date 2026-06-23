@@ -56,17 +56,17 @@ class AgentDescriptorMapper {
     }
 
     private AgentCapability toCapability(AgentCapabilityEntity c) {
-        return AgentCapability.builder()
-            .name(c.name)
-            .qualityHint(c.qualityHint)
-            .latencyHintP50Ms(c.latencyHintP50Ms)
-            .costHint(c.costHint)
-            .inputTypes(readJson(c.inputTypes, new TypeReference<List<String>>() {}))
-            .outputTypes(readJson(c.outputTypes, new TypeReference<List<String>>() {}))
-            .tags(readJson(c.tags, new TypeReference<List<String>>() {}))
-            .epistemicDomains(readJson(c.epistemicDomains, new TypeReference<Map<String, Double>>() {}))
-            .excludedDomains(readJson(c.excludedDomains, new TypeReference<Set<String>>() {}))
-            .build();
+        return new AgentCapability(
+            c.name,
+            c.qualityHint,
+            c.latencyHintP50Ms,
+            c.costHint,
+            readJson(c.inputTypes, new TypeReference<List<String>>() {}),
+            readJson(c.outputTypes, new TypeReference<List<String>>() {}),
+            readJson(c.tags, new TypeReference<List<String>>() {}),
+            readJson(c.epistemicDomains, new TypeReference<Map<String, Double>>() {}),
+            readJson(c.excludedDomains, new TypeReference<Set<String>>() {})
+        );
     }
 
     private AgentCapabilityEntity toCapabilityEntity(AgentCapability c, AgentDescriptorEntity parent) {
