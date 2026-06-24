@@ -188,7 +188,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── vocabulary/                  — CdiVocabularyRegistry (@ApplicationScoped, discovers Instance<VocabularyRegistrar>; three-map: byUri/byClass/byClassOrdered)
 │       ├── health/                      — DefaultCapabilityHealth (checks AgentStateStore + CapabilitySpecializationStore; Instance<PreferenceProvider> for per-tenancy exclude threshold), DefaultReactiveCapabilityHealth, NoOpAgentStateStore (@DefaultBean), NoOpCapabilitySpecializationStore (@DefaultBean)
 │       ├── preferences/                 — EidosPreferenceKeys (EXCLUDE_THRESHOLD PreferenceKey), ExcludeThresholdPreference (SingleValuePreference, default 3)
-│       ├── registrar/                   — AgentDescriptorBootstrap (@Observes StartupEvent, @IfBuildProperty), ClasspathYamlDescriptorRegistrar (META-INF/eidos/descriptors.yaml)
+│       ├── registrar/                   — AgentDescriptorBootstrap (@Observes StartupEvent, @IfBuildProperty blocking-mode), ReactiveAgentDescriptorBootstrap (@IfBuildProperty reactive-mode), DescriptorCollector (shared validation), ClasspathYamlDescriptorRegistrar (META-INF/eidos/descriptors.yaml)
 │       └── renderer/                    — EidosSystemPromptRenderer (@ApplicationScoped, LangChain4j ChatModel optional)
 ├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryAgentStateStore, InMemoryCapabilitySpecializationStore (TTL via @ConfigProperty decline-ttl-days=30)
 ├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
