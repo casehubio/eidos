@@ -235,6 +235,37 @@ class AgentDescriptorValidatorTest {
                 .build());
     }
 
+    @Test
+    void briefing_accepts_newlines() {
+        assertThatNoException().isThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId(VALID_ID).name(VALID_NAME).slot(VALID_SLOT).tenancyId(VALID_TID)
+                .briefing("First paragraph.\n\nSecond paragraph.\nThird line.")
+                .build());
+    }
+
+    @Test
+    void briefing_rejects_tab() {
+        assertThatThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId(VALID_ID).name(VALID_NAME).slot(VALID_SLOT).tenancyId(VALID_TID)
+                .briefing("text\twith\ttab")
+                .build())
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("briefing"));
+    }
+
+    @Test
+    void briefing_rejects_null_byte() {
+        assertThatThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId(VALID_ID).name(VALID_NAME).slot(VALID_SLOT).tenancyId(VALID_TID)
+                .briefing("text null")
+                .build())
+            .isInstanceOf(AgentValidationException.class);
+    }
+
     // ── validateMapKeys ────────────────────────────────────────────────────────
 
     @Test

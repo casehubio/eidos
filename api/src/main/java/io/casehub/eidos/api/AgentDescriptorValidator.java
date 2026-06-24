@@ -41,6 +41,12 @@ class AgentDescriptorValidator {
         validateField(fieldName, value, maxLength);
     }
 
+    static void validateOptional(final String fieldName, final String value, final int maxLength,
+                                  final int... allowedCodePoints) {
+        if (value == null) return;
+        validateField(fieldName, value, maxLength, allowedCodePoints);
+    }
+
     static void validateItems(final String fieldName, final Iterable<String> items,
                                final int maxLength) {
         if (items == null) return;
@@ -61,6 +67,11 @@ class AgentDescriptorValidator {
 
     private static void validateField(final String fieldName, final String value,
                                        final int maxLength) {
+        validateField(fieldName, value, maxLength, new int[0]);
+    }
+
+    private static void validateField(final String fieldName, final String value,
+                                       final int maxLength, final int... allowedCodePoints) {
         if (value == null) {
             throw new AgentValidationException(fieldName, "must not be null");
         }
@@ -73,12 +84,19 @@ class AgentDescriptorValidator {
         }
         for (int i = 0; i < value.length(); ) {
             final int cp = value.codePointAt(i);
-            if (isBanned(cp)) {
+            if (isBanned(cp) && !isAllowed(cp, allowedCodePoints)) {
                 throw new AgentValidationException(fieldName,
                     "contains banned character U+" + String.format("%04X", cp));
             }
             i += Character.charCount(cp);
         }
+    }
+
+    private static boolean isAllowed(final int cp, final int[] allowedCodePoints) {
+        for (final int allowed : allowedCodePoints) {
+            if (cp == allowed) return true;
+        }
+        return false;
     }
 
     private static boolean isBanned(final int cp) {
