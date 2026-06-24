@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -192,5 +193,50 @@ class JpaAgentRegistryTest {
         registry.register(descriptor("agent-noaxis", "reviewer", "default"));
         var found = registry.findById("agent-noaxis", "default").orElseThrow();
         assertThat(found.axisVocabularies()).isNull();
+    }
+
+    @Test
+    @TestTransaction
+    void domain_filter_excludes_agents_with_excluded_domain() {
+        var caps = List.of(AgentCapability.builder()
+            .name("code-review").qualityHint(0.9)
+            .excludedDomains(Set.of("rust", "c++"))
+            .build());
+        registry.register(AgentDescriptor.builder()
+            .agentId("agent-excl").name("Excluded").slot("reviewer")
+            .capabilities(caps).tenancyId("default").build());
+        registry.register(descriptor("agent-incl", "reviewer", "default", "code-review"));
+
+        var result = registry.find(AgentQuery.byCapabilityAndDomain("code-review", "rust", "default"));
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).agentId()).isEqualTo("agent-incl");
+    }
+
+    @Test
+    @TestTransaction
+    void domain_filter_includes_agents_without_exclusions() {
+        registry.register(descriptor("agent-open", "reviewer", "default", "code-review"));
+
+        var result = registry.find(AgentQuery.byCapabilityAndDomain("code-review", "java", "default"));
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).agentId()).isEqualTo("agent-open");
+    }
+
+    @Test
+    @TestTransaction
+    void excluded_domains_round_trips_through_jpa() {
+        var caps = List.of(AgentCapability.builder()
+            .name("code-review").qualityHint(0.9)
+            .excludedDomains(Set.of("rust", "go"))
+            .build());
+        registry.register(AgentDescriptor.builder()
+            .agentId("agent-rt").name("RT").slot("reviewer")
+            .capabilities(caps).tenancyId("default").build());
+
+        var found = registry.findById("agent-rt", "default").orElseThrow();
+        assertThat(found.capabilities().get(0).excludedDomains())
+            .containsExactlyInAnyOrder("rust", "go");
     }
 }

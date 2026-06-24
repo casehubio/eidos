@@ -163,7 +163,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── AgentDescriptor.java         — four-layer agent description record (tenancyId always required)
 │       ├── AgentCapability.java         — capability with qualityHint (Double) + epistemicDomains + excludedDomains (Set<String>, declared negative specialization); Builder inner class
 │       ├── AgentDisposition.java        — open-String disposition axes + delegation boolean + get(DispositionAxis)
-│       ├── AgentQuery.java              — criteria record for find(): slot, capabilityName, tenancyId (required)
+│       ├── AgentQuery.java              — criteria record for find(): slot, capabilityName, tenancyId (required), taskDomain (optional pre-filter by excludedDomains)
 │       ├── DispositionAxis.java         — enum: SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY, CONFLICT_MODE; jsonKey() → camelCase JSON key; description() → axis description for LLM judge prompts
 │       ├── VocabularyMetadata.java      — annotation: uri (required), name, version on vocabulary enum classes
 │       ├── VocabularyTerm.java          — interface implemented by vocabulary enum constants; exactMatch + axisExactMatch

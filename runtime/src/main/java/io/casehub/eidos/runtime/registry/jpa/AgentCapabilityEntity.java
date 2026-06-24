@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.registry.jpa;
 
 import jakarta.persistence.*;
+import java.util.Set;
 
 /**
  * JPA entity for {@link io.casehub.eidos.api.AgentCapability}.
@@ -35,5 +36,10 @@ public class AgentCapabilityEntity {
     @Column(name = "output_types",      columnDefinition = "TEXT") String outputTypes;
     @Column(columnDefinition = "TEXT")                              String tags;
     @Column(name = "epistemic_domains", columnDefinition = "TEXT") String epistemicDomains;
-    @Column(name = "excluded_domains",  columnDefinition = "TEXT") String excludedDomains;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "agent_capability_excluded_domain",
+                     joinColumns = @JoinColumn(name = "capability_id"))
+    @Column(name = "domain")
+    Set<String> excludedDomains;
 }

@@ -44,7 +44,7 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
     @Override
     @WithSession
     public Uni<List<AgentDescriptor>> find(AgentQuery query) {
-        String fetchJoin = query.capabilityName() != null
+        String fetchJoin = (query.capabilityName() != null || query.taskDomain() != null)
             ? "JOIN FETCH a.capabilities c"
             : "LEFT JOIN FETCH a.capabilities c";
 
@@ -60,6 +60,10 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
         if (query.capabilityName() != null) {
             jpql.append(" AND c.name = :capabilityName");
             params.and("capabilityName", query.capabilityName());
+        }
+        if (query.taskDomain() != null) {
+            jpql.append(" AND :taskDomain NOT MEMBER OF c.excludedDomains");
+            params.and("taskDomain", query.taskDomain());
         }
 
         return repo.list(jpql.toString(), params)

@@ -8,7 +8,7 @@ class AgentQueryTest {
     @Test
     void null_tenancy_id_throws() {
         assertThatNullPointerException()
-            .isThrownBy(() -> new AgentQuery("reviewer", null, null))
+            .isThrownBy(() -> new AgentQuery("reviewer", null, null, null))
             .withMessageContaining("tenancyId");
     }
 
@@ -41,6 +41,16 @@ class AgentQueryTest {
         var q = AgentQuery.all("default");
         assertThat(q.slot()).isNull();
         assertThat(q.capabilityName()).isNull();
+        assertThat(q.tenancyId()).isEqualTo("default");
+        assertThat(q.taskDomain()).isNull();
+    }
+
+    @Test
+    void byCapabilityAndDomain_sets_correct_fields() {
+        var q = AgentQuery.byCapabilityAndDomain("code-review", "java", "default");
+        assertThat(q.slot()).isNull();
+        assertThat(q.capabilityName()).isEqualTo("code-review");
+        assertThat(q.taskDomain()).isEqualTo("java");
         assertThat(q.tenancyId()).isEqualTo("default");
     }
 }

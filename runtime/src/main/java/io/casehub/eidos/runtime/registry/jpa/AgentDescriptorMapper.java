@@ -65,7 +65,7 @@ class AgentDescriptorMapper {
             readJson(c.outputTypes, new TypeReference<List<String>>() {}),
             readJson(c.tags, new TypeReference<List<String>>() {}),
             readJson(c.epistemicDomains, new TypeReference<Map<String, Double>>() {}),
-            readJson(c.excludedDomains, new TypeReference<Set<String>>() {})
+            c.excludedDomains
         );
     }
 
@@ -82,7 +82,7 @@ class AgentDescriptorMapper {
         e.outputTypes = writeJson(c.outputTypes());
         e.tags = writeJson(c.tags());
         e.epistemicDomains = writeJson(c.epistemicDomains());
-        e.excludedDomains = writeJson(c.excludedDomains());
+        e.excludedDomains = c.excludedDomains();
         return e;
     }
 

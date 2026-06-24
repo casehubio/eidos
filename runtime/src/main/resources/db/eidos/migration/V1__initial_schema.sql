@@ -37,7 +37,13 @@ CREATE TABLE agent_capability (
     input_types         TEXT,
     output_types        TEXT,
     tags                TEXT,
-    epistemic_domains   TEXT,
-    excluded_domains    TEXT
+    epistemic_domains   TEXT
 );
 CREATE INDEX idx_agent_capability_name ON agent_capability(name);
+
+CREATE TABLE agent_capability_excluded_domain (
+    capability_id BIGINT       NOT NULL
+                      REFERENCES agent_capability(id) ON DELETE CASCADE,
+    domain        VARCHAR(200) NOT NULL,
+    PRIMARY KEY (capability_id, domain)
+);

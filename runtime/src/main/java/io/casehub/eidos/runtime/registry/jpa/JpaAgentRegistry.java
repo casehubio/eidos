@@ -52,7 +52,7 @@ public class JpaAgentRegistry implements AgentRegistry {
     @Override
     @Transactional(TxType.SUPPORTS)
     public List<AgentDescriptor> find(AgentQuery query) {
-        String fetchJoin = query.capabilityName() != null
+        String fetchJoin = (query.capabilityName() != null || query.taskDomain() != null)
             ? "JOIN FETCH a.capabilities c"
             : "LEFT JOIN FETCH a.capabilities c";
 
@@ -61,11 +61,13 @@ public class JpaAgentRegistry implements AgentRegistry {
             + " WHERE a.tenancyId = :tenancyId");
         if (query.slot() != null) jpql.append(" AND a.slot = :slot");
         if (query.capabilityName() != null) jpql.append(" AND c.name = :capabilityName");
+        if (query.taskDomain() != null) jpql.append(" AND :taskDomain NOT MEMBER OF c.excludedDomains");
 
         var q = em.createQuery(jpql.toString(), AgentDescriptorEntity.class)
                   .setParameter("tenancyId", query.tenancyId());
         if (query.slot() != null) q.setParameter("slot", query.slot());
         if (query.capabilityName() != null) q.setParameter("capabilityName", query.capabilityName());
+        if (query.taskDomain() != null) q.setParameter("taskDomain", query.taskDomain());
 
         return q.getResultList().stream().map(mapper::toRecord).toList();
     }
