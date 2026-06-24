@@ -702,16 +702,16 @@ Not closed here: L3 (JPA registry), L4 (capability health uses vocabulary for sl
 
 ##### Key files
 
-- `runtime/src/main/java/io/casehub/eidos/runtime/vocabulary/CdiVocabularyRegistry.java` — `@DefaultBean @ApplicationScoped`; discovers `@Any Instance<VocabularyRegistrar>`; three internal maps: byUri/byClass/byClassOrdered; `register(Class<T>)` reads `@VocabularyMetadata` annotation; axis-aware `equivalentValues`
+- `runtime/src/main/java/io/casehub/eidos/runtime/vocabulary/CdiVocabularyRegistry.java` — `@ApplicationScoped`; discovers `@Any Instance<VocabularyRegistrar>`; three internal maps: byUri/byClass/byClassOrdered; `register(Class<T>)` reads `@VocabularyMetadata` annotation; axis-aware `equivalentValues`
 - `api/src/main/java/io/casehub/eidos/api/VocabularyRegistry.java` — SPI: `register(Class<T>)`, `isRegistered`, `resolve`, `allTerms`, `equivalentValues` (typed generic + string-based + axis-aware with `DispositionAxis`)
 - `api/src/main/java/io/casehub/eidos/api/VocabularyTerm.java` — interface implemented by vocabulary enum constants; `exactMatch` cross-references (same vocab); `axisExactMatch` cross-references (axis-discriminated, for DISC-as-disposition)
 - `api/src/main/java/io/casehub/eidos/api/VocabularyMetadata.java` — `@Retention(RUNTIME) @Target(TYPE)` annotation; `uri()` required; `name()`, `version()` default to `""`
-- `api/src/main/java/io/casehub/eidos/api/spi/VocabularyRegistrar.java` — `@FunctionalInterface`; `void register(VocabularyRegistry registry)`; `@ApplicationScoped` beans call `registry.register(MyVocabEnum.class)`
+- `api/src/main/java/io/casehub/eidos/api/spi/VocabularyRegistrar.java` — `@FunctionalInterface`; `Class<? extends Enum<? extends VocabularyTerm>> vocabulary()`; `@ApplicationScoped` beans return the vocabulary enum class for auto-registration
 - `vocab/src/main/java/io/casehub/eidos/vocab/SvoTerm.java`, `ConscientiousnessTerm.java`, `CasehubSlotTerm.java`, `BelbinTerm.java`, `DiscTerm.java`, `ThomasKilmannTerm.java` — enum constants implementing `VocabularyTerm`; each paired with a `VocabularyRegistrar` CDI bean
 
 ##### Key wiring
 
-**`@Any Instance<VocabularyRegistrar>`** discovers all registrar beans. `CdiVocabularyRegistry` iterates at `@PostConstruct` and calls `registrar.register(this)` for each; the registrar calls `registry.register(MyVocabEnum.class)`. Do not call `.get()` lazily; the iterator is stateful.
+**`@Any Instance<VocabularyRegistrar>`** discovers all registrar beans. `CdiVocabularyRegistry` iterates at `@PostConstruct` and calls `registerRaw(r.vocabulary())` for each; the registrar returns the vocabulary enum class and the registry handles registration. Do not call `.get()` lazily; the iterator is stateful.
 
 **`register(Class<T>)` reads `@VocabularyMetadata.uri()`** — absent annotation throws `IllegalArgumentException`. The enum class IS the vocabulary; per-constant URI methods are architecturally impossible.
 
@@ -721,7 +721,7 @@ Not closed here: L3 (JPA registry), L4 (capability health uses vocabulary for sl
 
 ##### Architectural decisions
 
-**Why `VocabularyRegistrar` @FunctionalInterface rather than `Vocabulary` record CDI bean:** The enum class IS the vocabulary — all term values are compile-time constants, not runtime instances. A `Vocabulary` record required a CDI bean that existed solely to return a list of `VocabularyTerm` records mirroring the enum constants. `VocabularyRegistrar` eliminates the mirror: domain apps write `registry.register(MyVocab.class)` and the enum constants themselves are the terms. `@Any Instance<VocabularyRegistrar>` discovers all registrar beans without explicit registration. See ADR-0004.
+**Why `VocabularyRegistrar` @FunctionalInterface rather than `Vocabulary` record CDI bean:** The enum class IS the vocabulary — all term values are compile-time constants, not runtime instances. A `Vocabulary` record required a CDI bean that existed solely to return a list of `VocabularyTerm` records mirroring the enum constants. `VocabularyRegistrar` eliminates the mirror: domain apps implement `VocabularyRegistrar`, return the vocabulary enum class, and `CdiVocabularyRegistry` handles registration at `@PostConstruct`. `@Any Instance<VocabularyRegistrar>` discovers all registrar beans without explicit registration. See ADR-0004.
 
 ##### Pattern introduced
 
