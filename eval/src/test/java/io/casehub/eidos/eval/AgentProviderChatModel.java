@@ -84,7 +84,7 @@ class AgentProviderChatModel implements ChatModel {
             : agentProviderInstance.get();
 
         final String text = provider.invoke(AgentSessionConfig.of(systemPrompt, userPrompt))
-            .map(e -> switch (e) { case AgentEvent.TextDelta td -> td.text(); })
+            .map(e -> switch (e) { case AgentEvent.TextDelta td -> td.text(); default -> ""; })
             .collect().asList()
             .await().atMost(timeout)
             .stream().collect(Collectors.joining());
