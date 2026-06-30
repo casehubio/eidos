@@ -605,7 +605,8 @@ Not closed here: L4 (`DefaultCapabilityHealth` implementation, `AgentStateStore`
 
 - `api/src/main/java/io/casehub/eidos/api/AgentDescriptor.java` — four-layer agent identity record; compact constructor delegates to `AgentDescriptorValidator`
 - `api/src/main/java/io/casehub/eidos/api/AgentCapability.java` — capability record with `qualityHint` (Double), `epistemicDomains` (Map), `excludedDomains` (Set<String>, overlap invariant with epistemicDomains), and validated string fields; Builder inner class
-- `api/src/main/java/io/casehub/eidos/api/CapabilitySpecializationStore.java` — SPI: `recordDecline`, `clearDeclines`, `learnedExclusions`, `declineCount`; TTL owned by store implementation
+- `api/src/main/java/io/casehub/eidos/api/SpecializationSignal.java` — enum: `DECLINE`, `SUCCESS` — discriminator for `CapabilitySpecializationStore` methods
+- `api/src/main/java/io/casehub/eidos/api/CapabilitySpecializationStore.java` — SPI: `record`, `clear`, `learned`, `count` — signal-parameterized via `SpecializationSignal`; per-signal TTL owned by store implementation
 - `api/src/main/java/io/casehub/eidos/api/AgentDisposition.java` — four open-string disposition axes (socialOrient, ruleFollowing, riskAppetite, autonomy) + `canDelegate` boolean
 - `api/src/main/java/io/casehub/eidos/api/AgentQuery.java` — criteria record; compact constructor enforces non-null `tenancyId`
 - `api/src/main/java/io/casehub/eidos/api/AgentDescriptorValidator.java` — validates required fields, optional fields, list items, and map keys against character-set rules
@@ -1236,7 +1237,8 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | `Vocabulary` / `VocabularyTerm` | Named versioned vocabulary; each term carries `aliases` and `exactMatches` pairs for cross-vocabulary equivalence |
 | `CapabilityHealth` / `ReactiveCapabilityHealth` | SPI for probing whether a declared capability is operable at dispatch time; returns sealed `CapabilityStatus` |
 | `CapabilityStatus` | Sealed hierarchy: `Ready`, `Unavailable(message)`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)` |
-| `CapabilitySpecializationStore` | SPI accumulating learned domain exclusions from DECLINE patterns; store-owned TTL (30d default via `@ConfigProperty`); `declineCount` targeted query for probe efficiency |
+| `SpecializationSignal` | Enum: `DECLINE`, `SUCCESS` — discriminator for bidirectional `CapabilitySpecializationStore` methods |
+| `CapabilitySpecializationStore` | SPI accumulating learned domain signals (DECLINE and SUCCESS); signal-parameterized methods: `record`, `clear`, `learned`, `count`; per-signal TTL (30d default via `@ConfigProperty` `decline-ttl-days` / `success-ttl-days`) |
 | `DegradationReason` | Top-level enum: `RATE_LIMITED`, `CONTEXT_EXHAUSTED`, `OVERLOADED`, `DOMAIN_MISMATCH` |
 | `AgentStateStore` | SPI for recording and querying runtime degradation state with TTL; `tenancyId` required on all operations |
 | `AgentPromptContext` | Render-time accumulation record: `Optional<GoalContext>`, `List<Resource>`, `situationalContext`, `RenderFormat`; wither methods support incremental build; re-renderable as context evolves |

@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.health.jpa;
 
 import io.casehub.eidos.api.CapabilitySpecializationStore;
+import io.casehub.eidos.api.SpecializationSignal;
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,35 +23,43 @@ public class JpaCapabilitySpecializationStore implements CapabilitySpecializatio
     @ConfigProperty(name = "casehub.eidos.specialization.decline-ttl-days", defaultValue = "30")
     int declineTtlDays;
 
+    @ConfigProperty(name = "casehub.eidos.specialization.success-ttl-days", defaultValue = "30")
+    int successTtlDays;
+
     @Override
     @Transactional
-    public void recordDecline(String agentId, String tenancyId,
-                               String capabilityName, String domain) {
-        var id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain);
-        var existing = em.find(CapabilitySpecializationEntity.class, id);
-        var now = Instant.now();
-        var expiresAt = now.plusSeconds((long) declineTtlDays * 86400);
+    public void record(final String agentId, final String tenancyId,
+                       final String capabilityName, final String domain,
+                       final SpecializationSignal signal) {
+        final var id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain, signal.name());
+        final var existing = em.find(CapabilitySpecializationEntity.class, id);
+        final var now = Instant.now();
+        final var expiresAt = now.plusSeconds((long) ttlDaysFor(signal) * 86400);
 
         if (existing != null) {
-            existing.declineCount++;
-            existing.lastDeclined = now;
+            existing.signalCount++;
+            existing.lastRecorded = now;
             existing.expiresAt = expiresAt;
         } else {
             em.persist(new CapabilitySpecializationEntity(
-                agentId, tenancyId, capabilityName, domain, 1, now, expiresAt));
+                agentId, tenancyId, capabilityName, domain, signal.name(),
+                1, now, expiresAt));
         }
     }
 
     @Override
     @Transactional
-    public void clearDeclines(String agentId, String tenancyId, String capabilityName) {
+    public void clear(final String agentId, final String tenancyId,
+                      final String capabilityName, final SpecializationSignal signal) {
         em.createQuery("DELETE FROM CapabilitySpecializationEntity e"
                 + " WHERE e.id.agentId = :agentId"
                 + " AND e.id.tenancyId = :tenancyId"
-                + " AND e.id.capabilityName = :capabilityName")
+                + " AND e.id.capabilityName = :capabilityName"
+                + " AND e.id.signalType = :signalType")
             .setParameter("agentId", agentId)
             .setParameter("tenancyId", tenancyId)
             .setParameter("capabilityName", capabilityName)
+            .setParameter("signalType", signal.name())
             .executeUpdate();
         em.flush();
         em.clear();
@@ -58,35 +67,43 @@ public class JpaCapabilitySpecializationStore implements CapabilitySpecializatio
 
     @Override
     @Transactional(TxType.SUPPORTS)
-    public Map<String, Integer> learnedExclusions(String agentId, String tenancyId,
-                                                    String capabilityName) {
-        var results = em.createQuery(
+    public Map<String, Integer> learned(final String agentId, final String tenancyId,
+                                         final String capabilityName,
+                                         final SpecializationSignal signal) {
+        final var results = em.createQuery(
                 "SELECT e FROM CapabilitySpecializationEntity e"
                     + " WHERE e.id.agentId = :agentId"
                     + " AND e.id.tenancyId = :tenancyId"
                     + " AND e.id.capabilityName = :capabilityName"
+                    + " AND e.id.signalType = :signalType"
                     + " AND e.expiresAt > :now",
                 CapabilitySpecializationEntity.class)
             .setParameter("agentId", agentId)
             .setParameter("tenancyId", tenancyId)
             .setParameter("capabilityName", capabilityName)
+            .setParameter("signalType", signal.name())
             .setParameter("now", Instant.now())
             .getResultList();
 
-        var map = new HashMap<String, Integer>();
-        for (var e : results) {
-            map.put(e.id.domain, e.declineCount);
+        final var map = new HashMap<String, Integer>();
+        for (final var e : results) {
+            map.put(e.id.domain, e.signalCount);
         }
         return Map.copyOf(map);
     }
 
     @Override
     @Transactional(TxType.SUPPORTS)
-    public int declineCount(String agentId, String tenancyId,
-                             String capabilityName, String domain) {
-        var id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain);
-        var entity = em.find(CapabilitySpecializationEntity.class, id);
+    public int count(final String agentId, final String tenancyId,
+                     final String capabilityName, final String domain,
+                     final SpecializationSignal signal) {
+        final var id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain, signal.name());
+        final var entity = em.find(CapabilitySpecializationEntity.class, id);
         if (entity == null || !Instant.now().isBefore(entity.expiresAt)) return 0;
-        return entity.declineCount;
+        return entity.signalCount;
+    }
+
+    private int ttlDaysFor(final SpecializationSignal signal) {
+        return signal == SpecializationSignal.DECLINE ? declineTtlDays : successTtlDays;
     }
 }

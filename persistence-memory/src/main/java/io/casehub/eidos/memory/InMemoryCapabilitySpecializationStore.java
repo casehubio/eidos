@@ -1,6 +1,7 @@
 package io.casehub.eidos.memory;
 
 import io.casehub.eidos.api.CapabilitySpecializationStore;
+import io.casehub.eidos.api.SpecializationSignal;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
@@ -18,46 +19,52 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class InMemoryCapabilitySpecializationStore implements CapabilitySpecializationStore {
 
     @ConfigProperty(name = "casehub.eidos.specialization.decline-ttl-days", defaultValue = "30")
-    private int declineTtlDays;
+    int declineTtlDays;
 
-    private final ConcurrentHashMap<AgentCapKey, ConcurrentHashMap<String, ConcurrentLinkedQueue<Instant>>>
+    @ConfigProperty(name = "casehub.eidos.specialization.success-ttl-days", defaultValue = "30")
+    int successTtlDays;
+
+    private final ConcurrentHashMap<StoreKey, ConcurrentHashMap<String, ConcurrentLinkedQueue<Instant>>>
         store = new ConcurrentHashMap<>();
 
     @Override
-    public void recordDecline(final String agentId, final String tenancyId,
-                               final String capabilityName, final String domain) {
-        final var key = new AgentCapKey(agentId, tenancyId, capabilityName);
+    public void record(final String agentId, final String tenancyId,
+                       final String capabilityName, final String domain,
+                       final SpecializationSignal signal) {
+        final var key = new StoreKey(agentId, tenancyId, capabilityName, signal);
         final var domainQueues = store.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
         final var queue = domainQueues.computeIfAbsent(domain, d -> new ConcurrentLinkedQueue<>());
         final Instant now = Instant.now();
         queue.removeIf(ts -> !now.isBefore(ts));
-        queue.offer(now.plusSeconds((long) declineTtlDays * 86400));
+        queue.offer(now.plusSeconds((long) ttlDaysFor(signal) * 86400));
     }
 
     @Override
-    public void clearDeclines(final String agentId, final String tenancyId,
-                               final String capabilityName) {
-        store.remove(new AgentCapKey(agentId, tenancyId, capabilityName));
+    public void clear(final String agentId, final String tenancyId,
+                      final String capabilityName, final SpecializationSignal signal) {
+        store.remove(new StoreKey(agentId, tenancyId, capabilityName, signal));
     }
 
     @Override
-    public Map<String, Integer> learnedExclusions(final String agentId, final String tenancyId,
-                                                   final String capabilityName) {
-        final var domainQueues = store.get(new AgentCapKey(agentId, tenancyId, capabilityName));
+    public Map<String, Integer> learned(final String agentId, final String tenancyId,
+                                         final String capabilityName,
+                                         final SpecializationSignal signal) {
+        final var domainQueues = store.get(new StoreKey(agentId, tenancyId, capabilityName, signal));
         if (domainQueues == null) return Map.of();
         final Instant now = Instant.now();
         final var result = new HashMap<String, Integer>();
         domainQueues.forEach((domain, queue) -> {
-            final int count = (int) queue.stream().filter(ts -> now.isBefore(ts)).count();
-            if (count > 0) result.put(domain, count);
+            final int cnt = (int) queue.stream().filter(ts -> now.isBefore(ts)).count();
+            if (cnt > 0) result.put(domain, cnt);
         });
         return Map.copyOf(result);
     }
 
     @Override
-    public int declineCount(final String agentId, final String tenancyId,
-                             final String capabilityName, final String domain) {
-        final var domainQueues = store.get(new AgentCapKey(agentId, tenancyId, capabilityName));
+    public int count(final String agentId, final String tenancyId,
+                     final String capabilityName, final String domain,
+                     final SpecializationSignal signal) {
+        final var domainQueues = store.get(new StoreKey(agentId, tenancyId, capabilityName, signal));
         if (domainQueues == null) return 0;
         final var queue = domainQueues.get(domain);
         if (queue == null) return 0;
@@ -65,5 +72,10 @@ public class InMemoryCapabilitySpecializationStore implements CapabilitySpeciali
         return (int) queue.stream().filter(ts -> now.isBefore(ts)).count();
     }
 
-    private record AgentCapKey(String agentId, String tenancyId, String capabilityName) {}
+    private int ttlDaysFor(final SpecializationSignal signal) {
+        return signal == SpecializationSignal.DECLINE ? declineTtlDays : successTtlDays;
+    }
+
+    private record StoreKey(String agentId, String tenancyId,
+                             String capabilityName, SpecializationSignal signal) {}
 }

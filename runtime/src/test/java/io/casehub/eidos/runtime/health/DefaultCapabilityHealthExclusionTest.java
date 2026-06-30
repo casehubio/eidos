@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.casehub.eidos.api.SpecializationSignal;
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -39,17 +41,20 @@ class DefaultCapabilityHealthExclusionTest {
     static class StubSpecializationStore implements CapabilitySpecializationStore {
         private final Map<String, Integer> counts = new HashMap<>();
 
-        void setCount(String agentId, String tenancyId, String capability, String domain, int count) {
-            counts.put(agentId + "|" + tenancyId + "|" + capability + "|" + domain, count);
+        void setCount(String agentId, String tenancyId, String capability,
+                       String domain, SpecializationSignal signal, int count) {
+            counts.put(agentId + "|" + tenancyId + "|" + capability + "|" + domain + "|" + signal.name(), count);
         }
 
-        @Override public void recordDecline(String a, String t, String c, String d) {}
-        @Override public void clearDeclines(String a, String t, String c) {}
-        @Override public Map<String, Integer> learnedExclusions(String a, String t, String c) { return Map.of(); }
+        @Override public void record(String a, String t, String c, String d, SpecializationSignal s) {}
+        @Override public void clear(String a, String t, String c, SpecializationSignal s) {}
+        @Override public Map<String, Integer> learned(String a, String t, String c, SpecializationSignal s) { return Map.of(); }
 
         @Override
-        public int declineCount(String agentId, String tenancyId, String capabilityName, String domain) {
-            return counts.getOrDefault(agentId + "|" + tenancyId + "|" + capabilityName + "|" + domain, 0);
+        public int count(String agentId, String tenancyId, String capabilityName,
+                          String domain, SpecializationSignal signal) {
+            return counts.getOrDefault(
+                agentId + "|" + tenancyId + "|" + capabilityName + "|" + domain + "|" + signal.name(), 0);
         }
     }
 
@@ -129,7 +134,7 @@ class DefaultCapabilityHealthExclusionTest {
 
     @Test
     void learned_exclusion_at_default_threshold_returns_excluded() {
-        specializationStore.setCount("agent5", "default", "code-review", "rust", 3);
+        specializationStore.setCount("agent5", "default", "code-review", "rust", SpecializationSignal.DECLINE, 3);
         var descriptor = agent("agent5", capability("code-review"));
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(status).isInstanceOf(CapabilityStatus.Excluded.class);
@@ -141,7 +146,7 @@ class DefaultCapabilityHealthExclusionTest {
 
     @Test
     void learned_exclusion_below_threshold_continues_to_ready() {
-        specializationStore.setCount("agent6", "default", "code-review", "rust", 2);
+        specializationStore.setCount("agent6", "default", "code-review", "rust", SpecializationSignal.DECLINE, 2);
         var descriptor = agent("agent6", capability("code-review"));
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
@@ -149,7 +154,7 @@ class DefaultCapabilityHealthExclusionTest {
 
     @Test
     void count_captured_in_single_call_matches_excluded_record() {
-        specializationStore.setCount("agent7", "default", "code-review", "rust", 5);
+        specializationStore.setCount("agent7", "default", "code-review", "rust", SpecializationSignal.DECLINE, 5);
         var descriptor = agent("agent7", capability("code-review"));
         var excluded = (CapabilityStatus.Excluded) health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(excluded.declineCount()).isEqualTo(5);
@@ -158,7 +163,7 @@ class DefaultCapabilityHealthExclusionTest {
     @Test
     void null_task_domain_skips_both_exclusion_checks() {
         var descriptor = agent("agent8", capabilityWithExclusions("code-review", Set.of("rust")));
-        specializationStore.setCount("agent8", "default", "code-review", "rust", 10);
+        specializationStore.setCount("agent8", "default", "code-review", "rust", SpecializationSignal.DECLINE, 10);
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null));
         assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
     }
@@ -173,7 +178,7 @@ class DefaultCapabilityHealthExclusionTest {
         when(mockPreferences.getOrDefault(EidosPreferenceKeys.EXCLUDE_THRESHOLD))
             .thenReturn(new ExcludeThresholdPreference(2));
 
-        specializationStore.setCount("agent9", "default", "code-review", "rust", 2);
+        specializationStore.setCount("agent9", "default", "code-review", "rust", SpecializationSignal.DECLINE, 2);
         var descriptor = agent("agent9", capability("code-review"));
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
 
@@ -183,13 +188,21 @@ class DefaultCapabilityHealthExclusionTest {
     @Test
     void no_preference_provider_falls_back_to_default_threshold_of_3() {
         // isUnsatisfied() = true (setUp default)
-        specializationStore.setCount("agent10", "default", "code-review", "rust", 2);
+        specializationStore.setCount("agent10", "default", "code-review", "rust", SpecializationSignal.DECLINE, 2);
         var descriptor = agent("agent10", capability("code-review"));
         assertThat(health.probe(descriptor, "code-review", ProbeContext.of("rust")))
             .isInstanceOf(CapabilityStatus.Ready.class);  // 2 < 3
 
-        specializationStore.setCount("agent10", "default", "code-review", "rust", 3);
+        specializationStore.setCount("agent10", "default", "code-review", "rust", SpecializationSignal.DECLINE, 3);
         assertThat(health.probe(descriptor, "code-review", ProbeContext.of("rust")))
             .isInstanceOf(CapabilityStatus.Excluded.class);  // 3 >= 3
+    }
+
+    @Test
+    void success_data_does_not_affect_probe_result() {
+        specializationStore.setCount("agent11", "default", "code-review", "rust", SpecializationSignal.SUCCESS, 10);
+        var descriptor = agent("agent11", capability("code-review"));
+        var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
+        assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
     }
 }

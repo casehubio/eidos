@@ -2,6 +2,7 @@ package io.casehub.eidos.runtime.health;
 
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus.ExclusionSource;
+import io.casehub.eidos.api.SpecializationSignal;
 import io.casehub.eidos.runtime.preferences.EidosPreferenceKeys;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
@@ -63,10 +64,11 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return new CapabilityStatus.Excluded(context.taskDomain(), ExclusionSource.DECLARED, 0);
         }
 
-        // Step 4: learned exclusion — single declineCount call (count used for threshold check and Excluded record)
+        // Step 4: learned exclusion — single count call (count used for threshold check and Excluded record)
         if (context.taskDomain() != null) {
-            final int count = specializationStore.declineCount(
-                descriptor.agentId(), descriptor.tenancyId(), capabilityTag, context.taskDomain());
+            final int count = specializationStore.count(
+                descriptor.agentId(), descriptor.tenancyId(), capabilityTag,
+                context.taskDomain(), SpecializationSignal.DECLINE);
             if (count >= excludeThreshold(descriptor.tenancyId())) {
                 return new CapabilityStatus.Excluded(context.taskDomain(), ExclusionSource.LEARNED, count);
             }

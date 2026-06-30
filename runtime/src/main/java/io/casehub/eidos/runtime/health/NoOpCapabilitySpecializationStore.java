@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.health;
 
 import io.casehub.eidos.api.CapabilitySpecializationStore;
+import io.casehub.eidos.api.SpecializationSignal;
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -11,21 +12,25 @@ import java.util.Map;
 public class NoOpCapabilitySpecializationStore implements CapabilitySpecializationStore {
 
     @Override
-    public void recordDecline(String agentId, String tenancyId,
-                               String capabilityName, String domain) {}
+    public void record(final String agentId, final String tenancyId,
+                       final String capabilityName, final String domain,
+                       final SpecializationSignal signal) {}
 
     @Override
-    public void clearDeclines(String agentId, String tenancyId, String capabilityName) {}
+    public void clear(final String agentId, final String tenancyId,
+                      final String capabilityName, final SpecializationSignal signal) {}
 
     @Override
-    public Map<String, Integer> learnedExclusions(String agentId, String tenancyId,
-                                                   String capabilityName) {
+    public Map<String, Integer> learned(final String agentId, final String tenancyId,
+                                         final String capabilityName,
+                                         final SpecializationSignal signal) {
         return Map.of();
     }
 
     @Override
-    public int declineCount(String agentId, String tenancyId,
-                             String capabilityName, String domain) {
+    public int count(final String agentId, final String tenancyId,
+                     final String capabilityName, final String domain,
+                     final SpecializationSignal signal) {
         return 0;
     }
 }

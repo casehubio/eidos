@@ -44,10 +44,10 @@ class DefaultCapabilityHealthDegradedTest {
     }
 
     static class NoOpSpecializationStore implements CapabilitySpecializationStore {
-        @Override public void recordDecline(String a, String t, String c, String d) {}
-        @Override public void clearDeclines(String a, String t, String c) {}
-        @Override public Map<String, Integer> learnedExclusions(String a, String t, String c) { return Map.of(); }
-        @Override public int declineCount(String a, String t, String c, String d) { return 0; }
+        @Override public void record(String a, String t, String c, String d, SpecializationSignal s) {}
+        @Override public void clear(String a, String t, String c, SpecializationSignal s) {}
+        @Override public Map<String, Integer> learned(String a, String t, String c, SpecializationSignal s) { return Map.of(); }
+        @Override public int count(String a, String t, String c, String d, SpecializationSignal s) { return 0; }
     }
 
     StubStateStore stateStore;

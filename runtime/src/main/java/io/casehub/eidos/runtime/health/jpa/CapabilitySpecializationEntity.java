@@ -10,24 +10,25 @@ public class CapabilitySpecializationEntity {
     @EmbeddedId
     CapabilitySpecializationId id;
 
-    @Column(name = "decline_count", nullable = false)
-    int declineCount;
+    @Column(name = "signal_count", nullable = false)
+    int signalCount;
 
-    @Column(name = "last_declined", nullable = false)
-    Instant lastDeclined;
+    @Column(name = "last_recorded", nullable = false)
+    Instant lastRecorded;
 
     @Column(name = "expires_at", nullable = false)
     Instant expiresAt;
 
     protected CapabilitySpecializationEntity() {}
 
-    CapabilitySpecializationEntity(String agentId, String tenancyId,
-                                    String capabilityName, String domain,
-                                    int declineCount, Instant lastDeclined,
-                                    Instant expiresAt) {
-        this.id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain);
-        this.declineCount = declineCount;
-        this.lastDeclined = lastDeclined;
+    CapabilitySpecializationEntity(final String agentId, final String tenancyId,
+                                    final String capabilityName, final String domain,
+                                    final String signalType,
+                                    final int signalCount, final Instant lastRecorded,
+                                    final Instant expiresAt) {
+        this.id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain, signalType);
+        this.signalCount = signalCount;
+        this.lastRecorded = lastRecorded;
         this.expiresAt = expiresAt;
     }
 }
