@@ -12,6 +12,8 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.List;
+
 @DefaultBean
 @ApplicationScoped
 public class DefaultCapabilityHealth implements CapabilityHealth {
@@ -20,6 +22,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
     private final AgentStateStore stateStore;
     private final CapabilitySpecializationStore specializationStore;
     private final Instance<PreferenceProvider> preferenceProviderInstance;
+    private final VocabularyRegistry vocabularyRegistry;
 
     @Inject
     public DefaultCapabilityHealth(
@@ -27,11 +30,13 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             final double weakThreshold,
             final AgentStateStore stateStore,
             final CapabilitySpecializationStore specializationStore,
-            final Instance<PreferenceProvider> preferenceProviderInstance) {
+            final Instance<PreferenceProvider> preferenceProviderInstance,
+            final VocabularyRegistry vocabularyRegistry) {
         this.weakThreshold = weakThreshold;
         this.stateStore = stateStore;
         this.specializationStore = specializationStore;
         this.preferenceProviderInstance = preferenceProviderInstance;
+        this.vocabularyRegistry = vocabularyRegistry;
     }
 
     @Override
@@ -48,10 +53,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return new CapabilityStatus.Unavailable("Capability '" + capabilityTag + "' not declared");
         }
 
-        final var capability = descriptor.capabilities().stream()
-                .filter(c -> c.name().equals(capabilityTag))
-                .findFirst()
-                .orElse(null);
+        final var capability = findCapability(descriptor.capabilities(), capabilityTag);
 
         if (capability == null) {
             return new CapabilityStatus.Unavailable("Capability '" + capabilityTag + "' not declared");
@@ -92,5 +94,54 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
         return preferenceProviderInstance.get()
             .resolve(SettingsScope.of(tenancyId))
             .getOrDefault(EidosPreferenceKeys.EXCLUDE_THRESHOLD).value();
+    }
+
+    /**
+     * Finds a capability by exact match first, then by subsumption via vocabulary hierarchy.
+     * Returns null if no match is found.
+     * When multiple subsumption matches exist, returns the closest match (lowest depth).
+     */
+    private AgentCapability findCapability(final List<AgentCapability> capabilities, final String capabilityTag) {
+        // Step 1: Try exact match first
+        for (final var capability : capabilities) {
+            if (capability.name().equals(capabilityTag)) {
+                return capability;
+            }
+        }
+
+        // Step 2: Try subsumption match for vocabulary-grounded capabilities
+        AgentCapability bestMatch = null;
+        int bestDepth = Integer.MAX_VALUE;
+
+        for (final var capability : capabilities) {
+            // Skip ungrounded capabilities — they only match via exact match
+            if (capability.capabilityVocabulary() == null || capability.capabilityVocabulary().isBlank()) {
+                continue;
+            }
+
+            // Check if this capability subsumes the requested tag via the vocabulary
+            final MatchDegree match = vocabularyRegistry.match(
+                capability.capabilityVocabulary(),
+                capability.name(),
+                capabilityTag
+            );
+
+            // Plugin means declared capability is more general (parent) of requested tag
+            // Specialization means declared capability is more specific (child) of requested tag
+            // Both are valid matches — track depth for both
+            if (match instanceof MatchDegree.Plugin plugin) {
+                if (plugin.depth() < bestDepth) {
+                    bestMatch = capability;
+                    bestDepth = plugin.depth();
+                }
+            } else if (match instanceof MatchDegree.Specialization specialization) {
+                if (specialization.depth() < bestDepth) {
+                    bestMatch = capability;
+                    bestDepth = specialization.depth();
+                }
+            }
+        }
+
+        return bestMatch;
     }
 }

@@ -62,6 +62,9 @@ class DefaultCapabilityHealthExclusionTest {
     @SuppressWarnings("unchecked")
     Instance<PreferenceProvider> preferenceProviderInstance;
 
+    @Mock
+    VocabularyRegistry mockVocabRegistry;
+
     StubStateStore stateStore;
     StubSpecializationStore specializationStore;
     DefaultCapabilityHealth health;
@@ -71,7 +74,7 @@ class DefaultCapabilityHealthExclusionTest {
         stateStore = new StubStateStore();
         specializationStore = new StubSpecializationStore();
         lenient().when(preferenceProviderInstance.isUnsatisfied()).thenReturn(true);
-        health = new DefaultCapabilityHealth(0.3, stateStore, specializationStore, preferenceProviderInstance);
+        health = new DefaultCapabilityHealth(0.3, stateStore, specializationStore, preferenceProviderInstance, mockVocabRegistry);
     }
 
     static AgentDescriptor agent(String agentId, AgentCapability... capabilities) {

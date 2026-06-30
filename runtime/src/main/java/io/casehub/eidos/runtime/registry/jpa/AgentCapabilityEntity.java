@@ -28,6 +28,8 @@ public class AgentCapabilityEntity {
     @Column(nullable = false)
     String name;
 
+    @Column(name = "capability_vocabulary") String capabilityVocabulary;
+
     @Column(name = "quality_hint")        Double qualityHint;
     @Column(name = "latency_hint_p50_ms") Long latencyHintP50Ms;
     @Column(name = "cost_hint")           String costHint;

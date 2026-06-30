@@ -11,6 +11,7 @@ import java.util.Set;
  */
 public record AgentCapability(
         String name,
+        String capabilityVocabulary,
         Double qualityHint,
         Long latencyHintP50Ms,
         String costHint,
@@ -23,6 +24,8 @@ public record AgentCapability(
     public AgentCapability {
         AgentDescriptorValidator.validateRequired("capability.name", name,
             AgentDescriptorValidator.MAX_CAPABILITY_NAME);
+        AgentDescriptorValidator.validateOptional("capabilityVocabulary", capabilityVocabulary,
+            AgentDescriptorValidator.MAX_VOCABULARY_URI);
         AgentDescriptorValidator.validateOptional("costHint", costHint,
             AgentDescriptorValidator.MAX_CAPABILITY_STRING);
         AgentDescriptorValidator.validateItems("inputTypes", inputTypes,
@@ -53,6 +56,7 @@ public record AgentCapability(
 
     public static final class Builder {
         private String name;
+        private String capabilityVocabulary;
         private Double qualityHint;
         private Long latencyHintP50Ms;
         private String costHint;
@@ -63,6 +67,7 @@ public record AgentCapability(
         private Set<String> excludedDomains;
 
         public Builder name(String v)                     { this.name = v; return this; }
+        public Builder capabilityVocabulary(String v)     { this.capabilityVocabulary = v; return this; }
         public Builder qualityHint(Double v)              { this.qualityHint = v; return this; }
         public Builder latencyHintP50Ms(Long v)           { this.latencyHintP50Ms = v; return this; }
         public Builder costHint(String v)                 { this.costHint = v; return this; }
@@ -73,7 +78,7 @@ public record AgentCapability(
         public Builder excludedDomains(Set<String> v)     { this.excludedDomains = v; return this; }
 
         public AgentCapability build() {
-            return new AgentCapability(name, qualityHint, latencyHintP50Ms, costHint,
+            return new AgentCapability(name, capabilityVocabulary, qualityHint, latencyHintP50Ms, costHint,
                 inputTypes, outputTypes, tags, epistemicDomains, excludedDomains);
         }
     }

@@ -225,4 +225,23 @@ class AgentCapabilityTest {
         assertThat(cap.epistemicDomains()).containsEntry("java", 0.95);
         assertThat(cap.excludedDomains()).containsExactly("rust");
     }
+
+    // ── capabilityVocabulary (optional) ────────────────────────────────────────
+
+    @Test
+    void capability_vocabulary_carried_through_builder() {
+        var cap = AgentCapability.builder()
+            .name("code-review")
+            .capabilityVocabulary("urn:casehub:vocab:capability")
+            .build();
+        assertThat(cap.capabilityVocabulary()).isEqualTo("urn:casehub:vocab:capability");
+    }
+
+    @Test
+    void capability_vocabulary_null_is_valid() {
+        var cap = AgentCapability.builder()
+            .name("code-review")
+            .build();
+        assertThat(cap.capabilityVocabulary()).isNull();
+    }
 }

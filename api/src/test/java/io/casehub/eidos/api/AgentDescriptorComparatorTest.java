@@ -374,4 +374,22 @@ class AgentDescriptorComparatorTest {
                 "capabilities[code-review].qualityHint",
                 "capabilities[planning]");
     }
+
+    @Test
+    void capability_vocabulary_drift_detected() {
+        var desiredCap = AgentCapability.builder()
+                .name("review")
+                .capabilityVocabulary("urn:vocab:a")
+                .build();
+        var actualCap = AgentCapability.builder()
+                .name("review")
+                .capabilityVocabulary("urn:vocab:b")
+                .build();
+        var desired = withField(b -> b.capabilities(List.of(desiredCap)));
+        var actual = withField(b -> b.capabilities(List.of(actualCap)));
+        var result = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.matches()).isFalse();
+        assertThat(result.drifts()).anyMatch(d ->
+            d.field().contains("capabilityVocabulary"));
+    }
 }

@@ -53,6 +53,7 @@ class DefaultCapabilityHealthDegradedTest {
     StubStateStore stateStore;
     @SuppressWarnings("unchecked")
     Instance<PreferenceProvider> preferenceProviderInstance;
+    VocabularyRegistry mockVocabRegistry;
     DefaultCapabilityHealth health;
 
     @BeforeEach
@@ -60,7 +61,8 @@ class DefaultCapabilityHealthDegradedTest {
         stateStore = new StubStateStore();
         preferenceProviderInstance = org.mockito.Mockito.mock(Instance.class);
         org.mockito.Mockito.lenient().when(preferenceProviderInstance.isUnsatisfied()).thenReturn(true);
-        health = new DefaultCapabilityHealth(0.3, stateStore, new NoOpSpecializationStore(), preferenceProviderInstance);
+        mockVocabRegistry = org.mockito.Mockito.mock(VocabularyRegistry.class);
+        health = new DefaultCapabilityHealth(0.3, stateStore, new NoOpSpecializationStore(), preferenceProviderInstance, mockVocabRegistry);
     }
 
     static AgentDescriptor agent(final String agentId, final AgentCapability... capabilities) {

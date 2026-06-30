@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.vocabulary;
 
 import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.MatchDegree;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
@@ -11,11 +12,18 @@ import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -39,6 +47,14 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
     // class → constants in declaration order  (for allTerms — stored immutably)
     private final ConcurrentHashMap<Class<?>, List<? extends VocabularyTerm>> byClassOrdered =
         new ConcurrentHashMap<>();
+
+    // DAG index — hierarchy / subsumption
+    private final ConcurrentHashMap<String, Set<String>> valueToVocabs = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Map<String, List<AncestorEntry>>> ancestorIndex = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Map<String, List<DescendantEntry>>> descendantIndex = new ConcurrentHashMap<>();
+
+    private record AncestorEntry(VocabularyTerm term, int depth) {}
+    private record DescendantEntry(VocabularyTerm term, int depth) {}
 
     @PostConstruct
     void init() {
@@ -112,6 +128,126 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
         byClassOrdered.put(vocab, orderedList);
         byClass.put(vocab, Map.copyOf(lookupMap));
         byUri.put(uri, (Class<? extends Enum<?>>) vocab);
+
+        // Build DAG index — hierarchy / subsumption
+        buildHierarchyIndex(vocab, uri, constants);
+    }
+
+    private <T extends Enum<T> & VocabularyTerm> void buildHierarchyIndex(
+            Class<T> vocab, String uri, T[] constants) {
+        // 1. Validate specializes() references (same enum class check)
+        for (var constant : constants) {
+            for (var parent : constant.specializes()) {
+                if (!vocab.isInstance(parent)) {
+                    throw new IllegalArgumentException(
+                        "Cross-vocabulary specializes() not allowed: " + constant.value()
+                            + " in " + vocab.getName() + " specializes " + parent.value()
+                            + " from different vocabulary");
+                }
+            }
+        }
+
+        // 2. Cycle detection via Kahn's algorithm (topological sort)
+        Map<VocabularyTerm, Integer> inDegree = new HashMap<>();
+        Map<VocabularyTerm, List<VocabularyTerm>> edges = new HashMap<>();
+        for (var c : constants) {
+            inDegree.put(c, 0);
+            edges.put(c, new ArrayList<>());
+        }
+        for (var c : constants) {
+            for (var parent : c.specializes()) {
+                edges.get(parent).add(c);
+                inDegree.merge(c, 1, Integer::sum);
+            }
+        }
+        Queue<VocabularyTerm> queue = new ArrayDeque<>();
+        for (var c : constants) {
+            if (inDegree.get(c) == 0) queue.add(c);
+        }
+        int processed = 0;
+        while (!queue.isEmpty()) {
+            var node = queue.poll();
+            processed++;
+            for (var child : edges.get(node)) {
+                int newDegree = inDegree.get(child) - 1;
+                inDegree.put(child, newDegree);
+                if (newDegree == 0) queue.add(child);
+            }
+        }
+        if (processed != constants.length) {
+            throw new IllegalArgumentException(
+                "Cycle detected in specializes() hierarchy for vocabulary " + vocab.getName());
+        }
+
+        // 3. BFS from each term to compute ancestors with min depth
+        Map<String, List<AncestorEntry>> ancestorMap = new HashMap<>();
+        for (var c : constants) {
+            List<AncestorEntry> ancestors = new ArrayList<>();
+            Map<VocabularyTerm, Integer> visited = new HashMap<>();
+            Queue<AncestorEntry> bfsQueue = new ArrayDeque<>();
+            for (var parent : c.specializes()) {
+                bfsQueue.add(new AncestorEntry(parent, 1));
+                visited.put(parent, 1);
+            }
+            while (!bfsQueue.isEmpty()) {
+                var entry = bfsQueue.poll();
+                if (visited.get(entry.term) < entry.depth) continue;  // Skip if we found shorter path
+                ancestors.add(entry);
+                for (var grandparent : entry.term.specializes()) {
+                    int newDepth = entry.depth + 1;
+                    if (!visited.containsKey(grandparent) || visited.get(grandparent) > newDepth) {
+                        visited.put(grandparent, newDepth);
+                        bfsQueue.add(new AncestorEntry(grandparent, newDepth));
+                    }
+                }
+            }
+            ancestors.sort(Comparator.comparingInt(AncestorEntry::depth));
+            ancestorMap.put(c.value(), ancestors);
+        }
+
+        // 4. Invert edges, BFS for descendants with min depth
+        Map<VocabularyTerm, List<VocabularyTerm>> reverseEdges = new HashMap<>();
+        for (var c : constants) {
+            reverseEdges.put(c, new ArrayList<>());
+        }
+        for (var c : constants) {
+            for (var parent : c.specializes()) {
+                reverseEdges.get(parent).add(c);
+            }
+        }
+        Map<String, List<DescendantEntry>> descendantMap = new HashMap<>();
+        for (var c : constants) {
+            List<DescendantEntry> descendants = new ArrayList<>();
+            Map<VocabularyTerm, Integer> visited = new HashMap<>();
+            Queue<DescendantEntry> bfsQueue = new ArrayDeque<>();
+            for (var child : reverseEdges.get(c)) {
+                bfsQueue.add(new DescendantEntry(child, 1));
+                visited.put(child, 1);
+            }
+            while (!bfsQueue.isEmpty()) {
+                var entry = bfsQueue.poll();
+                if (visited.get(entry.term) < entry.depth) continue;
+                descendants.add(entry);
+                for (var grandchild : reverseEdges.get(entry.term)) {
+                    int newDepth = entry.depth + 1;
+                    if (!visited.containsKey(grandchild) || visited.get(grandchild) > newDepth) {
+                        visited.put(grandchild, newDepth);
+                        bfsQueue.add(new DescendantEntry(grandchild, newDepth));
+                    }
+                }
+            }
+            descendants.sort(Comparator.comparingInt(DescendantEntry::depth));
+            descendantMap.put(c.value(), descendants);
+        }
+
+        // 5. Populate valueToVocabs
+        for (var c : constants) {
+            valueToVocabs.computeIfAbsent(c.value(), k -> ConcurrentHashMap.newKeySet()).add(uri);
+        }
+
+        // Write indexes
+        ancestorIndex.put(uri, ancestorMap);
+        descendantIndex.put(uri, descendantMap);
     }
 
     @Override
@@ -181,5 +317,92 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
         if (clazz == null) return Optional.empty();
         // register() guarantees @VocabularyMetadata is present for anything in byUri
         return Optional.of(clazz.getAnnotation(VocabularyMetadata.class));
+    }
+
+    @Override
+    public boolean subsumes(String vocabUri, String generalValue, String specificValue) {
+        var ancestorMap = ancestorIndex.get(vocabUri);
+        if (ancestorMap == null) return false;
+        if (generalValue.equals(specificValue)) return true;
+        var ancestors = ancestorMap.get(specificValue);
+        if (ancestors == null) return false;
+        return ancestors.stream().anyMatch(e -> e.term.value().equals(generalValue));
+    }
+
+    @Override
+    public MatchDegree match(String vocabUri, String declaredValue, String requestedValue) {
+        if (declaredValue.equals(requestedValue)) return new MatchDegree.Exact();
+        var ancestorMap = ancestorIndex.get(vocabUri);
+        if (ancestorMap == null) return new MatchDegree.None();
+        // Plugin: declared is ancestor of requested (requested specializes declared)
+        var requestedAncestors = ancestorMap.get(requestedValue);
+        if (requestedAncestors != null) {
+            for (var entry : requestedAncestors) {
+                if (entry.term.value().equals(declaredValue)) {
+                    return new MatchDegree.Plugin(entry.depth);
+                }
+            }
+        }
+        // Specialization: declared is descendant of requested (declared specializes requested)
+        var declaredAncestors = ancestorMap.get(declaredValue);
+        if (declaredAncestors != null) {
+            for (var entry : declaredAncestors) {
+                if (entry.term.value().equals(requestedValue)) {
+                    return new MatchDegree.Specialization(entry.depth);
+                }
+            }
+        }
+        return new MatchDegree.None();
+    }
+
+    @Override
+    public List<? extends VocabularyTerm> ancestors(String vocabUri, String value) {
+        var ancestorMap = ancestorIndex.get(vocabUri);
+        if (ancestorMap == null) return List.of();
+        var ancestors = ancestorMap.get(value);
+        if (ancestors == null) return List.of();
+        return ancestors.stream().map(AncestorEntry::term).toList();
+    }
+
+    @Override
+    public List<? extends VocabularyTerm> descendants(String vocabUri, String value) {
+        var descendantMap = descendantIndex.get(vocabUri);
+        if (descendantMap == null) return List.of();
+        var descendants = descendantMap.get(value);
+        if (descendants == null) return List.of();
+        return descendants.stream().map(DescendantEntry::term).toList();
+    }
+
+    @Override
+    public Map<String, Set<String>> expandForMatchingByVocabulary(String value) {
+        var vocabs = valueToVocabs.get(value);
+        if (vocabs == null || vocabs.isEmpty()) return Map.of();
+        Map<String, Set<String>> result = new HashMap<>();
+        for (var vocabUri : vocabs) {
+            Set<String> expanded = new HashSet<>();
+            expanded.add(value);
+            // Add ancestors
+            var ancestorMap = ancestorIndex.get(vocabUri);
+            if (ancestorMap != null) {
+                var ancestors = ancestorMap.get(value);
+                if (ancestors != null) {
+                    for (var entry : ancestors) {
+                        expanded.add(entry.term.value());
+                    }
+                }
+            }
+            // Add descendants
+            var descendantMap = descendantIndex.get(vocabUri);
+            if (descendantMap != null) {
+                var descendants = descendantMap.get(value);
+                if (descendants != null) {
+                    for (var entry : descendants) {
+                        expanded.add(entry.term.value());
+                    }
+                }
+            }
+            result.put(vocabUri, expanded);
+        }
+        return result;
     }
 }

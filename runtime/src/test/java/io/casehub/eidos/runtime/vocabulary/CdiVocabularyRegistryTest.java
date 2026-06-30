@@ -6,7 +6,9 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -416,5 +418,228 @@ class CdiVocabularyRegistryTest {
     @Test
     void vocabularyMetadata_unregistered_uri_returns_empty() {
         assertThat(registry.vocabularyMetadata("urn:does-not-exist")).isEmpty();
+    }
+
+    // --- Hierarchy test vocabulary ---
+
+    @VocabularyMetadata(uri = "urn:test:hierarchy", name = "Hierarchy Vocab", version = "1.0")
+    enum HierarchyTerm implements VocabularyTerm {
+        ROOT("root", "Root"),
+        CHILD_A("child-a", "Child A") {
+            @Override public List<VocabularyTerm> specializes() { return List.of(ROOT); }
+        },
+        CHILD_B("child-b", "Child B") {
+            @Override public List<VocabularyTerm> specializes() { return List.of(ROOT); }
+        },
+        GRANDCHILD("grandchild", "Grandchild") {
+            @Override public List<VocabularyTerm> specializes() { return List.of(CHILD_A); }
+        },
+        DAG_LEAF("dag-leaf", "DAG Leaf") {
+            @Override public List<VocabularyTerm> specializes() { return List.of(CHILD_A, CHILD_B); }
+        };
+
+        final String value, label;
+        HierarchyTerm(String v, String l) { value = v; label = l; }
+        @Override public String value() { return value; }
+        @Override public String label() { return label; }
+    }
+
+    // --- Hierarchy / subsumption tests ---
+
+    @Test
+    void subsumes_parent_subsumes_child() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.subsumes("urn:test:hierarchy", "root", "child-a")).isTrue();
+    }
+
+    @Test
+    void subsumes_grandparent_subsumes_grandchild() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.subsumes("urn:test:hierarchy", "root", "grandchild")).isTrue();
+    }
+
+    @Test
+    void subsumes_self() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.subsumes("urn:test:hierarchy", "root", "root")).isTrue();
+    }
+
+    @Test
+    void subsumes_child_does_not_subsume_parent() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.subsumes("urn:test:hierarchy", "child-a", "root")).isFalse();
+    }
+
+    @Test
+    void subsumes_siblings_do_not_subsume() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.subsumes("urn:test:hierarchy", "child-a", "child-b")).isFalse();
+    }
+
+    @Test
+    void subsumes_unknown_vocab_returns_false() {
+        assertThat(registry.subsumes("urn:unknown", "a", "b")).isFalse();
+    }
+
+    @Test
+    void subsumes_unknown_term_returns_false() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.subsumes("urn:test:hierarchy", "root", "nonexistent")).isFalse();
+    }
+
+    @Test
+    void match_exact() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.match("urn:test:hierarchy", "child-a", "child-a"))
+            .isEqualTo(new MatchDegree.Exact());
+    }
+
+    @Test
+    void match_plugin_immediate_parent() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.match("urn:test:hierarchy", "root", "child-a"))
+            .isEqualTo(new MatchDegree.Plugin(1));
+    }
+
+    @Test
+    void match_plugin_grandparent() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.match("urn:test:hierarchy", "root", "grandchild"))
+            .isEqualTo(new MatchDegree.Plugin(2));
+    }
+
+    @Test
+    void match_specialization_immediate_child() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.match("urn:test:hierarchy", "child-a", "root"))
+            .isEqualTo(new MatchDegree.Specialization(1));
+    }
+
+    @Test
+    void match_none_for_siblings() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.match("urn:test:hierarchy", "child-a", "child-b"))
+            .isEqualTo(new MatchDegree.None());
+    }
+
+    @Test
+    void match_unknown_vocab_returns_none() {
+        assertThat(registry.match("urn:unknown", "a", "b"))
+            .isEqualTo(new MatchDegree.None());
+    }
+
+    @Test
+    void ancestors_returns_ordered_by_depth() {
+        registry.register(HierarchyTerm.class);
+        var ancestors = registry.ancestors("urn:test:hierarchy", "grandchild");
+        assertThat(ancestors).extracting(VocabularyTerm::value)
+            .containsExactly("child-a", "root");
+    }
+
+    @Test
+    void ancestors_of_root_is_empty() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.ancestors("urn:test:hierarchy", "root")).isEmpty();
+    }
+
+    @Test
+    void ancestors_unknown_term_returns_empty() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.ancestors("urn:test:hierarchy", "nonexistent")).isEmpty();
+    }
+
+    @Test
+    void descendants_returns_ordered_by_depth() {
+        registry.register(HierarchyTerm.class);
+        var desc = registry.descendants("urn:test:hierarchy", "root");
+        assertThat(desc).extracting(VocabularyTerm::value)
+            .startsWith("child-a", "child-b");
+        assertThat(desc).extracting(VocabularyTerm::value)
+            .contains("grandchild", "dag-leaf");
+    }
+
+    @Test
+    void descendants_of_leaf_is_empty() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.descendants("urn:test:hierarchy", "grandchild")).isEmpty();
+    }
+
+    @Test
+    void dag_leaf_has_two_parents() {
+        registry.register(HierarchyTerm.class);
+        var ancestors = registry.ancestors("urn:test:hierarchy", "dag-leaf");
+        assertThat(ancestors).extracting(VocabularyTerm::value)
+            .contains("child-a", "child-b", "root");
+    }
+
+    @Test
+    void dag_leaf_min_depth_to_root_is_2() {
+        registry.register(HierarchyTerm.class);
+        assertThat(registry.match("urn:test:hierarchy", "root", "dag-leaf"))
+            .isEqualTo(new MatchDegree.Plugin(2));
+    }
+
+    @Test
+    void expandForMatchingByVocabulary_returns_scoped_expansion() {
+        registry.register(HierarchyTerm.class);
+        var expansion = registry.expandForMatchingByVocabulary("child-a");
+        assertThat(expansion).containsKey("urn:test:hierarchy");
+        var names = expansion.get("urn:test:hierarchy");
+        assertThat(names).contains("child-a", "root", "grandchild", "dag-leaf");
+    }
+
+    @Test
+    void expandForMatchingByVocabulary_unknown_term_returns_empty() {
+        var expansion = registry.expandForMatchingByVocabulary("nonexistent");
+        assertThat(expansion).isEmpty();
+    }
+
+    @Test
+    void register_cycle_throws() {
+        @VocabularyMetadata(uri = "urn:test:cycle")
+        enum CycleTerm implements VocabularyTerm {
+            A("a", "A") {
+                @Override public List<VocabularyTerm> specializes() { return List.of(B); }
+            },
+            B("b", "B") {
+                @Override public List<VocabularyTerm> specializes() { return List.of(A); }
+            };
+            final String value, label;
+            CycleTerm(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        assertThatThrownBy(() -> registry.register(CycleTerm.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Cycle");
+    }
+
+    @Test
+    void register_cross_vocab_specializes_throws() {
+        @VocabularyMetadata(uri = "urn:test:cross-ref")
+        enum CrossRefTerm implements VocabularyTerm {
+            X("x", "X") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(SourceTerm.ALPHA);
+                }
+            };
+            final String value, label;
+            CrossRefTerm(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(SourceTerm.class);
+        assertThatThrownBy(() -> registry.register(CrossRefTerm.class))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void flat_vocab_has_no_hierarchy() {
+        registry.register(SourceTerm.class);
+        assertThat(registry.ancestors("urn:test:source", "alpha")).isEmpty();
+        assertThat(registry.descendants("urn:test:source", "alpha")).isEmpty();
+        assertThat(registry.subsumes("urn:test:source", "alpha", "beta")).isFalse();
+        assertThat(registry.match("urn:test:source", "alpha", "beta"))
+            .isEqualTo(new MatchDegree.None());
     }
 }

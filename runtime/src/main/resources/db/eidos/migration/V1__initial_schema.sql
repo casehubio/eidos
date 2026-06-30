@@ -31,6 +31,7 @@ CREATE TABLE agent_capability (
     agent_id            VARCHAR(255)  NOT NULL,
     tenancy_id          VARCHAR(255)  NOT NULL,
     name                VARCHAR(255)  NOT NULL,
+    capability_vocabulary TEXT,
     quality_hint        DOUBLE PRECISION,
     latency_hint_p50_ms BIGINT,
     cost_hint           VARCHAR(255),

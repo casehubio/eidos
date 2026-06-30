@@ -1,7 +1,9 @@
 package io.casehub.eidos.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface VocabularyRegistry {
 
@@ -63,4 +65,48 @@ public interface VocabularyRegistry {
      * meaning "not provided"; callers should treat {@code isEmpty()} as absent.
      */
     Optional<VocabularyMetadata> vocabularyMetadata(String uri);
+
+    // --- Hierarchy / subsumption ---
+
+    /**
+     * Tests whether {@code generalValue} subsumes {@code specificValue} in the given vocabulary.
+     * @param vocabUri vocabulary URI
+     * @param generalValue more general term
+     * @param specificValue more specific term (candidate descendant)
+     * @return true if {@code specificValue} specializes {@code generalValue}, or they are equal
+     */
+    boolean subsumes(String vocabUri, String generalValue, String specificValue);
+
+    /**
+     * Computes the OWLS-MX match degree between a declared capability and a requested capability.
+     * @param vocabUri vocabulary URI grounding both values
+     * @param declaredValue value declared in agent descriptor
+     * @param requestedValue value requested at probe/query time
+     * @return Exact, Plugin (declared subsumes requested), Specialization (declared is subsumed by requested), or None
+     */
+    MatchDegree match(String vocabUri, String declaredValue, String requestedValue);
+
+    /**
+     * Returns all ancestors (more general terms) of {@code value} in the vocabulary hierarchy.
+     * @param vocabUri vocabulary URI
+     * @param value term to find ancestors for
+     * @return list of ancestor terms ordered by depth (closest first), or empty if none
+     */
+    List<? extends VocabularyTerm> ancestors(String vocabUri, String value);
+
+    /**
+     * Returns all descendants (more specific terms) of {@code value} in the vocabulary hierarchy.
+     * @param vocabUri vocabulary URI
+     * @param value term to find descendants for
+     * @return list of descendant terms ordered by depth (closest first), or empty if none
+     */
+    List<? extends VocabularyTerm> descendants(String vocabUri, String value);
+
+    /**
+     * Expands a value to all related terms (ancestors and descendants) grouped by vocabulary.
+     * Used by {@code AgentRegistry.find()} to match vocabulary-grounded capabilities.
+     * @param value term to expand (primary value, not alias)
+     * @return map of vocabulary URI → expanded term set, or empty map if value is not registered in any vocabulary
+     */
+    Map<String, Set<String>> expandForMatchingByVocabulary(String value);
 }

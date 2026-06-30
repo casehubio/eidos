@@ -9,8 +9,10 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "true")
 @ApplicationScoped
@@ -18,10 +20,12 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
 
     @Inject AgentDescriptorReactivePanacheRepo repo;
     @Inject AgentDescriptorMapper mapper;
+    @Inject VocabularyRegistry vocabularyRegistry;
 
     @Override
     @WithTransaction
     public Uni<Void> register(AgentDescriptor descriptor) {
+        CapabilityVocabularyValidator.validate(descriptor, vocabularyRegistry);
         return repo.delete("agentId = ?1 AND tenancyId = ?2",
                           descriptor.agentId(), descriptor.tenancyId())
                    .chain(() -> repo.persist(mapper.toEntity(descriptor)))
@@ -57,10 +61,30 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
             jpql.append(" AND a.slot = :slot");
             params.and("slot", query.slot());
         }
+
+        // Capability matching with vocabulary expansion
         if (query.capabilityName() != null) {
-            jpql.append(" AND c.name = :capabilityName");
-            params.and("capabilityName", query.capabilityName());
+            Map<String, Set<String>> expansion = vocabularyRegistry.expandForMatchingByVocabulary(query.capabilityName());
+            if (expansion.isEmpty()) {
+                // No vocabulary grounding - exact match only
+                jpql.append(" AND c.name = :capabilityName");
+                params.and("capabilityName", query.capabilityName());
+            } else {
+                // Vocabulary grounding - expand to include specialized terms
+                jpql.append(" AND (c.name = :capabilityName");
+                params.and("capabilityName", query.capabilityName());
+                int idx = 0;
+                for (var entry : expansion.entrySet()) {
+                    jpql.append(" OR (c.capabilityVocabulary = :vocab").append(idx)
+                        .append(" AND c.name IN :expanded").append(idx).append(")");
+                    params.and("vocab" + idx, entry.getKey());
+                    params.and("expanded" + idx, entry.getValue());
+                    idx++;
+                }
+                jpql.append(")");
+            }
         }
+
         if (query.taskDomain() != null) {
             jpql.append(" AND :taskDomain NOT MEMBER OF c.excludedDomains");
             params.and("taskDomain", query.taskDomain());

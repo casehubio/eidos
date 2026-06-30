@@ -17,10 +17,17 @@ class InMemoryAgentRegistryTest {
 
     @Inject AgentRegistry registry;
     @Inject InMemoryAgentRegistry store;
+    @Inject VocabularyRegistry vocabularyRegistry;
 
     @BeforeEach
     void clearStore() {
         store.clear();
+    }
+
+    @BeforeEach
+    void registerTestVocabulary() {
+        // Register the test capability vocabulary before each test
+        vocabularyRegistry.register(TestCapabilityVocab.class);
     }
 
     static AgentDescriptor descriptor(String agentId, String slot, String tenancyId, String... caps) {
@@ -139,4 +146,160 @@ class InMemoryAgentRegistryTest {
         var result = registry.find(AgentQuery.byCapability("empty-types", "default"));
         assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("m-8");
     }
+
+    // --- Subsumption tests ---
+
+    @Test
+    void find_by_capability_matches_via_subsumption() {
+        // Register an agent with a general "review" capability grounded in TestCapabilityVocab
+        var generalCap = AgentCapability.builder()
+            .name("review")
+            .capabilityVocabulary("urn:test:capabilities")
+            .qualityHint(0.9)
+            .epistemicDomains(Map.of())
+            .build();
+        var desc = AgentDescriptor.builder()
+            .agentId("m-sub-1")
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(generalCap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
+        registry.register(desc);
+
+        // Query for "security-review" — which is a specialization of "review"
+        var result = registry.find(AgentQuery.byCapability("security-review", "default"));
+
+        // The agent should be found via subsumption
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("m-sub-1");
+    }
+
+    @Test
+    void find_ungrounded_capability_uses_exact_match_only() {
+        // Register an agent with capability "code-review" (no vocabulary)
+        registry.register(descriptor("m-exact-1", "reviewer", "default", "code-review"));
+
+        // Query for "security-code-review"
+        var result = registry.find(AgentQuery.byCapability("security-code-review", "default"));
+
+        // Should NOT be found (no subsumption without vocabulary grounding)
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).doesNotContain("m-exact-1");
+    }
+
+    @Test
+    void register_rejects_unknown_capability_vocabulary() {
+        var cap = AgentCapability.builder()
+            .name("review")
+            .capabilityVocabulary("urn:nonexistent:vocab")
+            .qualityHint(0.9)
+            .epistemicDomains(Map.of())
+            .build();
+        var desc = AgentDescriptor.builder()
+            .agentId("m-invalid-vocab")
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(cap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
+
+        assertThatThrownBy(() -> registry.register(desc))
+            .isInstanceOf(AgentValidationException.class)
+            .hasMessageContaining("capabilityVocabulary")
+            .hasMessageContaining("urn:nonexistent:vocab");
+    }
+
+    @Test
+    void register_rejects_unknown_term_in_known_vocabulary() {
+        var cap = AgentCapability.builder()
+            .name("nonexistent-capability")
+            .capabilityVocabulary("urn:test:capabilities")
+            .qualityHint(0.9)
+            .epistemicDomains(Map.of())
+            .build();
+        var desc = AgentDescriptor.builder()
+            .agentId("m-invalid-term")
+            .name("Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(cap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
+
+        assertThatThrownBy(() -> registry.register(desc))
+            .isInstanceOf(AgentValidationException.class)
+            .hasMessageContaining("capability.name")
+            .hasMessageContaining("nonexistent-capability");
+    }
+
+    // --- Test vocabulary with hierarchy ---
+
+    @VocabularyMetadata(uri = "urn:test:capabilities", name = "Test Capability Vocabulary")
+    enum TestCapabilityVocab implements VocabularyTerm {
+        REVIEW("review", "Review"),
+        CODE_REVIEW("code-review", "Code Review", REVIEW),
+        SECURITY_REVIEW("security-review", "Security Review", CODE_REVIEW),
+        DESIGN_REVIEW("design-review", "Design Review", REVIEW),
+        TESTING("testing", "Testing"),
+        UNIT_TESTING("unit-testing", "Unit Testing", TESTING),
+        INTEGRATION_TESTING("integration-testing", "Integration Testing", TESTING);
+
+        private final String value;
+        private final String label;
+        private final TestCapabilityVocab parent;
+
+        TestCapabilityVocab(String value, String label) {
+            this(value, label, null);
+        }
+
+        TestCapabilityVocab(String value, String label, TestCapabilityVocab parent) {
+            this.value = value;
+            this.label = label;
+            this.parent = parent;
+        }
+
+        @Override
+        public String value() {
+            return value;
+        }
+
+        @Override
+        public String label() {
+            return label;
+        }
+
+        @Override
+        public List<VocabularyTerm> specializes() {
+            return parent != null ? List.of(parent) : List.of();
+        }
+    }
+
 }

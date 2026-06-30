@@ -58,6 +58,7 @@ class AgentDescriptorMapper {
     private AgentCapability toCapability(AgentCapabilityEntity c) {
         return new AgentCapability(
             c.name,
+            c.capabilityVocabulary,
             c.qualityHint,
             c.latencyHintP50Ms,
             c.costHint,
@@ -75,6 +76,7 @@ class AgentDescriptorMapper {
         e.agentId    = parent.agentId;
         e.tenancyId  = parent.tenancyId;
         e.name = c.name();
+        e.capabilityVocabulary = c.capabilityVocabulary();
         e.qualityHint = c.qualityHint();
         e.latencyHintP50Ms = c.latencyHintP50Ms();
         e.costHint = c.costHint();

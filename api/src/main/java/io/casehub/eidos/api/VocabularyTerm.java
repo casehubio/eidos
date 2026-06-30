@@ -17,6 +17,7 @@ public interface VocabularyTerm {
     /** Returns {@code ""} when no description was provided. Callers treat {@code isEmpty()} as absent. */
     default String description()   { return ""; }
     default List<String> aliases() { return List.of(); }
+    default List<VocabularyTerm> specializes() { return List.of(); }
 
     /**
      * Axis-unaware cross-vocabulary equivalence.
