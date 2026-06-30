@@ -12,10 +12,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import org.jboss.logging.Logger;
 
 @IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "false", enableIfMissing = true)
 @ApplicationScoped
 public class JpaAgentRegistry implements AgentRegistry {
+
+    private static final Logger LOG = Logger.getLogger(JpaAgentRegistry.class);
+    static final int MAX_EXPANSION_SIZE = 500;
 
     @Inject EntityManager em;
     @Inject AgentDescriptorMapper mapper;
@@ -69,6 +73,11 @@ public class JpaAgentRegistry implements AgentRegistry {
         Map<String, Set<String>> capabilityExpansion = null;
         if (query.capabilityName() != null) {
             capabilityExpansion = vocabularyRegistry.expandForMatchingByVocabulary(query.capabilityName());
+            int totalExpanded = capabilityExpansion.values().stream().mapToInt(Set::size).sum();
+            if (totalExpanded > MAX_EXPANSION_SIZE) {
+                LOG.warnf("Vocabulary expansion for '%s' produced %d terms across %d vocabularies;"
+                    + " query may be slow", query.capabilityName(), totalExpanded, capabilityExpansion.size());
+            }
             if (capabilityExpansion.isEmpty()) {
                 // No vocabulary grounding - exact match only
                 jpql.append(" AND c.name = :capabilityName");

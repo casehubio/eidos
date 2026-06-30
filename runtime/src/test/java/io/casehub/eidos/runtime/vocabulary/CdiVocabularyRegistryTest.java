@@ -611,7 +611,8 @@ class CdiVocabularyRegistryTest {
         }
         assertThatThrownBy(() -> registry.register(CycleTerm.class))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Cycle");
+            .hasMessageContaining("Cycle")
+            .hasMessageContaining("terms involved: [a, b]");
     }
 
     @Test

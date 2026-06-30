@@ -175,8 +175,14 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
             }
         }
         if (processed != constants.length) {
+            var cycleTerms = inDegree.entrySet().stream()
+                .filter(e -> e.getValue() > 0)
+                .map(e -> e.getKey().value())
+                .sorted()
+                .toList();
             throw new IllegalArgumentException(
-                "Cycle detected in specializes() hierarchy for vocabulary " + vocab.getName());
+                "Cycle detected in specializes() hierarchy for vocabulary " + vocab.getName()
+                    + "; terms involved: " + cycleTerms);
         }
 
         // 3. BFS from each term to compute ancestors with min depth
@@ -191,18 +197,18 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
             }
             while (!bfsQueue.isEmpty()) {
                 var entry = bfsQueue.poll();
-                if (visited.get(entry.term) < entry.depth) continue;  // Skip if we found shorter path
+                if (visited.getOrDefault(entry.term, Integer.MAX_VALUE) < entry.depth) continue;
                 ancestors.add(entry);
                 for (var grandparent : entry.term.specializes()) {
                     int newDepth = entry.depth + 1;
-                    if (!visited.containsKey(grandparent) || visited.get(grandparent) > newDepth) {
+                    if (visited.getOrDefault(grandparent, Integer.MAX_VALUE) > newDepth) {
                         visited.put(grandparent, newDepth);
                         bfsQueue.add(new AncestorEntry(grandparent, newDepth));
                     }
                 }
             }
             ancestors.sort(Comparator.comparingInt(AncestorEntry::depth));
-            ancestorMap.put(c.value(), ancestors);
+            ancestorMap.put(c.value(), List.copyOf(ancestors));
         }
 
         // 4. Invert edges, BFS for descendants with min depth
@@ -226,18 +232,18 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
             }
             while (!bfsQueue.isEmpty()) {
                 var entry = bfsQueue.poll();
-                if (visited.get(entry.term) < entry.depth) continue;
+                if (visited.getOrDefault(entry.term, Integer.MAX_VALUE) < entry.depth) continue;
                 descendants.add(entry);
                 for (var grandchild : reverseEdges.get(entry.term)) {
                     int newDepth = entry.depth + 1;
-                    if (!visited.containsKey(grandchild) || visited.get(grandchild) > newDepth) {
+                    if (visited.getOrDefault(grandchild, Integer.MAX_VALUE) > newDepth) {
                         visited.put(grandchild, newDepth);
                         bfsQueue.add(new DescendantEntry(grandchild, newDepth));
                     }
                 }
             }
             descendants.sort(Comparator.comparingInt(DescendantEntry::depth));
-            descendantMap.put(c.value(), descendants);
+            descendantMap.put(c.value(), List.copyOf(descendants));
         }
 
         // 5. Populate valueToVocabs
@@ -245,9 +251,9 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
             valueToVocabs.computeIfAbsent(c.value(), k -> ConcurrentHashMap.newKeySet()).add(uri);
         }
 
-        // Write indexes
-        ancestorIndex.put(uri, ancestorMap);
-        descendantIndex.put(uri, descendantMap);
+        // Write indexes — immutable snapshots for safe concurrent reads
+        ancestorIndex.put(uri, Map.copyOf(ancestorMap));
+        descendantIndex.put(uri, Map.copyOf(descendantMap));
     }
 
     @Override
