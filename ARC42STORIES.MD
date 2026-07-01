@@ -19,7 +19,7 @@ Core capabilities:
 
 - **AgentDescriptor** — four-layer structured description: identity (id, name, model, provider), slot (open-string role classification), capabilities (capability name, quality, latency, epistemic domain confidence), disposition (four open-string axes + delegation flag); optional `briefing` freeform text field for per-agent narrative context
 - **AgentRegistry / ReactiveAgentRegistry** — SPI for agent registration and discovery by slot, capability, and tenancyId
-- **VocabularyRegistry / CdiVocabularyRegistry** — pluggable vocabulary system; CDI `Instance<Vocabulary>` discovery with cross-vocabulary equivalence traversal
+- **VocabularyRegistry / CdiVocabularyRegistry** — pluggable vocabulary system; CDI `Instance<VocabularyRegistrar>` discovery with cross-vocabulary equivalence traversal and XKOS-style subsumption hierarchy (`specializes()` → global DAG across vocabulary boundaries; `subsumes()`, `match()` → `MatchDegree`, `ancestors()`, `descendants()`, `expandForMatchingByVocabulary()`)
 - **CapabilityHealth / ReactiveCapabilityHealth** — two-layer probe: declared (descriptor) vs. operable now (runtime degradation state); `AgentStateStore` SPI records degradation with TTL
 - **SystemPromptRenderer / ReactiveSystemPromptRenderer** — three-stage render pipeline (canonical JSON payload → optional LLM semantic enrichment → format-specific assembly) into `RenderedPrompt`; `RenderedPromptCache` / `ReactiveRenderedPromptCache` SPI for cache coherence; capability rendering is format-discriminated: PROSE/MARKDOWN surface names + `inputTypes`/`outputTypes` only; numeric routing signals (`qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains`) appear in A2A_CARD only — protocol PP-20260611-228599; `RenderedPrompt.enriched` flag set when Stage 2 enrichment ran
 - **Eval framework** (`casehub-eidos-eval`) — LLM-as-judge quality harness; `PromptJudge` (4 dimensions), `ProximityJudge` (prose fidelity), three-stage personality preservation attribution (VocabularyExpressivenessJudge → TraitExpressionJudge → PairContrastJudge)
@@ -126,7 +126,7 @@ See `../parent/docs/PLATFORM.md` Capability Ownership table and `../parent/docs/
 | Layer | What it represents | Chapters |
 |---|---|---|
 | L1 Zero-Dep API | All domain types and SPIs; zero casehubio deps; pure Java records and interfaces | C1–C6 |
-| L2 CDI Discovery | `CdiVocabularyRegistry` — `Instance<Vocabulary>` discovery; in-memory registry alternatives | C1 |
+| L2 CDI Discovery | `CdiVocabularyRegistry` — `Instance<VocabularyRegistrar>` discovery; XKOS-style subsumption hierarchy (global DAG, cross-vocabulary specialization); in-memory registry alternatives | C1 |
 | L3 JPA Registry | `JpaAgentRegistry`, Flyway schema (`agent_descriptor`, `agent_capability`); reactive build-gated variant | C1, C3 |
 | L4 Capability Health | `DefaultCapabilityHealth`; `AgentStateStore` degradation tracking; fail-fast probe order | C2, C3 |
 | L5 Rendering Pipeline | Three-stage pipeline; `EidosRenderPipeline` shared stage 1+3; blocking + reactive renderers; `ReactiveRenderedPromptCache` canonical SPI | C3, C4 |
@@ -155,7 +155,7 @@ C4Container
   }
 
   Container_Boundary(runtime_b, "L2–L5 Runtime — casehub-eidos") {
-    Container(vocab_cdi, "CdiVocabularyRegistry", "CDI @DefaultBean", "Discovers Vocabulary beans via Instance<Vocabulary>")
+    Container(vocab_cdi, "CdiVocabularyRegistry", "CDI @ApplicationScoped", "Discovers VocabularyRegistrar beans via Instance<VocabularyRegistrar>; two-pass registration; global subsumption DAG with cross-vocabulary specialization; per-vocabulary index injection")
     Container(jpa_reg, "JpaAgentRegistry", "Panache JPA", "Persistent agent storage; unconditional tenancy filter")
     Container(cap_h, "DefaultCapabilityHealth", "CDI @ApplicationScoped", "Fail-fast probe: degraded → unavailable → epistemically weak → ready")
     Container(renderer, "EidosSystemPromptRenderer", "LangChain4j-core", "Three-stage pipeline; @DefaultBean")
@@ -566,8 +566,8 @@ casehub-engine can record tasks dispatched to agents (`AgentTask`) and their out
 **Architectural patterns:** Hexagonal (port), Immutable Value Object, Compact Constructor Invariants
 **Key protocols:** `docs/protocols/universal/module-tier-structure.md`, `docs/protocols/casehub/PP-20260530-2d6dbd`
 **Design refs:** `docs/specs/2026-05-23-phase2-capability-health-design.md`, `docs/specs/2026-06-02-knowledge-graph-design.md`
-**Issues:** eidos#1, #4, #5, #15, #20, #22, #32, #36, #37
-**Navigation:** `git log --grep="#1\|#4\|#5\|#15\|#20\|#22\|#32" --oneline api/`
+**Issues:** eidos#1, #4, #5, #15, #20, #22, #32, #36, #37, #71, #73
+**Navigation:** `git log --grep="#1\|#4\|#5\|#15\|#20\|#22\|#32\|#71\|#73" --oneline api/`
 **Blog:** `blog/2026-05-23-mdp01-agent-identity-from-scratch.md`, `blog/2026-05-31-mdp01-format-names-matter.md`
 **Completed:** 2026-06-04
 
@@ -587,6 +587,9 @@ What this layer adds:
 - **Open-String slot** — `slot` is a plain `String`, not an enum; domain apps define their own vocabulary via `Vocabulary` CDI beans; the platform never constrains slot values
 - **Capability with epistemic domain confidence** — `AgentCapability(name, qualityHint, latencyHintP50Ms, epistemicDomains Map<String,Double>, excludedDomains Set<String>)` qualifies declared capability by domain confidence and explicit negative specialization (e.g. `epistemicDomains: {"java": 0.95}`, `excludedDomains: {"rust"}`)
 - **Mandatory tenancyId** — `AgentQuery` compact constructor requires non-null `tenancyId`; `findById(agentId, tenancyId)` is the only signature — single-parameter overloads do not exist
+- **`MatchDegree` sealed interface** — `Exact`, `Plugin(depth)`, `Specialization(depth)`, `None` — returned by `VocabularyRegistry.match()` to express how well a requested vocabulary term matches a declared term; `Plugin` means the declared term is more specific (depth = hierarchy steps from declared down to requested); `Specialization` means the declared term is more general (depth = steps from requested up to declared)
+- **`VocabularyTerm.specializes()`** — `default List<VocabularyTerm> specializes()` declares XKOS-style parent terms; enables subsumption hierarchy construction across vocabulary boundaries (application terms can specialize foundation terms); consumed by `CdiVocabularyRegistry` during two-pass registration to build global DAG
+- **`VocabularyRegistry` subsumption API** — `subsumes(vocabUri, general, specific)` tests hierarchy containment; `match(vocabUri, declared, requested)` → `MatchDegree`; `ancestors(vocabUri, value)` and `descendants(vocabUri, value)` traverse the DAG; `expandForMatchingByVocabulary(value)` groups all terms matching a value (including cross-vocabulary specialization edges) by declaring vocabulary URI
 - **Sealed CapabilityStatus** — `Ready` / `Unavailable` / `Degraded(reason, msg)` / `EpistemicallyWeak(domain, confidence)` / `Excluded(domain, ExclusionSource, declineCount)` — exhaustive probe result; callers must handle all five in a switch; probe order: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → Ready
 - **Structure-named RenderFormat** — `MARKDOWN` / `PROSE` / `A2A_CARD`; adding an LLM provider requires no new enum member; sub-labels deferred until concrete structural differences emerge
 - **AgentPromptContext** — single accumulation point: `Optional<GoalContext>`, `List<Resource>`, `situationalContext`, `RenderFormat`; wither methods support incremental construction; re-renderable at any point
@@ -607,6 +610,7 @@ Not closed here: L4 (`DefaultCapabilityHealth` implementation, `AgentStateStore`
 - `api/src/main/java/io/casehub/eidos/api/AgentCapability.java` — capability record with `qualityHint` (Double), `epistemicDomains` (Map), `excludedDomains` (Set<String>, overlap invariant with epistemicDomains), and validated string fields; Builder inner class
 - `api/src/main/java/io/casehub/eidos/api/SpecializationSignal.java` — enum: `DECLINE`, `SUCCESS` — discriminator for `CapabilitySpecializationStore` methods
 - `api/src/main/java/io/casehub/eidos/api/CapabilitySpecializationStore.java` — SPI: `record`, `clear`, `learned`, `count` — signal-parameterized via `SpecializationSignal`; per-signal TTL owned by store implementation
+- `api/src/main/java/io/casehub/eidos/api/MatchDegree.java` — sealed interface: `Exact`, `Plugin(depth)`, `Specialization(depth)`, `None`; returned by `VocabularyRegistry.match()`; depth counts hierarchy steps between declared and requested terms
 - `api/src/main/java/io/casehub/eidos/api/AgentDisposition.java` — four open-string disposition axes (socialOrient, ruleFollowing, riskAppetite, autonomy) + `canDelegate` boolean
 - `api/src/main/java/io/casehub/eidos/api/AgentQuery.java` — criteria record; compact constructor enforces non-null `tenancyId`
 - `api/src/main/java/io/casehub/eidos/api/AgentDescriptorValidator.java` — validates required fields, optional fields, list items, and map keys against character-set rules
@@ -677,21 +681,23 @@ Inject-ready zero-dep API — all domain types and SPIs in one module with zero 
 **Architectural patterns:** Service Locator (CDI Instance<T>), @DefaultBean CDI displacement
 **Key protocols:** `docs/protocols/casehub/alternative-extension-patterns.md`
 **Design refs:** `docs/specs/2026-05-23-phase2-capability-health-design.md`
-**Issues:** eidos#1, #3
-**Navigation:** `git log --grep="#1\|#3" --oneline runtime/src/main/java/io/casehub/eidos/runtime/vocabulary/`
+**Issues:** eidos#1, #3, #71, #73
+**Navigation:** `git log --grep="#1\|#3\|#71\|#73" --oneline runtime/src/main/java/io/casehub/eidos/runtime/vocabulary/`
 **Blog:** `blog/2026-05-23-mdp01-agent-identity-from-scratch.md`
 **Completed:** 2026-05-23
 
 ##### What it adds
 
 **Before:** No vocabulary resolution — `slot`, `disposition`, and `capability` fields are raw open strings with no cross-domain equivalence.
-**After:** `CdiVocabularyRegistry @DefaultBean` — discovers `Instance<Vocabulary>` CDI beans at startup; `find`, `resolve`, and `equivalentValues` traverse `exactMatches` links bidirectionally.
+**After:** `CdiVocabularyRegistry @ApplicationScoped` — discovers `Instance<VocabularyRegistrar>` CDI beans at startup; two-pass registration (term registration → hierarchy construction); `equivalentValues` traverses `exactMatches` links bidirectionally; XKOS-style subsumption hierarchy via `specializes()` builds a global DAG across vocabulary boundaries with `subsumes()`, `match()` → `MatchDegree`, `ancestors()`, `descendants()`.
 
 What this layer adds:
 
-- **Pluggable vocabulary via CDI** — domain apps provide `Vocabulary` implementations as CDI beans; `CdiVocabularyRegistry` discovers them without explicit registration calls
+- **Pluggable vocabulary via CDI** — domain apps provide `VocabularyRegistrar` implementations as `@ApplicationScoped` CDI beans; `CdiVocabularyRegistry` discovers them via `@Any Instance<VocabularyRegistrar>` at `@PostConstruct`
 - **Cross-vocabulary equivalence traversal** — `equivalentValues("svo", "evaluator")` returns all equivalent terms including CasehubSlot "reviewer" via `exactMatches` declared on each `VocabularyTerm`
-- **Runtime registration** — `VocabularyRegistry.register(Vocabulary)` supports programmatic registration alongside CDI discovery; both paths co-exist
+- **XKOS-style subsumption hierarchy** — `VocabularyTerm.specializes()` declares parent terms; `CdiVocabularyRegistry` builds a global DAG with ancestor/descendant indexes during two-pass registration; `subsumes(vocabUri, general, specific)` tests containment; `match(vocabUri, declared, requested)` returns `MatchDegree` (Exact, Plugin, Specialization, None)
+- **Cross-vocabulary specialization** — application-tier vocabulary terms can specialize foundation-tier terms across vocabulary boundaries (e.g. `CasehubCapabilityTerm.JAVA_CODE_REVIEW` specializes `CasehubCapabilityTerm.CODE_REVIEW`); per-vocabulary index injection enables bidirectional `match()` across vocabularies with inline collision detection (native-vs-injected, injected-vs-injected)
+- **Runtime registration** — `VocabularyRegistry.register(Class<T>)` supports programmatic registration with late-register atomicity (snapshot-rollback on failure)
 
 Not closed here: L3 (JPA registry), L4 (capability health uses vocabulary for slot label resolution).
 
@@ -700,10 +706,12 @@ Not closed here: L3 (JPA registry), L4 (capability health uses vocabulary for sl
 | Gap | What breaks without it | Closed by |
 |---|---|---|
 | Cross-vocabulary discovery | SVO "evaluator" and CasehubSlot "reviewer" are opaque strings — no platform-level equivalence | `CdiVocabularyRegistry.equivalentValues()` traverses `exactMatches` links |
+| No hierarchy-aware matching | `find(capabilityName)` requires exact string equality; "java-code-review" does not match agents declaring "code-review" | `VocabularyTerm.specializes()` → global DAG; `match()` returns `MatchDegree.Plugin(depth)` or `Specialization(depth)` |
+| Cross-vocabulary specialization impossible | Application terms cannot express "I am a specialization of a foundation term" — no cross-boundary edges | Two-pass registration with per-vocabulary index injection; collision detection prevents conflicting injections |
 
 ##### Key files
 
-- `runtime/src/main/java/io/casehub/eidos/runtime/vocabulary/CdiVocabularyRegistry.java` — `@ApplicationScoped`; discovers `@Any Instance<VocabularyRegistrar>`; three internal maps: byUri/byClass/byClassOrdered; `register(Class<T>)` reads `@VocabularyMetadata` annotation; axis-aware `equivalentValues`
+- `runtime/src/main/java/io/casehub/eidos/runtime/vocabulary/CdiVocabularyRegistry.java` — `@ApplicationScoped`; discovers `@Any Instance<VocabularyRegistrar>`; six internal maps: byUri/byClass/byClassOrdered/valueToVocabs/ancestorIndex/descendantIndex; two-pass registration (`registerTerms` → `buildAllHierarchyIndexes`); per-vocabulary index injection for cross-vocabulary subsumption; inline collision detection; late `register()` atomicity with snapshot-rollback
 - `api/src/main/java/io/casehub/eidos/api/VocabularyRegistry.java` — SPI: `register(Class<T>)`, `isRegistered`, `resolve`, `allTerms`, `equivalentValues` (typed generic + string-based + axis-aware with `DispositionAxis`)
 - `api/src/main/java/io/casehub/eidos/api/VocabularyTerm.java` — interface implemented by vocabulary enum constants; `exactMatch` cross-references (same vocab); `axisExactMatch` cross-references (axis-discriminated, for DISC-as-disposition)
 - `api/src/main/java/io/casehub/eidos/api/VocabularyMetadata.java` — `@Retention(RUNTIME) @Target(TYPE)` annotation; `uri()` required; `name()`, `version()` default to `""`
@@ -712,9 +720,15 @@ Not closed here: L3 (JPA registry), L4 (capability health uses vocabulary for sl
 
 ##### Key wiring
 
-**`@Any Instance<VocabularyRegistrar>`** discovers all registrar beans. `CdiVocabularyRegistry` iterates at `@PostConstruct` and calls `registerRaw(r.vocabulary())` for each; the registrar returns the vocabulary enum class and the registry handles registration. Do not call `.get()` lazily; the iterator is stateful.
+**`@Any Instance<VocabularyRegistrar>`** discovers all registrar beans. `CdiVocabularyRegistry` iterates at `@PostConstruct` and calls `registerTermsRaw(r.vocabulary())` for each; the registrar returns the vocabulary enum class and the registry handles registration. Do not call `.get()` lazily; the iterator is stateful.
+
+**Two-pass registration** — Pass 1 (`registerTerms`): registers enum constants into `byUri`/`byClass`/`byClassOrdered` maps and populates `valueToVocabs` (reverse index: value → set of vocabulary URIs). Pass 2 (`buildAllHierarchyIndexes`): walks `specializes()` edges across all registered vocabularies to build `ancestorIndex` and `descendantIndex` DAGs; injects cross-vocabulary entries into per-vocabulary indexes for bidirectional `match()`. Two-pass is required because `specializes()` can reference terms from vocabularies registered later in the iteration order.
+
+**Per-vocabulary index injection** — when term A (vocab X) specializes term B (vocab Y), the ancestor/descendant relationship is injected into both vocab X's and vocab Y's indexes. This enables `match("vocabY-uri", "termB", "termA")` to return `Specialization(depth)` even though termA is declared in a different vocabulary. Inline collision detection rejects conflicting injections: native-vs-injected (an injected entry would shadow a term's own hierarchy) and injected-vs-injected (two different vocabularies inject conflicting entries for the same target term).
 
 **`register(Class<T>)` reads `@VocabularyMetadata.uri()`** — absent annotation throws `IllegalArgumentException`. The enum class IS the vocabulary; per-constant URI methods are architecturally impossible.
+
+**Late `register()` atomicity** — vocabularies registered after `@PostConstruct` (e.g. from application-tier `@Observes StartupEvent`) are handled atomically: snapshot current index state → register terms → rebuild all hierarchy indexes → on failure, rollback to snapshot. Prevents partial registration from leaving inconsistent ancestor/descendant indexes.
 
 **`equivalentValues` axis-aware overload** — `equivalentValues(fromVocab, value, toVocabClass, DispositionAxis axis)` resolves DISC `"dominance"` to different Conscientiousness values depending on which disposition axis is being queried. Without the axis parameter, a single DISC type maps ambiguously to multiple Conscientiousness values.
 
@@ -726,7 +740,7 @@ Not closed here: L3 (JPA registry), L4 (capability health uses vocabulary for sl
 
 ##### Pattern introduced
 
-Enum-based vocabulary SPI — vocabulary enum class IS the vocabulary; `@VocabularyMetadata` annotation carries URI; `VocabularyRegistrar` @FunctionalInterface registers enum classes; `CdiVocabularyRegistry` discovers `@Any Instance<VocabularyRegistrar>` at startup; axis-aware `equivalentValues` enables DISC-as-disposition-vocabulary pattern.
+Enum-based vocabulary SPI — vocabulary enum class IS the vocabulary; `@VocabularyMetadata` annotation carries URI; `VocabularyRegistrar` @FunctionalInterface registers enum classes; `CdiVocabularyRegistry` discovers `@Any Instance<VocabularyRegistrar>` at startup; two-pass registration builds global subsumption DAG from `specializes()` edges; cross-vocabulary specialization via per-vocabulary index injection; axis-aware `equivalentValues` enables DISC-as-disposition-vocabulary pattern.
 
 ##### Pattern anchor
 
@@ -1233,8 +1247,9 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | `AgentDisposition` | Four open-string disposition axes (socialOrient, ruleFollowing, riskAppetite, autonomy) plus `canDelegate` boolean |
 | `AgentQuery` | Criteria record for `AgentRegistry.find()`; tenancyId is required (compact constructor guard); slot and capabilityName are optional filters |
 | `AgentRegistry` / `ReactiveAgentRegistry` | SPI for registering and discovering `AgentDescriptor` instances; `AgentQuery` drives all find operations |
-| `VocabularyRegistry` / `CdiVocabularyRegistry` | SPI + default CDI implementation; discovers `Vocabulary` CDI beans; supports `find`, `resolve`, and `equivalentValues` with cross-vocabulary `exactMatches` traversal |
-| `Vocabulary` / `VocabularyTerm` | Named versioned vocabulary; each term carries `aliases` and `exactMatches` pairs for cross-vocabulary equivalence |
+| `VocabularyRegistry` / `CdiVocabularyRegistry` | SPI + `@ApplicationScoped` CDI implementation; discovers `VocabularyRegistrar` CDI beans; supports `resolve`, `equivalentValues` (cross-vocabulary `exactMatches` traversal), and XKOS-style subsumption hierarchy: `subsumes()`, `match()` → `MatchDegree`, `ancestors()`, `descendants()`, `expandForMatchingByVocabulary()`; two-pass registration builds global DAG across vocabulary boundaries |
+| `VocabularyTerm` | Interface implemented by vocabulary enum constants; `exactMatch()` cross-references for equivalence; `axisExactMatch()` for axis-discriminated resolution; `specializes()` declares XKOS-style parent terms for subsumption hierarchy |
+| `MatchDegree` | Sealed interface returned by `VocabularyRegistry.match()`: `Exact` (same term), `Plugin(depth)` (declared is more specific than requested — declared specializes requested), `Specialization(depth)` (declared is more general than requested — requested specializes declared), `None` (no hierarchy relationship) |
 | `CapabilityHealth` / `ReactiveCapabilityHealth` | SPI for probing whether a declared capability is operable at dispatch time; returns sealed `CapabilityStatus` |
 | `CapabilityStatus` | Sealed hierarchy: `Ready`, `Unavailable(message)`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)` |
 | `SpecializationSignal` | Enum: `DECLINE`, `SUCCESS` — discriminator for bidirectional `CapabilitySpecializationStore` methods |
