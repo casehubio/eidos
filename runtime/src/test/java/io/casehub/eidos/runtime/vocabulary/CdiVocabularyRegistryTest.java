@@ -113,6 +113,33 @@ class CdiVocabularyRegistryTest {
         @Override public List<String> aliases() { return aliases; }
     }
 
+    // Cross-vocabulary cycle detection enums — must be class-level for mutual reference
+    @VocabularyMetadata(uri = "urn:test:cycle-a")
+    enum CrossCycleA implements VocabularyTerm {
+        A_TERM("a-term", "A") {
+            @Override public List<VocabularyTerm> specializes() {
+                return List.of(CrossCycleB.B_TERM);
+            }
+        };
+        final String value, label;
+        CrossCycleA(String v, String l) { value = v; label = l; }
+        @Override public String value() { return value; }
+        @Override public String label() { return label; }
+    }
+
+    @VocabularyMetadata(uri = "urn:test:cycle-b")
+    enum CrossCycleB implements VocabularyTerm {
+        B_TERM("b-term", "B") {
+            @Override public List<VocabularyTerm> specializes() {
+                return List.of(CrossCycleA.A_TERM);
+            }
+        };
+        final String value, label;
+        CrossCycleB(String v, String l) { value = v; label = l; }
+        @Override public String value() { return value; }
+        @Override public String label() { return label; }
+    }
+
     // --- Registration tests ---
 
     @Test
@@ -612,11 +639,12 @@ class CdiVocabularyRegistryTest {
         assertThatThrownBy(() -> registry.register(CycleTerm.class))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Cycle")
-            .hasMessageContaining("terms involved: [a, b]");
+            .hasMessageContaining("a (urn:test:cycle)")
+            .hasMessageContaining("b (urn:test:cycle)");
     }
 
     @Test
-    void register_cross_vocab_specializes_throws() {
+    void register_cross_vocab_specializes_accepted() {
         @VocabularyMetadata(uri = "urn:test:cross-ref")
         enum CrossRefTerm implements VocabularyTerm {
             X("x", "X") {
@@ -630,17 +658,455 @@ class CdiVocabularyRegistryTest {
             @Override public String label() { return label; }
         }
         registry.register(SourceTerm.class);
-        assertThatThrownBy(() -> registry.register(CrossRefTerm.class))
-            .isInstanceOf(IllegalArgumentException.class);
+        registry.register(CrossRefTerm.class);
+
+        assertThat(registry.subsumes("urn:test:cross-ref", "alpha", "x")).isTrue();
+        assertThat(registry.ancestors("urn:test:cross-ref", "x"))
+            .extracting(VocabularyTerm::value).containsExactly("alpha");
+    }
+
+    // --- Cross-vocabulary match() tests ---
+
+    @Test
+    void match_cross_vocab_specialization() {
+        registry.register(SourceTerm.class);
+        @VocabularyMetadata(uri = "urn:test:app-cap")
+        enum AppCap implements VocabularyTerm {
+            SPECIAL("special", "Special") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(SourceTerm.ALPHA);
+                }
+            };
+            final String value, label;
+            AppCap(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(AppCap.class);
+
+        // Specialization: declared is app-specific, requested is foundation
+        assertThat(registry.match("urn:test:app-cap", "special", "alpha"))
+            .isEqualTo(new MatchDegree.Specialization(1));
+
+        // Plugin: declared is foundation, requested is app-specific (via injection)
+        assertThat(registry.match("urn:test:source", "alpha", "special"))
+            .isEqualTo(new MatchDegree.Plugin(1));
+    }
+
+    // --- Cross-vocabulary subsumes/ancestors/descendants tests ---
+
+    @Test
+    void subsumes_cross_vocab_parent_subsumes_child() {
+        registry.register(SourceTerm.class);
+        @VocabularyMetadata(uri = "urn:test:cross-sub")
+        enum CrossSubTerm implements VocabularyTerm {
+            LEAF("leaf", "Leaf") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(SourceTerm.ALPHA);
+                }
+            };
+            final String value, label;
+            CrossSubTerm(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(CrossSubTerm.class);
+
+        // Within the child's vocab: the cross-vocab parent subsumes the child
+        assertThat(registry.subsumes("urn:test:cross-sub", "alpha", "leaf")).isTrue();
+        // Reverse: the child does NOT subsume the parent
+        assertThat(registry.subsumes("urn:test:cross-sub", "leaf", "alpha")).isFalse();
+    }
+
+    @Test
+    void ancestors_cross_vocab_returns_cross_vocab_ancestor() {
+        registry.register(SourceTerm.class);
+        @VocabularyMetadata(uri = "urn:test:cross-anc")
+        enum CrossAncTerm implements VocabularyTerm {
+            DEEP("deep", "Deep") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(SourceTerm.ALPHA);
+                }
+            };
+            final String value, label;
+            CrossAncTerm(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(CrossAncTerm.class);
+
+        // Ancestors of "deep" in cross-anc vocab should include "alpha" from source vocab
+        var ancestors = registry.ancestors("urn:test:cross-anc", "deep");
+        assertThat(ancestors).extracting(VocabularyTerm::value).containsExactly("alpha");
+    }
+
+    @Test
+    void descendants_cross_vocab_injection_shows_cross_vocab_child() {
+        registry.register(SourceTerm.class);
+        @VocabularyMetadata(uri = "urn:test:cross-desc")
+        enum CrossDescTerm implements VocabularyTerm {
+            BRANCH("branch", "Branch") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(SourceTerm.ALPHA);
+                }
+            };
+            final String value, label;
+            CrossDescTerm(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(CrossDescTerm.class);
+
+        // In the source vocab, "alpha" should have "branch" as a descendant (via injection)
+        var descendants = registry.descendants("urn:test:source", "alpha");
+        assertThat(descendants).extracting(VocabularyTerm::value).contains("branch");
+    }
+
+    @Test
+    void cross_vocab_late_register_rebuilds_global_dag() {
+        // Register parent first, then child — late register() rebuilds global DAG
+        // and injects the child into the parent's descendant index
+        @VocabularyMetadata(uri = "urn:test:late-parent")
+        enum LateParent implements VocabularyTerm {
+            BASE("late-base", "Late Base");
+            final String value, label;
+            LateParent(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        @VocabularyMetadata(uri = "urn:test:late-child")
+        enum LateChild implements VocabularyTerm {
+            LEAF("late-leaf", "Late Leaf") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(LateParent.BASE);
+                }
+            };
+            final String value, label;
+            LateChild(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(LateParent.class);
+        // Parent has no descendants yet
+        assertThat(registry.descendants("urn:test:late-parent", "late-base")).isEmpty();
+
+        registry.register(LateChild.class);
+        // After child registration, global DAG is rebuilt — parent now has the child as descendant
+        assertThat(registry.descendants("urn:test:late-parent", "late-base"))
+            .extracting(VocabularyTerm::value).contains("late-leaf");
+        assertThat(registry.subsumes("urn:test:late-child", "late-base", "late-leaf")).isTrue();
+        assertThat(registry.ancestors("urn:test:late-child", "late-leaf"))
+            .extracting(VocabularyTerm::value).containsExactly("late-base");
+    }
+
+    // --- Cross-vocabulary validation tests ---
+
+    @Test
+    void register_cross_vocab_unregistered_parent_vocab_throws() {
+        // Use a dedicated never-registered vocab as the parent, avoiding test isolation issues
+        // where another test might have registered the parent before this test runs
+        @VocabularyMetadata(uri = "urn:test:never-registered-parent")
+        enum NeverRegisteredParent implements VocabularyTerm {
+            PHANTOM("phantom", "Phantom");
+            final String value, label;
+            NeverRegisteredParent(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        @VocabularyMetadata(uri = "urn:test:orphan-ref")
+        enum OrphanRefTerm implements VocabularyTerm {
+            ORPHAN("orphan", "Orphan") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(NeverRegisteredParent.PHANTOM);
+                }
+            };
+            final String value, label;
+            OrphanRefTerm(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        // NeverRegisteredParent is NOT registered — this should fail
+        assertThatThrownBy(() -> registry.register(OrphanRefTerm.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("unregistered vocabulary");
+    }
+
+    @Test
+    void cross_vocab_cycle_caught_as_unregistered_parent() {
+        // Cross-vocabulary cycles are caught at registration time: when CycleA is registered,
+        // it references CycleB which isn't registered yet → "unregistered vocabulary" error.
+        // This is a stricter check that fires before cycle detection.
+        assertThatThrownBy(() -> registry.register(CrossCycleA.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("unregistered vocabulary");
+    }
+
+    @Test
+    void native_vs_injected_value_collision_throws() {
+        // Parent vocab has a term "shared"
+        @VocabularyMetadata(uri = "urn:test:collision-parent")
+        enum ColParent implements VocabularyTerm {
+            SHARED("shared", "Shared Parent");
+            final String value, label;
+            ColParent(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        // Child vocab also has a native term "shared" AND specializes from ColParent.SHARED
+        @VocabularyMetadata(uri = "urn:test:collision-child")
+        enum ColChild implements VocabularyTerm {
+            CHILD_SPEC("child-spec", "Child Spec") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(ColParent.SHARED);
+                }
+            };
+            final String value, label;
+            ColChild(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        // ColChild.CHILD_SPEC specializes ColParent.SHARED.
+        // When building the parent vocab index, ColChild.CHILD_SPEC would be injected.
+        // No collision here because the values are different ("shared" vs "child-spec").
+        // Let's create a scenario where there IS a collision:
+        @VocabularyMetadata(uri = "urn:test:collision-overlay")
+        enum ColOverlay implements VocabularyTerm {
+            // This term has the same value "shared" as ColParent.SHARED and specializes from it
+            SHARED("shared", "Shared Overlay") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(ColParent.SHARED);
+                }
+            };
+            final String value, label;
+            ColOverlay(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(ColParent.class);
+        // ColOverlay.SHARED has value "shared" and specializes ColParent.SHARED (also value "shared")
+        // When injecting into collision-parent's index, "shared" already exists as native → collision
+        assertThatThrownBy(() -> registry.register(ColOverlay.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Value collision");
+    }
+
+    @Test
+    void late_register_atomicity_on_collision() {
+        // Register parent vocab
+        @VocabularyMetadata(uri = "urn:test:atom-parent")
+        enum AtomParent implements VocabularyTerm {
+            BASE("base", "Base");
+            final String value, label;
+            AtomParent(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(AtomParent.class);
+
+        // Verify parent is registered and has hierarchy
+        assertThat(registry.isRegistered("urn:test:atom-parent")).isTrue();
+
+        // Now try to register a vocab that will cause a collision
+        @VocabularyMetadata(uri = "urn:test:atom-collision")
+        enum AtomCollision implements VocabularyTerm {
+            BASE("base", "Base Collision") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(AtomParent.BASE);
+                }
+            };
+            final String value, label;
+            AtomCollision(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+
+        // This should fail with collision — "base" already exists in atom-parent
+        assertThatThrownBy(() -> registry.register(AtomCollision.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Value collision");
+
+        // After the failed registration, the colliding vocab should NOT be registered
+        assertThat(registry.isRegistered("urn:test:atom-collision")).isFalse();
+
+        // And the existing vocab's indexes should be intact
+        assertThat(registry.isRegistered("urn:test:atom-parent")).isTrue();
+        assertThat(registry.allTerms("urn:test:atom-parent")).hasSize(1);
     }
 
     @Test
     void flat_vocab_has_no_hierarchy() {
-        registry.register(SourceTerm.class);
-        assertThat(registry.ancestors("urn:test:source", "alpha")).isEmpty();
-        assertThat(registry.descendants("urn:test:source", "alpha")).isEmpty();
-        assertThat(registry.subsumes("urn:test:source", "alpha", "beta")).isFalse();
-        assertThat(registry.match("urn:test:source", "alpha", "beta"))
+        // Use a dedicated vocab that no other test creates cross-vocab specializations of,
+        // avoiding test isolation issues with the shared @ApplicationScoped registry
+        @VocabularyMetadata(uri = "urn:test:flat-isolated")
+        enum FlatIsolated implements VocabularyTerm {
+            P("p", "P"),
+            Q("q", "Q");
+            final String value, label;
+            FlatIsolated(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(FlatIsolated.class);
+        assertThat(registry.ancestors("urn:test:flat-isolated", "p")).isEmpty();
+        assertThat(registry.descendants("urn:test:flat-isolated", "p")).isEmpty();
+        assertThat(registry.subsumes("urn:test:flat-isolated", "p", "q")).isFalse();
+        assertThat(registry.match("urn:test:flat-isolated", "p", "q"))
             .isEqualTo(new MatchDegree.None());
+    }
+
+    @Test
+    void injected_vs_injected_value_collision_throws() {
+        // Foundation vocab with two parent terms
+        @VocabularyMetadata(uri = "urn:test:foundation")
+        enum Foundation implements VocabularyTerm {
+            DOCUMENTATION("documentation", "Documentation"),
+            ANALYSIS("analysis", "Analysis");
+            final String value, label;
+            Foundation(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        // Clinical defines "review" specializing Foundation.DOCUMENTATION
+        @VocabularyMetadata(uri = "urn:test:clinical")
+        enum Clinical implements VocabularyTerm {
+            REVIEW("review", "Clinical Review") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(Foundation.DOCUMENTATION);
+                }
+            };
+            final String value, label;
+            Clinical(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        // Legal defines "review" specializing Foundation.ANALYSIS
+        @VocabularyMetadata(uri = "urn:test:legal")
+        enum Legal implements VocabularyTerm {
+            REVIEW("review", "Legal Review") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(Foundation.ANALYSIS);
+                }
+            };
+            final String value, label;
+            Legal(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(Foundation.class);
+        registry.register(Clinical.class);
+        // Legal.REVIEW will attempt to inject into Foundation's index under "review",
+        // but Clinical.REVIEW already injected there → collision
+        assertThatThrownBy(() -> registry.register(Legal.class))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("collision")
+            .hasMessageContaining("urn:test:foundation")
+            .hasMessageContaining("urn:test:clinical")
+            .hasMessageContaining("urn:test:legal");
+    }
+
+    // --- Cross-vocabulary expandForMatchingByVocabulary tests ---
+
+    @Test
+    void expandForMatchingByVocabulary_cross_vocab_groups_by_declaring_vocab() {
+        @VocabularyMetadata(uri = "urn:test:expand-base")
+        enum ExpandBase implements VocabularyTerm {
+            ROOT("expand-root", "Expand Root");
+            final String value, label;
+            ExpandBase(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        @VocabularyMetadata(uri = "urn:test:expand-app")
+        enum ExpandApp implements VocabularyTerm {
+            APP_CHILD("expand-app-child", "Expand App Child") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(ExpandBase.ROOT);
+                }
+            };
+            final String value, label;
+            ExpandApp(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(ExpandBase.class);
+        registry.register(ExpandApp.class);
+
+        // Expanding foundation term — should include app-tier descendant
+        var expansion = registry.expandForMatchingByVocabulary("expand-root");
+        assertThat(expansion).containsKey("urn:test:expand-base");
+        assertThat(expansion).containsKey("urn:test:expand-app");
+        assertThat(expansion.get("urn:test:expand-app")).contains("expand-app-child");
+
+        // Expanding app term — should include foundation ancestor
+        var appExpansion = registry.expandForMatchingByVocabulary("expand-app-child");
+        assertThat(appExpansion).containsKey("urn:test:expand-app");
+        assertThat(appExpansion).containsKey("urn:test:expand-base");
+        assertThat(appExpansion.get("urn:test:expand-base")).contains("expand-root");
+    }
+
+    @Test
+    void expandForMatchingByVocabulary_three_vocab_chain_expansion() {
+        @VocabularyMetadata(uri = "urn:test:chain-foundation")
+        enum ChainFoundation implements VocabularyTerm {
+            BASE("chain-base", "Chain Base");
+            final String value, label;
+            ChainFoundation(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        @VocabularyMetadata(uri = "urn:test:chain-mid")
+        enum ChainMid implements VocabularyTerm {
+            MID("chain-mid", "Chain Mid") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(ChainFoundation.BASE);
+                }
+            };
+            final String value, label;
+            ChainMid(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        @VocabularyMetadata(uri = "urn:test:chain-app")
+        enum ChainApp implements VocabularyTerm {
+            APP("chain-app", "Chain App") {
+                @Override public List<VocabularyTerm> specializes() {
+                    return List.of(ChainMid.MID);
+                }
+            };
+            final String value, label;
+            ChainApp(String v, String l) { value = v; label = l; }
+            @Override public String value() { return value; }
+            @Override public String label() { return label; }
+        }
+        registry.register(ChainFoundation.class);
+        registry.register(ChainMid.class);
+        registry.register(ChainApp.class);
+
+        // Expanding foundation term — should include mid and app descendants grouped by their vocabularies
+        var baseExpansion = registry.expandForMatchingByVocabulary("chain-base");
+        assertThat(baseExpansion).containsKey("urn:test:chain-foundation");
+        assertThat(baseExpansion).containsKey("urn:test:chain-mid");
+        assertThat(baseExpansion).containsKey("urn:test:chain-app");
+        assertThat(baseExpansion.get("urn:test:chain-foundation")).contains("chain-base");
+        assertThat(baseExpansion.get("urn:test:chain-mid")).contains("chain-mid");
+        assertThat(baseExpansion.get("urn:test:chain-app")).contains("chain-app");
+
+        // Expanding mid term — should include foundation ancestor and app descendant
+        var midExpansion = registry.expandForMatchingByVocabulary("chain-mid");
+        assertThat(midExpansion).containsKey("urn:test:chain-foundation");
+        assertThat(midExpansion).containsKey("urn:test:chain-mid");
+        assertThat(midExpansion).containsKey("urn:test:chain-app");
+        assertThat(midExpansion.get("urn:test:chain-foundation")).contains("chain-base");
+        assertThat(midExpansion.get("urn:test:chain-mid")).contains("chain-mid");
+        assertThat(midExpansion.get("urn:test:chain-app")).contains("chain-app");
+
+        // Expanding app term — should include both foundation and mid ancestors
+        var appExpansion = registry.expandForMatchingByVocabulary("chain-app");
+        assertThat(appExpansion).containsKey("urn:test:chain-foundation");
+        assertThat(appExpansion).containsKey("urn:test:chain-mid");
+        assertThat(appExpansion).containsKey("urn:test:chain-app");
+        assertThat(appExpansion.get("urn:test:chain-foundation")).contains("chain-base");
+        assertThat(appExpansion.get("urn:test:chain-mid")).contains("chain-mid");
+        assertThat(appExpansion.get("urn:test:chain-app")).contains("chain-app");
     }
 }

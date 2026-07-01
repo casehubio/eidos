@@ -367,4 +367,199 @@ class JpaAgentRegistryTest {
             .hasMessageContaining("nonexistent-capability");
     }
 
+    // --- Cross-vocabulary JPA registry tests ---
+
+    /**
+     * Foundation vocabulary for cross-vocabulary tests.
+     * Simulates casehub-eidos-vocab/CasehubCapabilityTerm without adding a dependency.
+     */
+    @VocabularyMetadata(uri = "urn:test:foundation-cap", name = "Foundation Capability Vocabulary")
+    public enum FoundationCapabilityVocab implements VocabularyTerm {
+        DOCUMENTATION("documentation", "Documentation");
+
+        private final String value;
+        private final String label;
+
+        FoundationCapabilityVocab(String value, String label) {
+            this.value = value;
+            this.label = label;
+        }
+
+        @Override public String value() { return value; }
+        @Override public String label() { return label; }
+    }
+
+    /**
+     * App-tier vocabulary that specializes FoundationCapabilityVocab.DOCUMENTATION.
+     * Tests cross-vocabulary subsumption in JPA query path.
+     */
+    @VocabularyMetadata(uri = "urn:test:app-clinical-cap", name = "Clinical Capability Vocabulary")
+    public enum ClinicalCapabilityVocab implements VocabularyTerm {
+        CLINICAL_DOCUMENTATION_REVIEW("clinical-documentation-review", "Clinical Documentation Review");
+
+        private final String value;
+        private final String label;
+
+        ClinicalCapabilityVocab(String value, String label) {
+            this.value = value;
+            this.label = label;
+        }
+
+        @Override public String value() { return value; }
+        @Override public String label() { return label; }
+
+        @Override public List<VocabularyTerm> specializes() {
+            return List.of(FoundationCapabilityVocab.DOCUMENTATION);
+        }
+    }
+
+    @Test
+    @TestTransaction
+    void cross_vocabulary_query_foundation_term_matches_app_tier_specialization_via_plugin() {
+        // Register both foundation and cross-vocabulary vocab
+        vocabularyRegistry.register(FoundationCapabilityVocab.class);
+        vocabularyRegistry.register(ClinicalCapabilityVocab.class);
+
+        // Register agent with app-tier clinical-documentation-review capability
+        var clinicalCap = AgentCapability.builder()
+            .name("clinical-documentation-review")
+            .capabilityVocabulary("urn:test:app-clinical-cap")
+            .qualityHint(0.9)
+            .epistemicDomains(Map.of())
+            .build();
+        var clinicalAgent = AgentDescriptor.builder()
+            .agentId("agent-clinical")
+            .name("Clinical Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("clinical-reviewer")
+            .capabilities(List.of(clinicalCap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
+        registry.register(clinicalAgent);
+
+        // Query for foundation "documentation" term
+        var result = registry.find(AgentQuery.byCapability("documentation", "default"));
+
+        // JPA query path should match via Plugin (foundation subsumes app-tier specialization)
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+            .contains("agent-clinical");
+    }
+
+    @Test
+    @TestTransaction
+    void cross_vocabulary_query_app_tier_term_matches_foundation_via_specialization() {
+        // Register both foundation and cross-vocabulary vocab
+        vocabularyRegistry.register(FoundationCapabilityVocab.class);
+        vocabularyRegistry.register(ClinicalCapabilityVocab.class);
+
+        // Register agent with foundation documentation capability
+        var foundationCap = AgentCapability.builder()
+            .name("documentation")
+            .capabilityVocabulary("urn:test:foundation-cap")
+            .qualityHint(0.9)
+            .epistemicDomains(Map.of())
+            .build();
+        var foundationAgent = AgentDescriptor.builder()
+            .agentId("agent-foundation-doc")
+            .name("Foundation Documentation Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("general-reviewer")
+            .capabilities(List.of(foundationCap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build();
+        registry.register(foundationAgent);
+
+        // Query for app-tier clinical-documentation-review
+        var result = registry.find(AgentQuery.byCapability("clinical-documentation-review", "default"));
+
+        // JPA query path should match via Specialization (app-tier term matches foundation parent)
+        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+            .contains("agent-foundation-doc");
+    }
+
+    @Test
+    @TestTransaction
+    void cross_vocabulary_jpa_matches_same_agents_as_in_memory() {
+        // Register both foundation and cross-vocabulary vocab
+        vocabularyRegistry.register(FoundationCapabilityVocab.class);
+        vocabularyRegistry.register(ClinicalCapabilityVocab.class);
+
+        // Register both foundation and app-tier agents
+        var foundationCap = AgentCapability.builder()
+            .name("documentation")
+            .capabilityVocabulary("urn:test:foundation-cap")
+            .qualityHint(0.9)
+            .epistemicDomains(Map.of())
+            .build();
+        registry.register(AgentDescriptor.builder()
+            .agentId("agent-foundation-consistency")
+            .name("Foundation Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(foundationCap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build());
+
+        var appCap = AgentCapability.builder()
+            .name("clinical-documentation-review")
+            .capabilityVocabulary("urn:test:app-clinical-cap")
+            .qualityHint(0.9)
+            .epistemicDomains(Map.of())
+            .build();
+        registry.register(AgentDescriptor.builder()
+            .agentId("agent-app-consistency")
+            .name("App Agent")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-3-7")
+            .slot("reviewer")
+            .capabilities(List.of(appCap))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("principled")
+                .riskAppetite("measured")
+                .autonomy("semi-autonomous")
+                .build())
+            .tenancyId("default")
+            .build());
+
+        // Query for foundation term — should match both
+        var foundationQuery = registry.find(AgentQuery.byCapability("documentation", "default"));
+        assertThat(foundationQuery.stream().map(AgentDescriptor::agentId).toList())
+            .containsExactlyInAnyOrder("agent-foundation-consistency", "agent-app-consistency");
+
+        // Query for app-tier term — should match both
+        var appQuery = registry.find(AgentQuery.byCapability("clinical-documentation-review", "default"));
+        assertThat(appQuery.stream().map(AgentDescriptor::agentId).toList())
+            .containsExactlyInAnyOrder("agent-foundation-consistency", "agent-app-consistency");
+    }
+
 }
