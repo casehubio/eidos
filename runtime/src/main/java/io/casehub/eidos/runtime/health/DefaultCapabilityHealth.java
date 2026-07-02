@@ -2,6 +2,7 @@ package io.casehub.eidos.runtime.health;
 
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus.ExclusionSource;
+import io.casehub.eidos.api.CapabilityResolver;
 import io.casehub.eidos.api.SpecializationSignal;
 import io.casehub.eidos.runtime.preferences.EidosPreferenceKeys;
 import io.casehub.platform.api.preferences.PreferenceProvider;
@@ -53,7 +54,8 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return new CapabilityStatus.Unavailable("Capability '" + capabilityTag + "' not declared");
         }
 
-        final var capability = findCapability(descriptor.capabilities(), capabilityTag);
+        final var capability = CapabilityResolver.resolve(
+            descriptor.capabilities(), capabilityTag, vocabularyRegistry);
 
         if (capability == null) {
             return new CapabilityStatus.Unavailable("Capability '" + capabilityTag + "' not declared");
@@ -66,10 +68,10 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return new CapabilityStatus.Excluded(context.taskDomain(), ExclusionSource.DECLARED, 0);
         }
 
-        // Step 4: learned exclusion — single count call (count used for threshold check and Excluded record)
+        // Step 4: learned exclusion — use declared capability name, not query tag
         if (context.taskDomain() != null) {
             final int count = specializationStore.count(
-                descriptor.agentId(), descriptor.tenancyId(), capabilityTag,
+                descriptor.agentId(), descriptor.tenancyId(), capability.name(),
                 context.taskDomain(), SpecializationSignal.DECLINE);
             if (count >= excludeThreshold(descriptor.tenancyId())) {
                 return new CapabilityStatus.Excluded(context.taskDomain(), ExclusionSource.LEARNED, count);
@@ -94,54 +96,5 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
         return preferenceProviderInstance.get()
             .resolve(SettingsScope.of(tenancyId))
             .getOrDefault(EidosPreferenceKeys.EXCLUDE_THRESHOLD).value();
-    }
-
-    /**
-     * Finds a capability by exact match first, then by subsumption via vocabulary hierarchy.
-     * Returns null if no match is found.
-     * When multiple subsumption matches exist, returns the closest match (lowest depth).
-     */
-    private AgentCapability findCapability(final List<AgentCapability> capabilities, final String capabilityTag) {
-        // Step 1: Try exact match first
-        for (final var capability : capabilities) {
-            if (capability.name().equals(capabilityTag)) {
-                return capability;
-            }
-        }
-
-        // Step 2: Try subsumption match for vocabulary-grounded capabilities
-        AgentCapability bestMatch = null;
-        int bestDepth = Integer.MAX_VALUE;
-
-        for (final var capability : capabilities) {
-            // Skip ungrounded capabilities — they only match via exact match
-            if (capability.capabilityVocabulary() == null || capability.capabilityVocabulary().isBlank()) {
-                continue;
-            }
-
-            // Check if this capability subsumes the requested tag via the vocabulary
-            final MatchDegree match = vocabularyRegistry.match(
-                capability.capabilityVocabulary(),
-                capability.name(),
-                capabilityTag
-            );
-
-            // Plugin means declared capability is more general (parent) of requested tag
-            // Specialization means declared capability is more specific (child) of requested tag
-            // Both are valid matches — track depth for both
-            if (match instanceof MatchDegree.Plugin plugin) {
-                if (plugin.depth() < bestDepth) {
-                    bestMatch = capability;
-                    bestDepth = plugin.depth();
-                }
-            } else if (match instanceof MatchDegree.Specialization specialization) {
-                if (specialization.depth() < bestDepth) {
-                    bestMatch = capability;
-                    bestDepth = specialization.depth();
-                }
-            }
-        }
-
-        return bestMatch;
     }
 }

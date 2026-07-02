@@ -208,4 +208,80 @@ class DefaultCapabilityHealthExclusionTest {
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
     }
+
+    @Test
+    void learned_exclusion_uses_declared_name_under_subsumption() {
+        // Agent declares "security-code-review" grounded. Probe for "code-review" (parent).
+        // DECLINE signals recorded against "security-code-review" (declared name).
+        // Mock vocab: code-review → security-code-review is Specialization(1)
+        var cap = AgentCapability.builder().name("security-code-review")
+            .capabilityVocabulary("urn:test:cap").qualityHint(0.9).build();
+        var descriptor = agent("agent-sub1", cap);
+
+        // No exact match for "code-review", so CapabilityResolver will try subsumption
+        when(mockVocabRegistry.match("urn:test:cap", "security-code-review", "code-review"))
+            .thenReturn(new MatchDegree.Specialization(1));
+
+        // Record declines against declared name "security-code-review"
+        specializationStore.setCount("agent-sub1", "default", "security-code-review",
+            "rust", SpecializationSignal.DECLINE, 3);
+
+        var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
+        assertThat(status).isInstanceOf(CapabilityStatus.Excluded.class);
+        var excluded = (CapabilityStatus.Excluded) status;
+        assertThat(excluded.source()).isEqualTo(CapabilityStatus.ExclusionSource.LEARNED);
+        assertThat(excluded.declineCount()).isEqualTo(3);
+    }
+
+    @Test
+    void learned_exclusion_invisible_under_wrong_key() {
+        // Same setup, but DECLINE recorded against "code-review" (query tag, wrong key)
+        var cap = AgentCapability.builder().name("security-code-review")
+            .capabilityVocabulary("urn:test:cap").qualityHint(0.9).build();
+        var descriptor = agent("agent-sub2", cap);
+
+        when(mockVocabRegistry.match("urn:test:cap", "security-code-review", "code-review"))
+            .thenReturn(new MatchDegree.Specialization(1));
+
+        // Record against query tag — wrong key
+        specializationStore.setCount("agent-sub2", "default", "code-review",
+            "rust", SpecializationSignal.DECLINE, 3);
+
+        var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
+        // Should be Ready — declines under wrong key are invisible
+        assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
+    }
+
+    @Test
+    void learned_exclusion_under_plugin_direction() {
+        // Agent declares "code-review" (general, grounded). Probe for "security-code-review" (child).
+        var cap = AgentCapability.builder().name("code-review")
+            .capabilityVocabulary("urn:test:cap").qualityHint(0.9).build();
+        var descriptor = agent("agent-sub3", cap);
+
+        when(mockVocabRegistry.match("urn:test:cap", "code-review", "security-code-review"))
+            .thenReturn(new MatchDegree.Plugin(1));
+
+        // Record declines against declared name "code-review"
+        specializationStore.setCount("agent-sub3", "default", "code-review",
+            "rust", SpecializationSignal.DECLINE, 3);
+
+        var status = health.probe(descriptor, "security-code-review", ProbeContext.of("rust"));
+        assertThat(status).isInstanceOf(CapabilityStatus.Excluded.class);
+        var excluded = (CapabilityStatus.Excluded) status;
+        assertThat(excluded.source()).isEqualTo(CapabilityStatus.ExclusionSource.LEARNED);
+    }
+
+    @Test
+    void learned_exclusion_exact_match_regression() {
+        // Exact match: declared and query tag are the same — regression guard
+        var descriptor = agent("agent-sub4", capability("code-review"));
+
+        specializationStore.setCount("agent-sub4", "default", "code-review",
+            "rust", SpecializationSignal.DECLINE, 3);
+
+        var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
+        assertThat(status).isInstanceOf(CapabilityStatus.Excluded.class);
+        assertThat(((CapabilityStatus.Excluded) status).declineCount()).isEqualTo(3);
+    }
 }

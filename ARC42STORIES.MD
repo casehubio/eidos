@@ -849,14 +849,14 @@ Not closed here: L4 (runtime degradation tracking), L7 (knowledge graph — V3 m
 ##### What it adds
 
 **Before:** `NoOpCapabilityHealth @DefaultBean` — probe always returns `Ready`.
-**After:** `DefaultCapabilityHealth` — fail-fast probe (degraded state → unavailable → epistemically weak → ready); `AgentStateStore` SPI records runtime degradation with TTL; `NoOpAgentStateStore @DefaultBean` preserves backward behaviour.
+**After:** `DefaultCapabilityHealth` — fail-fast probe (Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → Ready); `AgentStateStore` SPI records runtime degradation with TTL; `NoOpAgentStateStore @DefaultBean` preserves backward behaviour.
 
 What this layer adds:
 
-- **Fail-fast probe order** — `AgentStateStore.query()` runs first; a known-degraded agent is not worth checking further; declared capability check second; epistemic domain confidence third
+- **Fail-fast probe order** — `AgentStateStore.query()` runs first (Degraded); capability resolution via `CapabilityResolver.resolve()` second (Unavailable if no match); declared `excludedDomains` third (Excluded/DECLARED); learned exclusion via `CapabilitySpecializationStore.count()` fourth (Excluded/LEARNED); epistemic domain confidence fifth (EpistemicallyWeak); else Ready
 - **`AgentStateStore` degradation tracking** — `record(agentId, tenancyId, DegradationReason, Instant expiresAt)`; `NoOpAgentStateStore @DefaultBean`; `InMemoryAgentStateStore @Alternative @Priority(1)` (ConcurrentHashMap with TTL expiry); `JpaAgentStateStore` in runtime (Flyway V2)
 - **`CapabilityHealth` probe takes `AgentDescriptor`, not `agentId`** — the caller already has the descriptor from the registry query; no redundant lookup; no tenancy question at probe time
-- **Four `CapabilityStatus` variants** — `Ready`, `Unavailable`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`; sealed hierarchy; exhaustive switch at call sites
+- **Five `CapabilityStatus` variants** — `Ready`, `Unavailable`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)`; sealed hierarchy; exhaustive switch at call sites
 
 Not closed here: L5 (rendering pipeline calls health check), L7 (knowledge graph outcome history provides empirical health signal).
 
@@ -869,6 +869,7 @@ Not closed here: L5 (rendering pipeline calls health check), L7 (knowledge graph
 
 ##### Key files
 
+- `api/src/main/java/io/casehub/eidos/api/CapabilityResolver.java` — static utility; shared subsumption resolution for probe and recording paths; `resolve()` returns best-matching `AgentCapability` from a list; `match()` returns `MatchDegree` for a single capability
 - `runtime/src/main/java/io/casehub/eidos/runtime/health/DefaultCapabilityHealth.java` — `@ApplicationScoped`; fail-fast probe order; `@IfBuildProperty(name="casehub.eidos.reactive.enabled", stringValue="false", enableIfMissing=true)`
 - `runtime/src/main/java/io/casehub/eidos/runtime/health/DefaultReactiveCapabilityHealth.java` — reactive variant; delegates to blocking impl via `Uni.createFrom().item(supplier).runSubscriptionOn(workerPool)`
 - `runtime/src/main/java/io/casehub/eidos/runtime/health/NoOpAgentStateStore.java` — `@DefaultBean @ApplicationScoped`; all methods no-op; preserves Phase 2 behaviour when no state store is configured
