@@ -9,7 +9,7 @@ import java.util.List;
  *
  * <p>This utility eliminates duplication and ensures consistent matching logic
  * across {@link CapabilityHealth#probe(AgentDescriptor, String, ProbeContext)}
- * and {@link CapabilitySpecializationStore} learned exclusion lookups.
+ * and {@link BehavioralSignalStore} learned exclusion lookups.
  *
  * @since 0.2
  */

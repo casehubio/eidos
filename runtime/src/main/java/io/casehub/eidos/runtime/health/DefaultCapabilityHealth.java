@@ -3,7 +3,6 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus.ExclusionSource;
 import io.casehub.eidos.api.CapabilityResolver;
-import io.casehub.eidos.api.SpecializationSignal;
 import io.casehub.eidos.runtime.preferences.EidosPreferenceKeys;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
@@ -14,6 +13,7 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
+import java.util.Map;
 
 @DefaultBean
 @ApplicationScoped
@@ -21,7 +21,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
 
     private final double weakThreshold;
     private final AgentStateStore stateStore;
-    private final CapabilitySpecializationStore specializationStore;
+    private final BehavioralSignalStore signalStore;
     private final Instance<PreferenceProvider> preferenceProviderInstance;
     private final VocabularyRegistry vocabularyRegistry;
 
@@ -30,12 +30,12 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             @ConfigProperty(name = "casehub.eidos.epistemic.weak-threshold", defaultValue = "0.3")
             final double weakThreshold,
             final AgentStateStore stateStore,
-            final CapabilitySpecializationStore specializationStore,
+            final BehavioralSignalStore signalStore,
             final Instance<PreferenceProvider> preferenceProviderInstance,
             final VocabularyRegistry vocabularyRegistry) {
         this.weakThreshold = weakThreshold;
         this.stateStore = stateStore;
-        this.specializationStore = specializationStore;
+        this.signalStore = signalStore;
         this.preferenceProviderInstance = preferenceProviderInstance;
         this.vocabularyRegistry = vocabularyRegistry;
     }
@@ -70,9 +70,9 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
 
         // Step 4: learned exclusion — use declared capability name, not query tag
         if (context.taskDomain() != null) {
-            final int count = specializationStore.count(
+            final int count = signalStore.count(
                 descriptor.agentId(), descriptor.tenancyId(), capability.name(),
-                context.taskDomain(), SpecializationSignal.DECLINE);
+                context.taskDomain(), BehavioralSignal.DECLINE);
             if (count >= excludeThreshold(descriptor.tenancyId())) {
                 return new CapabilityStatus.Excluded(context.taskDomain(), ExclusionSource.LEARNED, count);
             }
@@ -86,6 +86,21 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             }
         }
 
+        // Step 6: behavioral compliance
+        final var violations = signalStore.learned(
+            descriptor.agentId(), descriptor.tenancyId(), capability.name(),
+            BehavioralSignal.VIOLATED);
+        if (!violations.isEmpty()) {
+            final int threshold = complianceViolationThreshold(descriptor.tenancyId());
+            final var exceeding = new java.util.LinkedHashMap<String, Integer>();
+            violations.forEach((dimension, count) -> {
+                if (count >= threshold) exceeding.put(dimension, count);
+            });
+            if (!exceeding.isEmpty()) {
+                return new CapabilityStatus.BehavioralViolation(Map.copyOf(exceeding));
+            }
+        }
+
         return new CapabilityStatus.Ready();
     }
 
@@ -96,5 +111,14 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
         return preferenceProviderInstance.get()
             .resolve(SettingsScope.of(tenancyId))
             .getOrDefault(EidosPreferenceKeys.EXCLUDE_THRESHOLD).value();
+    }
+
+    private int complianceViolationThreshold(final String tenancyId) {
+        if (preferenceProviderInstance.isUnsatisfied()) {
+            return EidosPreferenceKeys.COMPLIANCE_VIOLATION_THRESHOLD.defaultValue().value();
+        }
+        return preferenceProviderInstance.get()
+            .resolve(SettingsScope.of(tenancyId))
+            .getOrDefault(EidosPreferenceKeys.COMPLIANCE_VIOLATION_THRESHOLD).value();
     }
 }

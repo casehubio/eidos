@@ -15,4 +15,15 @@ public final class EidosPreferenceKeys {
         new PreferenceKey<>("casehub.eidos", "specialization.exclude-threshold",
                             new ExcludeThresholdPreference(3),
                             s -> new ExcludeThresholdPreference(Integer.parseInt(s)));
+
+    /**
+     * Minimum number of unexpired VIOLATED records for a compliance dimension before
+     * eidos reports it as a behavioral violation. Resolved per-tenancy via
+     * PreferenceProvider ancestor-chain walk.
+     * Default: 3.
+     */
+    public static final PreferenceKey<ComplianceViolationThresholdPreference> COMPLIANCE_VIOLATION_THRESHOLD =
+        new PreferenceKey<>("casehub.eidos", "behavioral.compliance-violation-threshold",
+                            new ComplianceViolationThresholdPreference(3),
+                            s -> new ComplianceViolationThresholdPreference(Integer.parseInt(s)));
 }

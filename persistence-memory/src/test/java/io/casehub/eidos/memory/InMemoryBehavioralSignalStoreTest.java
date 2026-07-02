@@ -1,29 +1,33 @@
 package io.casehub.eidos.memory;
 
-import io.casehub.eidos.api.SpecializationSignal;
+import io.casehub.eidos.api.BehavioralSignal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 
-import static io.casehub.eidos.api.SpecializationSignal.DECLINE;
-import static io.casehub.eidos.api.SpecializationSignal.SUCCESS;
+import static io.casehub.eidos.api.BehavioralSignal.DECLINE;
+import static io.casehub.eidos.api.BehavioralSignal.SUCCESS;
+import static io.casehub.eidos.api.BehavioralSignal.COMPLIANT;
+import static io.casehub.eidos.api.BehavioralSignal.VIOLATED;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class InMemoryCapabilitySpecializationStoreTest {
+class InMemoryBehavioralSignalStoreTest {
 
-    InMemoryCapabilitySpecializationStore store;
+    InMemoryBehavioralSignalStore store;
 
     @BeforeEach
     void setUp() throws Exception {
-        store = new InMemoryCapabilitySpecializationStore();
+        store = new InMemoryBehavioralSignalStore();
         setTtl(store, "declineTtlDays", 30);
         setTtl(store, "successTtlDays", 30);
+        setTtl(store, "compliantTtlDays", 30);
+        setTtl(store, "violatedTtlDays", 90);
     }
 
-    static void setTtl(final InMemoryCapabilitySpecializationStore s,
+    static void setTtl(final InMemoryBehavioralSignalStore s,
                         final String fieldName, final int days) throws Exception {
-        final Field f = InMemoryCapabilitySpecializationStore.class.getDeclaredField(fieldName);
+        final Field f = InMemoryBehavioralSignalStore.class.getDeclaredField(fieldName);
         f.setAccessible(true);
         f.setInt(s, days);
     }
@@ -191,5 +195,46 @@ class InMemoryCapabilitySpecializationStoreTest {
         final var successes = store.learned("a1", "t1", "code-review", SUCCESS);
         assertThat(declines).containsEntry("rust", 2);
         assertThat(successes).containsEntry("rust", 3);
+    }
+
+    // --- COMPLIANT signal tests ---
+
+    @Test
+    void compliant_signal_recorded_and_counted() {
+        store.record("a1", "t1", "code-review", "latency", COMPLIANT);
+        assertThat(store.count("a1", "t1", "code-review", "latency", COMPLIANT)).isEqualTo(1);
+    }
+
+    @Test
+    void violated_signal_recorded_and_counted() {
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+        assertThat(store.count("a1", "t1", "code-review", "latency", VIOLATED)).isEqualTo(1);
+    }
+
+    @Test
+    void violated_expires_after_ttl() throws Exception {
+        setTtl(store, "violatedTtlDays", -1);
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+        assertThat(store.count("a1", "t1", "code-review", "latency", VIOLATED)).isEqualTo(0);
+    }
+
+    @Test
+    void compliant_and_violated_coexist_independently() {
+        store.record("a1", "t1", "code-review", "latency", COMPLIANT);
+        store.record("a1", "t1", "code-review", "latency", COMPLIANT);
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+
+        assertThat(store.count("a1", "t1", "code-review", "latency", COMPLIANT)).isEqualTo(2);
+        assertThat(store.count("a1", "t1", "code-review", "latency", VIOLATED)).isEqualTo(1);
+    }
+
+    @Test
+    void learned_returns_violated_qualifiers() {
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+        store.record("a1", "t1", "code-review", "attestation-rate", VIOLATED);
+
+        var violations = store.learned("a1", "t1", "code-review", VIOLATED);
+        assertThat(violations).containsEntry("latency", 2).containsEntry("attestation-rate", 1);
     }
 }

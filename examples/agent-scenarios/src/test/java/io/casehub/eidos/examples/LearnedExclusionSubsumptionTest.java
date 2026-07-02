@@ -17,7 +17,7 @@ class LearnedExclusionSubsumptionTest {
 
     @Inject AgentRegistry registry;
     @Inject CapabilityHealth capabilityHealth;
-    @Inject CapabilitySpecializationStore specializationStore;
+    @Inject BehavioralSignalStore behavioralSignalStore;
     @Inject VocabularyRegistry vocabularyRegistry;
 
     static AgentDescriptor securityReviewer(String tenancyId) {
@@ -49,10 +49,10 @@ class LearnedExclusionSubsumptionTest {
 
         // Record 3 DECLINE signals against the declared capability name
         for (int i = 0; i < 3; i++) {
-            specializationStore.record(
+            behavioralSignalStore.record(
                 agent.agentId(), tenancyId,
                 resolved.name(), "rust",
-                SpecializationSignal.DECLINE);
+                BehavioralSignal.DECLINE);
         }
 
         // Probe via subsumption query (code-review → matches security-code-review)
@@ -74,10 +74,10 @@ class LearnedExclusionSubsumptionTest {
 
         // Record 3 DECLINEs directly against declared name
         for (int i = 0; i < 3; i++) {
-            specializationStore.record(
+            behavioralSignalStore.record(
                 agent.agentId(), tenancyId,
                 "security-code-review", "java",
-                SpecializationSignal.DECLINE);
+                BehavioralSignal.DECLINE);
         }
 
         // Probe with exact name

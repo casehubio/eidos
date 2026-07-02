@@ -1,7 +1,7 @@
 package io.casehub.eidos.runtime.health.jpa;
 
-import io.casehub.eidos.api.CapabilitySpecializationStore;
-import io.casehub.eidos.api.SpecializationSignal;
+import io.casehub.eidos.api.BehavioralSignal;
+import io.casehub.eidos.api.BehavioralSignalStore;
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -16,23 +16,29 @@ import java.util.Map;
 
 @IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "false", enableIfMissing = true)
 @ApplicationScoped
-public class JpaCapabilitySpecializationStore implements CapabilitySpecializationStore {
+public class JpaBehavioralSignalStore implements BehavioralSignalStore {
 
     @Inject EntityManager em;
 
-    @ConfigProperty(name = "casehub.eidos.specialization.decline-ttl-days", defaultValue = "30")
+    @ConfigProperty(name = "casehub.eidos.behavioral-signal.decline-ttl-days", defaultValue = "30")
     int declineTtlDays;
 
-    @ConfigProperty(name = "casehub.eidos.specialization.success-ttl-days", defaultValue = "30")
+    @ConfigProperty(name = "casehub.eidos.behavioral-signal.success-ttl-days", defaultValue = "30")
     int successTtlDays;
+
+    @ConfigProperty(name = "casehub.eidos.behavioral-signal.compliant-ttl-days", defaultValue = "30")
+    int compliantTtlDays;
+
+    @ConfigProperty(name = "casehub.eidos.behavioral-signal.violated-ttl-days", defaultValue = "90")
+    int violatedTtlDays;
 
     @Override
     @Transactional
     public void record(final String agentId, final String tenancyId,
-                       final String capabilityName, final String domain,
-                       final SpecializationSignal signal) {
-        final var id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain, signal.name());
-        final var existing = em.find(CapabilitySpecializationEntity.class, id);
+                       final String capabilityName, final String qualifier,
+                       final BehavioralSignal signal) {
+        final var id = new BehavioralSignalId(agentId, tenancyId, capabilityName, qualifier, signal.name());
+        final var existing = em.find(BehavioralSignalEntity.class, id);
         final var now = Instant.now();
         final var expiresAt = now.plusSeconds((long) ttlDaysFor(signal) * 86400);
 
@@ -41,8 +47,8 @@ public class JpaCapabilitySpecializationStore implements CapabilitySpecializatio
             existing.lastRecorded = now;
             existing.expiresAt = expiresAt;
         } else {
-            em.persist(new CapabilitySpecializationEntity(
-                agentId, tenancyId, capabilityName, domain, signal.name(),
+            em.persist(new BehavioralSignalEntity(
+                agentId, tenancyId, capabilityName, qualifier, signal.name(),
                 1, now, expiresAt));
         }
     }
@@ -50,8 +56,8 @@ public class JpaCapabilitySpecializationStore implements CapabilitySpecializatio
     @Override
     @Transactional
     public void clear(final String agentId, final String tenancyId,
-                      final String capabilityName, final SpecializationSignal signal) {
-        em.createQuery("DELETE FROM CapabilitySpecializationEntity e"
+                      final String capabilityName, final BehavioralSignal signal) {
+        em.createQuery("DELETE FROM BehavioralSignalEntity e"
                 + " WHERE e.id.agentId = :agentId"
                 + " AND e.id.tenancyId = :tenancyId"
                 + " AND e.id.capabilityName = :capabilityName"
@@ -69,15 +75,15 @@ public class JpaCapabilitySpecializationStore implements CapabilitySpecializatio
     @Transactional(TxType.SUPPORTS)
     public Map<String, Integer> learned(final String agentId, final String tenancyId,
                                          final String capabilityName,
-                                         final SpecializationSignal signal) {
+                                         final BehavioralSignal signal) {
         final var results = em.createQuery(
-                "SELECT e FROM CapabilitySpecializationEntity e"
+                "SELECT e FROM BehavioralSignalEntity e"
                     + " WHERE e.id.agentId = :agentId"
                     + " AND e.id.tenancyId = :tenancyId"
                     + " AND e.id.capabilityName = :capabilityName"
                     + " AND e.id.signalType = :signalType"
                     + " AND e.expiresAt > :now",
-                CapabilitySpecializationEntity.class)
+                BehavioralSignalEntity.class)
             .setParameter("agentId", agentId)
             .setParameter("tenancyId", tenancyId)
             .setParameter("capabilityName", capabilityName)
@@ -87,7 +93,7 @@ public class JpaCapabilitySpecializationStore implements CapabilitySpecializatio
 
         final var map = new HashMap<String, Integer>();
         for (final var e : results) {
-            map.put(e.id.domain, e.signalCount);
+            map.put(e.id.qualifier, e.signalCount);
         }
         return Map.copyOf(map);
     }
@@ -95,15 +101,20 @@ public class JpaCapabilitySpecializationStore implements CapabilitySpecializatio
     @Override
     @Transactional(TxType.SUPPORTS)
     public int count(final String agentId, final String tenancyId,
-                     final String capabilityName, final String domain,
-                     final SpecializationSignal signal) {
-        final var id = new CapabilitySpecializationId(agentId, tenancyId, capabilityName, domain, signal.name());
-        final var entity = em.find(CapabilitySpecializationEntity.class, id);
+                     final String capabilityName, final String qualifier,
+                     final BehavioralSignal signal) {
+        final var id = new BehavioralSignalId(agentId, tenancyId, capabilityName, qualifier, signal.name());
+        final var entity = em.find(BehavioralSignalEntity.class, id);
         if (entity == null || !Instant.now().isBefore(entity.expiresAt)) return 0;
         return entity.signalCount;
     }
 
-    private int ttlDaysFor(final SpecializationSignal signal) {
-        return signal == SpecializationSignal.DECLINE ? declineTtlDays : successTtlDays;
+    private int ttlDaysFor(final BehavioralSignal signal) {
+        return switch (signal) {
+            case DECLINE -> declineTtlDays;
+            case SUCCESS -> successTtlDays;
+            case COMPLIANT -> compliantTtlDays;
+            case VIOLATED -> violatedTtlDays;
+        };
     }
 }

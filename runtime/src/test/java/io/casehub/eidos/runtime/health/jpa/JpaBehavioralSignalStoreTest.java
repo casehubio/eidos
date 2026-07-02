@@ -1,20 +1,22 @@
 package io.casehub.eidos.runtime.health.jpa;
 
-import io.casehub.eidos.api.CapabilitySpecializationStore;
+import io.casehub.eidos.api.BehavioralSignalStore;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static io.casehub.eidos.api.SpecializationSignal.DECLINE;
-import static io.casehub.eidos.api.SpecializationSignal.SUCCESS;
+import static io.casehub.eidos.api.BehavioralSignal.COMPLIANT;
+import static io.casehub.eidos.api.BehavioralSignal.DECLINE;
+import static io.casehub.eidos.api.BehavioralSignal.SUCCESS;
+import static io.casehub.eidos.api.BehavioralSignal.VIOLATED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @TestTransaction
-class JpaCapabilitySpecializationStoreTest {
+class JpaBehavioralSignalStoreTest {
 
-    @Inject CapabilitySpecializationStore store;
+    @Inject BehavioralSignalStore store;
 
     @Test
     void single_decline_counted() {
@@ -134,5 +136,39 @@ class JpaCapabilitySpecializationStoreTest {
 
         assertThat(store.count("a1", "t1", "code-review", "rust", DECLINE)).isEqualTo(2);
         assertThat(store.count("a1", "t1", "code-review", "rust", SUCCESS)).isEqualTo(3);
+    }
+
+    // --- COMPLIANT signal tests ---
+
+    @Test
+    void compliant_signal_recorded_and_counted() {
+        store.record("a1", "t1", "code-review", "latency", COMPLIANT);
+        assertThat(store.count("a1", "t1", "code-review", "latency", COMPLIANT)).isEqualTo(1);
+    }
+
+    @Test
+    void violated_signal_recorded_and_counted() {
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+        assertThat(store.count("a1", "t1", "code-review", "latency", VIOLATED)).isEqualTo(1);
+    }
+
+    @Test
+    void compliant_and_violated_coexist_independently() {
+        store.record("a1", "t1", "code-review", "latency", COMPLIANT);
+        store.record("a1", "t1", "code-review", "latency", COMPLIANT);
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+
+        assertThat(store.count("a1", "t1", "code-review", "latency", COMPLIANT)).isEqualTo(2);
+        assertThat(store.count("a1", "t1", "code-review", "latency", VIOLATED)).isEqualTo(1);
+    }
+
+    @Test
+    void learned_returns_violated_qualifiers() {
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+        store.record("a1", "t1", "code-review", "latency", VIOLATED);
+        store.record("a1", "t1", "code-review", "attestation-rate", VIOLATED);
+
+        var violations = store.learned("a1", "t1", "code-review", VIOLATED);
+        assertThat(violations).containsEntry("latency", 2).containsEntry("attestation-rate", 1);
     }
 }
