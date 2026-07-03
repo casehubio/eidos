@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,23 +44,40 @@ public class InMemoryAgentRegistry implements AgentRegistry {
     }
 
     @Override
-    public List<AgentDescriptor> find(AgentQuery query) {
-        return store.values().stream()
+    public List<AgentMatch> find(AgentQuery query) {
+        var stream = store.values().stream()
             .filter(d -> d.tenancyId().equals(query.tenancyId()))
             .filter(d -> query.slot() == null || Objects.equals(d.slot(), query.slot()))
-            .filter(d -> query.capabilityName() == null
-                || d.capabilities().stream().anyMatch(c -> matchesCapability(c, query.capabilityName())))
             .filter(d -> query.taskDomain() == null
                 || d.capabilities().stream().noneMatch(c ->
-                    c.excludedDomains() != null && c.excludedDomains().contains(query.taskDomain())))
+                    c.excludedDomains() != null && c.excludedDomains().contains(query.taskDomain())));
+
+        if (query.capabilityName() == null) {
+            return stream
+                .map(d -> new AgentMatch(d, null))
+                .collect(Collectors.toList());
+        }
+
+        return stream
+            .map(d -> {
+                var resolved = resolveCapability(d, query.capabilityName());
+                return resolved != null ? new AgentMatch(d, resolved) : null;
+            })
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
+                Comparator.comparing(ResolvedCapability::degree)))
             .collect(Collectors.toList());
     }
 
-    private boolean matchesCapability(AgentCapability capability, String requestedName) {
+    private ResolvedCapability resolveCapability(AgentDescriptor descriptor, String capabilityName) {
         if (!vocabularyRegistry.isResolvable()) {
-            return capability.name().equals(requestedName);
+            return descriptor.capabilities().stream()
+                .filter(c -> c.name().equals(capabilityName))
+                .findFirst()
+                .map(c -> new ResolvedCapability(c, new MatchDegree.Exact()))
+                .orElse(null);
         }
-        return !(CapabilityResolver.match(capability, requestedName,
-                                          vocabularyRegistry.get()) instanceof MatchDegree.None);
+        return CapabilityResolver.resolve(
+            descriptor.capabilities(), capabilityName, vocabularyRegistry.get());
     }
 }

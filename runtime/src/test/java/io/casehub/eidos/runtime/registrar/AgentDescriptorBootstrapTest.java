@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.registrar;
 
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentMatch;
 import io.casehub.eidos.api.AgentRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ class AgentDescriptorBootstrapTest {
         @Override public java.util.Optional<AgentDescriptor> findById(String id, String tid) {
             return java.util.Optional.empty();
         }
-        @Override public List<AgentDescriptor> find(io.casehub.eidos.api.AgentQuery q) {
+        @Override public List<AgentMatch> find(io.casehub.eidos.api.AgentQuery q) {
             return List.of();
         }
     }

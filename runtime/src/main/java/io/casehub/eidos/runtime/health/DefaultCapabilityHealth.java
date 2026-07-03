@@ -55,12 +55,14 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return new CapabilityStatus.Unavailable("Capability '" + capabilityTag + "' not declared");
         }
 
-        final var capability = CapabilityResolver.resolve(
+        final var resolved = CapabilityResolver.resolve(
             descriptor.capabilities(), capabilityTag, vocabularyRegistry);
 
-        if (capability == null) {
+        if (resolved == null) {
             return new CapabilityStatus.Unavailable("Capability '" + capabilityTag + "' not declared");
         }
+
+        final var capability = resolved.capability();
 
         // Step 3: declared exclusion (null guard required — excludedDomains is nullable)
         if (context.taskDomain() != null

@@ -8,6 +8,7 @@ import io.quarkus.panache.common.Parameters;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,7 +51,7 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
 
     @Override
     @WithSession
-    public Uni<List<AgentDescriptor>> find(AgentQuery query) {
+    public Uni<List<AgentMatch>> find(AgentQuery query) {
         String fetchJoin = (query.capabilityName() != null || query.taskDomain() != null)
             ? "JOIN FETCH a.capabilities c"
             : "LEFT JOIN FETCH a.capabilities c";
@@ -99,6 +100,22 @@ public class JpaReactiveAgentRegistry implements ReactiveAgentRegistry {
         }
 
         return repo.list(jpql.toString(), params)
-                   .map(list -> list.stream().map(mapper::toRecord).toList());
+                   .map(list -> {
+                       var descriptors = list.stream().map(mapper::toRecord).toList();
+                       if (query.capabilityName() == null) {
+                           return descriptors.stream()
+                               .map(d -> new AgentMatch(d, null))
+                               .toList();
+                       }
+                       return descriptors.stream()
+                           .map(d -> {
+                               var resolved = CapabilityResolver.resolve(
+                                   d.capabilities(), query.capabilityName(), vocabularyRegistry);
+                               return new AgentMatch(d, resolved);
+                           })
+                           .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
+                               Comparator.nullsLast(Comparator.comparing(ResolvedCapability::degree))))
+                           .toList();
+                   });
     }
 }

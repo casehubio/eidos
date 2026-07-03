@@ -45,13 +45,13 @@ class LearnedExclusionSubsumptionTest {
         var resolved = CapabilityResolver.resolve(
             agent.capabilities(), "code-review", vocabularyRegistry);
         assertThat(resolved).isNotNull();
-        assertThat(resolved.name()).isEqualTo("security-code-review");
+        assertThat(resolved.capability().name()).isEqualTo("security-code-review");
 
         // Record 3 DECLINE signals against the declared capability name
         for (int i = 0; i < 3; i++) {
             behavioralSignalStore.record(
                 agent.agentId(), tenancyId,
-                resolved.name(), "rust",
+                resolved.capability().name(), "rust",
                 BehavioralSignal.DECLINE);
         }
 

@@ -65,9 +65,10 @@ class JpaReactiveAgentRegistryTest {
             .execute(() -> registry.register(descriptor("r-agent-2b", "planner", "default", "cap-test2b")))
             .assertThat(() -> registry.find(AgentQuery.bySlot("reviewer", "default")), result -> {
                 // at least r-agent-2a present; r-agent-1 may also be here — filter to known set
-                var agentIds = result.stream().map(AgentDescriptor::agentId).toList();
+                var agentIds = result.stream().map(m -> m.descriptor().agentId()).toList();
                 assertThat(agentIds).contains("r-agent-2a");
                 assertThat(agentIds).doesNotContain("r-agent-2b");
+                assertThat(result).allSatisfy(m -> assertThat(m.resolvedCapability()).isNull());
             });
     }
 
@@ -78,7 +79,12 @@ class JpaReactiveAgentRegistryTest {
         asserter
             .execute(() -> registry.register(descriptor("r-agent-3", "reviewer", "default", "cap-test3-unique")))
             .assertThat(() -> registry.find(AgentQuery.byCapability("cap-test3-unique", "default")),
-                result -> assertThat(result).hasSize(1));
+                result -> {
+                    assertThat(result).hasSize(1);
+                    assertThat(result.getFirst().resolvedCapability()).isNotNull();
+                    assertThat(result.getFirst().resolvedCapability().degree())
+                        .isInstanceOf(MatchDegree.Exact.class);
+                });
     }
 
     @Test

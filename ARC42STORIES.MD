@@ -222,7 +222,7 @@ sequenceDiagram
   Reg->>JPA: find(query)
   JPA->>DB: SELECT with JOIN on agent_capability WHERE tenancy_id = 't1'
   DB-->>JPA: rows
-  JPA-->>App: List<AgentDescriptor>
+  JPA-->>App: List<AgentMatch> (ordered by match quality when capability is queried)
 ```
 
 Tenancy filter is unconditional — `AgentQuery` compact constructor requires non-null `tenancyId`; the JPA query always includes `WHERE tenancy_id = ?` without a conditional branch.
@@ -1267,7 +1267,9 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | `AgentCapability` | A declared capability with name, qualityHint (0.0–1.0), latencyHintP50Ms, epistemicDomains map (domain → confidence), excludedDomains set (categorical negative specialization), inputTypes, outputTypes, tags; Builder inner class |
 | `AgentDisposition` | Four open-string disposition axes (socialOrient, ruleFollowing, riskAppetite, autonomy) plus `canDelegate` boolean |
 | `AgentQuery` | Criteria record for `AgentRegistry.find()`; tenancyId is required (compact constructor guard); slot and capabilityName are optional filters |
-| `AgentRegistry` / `ReactiveAgentRegistry` | SPI for registering and discovering `AgentDescriptor` instances; `AgentQuery` drives all find operations |
+| `AgentRegistry` / `ReactiveAgentRegistry` | SPI for registering and discovering `AgentDescriptor` instances; `find(AgentQuery)` returns `List<AgentMatch>` carrying descriptor + `ResolvedCapability` (matched capability and OWLS-MX `MatchDegree`); results ordered by match quality when capability is queried |
+| `AgentMatch` | Record carrying result of `AgentRegistry.find()`: `AgentDescriptor` + optional `ResolvedCapability` (capability name + OWLS-MX `MatchDegree` from subsumption matching) |
+| `ResolvedCapability` | Record carrying result of `CapabilityResolver.resolve()`: `AgentCapability` + `MatchDegree` (Exact, Plugin(depth), Specialization(depth), None); preserves match metadata from vocabulary subsumption resolution |
 | `VocabularyRegistry` / `CdiVocabularyRegistry` | SPI + `@ApplicationScoped` CDI implementation; discovers `VocabularyRegistrar` CDI beans; supports `resolve`, `equivalentValues` (cross-vocabulary `exactMatches` traversal), and XKOS-style subsumption hierarchy: `subsumes()`, `match()` → `MatchDegree`, `ancestors()`, `descendants()`, `expandForMatchingByVocabulary()`; two-pass registration builds global DAG across vocabulary boundaries |
 | `VocabularyTerm` | Interface implemented by vocabulary enum constants; `exactMatch()` cross-references for equivalence; `axisExactMatch()` for axis-discriminated resolution; `specializes()` declares XKOS-style parent terms for subsumption hierarchy |
 | `MatchDegree` | Sealed interface returned by `VocabularyRegistry.match()`: `Exact` (same term), `Plugin(depth)` (declared is more specific than requested — declared specializes requested), `Specialization(depth)` (declared is more general than requested — requested specializes declared), `None` (no hierarchy relationship) |
@@ -1279,7 +1281,7 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | `ComplianceDimension` | Constants class: `LATENCY`, `ATTESTATION_RATE` dimension keys; `ATTESTOR_ID` (`eidos:compliance`), `TRUST_DIMENSION_PREFIX` (`behavioral:`), `LATENCY_VIOLATION_MULTIPLIER` (2.0) conventions |
 | `BehavioralExpectations` | Static utility: `latencyBound(AgentCapability)` → `OptionalLong`, `delegationExpected(AgentDisposition)` → `boolean`; extracts testable expectations from descriptor fields |
 | `ComplianceAttestations` | Static utility: constructs `LedgerAttestation` records from compliance observations; attestorId=`eidos:compliance`, trustDimension=`behavioral:<dimension>` |
-| `CapabilityResolver` | Static utility in api/: `resolve(capabilities, tag, registry)` → best-matching `AgentCapability`; `match(capability, tag, registry)` → `MatchDegree`; shared by probe and recording paths; callers of `BehavioralSignalStore.record()` must pass the declared capability name |
+| `CapabilityResolver` | Static utility in api/: `resolve(capabilities, tag, registry)` → `ResolvedCapability(capability, degree)` preserving match metadata; `match(capability, tag, registry)` → `MatchDegree`; shared by probe and recording paths; callers of `BehavioralSignalStore.record()` must pass the declared capability name |
 | `DegradationReason` | Top-level enum: `RATE_LIMITED`, `CONTEXT_EXHAUSTED`, `OVERLOADED`, `DOMAIN_MISMATCH` |
 | `AgentStateStore` | SPI for recording and querying runtime degradation state with TTL; `tenancyId` required on all operations |
 | `AgentPromptContext` | Render-time accumulation record: `Optional<GoalContext>`, `List<Resource>`, `situationalContext`, `RenderFormat`; wither methods support incremental build; re-renderable as context evolves |

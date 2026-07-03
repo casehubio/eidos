@@ -78,7 +78,9 @@ class JpaAgentRegistryTest {
         var reviewers = registry.find(AgentQuery.bySlot("reviewer", "default"));
 
         assertThat(reviewers).hasSize(1);
-        assertThat(reviewers.get(0).agentId()).isEqualTo("agent-2a");
+        assertThat(reviewers).extracting(m -> m.descriptor().agentId())
+            .containsExactly("agent-2a");
+        assertThat(reviewers).allSatisfy(m -> assertThat(m.resolvedCapability()).isNull());
     }
 
     @Test
@@ -90,7 +92,11 @@ class JpaAgentRegistryTest {
         var codeReviewers = registry.find(AgentQuery.byCapability("code-review", "default"));
 
         assertThat(codeReviewers).hasSize(1);
-        assertThat(codeReviewers.get(0).agentId()).isEqualTo("agent-3a");
+        assertThat(codeReviewers).extracting(m -> m.descriptor().agentId())
+            .containsExactly("agent-3a");
+        assertThat(codeReviewers.getFirst().resolvedCapability()).isNotNull();
+        assertThat(codeReviewers.getFirst().resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Exact.class);
     }
 
     @Test
@@ -102,7 +108,11 @@ class JpaAgentRegistryTest {
         var result = registry.find(AgentQuery.bySlotAndCapability("reviewer", "code-review", "default"));
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).agentId()).isEqualTo("agent-4a");
+        assertThat(result).extracting(m -> m.descriptor().agentId())
+            .containsExactly("agent-4a");
+        assertThat(result.getFirst().resolvedCapability()).isNotNull();
+        assertThat(result.getFirst().resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Exact.class);
     }
 
     @Test
@@ -138,7 +148,9 @@ class JpaAgentRegistryTest {
         var tenantA = registry.find(AgentQuery.all("tenant-a"));
 
         assertThat(tenantA).hasSize(1);
-        assertThat(tenantA.get(0).agentId()).isEqualTo("agent-7a");
+        assertThat(tenantA).extracting(m -> m.descriptor().agentId())
+            .containsExactly("agent-7a");
+        assertThat(tenantA).allSatisfy(m -> assertThat(m.resolvedCapability()).isNull());
     }
 
     @Test
@@ -220,7 +232,11 @@ class JpaAgentRegistryTest {
         var result = registry.find(AgentQuery.byCapabilityAndDomain("code-review", "rust", "default"));
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).agentId()).isEqualTo("agent-incl");
+        assertThat(result).extracting(m -> m.descriptor().agentId())
+            .containsExactly("agent-incl");
+        assertThat(result.getFirst().resolvedCapability()).isNotNull();
+        assertThat(result.getFirst().resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Exact.class);
     }
 
     @Test
@@ -231,7 +247,11 @@ class JpaAgentRegistryTest {
         var result = registry.find(AgentQuery.byCapabilityAndDomain("code-review", "java", "default"));
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).agentId()).isEqualTo("agent-open");
+        assertThat(result).extracting(m -> m.descriptor().agentId())
+            .containsExactly("agent-open");
+        assertThat(result.getFirst().resolvedCapability()).isNotNull();
+        assertThat(result.getFirst().resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Exact.class);
     }
 
     @Test
@@ -285,7 +305,10 @@ class JpaAgentRegistryTest {
         var result = registry.find(AgentQuery.byCapability("security-review", "default"));
 
         // The agent should be found via subsumption
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("agent-sub-1");
+        assertThat(result).extracting(m -> m.descriptor().agentId()).containsExactly("agent-sub-1");
+        assertThat(result.getFirst().resolvedCapability()).isNotNull();
+        assertThat(result.getFirst().resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Plugin.class);
     }
 
     @Test
@@ -298,7 +321,7 @@ class JpaAgentRegistryTest {
         var result = registry.find(AgentQuery.byCapability("security-code-review", "default"));
 
         // Should NOT be found (no subsumption without vocabulary grounding)
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).doesNotContain("agent-exact-1");
+        assertThat(result).extracting(m -> m.descriptor().agentId()).doesNotContain("agent-exact-1");
     }
 
     @Test
@@ -449,9 +472,15 @@ class JpaAgentRegistryTest {
         // Query for foundation "documentation" term
         var result = registry.find(AgentQuery.byCapability("documentation", "default"));
 
-        // JPA query path should match via Plugin (foundation subsumes app-tier specialization)
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+        // JPA query path should match via Specialization (agent capability specializes query term)
+        assertThat(result).extracting(m -> m.descriptor().agentId())
             .contains("agent-clinical");
+        var match = result.stream()
+            .filter(m -> m.descriptor().agentId().equals("agent-clinical"))
+            .findFirst().orElseThrow();
+        assertThat(match.resolvedCapability()).isNotNull();
+        assertThat(match.resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Specialization.class);
     }
 
     @Test
@@ -490,9 +519,15 @@ class JpaAgentRegistryTest {
         // Query for app-tier clinical-documentation-review
         var result = registry.find(AgentQuery.byCapability("clinical-documentation-review", "default"));
 
-        // JPA query path should match via Specialization (app-tier term matches foundation parent)
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+        // JPA query path should match via Plugin (agent capability is parent of query term)
+        assertThat(result).extracting(m -> m.descriptor().agentId())
             .contains("agent-foundation-doc");
+        var match = result.stream()
+            .filter(m -> m.descriptor().agentId().equals("agent-foundation-doc"))
+            .findFirst().orElseThrow();
+        assertThat(match.resolvedCapability()).isNotNull();
+        assertThat(match.resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Plugin.class);
     }
 
     @Test
@@ -553,13 +588,27 @@ class JpaAgentRegistryTest {
 
         // Query for foundation term — should match both
         var foundationQuery = registry.find(AgentQuery.byCapability("documentation", "default"));
-        assertThat(foundationQuery.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(foundationQuery).extracting(m -> m.descriptor().agentId())
             .containsExactlyInAnyOrder("agent-foundation-consistency", "agent-app-consistency");
+        assertThat(foundationQuery).allSatisfy(m -> {
+            assertThat(m.resolvedCapability()).isNotNull();
+            assertThat(m.resolvedCapability().degree()).satisfiesAnyOf(
+                degree -> assertThat(degree).isInstanceOf(MatchDegree.Exact.class),
+                degree -> assertThat(degree).isInstanceOf(MatchDegree.Specialization.class)
+            );
+        });
 
         // Query for app-tier term — should match both
         var appQuery = registry.find(AgentQuery.byCapability("clinical-documentation-review", "default"));
-        assertThat(appQuery.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(appQuery).extracting(m -> m.descriptor().agentId())
             .containsExactlyInAnyOrder("agent-foundation-consistency", "agent-app-consistency");
+        assertThat(appQuery).allSatisfy(m -> {
+            assertThat(m.resolvedCapability()).isNotNull();
+            assertThat(m.resolvedCapability().degree()).satisfiesAnyOf(
+                degree -> assertThat(degree).isInstanceOf(MatchDegree.Exact.class),
+                degree -> assertThat(degree).isInstanceOf(MatchDegree.Plugin.class)
+            );
+        });
     }
 
 }

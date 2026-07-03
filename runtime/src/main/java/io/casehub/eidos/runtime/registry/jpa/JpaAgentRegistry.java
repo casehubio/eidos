@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -59,7 +60,7 @@ public class JpaAgentRegistry implements AgentRegistry {
 
     @Override
     @Transactional(TxType.SUPPORTS)
-    public List<AgentDescriptor> find(AgentQuery query) {
+    public List<AgentMatch> find(AgentQuery query) {
         String fetchJoin = (query.capabilityName() != null || query.taskDomain() != null)
             ? "JOIN FETCH a.capabilities c"
             : "LEFT JOIN FETCH a.capabilities c";
@@ -114,6 +115,22 @@ public class JpaAgentRegistry implements AgentRegistry {
 
         if (query.taskDomain() != null) q.setParameter("taskDomain", query.taskDomain());
 
-        return q.getResultList().stream().map(mapper::toRecord).toList();
+        var descriptors = q.getResultList().stream().map(mapper::toRecord).toList();
+
+        if (query.capabilityName() == null) {
+            return descriptors.stream()
+                .map(d -> new AgentMatch(d, null))
+                .toList();
+        }
+
+        return descriptors.stream()
+            .map(d -> {
+                var resolved = CapabilityResolver.resolve(
+                    d.capabilities(), query.capabilityName(), vocabularyRegistry);
+                return new AgentMatch(d, resolved);
+            })
+            .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
+                Comparator.nullsLast(Comparator.comparing(ResolvedCapability::degree))))
+            .toList();
     }
 }

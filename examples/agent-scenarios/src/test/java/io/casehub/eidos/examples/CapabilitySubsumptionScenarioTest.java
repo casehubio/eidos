@@ -64,7 +64,7 @@ class CapabilitySubsumptionScenarioTest {
 
         // Assert agent is in results (subsumption: code-review subsumes security-code-review)
         assertThat(matches)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .contains("reviewer-general");
     }
 
@@ -93,7 +93,7 @@ class CapabilitySubsumptionScenarioTest {
 
         // Assert agent is in results (subsumption: sast-review is subsumed by code-review)
         assertThat(matches)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .contains("sast-specialist");
     }
 
@@ -195,7 +195,7 @@ class CapabilitySubsumptionScenarioTest {
 
         // Assert NOT found (exact match only without vocabulary)
         assertThat(matches)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .doesNotContain("reviewer-ungrounded");
     }
 
@@ -228,21 +228,21 @@ class CapabilitySubsumptionScenarioTest {
         var securityQuery = new AgentQuery(null, "security-code-review", tenancyId, null);
         var securityMatches = registry.find(securityQuery);
         assertThat(securityMatches)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .contains("mixed-capabilities");
 
         // Query for "custom-review" — should match exact only
         var customQuery = new AgentQuery(null, "custom-review", tenancyId, null);
         var customMatches = registry.find(customQuery);
         assertThat(customMatches)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .contains("mixed-capabilities");
 
         // Query for "custom-review-specific" — should NOT match (ungrounded, no subsumption)
         var noMatchQuery = new AgentQuery(null, "custom-review-specific", tenancyId, null);
         var noMatches = registry.find(noMatchQuery);
         assertThat(noMatches)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .doesNotContain("mixed-capabilities");
     }
 
@@ -300,15 +300,18 @@ class CapabilitySubsumptionScenarioTest {
         var query = new AgentQuery(null, "security-code-review", tenancyId, null);
         var matches = registry.find(query);
 
-        // All three should be in results
+        // All three should be in results, ordered by match quality: EXACT → PLUGIN → SPECIALIZATION
         assertThat(matches)
-                .extracting(AgentDescriptor::agentId)
-                .containsExactlyInAnyOrder("security-exact", "sast-specialist", "code-review-general");
+                .extracting(m -> m.descriptor().agentId())
+                .containsExactly("security-exact", "code-review-general", "sast-specialist");
 
-        // Order should be: EXACT → SPECIALIZATION → PLUGIN
-        // (Current implementation returns List; ranking is a future enhancement)
-        // For now, just verify all are present
-        assertThat(matches).hasSize(3);
+        // Verify match degrees
+        assertThat(matches.get(0).resolvedCapability().degree())
+                .isInstanceOf(MatchDegree.Exact.class);
+        assertThat(matches.get(1).resolvedCapability().degree())
+                .isInstanceOf(MatchDegree.Plugin.class);
+        assertThat(matches.get(2).resolvedCapability().degree())
+                .isInstanceOf(MatchDegree.Specialization.class);
     }
 
     @Test
@@ -337,7 +340,7 @@ class CapabilitySubsumptionScenarioTest {
 
         // Assert NOT found (excluded by domain even though subsumption matches)
         assertThat(matches)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .doesNotContain("non-java-reviewer");
 
         // Query for "security-code-review" WITHOUT taskDomain
@@ -346,7 +349,7 @@ class CapabilitySubsumptionScenarioTest {
 
         // Assert found (no domain filter applied)
         assertThat(matchesNoDomain)
-                .extracting(AgentDescriptor::agentId)
+                .extracting(m -> m.descriptor().agentId())
                 .contains("non-java-reviewer");
     }
 }

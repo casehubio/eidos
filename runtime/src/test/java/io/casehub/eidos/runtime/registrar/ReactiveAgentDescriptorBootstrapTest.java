@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.registrar;
 
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentMatch;
 import io.casehub.eidos.api.AgentQuery;
 import io.casehub.eidos.api.ReactiveAgentRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
@@ -82,7 +83,7 @@ class ReactiveAgentDescriptorBootstrapTest {
         @Override public Uni<Optional<AgentDescriptor>> findById(String id, String tid) {
             return Uni.createFrom().item(Optional.empty());
         }
-        @Override public Uni<List<AgentDescriptor>> find(AgentQuery q) {
+        @Override public Uni<List<AgentMatch>> find(AgentQuery q) {
             return Uni.createFrom().item(List.of());
         }
     }

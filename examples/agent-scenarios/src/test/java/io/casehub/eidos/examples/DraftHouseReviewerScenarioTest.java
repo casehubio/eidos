@@ -22,7 +22,7 @@ class DraftHouseReviewerScenarioTest {
     void all_four_reviewers_found_by_slot() {
         var reviewers = registry.find(AgentQuery.bySlot("document-reviewer", "drafthouse"));
         assertThat(reviewers).hasSize(4);
-        assertThat(reviewers.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(reviewers.stream().map(m -> m.descriptor().agentId()).toList())
             .containsExactlyInAnyOrder(
                 "drafthouse-structural-reviewer",
                 "drafthouse-content-reviewer",

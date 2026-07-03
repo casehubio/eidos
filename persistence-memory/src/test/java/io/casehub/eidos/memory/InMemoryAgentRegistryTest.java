@@ -68,8 +68,9 @@ class InMemoryAgentRegistryTest {
         registry.register(descriptor("m-2a", "reviewer", "default", "code-review"));
         registry.register(descriptor("m-2b", "planner", "default", "planning"));
         var result = registry.find(AgentQuery.bySlot("reviewer", "default"));
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(result).extracting(m -> m.descriptor().agentId())
             .contains("m-2a").doesNotContain("m-2b");
+        assertThat(result).allSatisfy(m -> assertThat(m.resolvedCapability()).isNull());
     }
 
     @Test
@@ -77,8 +78,13 @@ class InMemoryAgentRegistryTest {
         registry.register(descriptor("m-3a", "reviewer", "default", "code-review"));
         registry.register(descriptor("m-3b", "executor", "default", "testing"));
         var result = registry.find(AgentQuery.byCapability("code-review", "default"));
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(result).extracting(m -> m.descriptor().agentId())
             .contains("m-3a").doesNotContain("m-3b");
+        assertThat(result).allSatisfy(m -> {
+            assertThat(m.resolvedCapability()).isNotNull();
+            assertThat(m.resolvedCapability().capability().name()).isEqualTo("code-review");
+            assertThat(m.resolvedCapability().degree()).isInstanceOf(MatchDegree.Exact.class);
+        });
     }
 
     @Test
@@ -86,14 +92,16 @@ class InMemoryAgentRegistryTest {
         registry.register(descriptor("m-4a", "reviewer", "default", "code-review"));
         registry.register(descriptor("m-4b", "executor", "default", "code-review"));
         var result = registry.find(AgentQuery.bySlotAndCapability("reviewer", "code-review", "default"));
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(result).extracting(m -> m.descriptor().agentId())
             .contains("m-4a").doesNotContain("m-4b");
+        assertThat(result).allSatisfy(m -> assertThat(m.resolvedCapability()).isNotNull());
     }
 
     @Test
     void tenancy_isolation() {
         registry.register(descriptor("m-5", "reviewer", "tenant-a", "code-review"));
-        assertThat(registry.find(AgentQuery.bySlot("reviewer", "tenant-b"))).isEmpty();
+        var result = registry.find(AgentQuery.bySlot("reviewer", "tenant-b"));
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -144,7 +152,8 @@ class InMemoryAgentRegistryTest {
         registry.register(descriptor);
         // Empty lists should not cause NPE in find()
         var result = registry.find(AgentQuery.byCapability("empty-types", "default"));
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("m-8");
+        assertThat(result).extracting(m -> m.descriptor().agentId()).contains("m-8");
+        assertThat(result).allSatisfy(m -> assertThat(m.resolvedCapability()).isNotNull());
     }
 
     // --- Subsumption tests ---
@@ -181,7 +190,13 @@ class InMemoryAgentRegistryTest {
         var result = registry.find(AgentQuery.byCapability("security-review", "default"));
 
         // The agent should be found via subsumption
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).contains("m-sub-1");
+        assertThat(result).extracting(m -> m.descriptor().agentId()).contains("m-sub-1");
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().resolvedCapability()).isNotNull();
+        assertThat(result.getFirst().resolvedCapability().degree())
+            .isInstanceOf(MatchDegree.Specialization.class);
+        assertThat(((MatchDegree.Specialization) result.getFirst().resolvedCapability().degree()).depth())
+            .isEqualTo(2);
     }
 
     @Test
@@ -193,7 +208,7 @@ class InMemoryAgentRegistryTest {
         var result = registry.find(AgentQuery.byCapability("security-code-review", "default"));
 
         // Should NOT be found (no subsumption without vocabulary grounding)
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList()).doesNotContain("m-exact-1");
+        assertThat(result).extracting(m -> m.descriptor().agentId()).doesNotContain("m-exact-1");
     }
 
     @Test

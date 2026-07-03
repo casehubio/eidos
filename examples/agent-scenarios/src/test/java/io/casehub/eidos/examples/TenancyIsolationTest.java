@@ -58,7 +58,7 @@ class TenancyIsolationTest {
     @Test
     void tenant_a_sees_only_own_agents() {
         var agents = registry.find(AgentQuery.all("tenant-a"));
-        assertThat(agents.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(agents.stream().map(m -> m.descriptor().agentId()).toList())
             .contains("tenant-a-agent")
             .doesNotContain("tenant-b-agent");
     }
@@ -66,7 +66,7 @@ class TenancyIsolationTest {
     @Test
     void tenant_b_sees_only_own_agents() {
         var agents = registry.find(AgentQuery.all("tenant-b"));
-        assertThat(agents.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(agents.stream().map(m -> m.descriptor().agentId()).toList())
             .contains("tenant-b-agent")
             .doesNotContain("tenant-a-agent");
     }

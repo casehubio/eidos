@@ -12,5 +12,5 @@ public interface ReactiveAgentRegistry {
      */
     Uni<Optional<AgentDescriptor>> findById(String agentId, String tenancyId);
 
-    Uni<List<AgentDescriptor>> find(AgentQuery query);
+    Uni<List<AgentMatch>> find(AgentQuery query);
 }

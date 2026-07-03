@@ -105,14 +105,14 @@ class MultiAgentTeamTest {
     void find_reviewers_by_slot() {
         var reviewers = registry.find(AgentQuery.bySlot("reviewer", "default"));
         assertThat(reviewers).hasSize(1);
-        assertThat(reviewers.get(0).agentId()).isEqualTo("reviewer-1");
+        assertThat(reviewers.get(0).descriptor().agentId()).isEqualTo("reviewer-1");
     }
 
     @Test
     void find_agents_with_code_review_capability() {
         var agents = registry.find(AgentQuery.byCapability("code-review", "default"));
         assertThat(agents).hasSize(1);
-        assertThat(agents.get(0).agentId()).isEqualTo("reviewer-1");
+        assertThat(agents.get(0).descriptor().agentId()).isEqualTo("reviewer-1");
     }
 
     @Test
@@ -120,14 +120,14 @@ class MultiAgentTeamTest {
         var executors = registry.find(
             AgentQuery.bySlotAndCapability("executor", "code-generation", "default"));
         assertThat(executors).hasSize(1);
-        assertThat(executors.get(0).agentId()).isEqualTo("executor-1");
+        assertThat(executors.get(0).descriptor().agentId()).isEqualTo("executor-1");
     }
 
     @Test
     void find_all_returns_entire_team() {
         var all = registry.find(AgentQuery.all("default"));
         assertThat(all).hasSizeGreaterThanOrEqualTo(3);
-        assertThat(all.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(all.stream().map(m -> m.descriptor().agentId()).toList())
             .contains("planner-1", "reviewer-1", "executor-1");
     }
 
@@ -135,9 +135,9 @@ class MultiAgentTeamTest {
     void agent_with_multiple_capabilities_found_by_either() {
         var codeReviewers = registry.find(AgentQuery.byCapability("code-review", "default"));
         var testWriters = registry.find(AgentQuery.byCapability("test-writing", "default"));
-        assertThat(codeReviewers.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(codeReviewers.stream().map(m -> m.descriptor().agentId()).toList())
             .contains("reviewer-1");
-        assertThat(testWriters.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(testWriters.stream().map(m -> m.descriptor().agentId()).toList())
             .contains("reviewer-1");
     }
 }

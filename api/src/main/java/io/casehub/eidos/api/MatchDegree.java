@@ -11,10 +11,29 @@ package io.casehub.eidos.api;
  *   <li>{@link Specialization} — requested subsumes declared (declared is more specific)
  *   <li>{@link None} — no semantic relationship
  * </ul>
+ *
+ * <p>Ordering reflects OWLS-MX priority: Exact &lt; Plugin &lt; Specialization &lt; None.
+ * Plugin ranks above Specialization because a Plugin match guarantees the agent covers
+ * the request (declared is more general); a Specialization covers only a subset.
+ * Within Plugin and Specialization, lower depth (closer in hierarchy) ranks higher.
  */
-public sealed interface MatchDegree
+public sealed interface MatchDegree extends Comparable<MatchDegree>
         permits MatchDegree.Exact, MatchDegree.Plugin,
                 MatchDegree.Specialization, MatchDegree.None {
+
+    private int ordinal() {
+        return switch (this) {
+            case Exact e -> 0;
+            case Plugin p -> 1000 + p.depth();
+            case Specialization s -> 2000 + s.depth();
+            case None n -> Integer.MAX_VALUE;
+        };
+    }
+
+    @Override
+    default int compareTo(MatchDegree other) {
+        return Integer.compare(this.ordinal(), other.ordinal());
+    }
 
     /** Exact match — declared and requested values are identical. */
     record Exact() implements MatchDegree {}

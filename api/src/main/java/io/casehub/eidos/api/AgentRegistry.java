@@ -11,5 +11,13 @@ public interface AgentRegistry {
      */
     Optional<AgentDescriptor> findById(String agentId, String tenancyId);
 
-    List<AgentDescriptor> find(AgentQuery query);
+    /**
+     * Finds agents matching the query criteria.
+     *
+     * <p>When {@link AgentQuery#capabilityName()} is non-null, results carry
+     * {@link AgentMatch#resolvedCapability()} and are ordered by match quality
+     * (best first per OWLS-MX ordering). When no capability is queried,
+     * {@code resolvedCapability} is null and ordering is unspecified.
+     */
+    List<AgentMatch> find(AgentQuery query);
 }

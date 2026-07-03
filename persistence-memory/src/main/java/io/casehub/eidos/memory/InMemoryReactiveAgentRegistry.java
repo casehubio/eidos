@@ -29,7 +29,7 @@ public class InMemoryReactiveAgentRegistry implements ReactiveAgentRegistry {
     }
 
     @Override
-    public Uni<List<AgentDescriptor>> find(AgentQuery query) {
+    public Uni<List<AgentMatch>> find(AgentQuery query) {
         return Uni.createFrom().item(delegate.find(query));
     }
 }

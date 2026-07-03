@@ -49,8 +49,9 @@ class InMemoryReactiveAgentRegistryTest {
         registry.register(descriptor("rm-2a", "reviewer", "default")).await().indefinitely();
         registry.register(descriptor("rm-2b", "planner", "default")).await().indefinitely();
         var result = registry.find(AgentQuery.bySlot("reviewer", "default")).await().indefinitely();
-        assertThat(result.stream().map(AgentDescriptor::agentId).toList())
+        assertThat(result).extracting(m -> m.descriptor().agentId())
             .contains("rm-2a").doesNotContain("rm-2b");
+        assertThat(result).allSatisfy(m -> assertThat(m.resolvedCapability()).isNull());
     }
 
     @Test

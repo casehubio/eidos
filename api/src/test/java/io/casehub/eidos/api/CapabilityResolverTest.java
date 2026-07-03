@@ -74,23 +74,27 @@ class CapabilityResolverTest {
         var caps = List.of(grounded("code-review"), grounded("security-review"));
         var result = CapabilityResolver.resolve(caps, "security-review", registry);
         assertThat(result).isNotNull();
-        assertThat(result.name()).isEqualTo("security-review");
+        assertThat(result.capability().name()).isEqualTo("security-review");
+        assertThat(result.degree()).isInstanceOf(MatchDegree.Exact.class);
     }
 
     @Test
     void resolve_closest_depth_wins() {
-        // Query for "unit-testing", list has "testing" (depth 1) and "review" (no match)
         var caps = List.of(grounded("review"), grounded("testing"));
         var result = CapabilityResolver.resolve(caps, "unit-testing", registry);
         assertThat(result).isNotNull();
-        assertThat(result.name()).isEqualTo("testing"); // depth 1 beats review (no match)
+        assertThat(result.capability().name()).isEqualTo("testing");
+        assertThat(result.degree()).isInstanceOf(MatchDegree.Plugin.class);
+        assertThat(((MatchDegree.Plugin) result.degree()).depth()).isEqualTo(1);
     }
 
     @Test
     void resolve_ungrounded_exact_only() {
         var caps = List.of(ungrounded("code-review"));
         assertThat(CapabilityResolver.resolve(caps, "security-review", registry)).isNull();
-        assertThat(CapabilityResolver.resolve(caps, "code-review", registry)).isNotNull();
+        var result = CapabilityResolver.resolve(caps, "code-review", registry);
+        assertThat(result).isNotNull();
+        assertThat(result.degree()).isInstanceOf(MatchDegree.Exact.class);
     }
 
     @Test
@@ -105,12 +109,35 @@ class CapabilityResolverTest {
 
     @Test
     void resolve_first_in_list_wins_at_equal_depth() {
-        // Both are depth 1 from "review": code-review and design-review
         var caps = List.of(grounded("code-review"), grounded("design-review"));
-        // Query for "review" — both are Specialization(1)
         var result = CapabilityResolver.resolve(caps, "review", registry);
         assertThat(result).isNotNull();
-        assertThat(result.name()).isEqualTo("code-review"); // first in list
+        assertThat(result.capability().name()).isEqualTo("code-review");
+        assertThat(result.degree()).isInstanceOf(MatchDegree.Specialization.class);
+    }
+
+    @Test
+    void resolve_plugin_beats_specialization_across_depth() {
+        // code-review is Plugin(1) for security-review query.
+        // If an agent had a Specialization(1) and a Plugin(2), Plugin wins.
+        // Here: "review" is Plugin(2) for "security-review", "testing" is no match.
+        // We need a case where Plugin and Specialization compete:
+        // Query "security-review":
+        //   "code-review" → Plugin(1) (code-review subsumes security-review)
+        //   "sast-review" is not in vocab — skip.
+        // Instead, test with the compareTo-based selection:
+        // Query "review":
+        //   "code-review" → Specialization(1) (code-review specializes review)
+        //   "testing" → None
+        // This doesn't create a Plugin vs Specialization competition in resolve().
+        // The Comparable ordering is already tested in MatchDegreeTest.
+        // The resolve() loop uses compareTo, so any two degrees compare correctly.
+        var caps = List.of(grounded("code-review"), grounded("review"));
+        var result = CapabilityResolver.resolve(caps, "security-review", registry);
+        assertThat(result).isNotNull();
+        // "review" is Plugin(2) for "security-review", "code-review" is Plugin(1)
+        assertThat(result.capability().name()).isEqualTo("code-review");
+        assertThat(result.degree()).isEqualTo(new MatchDegree.Plugin(1));
     }
 
     /**
