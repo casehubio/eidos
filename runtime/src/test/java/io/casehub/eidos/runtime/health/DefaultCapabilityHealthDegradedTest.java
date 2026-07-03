@@ -43,7 +43,7 @@ class DefaultCapabilityHealthDegradedTest {
         }
     }
 
-    static class NoOpSpecializationStore implements BehavioralSignalStore {
+    static class NoOpBehavioralSignalStore implements BehavioralSignalStore {
         @Override public void record(String a, String t, String c, String d, BehavioralSignal s) {}
         @Override public void clear(String a, String t, String c, BehavioralSignal s) {}
         @Override public Map<String, Integer> learned(String a, String t, String c, BehavioralSignal s) { return Map.of(); }
@@ -62,7 +62,7 @@ class DefaultCapabilityHealthDegradedTest {
         preferenceProviderInstance = org.mockito.Mockito.mock(Instance.class);
         org.mockito.Mockito.lenient().when(preferenceProviderInstance.isUnsatisfied()).thenReturn(true);
         mockVocabRegistry = org.mockito.Mockito.mock(VocabularyRegistry.class);
-        health = new DefaultCapabilityHealth(0.3, stateStore, new NoOpSpecializationStore(), preferenceProviderInstance, mockVocabRegistry);
+        health = new DefaultCapabilityHealth(0.3, stateStore, new NoOpBehavioralSignalStore(), preferenceProviderInstance, mockVocabRegistry);
     }
 
     static AgentDescriptor agent(final String agentId, final AgentCapability... capabilities) {

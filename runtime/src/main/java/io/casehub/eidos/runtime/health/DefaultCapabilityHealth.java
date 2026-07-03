@@ -12,6 +12,7 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,12 +93,20 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             BehavioralSignal.VIOLATED);
         if (!violations.isEmpty()) {
             final int threshold = complianceViolationThreshold(descriptor.tenancyId());
-            final var exceeding = new java.util.LinkedHashMap<String, Integer>();
+            final var exceeding = new LinkedHashMap<String, Integer>();
             violations.forEach((dimension, count) -> {
                 if (count >= threshold) exceeding.put(dimension, count);
             });
             if (!exceeding.isEmpty()) {
-                return new CapabilityStatus.BehavioralViolation(Map.copyOf(exceeding));
+                return new CapabilityStatus.BehavioralViolation(Map.copyOf(exceeding),
+                    CapabilityStatus.BehavioralViolation.ViolationKind.PER_DIMENSION);
+            }
+
+            // Step 6b: aggregate check — total violations across all dimensions
+            final int total = violations.values().stream().mapToInt(Integer::intValue).sum();
+            if (total >= aggregateViolationThreshold(descriptor.tenancyId())) {
+                return new CapabilityStatus.BehavioralViolation(Map.copyOf(violations),
+                    CapabilityStatus.BehavioralViolation.ViolationKind.AGGREGATE);
             }
         }
 
@@ -120,5 +129,14 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
         return preferenceProviderInstance.get()
             .resolve(SettingsScope.of(tenancyId))
             .getOrDefault(EidosPreferenceKeys.COMPLIANCE_VIOLATION_THRESHOLD).value();
+    }
+
+    private int aggregateViolationThreshold(final String tenancyId) {
+        if (preferenceProviderInstance.isUnsatisfied()) {
+            return EidosPreferenceKeys.AGGREGATE_VIOLATION_THRESHOLD.defaultValue().value();
+        }
+        return preferenceProviderInstance.get()
+            .resolve(SettingsScope.of(tenancyId))
+            .getOrDefault(EidosPreferenceKeys.AGGREGATE_VIOLATION_THRESHOLD).value();
     }
 }

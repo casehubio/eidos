@@ -108,6 +108,76 @@ class DefaultCapabilityHealthBehavioralViolationTest {
         assertThat(status).isInstanceOf(CapabilityStatus.Unavailable.class);
     }
 
+    // --- Aggregate threshold tests ---
+
+    @Test
+    void aggregate_violations_below_threshold_returns_ready() {
+        // 4 total across 2 dimensions — below default aggregate threshold of 5
+        signalStore.setViolations("a2", "default", "code-review",
+                Map.of("latency", 2, "attestation-rate", 2));
+        var status = health.probe(agent("a2", "code-review"), "code-review",
+                ProbeContext.of("java"));
+        assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
+    }
+
+    @Test
+    void aggregate_violations_at_threshold_returns_behavioral_violation() {
+        // 5 total across 3 dimensions — at default aggregate threshold of 5
+        signalStore.setViolations("a3", "default", "code-review",
+                Map.of("latency", 2, "attestation-rate", 2, "quality", 1));
+        var status = health.probe(agent("a3", "code-review"), "code-review",
+                ProbeContext.of("java"));
+        assertThat(status).isInstanceOf(CapabilityStatus.BehavioralViolation.class);
+        var violation = (CapabilityStatus.BehavioralViolation) status;
+        assertThat(violation.kind()).isEqualTo(
+                CapabilityStatus.BehavioralViolation.ViolationKind.AGGREGATE);
+        assertThat(violation.violations()).hasSize(3);
+    }
+
+    @Test
+    void aggregate_includes_all_dimensions_in_violations_map() {
+        // 6 total across 3 dimensions — all included in aggregate result
+        signalStore.setViolations("a4", "default", "code-review",
+                Map.of("latency", 2, "attestation-rate", 2, "quality", 2));
+        var status = health.probe(agent("a4", "code-review"), "code-review",
+                ProbeContext.of("java"));
+        assertThat(status).isInstanceOf(CapabilityStatus.BehavioralViolation.class);
+        var violation = (CapabilityStatus.BehavioralViolation) status;
+        assertThat(violation.kind()).isEqualTo(
+                CapabilityStatus.BehavioralViolation.ViolationKind.AGGREGATE);
+        assertThat(violation.violations())
+                .containsEntry("latency", 2)
+                .containsEntry("attestation-rate", 2)
+                .containsEntry("quality", 2);
+    }
+
+    @Test
+    void per_dimension_fires_before_aggregate() {
+        // latency=3 exceeds per-dimension threshold — should fire as PER_DIMENSION
+        // even though total=5 meets aggregate threshold
+        signalStore.setViolations("a5", "default", "code-review",
+                Map.of("latency", 3, "attestation-rate", 2));
+        var status = health.probe(agent("a5", "code-review"), "code-review",
+                ProbeContext.of("java"));
+        assertThat(status).isInstanceOf(CapabilityStatus.BehavioralViolation.class);
+        var violation = (CapabilityStatus.BehavioralViolation) status;
+        assertThat(violation.kind()).isEqualTo(
+                CapabilityStatus.BehavioralViolation.ViolationKind.PER_DIMENSION);
+        assertThat(violation.violations()).containsEntry("latency", 3);
+    }
+
+    @Test
+    void existing_per_dimension_violations_carry_violation_kind() {
+        signalStore.setViolations("a6", "default", "code-review",
+                Map.of("latency", 3));
+        var status = health.probe(agent("a6", "code-review"), "code-review",
+                ProbeContext.of("java"));
+        assertThat(status).isInstanceOf(CapabilityStatus.BehavioralViolation.class);
+        var violation = (CapabilityStatus.BehavioralViolation) status;
+        assertThat(violation.kind()).isEqualTo(
+                CapabilityStatus.BehavioralViolation.ViolationKind.PER_DIMENSION);
+    }
+
     // --- Stubs ---
 
     static class StubBehavioralSignalStore implements BehavioralSignalStore {

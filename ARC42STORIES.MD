@@ -20,7 +20,7 @@ Core capabilities:
 - **AgentDescriptor** — four-layer structured description: identity (id, name, model, provider), slot (open-string role classification), capabilities (capability name, quality, latency, epistemic domain confidence), disposition (four open-string axes + delegation flag); optional `briefing` freeform text field for per-agent narrative context
 - **AgentRegistry / ReactiveAgentRegistry** — SPI for agent registration and discovery by slot, capability, and tenancyId
 - **VocabularyRegistry / CdiVocabularyRegistry** — pluggable vocabulary system; CDI `Instance<VocabularyRegistrar>` discovery with cross-vocabulary equivalence traversal and XKOS-style subsumption hierarchy (`specializes()` → global DAG across vocabulary boundaries; `subsumes()`, `match()` → `MatchDegree`, `ancestors()`, `descendants()`, `expandForMatchingByVocabulary()`)
-- **CapabilityHealth / ReactiveCapabilityHealth** — two-layer probe: declared (descriptor) vs. operable now (runtime degradation state); `AgentStateStore` SPI records degradation with TTL
+- **CapabilityHealth / ReactiveCapabilityHealth** — two-layer probe: declared (descriptor) vs. operable now (runtime degradation + behavioral compliance); `AgentStateStore` SPI records degradation with TTL; `BehavioralSignalStore` SPI accumulates learned signals (DECLINE, SUCCESS, COMPLIANT, VIOLATED) with per-signal TTL; probe steps: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → BehavioralViolation → Ready; aggregate violation safety valve detects cross-dimensional drift
 - **SystemPromptRenderer / ReactiveSystemPromptRenderer** — three-stage render pipeline (canonical JSON payload → optional LLM semantic enrichment → format-specific assembly) into `RenderedPrompt`; `RenderedPromptCache` / `ReactiveRenderedPromptCache` SPI for cache coherence; capability rendering is format-discriminated: PROSE/MARKDOWN surface names + `inputTypes`/`outputTypes` only; numeric routing signals (`qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains`) appear in A2A_CARD only — protocol PP-20260611-228599; `RenderedPrompt.enriched` flag set when Stage 2 enrichment ran
 - **Eval framework** (`casehub-eidos-eval`) — LLM-as-judge quality harness; `PromptJudge` (4 dimensions), `ProximityJudge` (prose fidelity), three-stage personality preservation attribution (VocabularyExpressivenessJudge → TraitExpressionJudge → PairContrastJudge)
 - **Knowledge graph** (`casehub-eidos-graph`) — `AgentGraphStore` SPI records tasks and outcomes; `AgentGraphQuery` ranks agents by Wilson lower-bound confidence; `AttestationRef` chains outcomes to casehub-ledger hashes; `TaskSemanticEnricher` SPI (pull interface for domain-specific axis correlation)
@@ -128,7 +128,7 @@ See `../parent/docs/PLATFORM.md` Capability Ownership table and `../parent/docs/
 | L1 Zero-Dep API | All domain types and SPIs; zero casehubio deps; pure Java records and interfaces | C1–C6 |
 | L2 CDI Discovery | `CdiVocabularyRegistry` — `Instance<VocabularyRegistrar>` discovery; XKOS-style subsumption hierarchy (global DAG, cross-vocabulary specialization); in-memory registry alternatives | C1 |
 | L3 JPA Registry | `JpaAgentRegistry`, Flyway schema (`agent_descriptor`, `agent_capability`); reactive build-gated variant | C1, C3 |
-| L4 Capability Health | `DefaultCapabilityHealth`; `AgentStateStore` degradation tracking; fail-fast probe order | C2, C3 |
+| L4 Capability Health | `DefaultCapabilityHealth`; `AgentStateStore` degradation tracking; `BehavioralSignalStore` compliance signals; fail-fast 6-step probe (Degraded → Unavailable → Excluded → EpistemicallyWeak → BehavioralViolation → Ready); aggregate violation safety valve | C2, C3 |
 | L5 Rendering Pipeline | Three-stage pipeline; `EidosRenderPipeline` shared stage 1+3; blocking + reactive renderers; `ReactiveRenderedPromptCache` canonical SPI | C3, C4 |
 | L6 Eval Framework | `PromptJudge` (4 dimensions); `ProximityJudge`; personality preservation (3-stage attribution); real-world profile library | C4, C5 |
 | L7 Knowledge Graph | `AgentGraphStore` / `AgentGraphQuery` SPIs; JPA graph (`casehub-eidos-graph`); Wilson ranking; `TaskSemanticEnricher` pull interface | C6 |
@@ -234,22 +234,35 @@ sequenceDiagram
   participant Eng as casehub-engine
   participant CH as DefaultCapabilityHealth
   participant SS as AgentStateStore
+  participant BS as BehavioralSignalStore
 
   Eng->>CH: probe(descriptor, "code-review", context{taskDomain="rust"})
   CH->>SS: query(descriptor.agentId(), descriptor.tenancyId())
   SS-->>CH: Optional<DegradationReason> (e.g. RATE_LIMITED)
-  alt DegradationReason present
+  alt Step 1: DegradationReason present
     CH-->>Eng: Degraded(reason, message)
-  else capability not declared
+  else Step 2: capability not declared
     CH-->>Eng: Unavailable("code-review not declared")
-  else epistemicDomains["rust"] < threshold
+  else Step 3: excludedDomains contains taskDomain
+    CH-->>Eng: Excluded(domain, DECLARED, 0)
+  else Step 4: learned DECLINE count ≥ threshold
+    CH-->>Eng: Excluded(domain, LEARNED, count)
+  else Step 5: epistemicDomains[domain] < threshold
     CH-->>Eng: EpistemicallyWeak("rust", 0.2)
-  else
-    CH-->>Eng: Ready
+  else Step 6: behavioral compliance
+    CH->>BS: learned(agentId, tenancyId, capability, VIOLATED)
+    BS-->>CH: Map<dimension, count>
+    alt per-dimension count ≥ threshold
+      CH-->>Eng: BehavioralViolation(exceeding, PER_DIMENSION)
+    else aggregate total ≥ threshold
+      CH-->>Eng: BehavioralViolation(all, AGGREGATE)
+    else
+      CH-->>Eng: Ready
+    end
   end
 ```
 
-Probe order is fail-fast: degradation state first (known-bad agents are not worth checking further), then capability declaration, then epistemic confidence.
+Probe order is fail-fast: degradation state first (known-bad agents are not worth checking further), then capability resolution, then declared exclusions, then learned exclusions (DECLINE signals), then epistemic confidence, then behavioral compliance (VIOLATED signals — per-dimension then aggregate).
 
 ### Scenario 3 — System prompt rendering (structural path)
 
@@ -590,7 +603,7 @@ What this layer adds:
 - **`MatchDegree` sealed interface** — `Exact`, `Plugin(depth)`, `Specialization(depth)`, `None` — returned by `VocabularyRegistry.match()` to express how well a requested vocabulary term matches a declared term; `Plugin` means the declared term is more specific (depth = hierarchy steps from declared down to requested); `Specialization` means the declared term is more general (depth = steps from requested up to declared)
 - **`VocabularyTerm.specializes()`** — `default List<VocabularyTerm> specializes()` declares XKOS-style parent terms; enables subsumption hierarchy construction across vocabulary boundaries (application terms can specialize foundation terms); consumed by `CdiVocabularyRegistry` during two-pass registration to build global DAG
 - **`VocabularyRegistry` subsumption API** — `subsumes(vocabUri, general, specific)` tests hierarchy containment; `match(vocabUri, declared, requested)` → `MatchDegree`; `ancestors(vocabUri, value)` and `descendants(vocabUri, value)` traverse the DAG; `expandForMatchingByVocabulary(value)` groups all terms matching a value (including cross-vocabulary specialization edges) by declaring vocabulary URI
-- **Sealed CapabilityStatus** — `Ready` / `Unavailable` / `Degraded(reason, msg)` / `EpistemicallyWeak(domain, confidence)` / `Excluded(domain, ExclusionSource, declineCount)` — exhaustive probe result; callers must handle all five in a switch; probe order: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → Ready
+- **Sealed CapabilityStatus** — `Ready` / `Unavailable` / `Degraded(reason, msg)` / `EpistemicallyWeak(domain, confidence)` / `Excluded(domain, ExclusionSource, declineCount)` / `BehavioralViolation(violations, ViolationKind)` — exhaustive probe result; callers must handle all six in a switch; `ViolationKind { PER_DIMENSION, AGGREGATE }` discriminates single-dimension spike from cross-dimensional drift; probe order: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → BehavioralViolation → Ready
 - **Structure-named RenderFormat** — `MARKDOWN` / `PROSE` / `A2A_CARD`; adding an LLM provider requires no new enum member; sub-labels deferred until concrete structural differences emerge
 - **AgentPromptContext** — single accumulation point: `Optional<GoalContext>`, `List<Resource>`, `situationalContext`, `RenderFormat`; wither methods support incremental construction; re-renderable at any point
 
@@ -608,8 +621,11 @@ Not closed here: L4 (`DefaultCapabilityHealth` implementation, `AgentStateStore`
 
 - `api/src/main/java/io/casehub/eidos/api/AgentDescriptor.java` — four-layer agent identity record; compact constructor delegates to `AgentDescriptorValidator`
 - `api/src/main/java/io/casehub/eidos/api/AgentCapability.java` — capability record with `qualityHint` (Double), `epistemicDomains` (Map), `excludedDomains` (Set<String>, overlap invariant with epistemicDomains), and validated string fields; Builder inner class
-- `api/src/main/java/io/casehub/eidos/api/SpecializationSignal.java` — enum: `DECLINE`, `SUCCESS` — discriminator for `CapabilitySpecializationStore` methods
-- `api/src/main/java/io/casehub/eidos/api/CapabilitySpecializationStore.java` — SPI: `record`, `clear`, `learned`, `count` — signal-parameterized via `SpecializationSignal`; per-signal TTL owned by store implementation
+- `api/src/main/java/io/casehub/eidos/api/BehavioralSignal.java` — enum: `DECLINE`, `SUCCESS`, `COMPLIANT`, `VIOLATED` — discriminator for `BehavioralSignalStore` methods; COMPLIANT/VIOLATED pair supports compliance observation recording
+- `api/src/main/java/io/casehub/eidos/api/BehavioralSignalStore.java` — SPI: `record`, `clear`, `learned`, `count` — signal-parameterized via `BehavioralSignal`; qualifier parameter (task domain for DECLINE/SUCCESS, `ComplianceDimension` key for COMPLIANT/VIOLATED); per-signal TTL owned by store implementation
+- `api/src/main/java/io/casehub/eidos/api/ComplianceDimension.java` — constants: `LATENCY`, `ATTESTATION_RATE` dimension keys; `ATTESTOR_ID`, `TRUST_DIMENSION_PREFIX`, `LATENCY_VIOLATION_MULTIPLIER` conventions
+- `api/src/main/java/io/casehub/eidos/api/BehavioralExpectations.java` — static utility: `latencyBound(AgentCapability)` → `OptionalLong`, `delegationExpected(AgentDisposition)` → `boolean`; extracts testable expectations from descriptor fields
+- `api/src/main/java/io/casehub/eidos/api/CapabilityResolver.java` — static utility: `resolve(capabilities, tag, registry)` → best-matching `AgentCapability`; `match(capability, tag, registry)` → `MatchDegree`; shared by probe and recording paths
 - `api/src/main/java/io/casehub/eidos/api/MatchDegree.java` — sealed interface: `Exact`, `Plugin(depth)`, `Specialization(depth)`, `None`; returned by `VocabularyRegistry.match()`; depth counts hierarchy steps between declared and requested terms
 - `api/src/main/java/io/casehub/eidos/api/AgentDisposition.java` — four open-string disposition axes (socialOrient, ruleFollowing, riskAppetite, autonomy) + `canDelegate` boolean
 - `api/src/main/java/io/casehub/eidos/api/AgentQuery.java` — criteria record; compact constructor enforces non-null `tenancyId`
@@ -849,14 +865,18 @@ Not closed here: L4 (runtime degradation tracking), L7 (knowledge graph — V3 m
 ##### What it adds
 
 **Before:** `NoOpCapabilityHealth @DefaultBean` — probe always returns `Ready`.
-**After:** `DefaultCapabilityHealth` — fail-fast probe (Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → Ready); `AgentStateStore` SPI records runtime degradation with TTL; `NoOpAgentStateStore @DefaultBean` preserves backward behaviour.
+**After:** `DefaultCapabilityHealth` — fail-fast 6-step probe (Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → BehavioralViolation → Ready); `AgentStateStore` SPI records runtime degradation with TTL; `BehavioralSignalStore` SPI accumulates compliance signals; `NoOpAgentStateStore @DefaultBean` and `NoOpBehavioralSignalStore @DefaultBean` preserve backward behaviour.
 
 What this layer adds:
 
-- **Fail-fast probe order** — `AgentStateStore.query()` runs first (Degraded); capability resolution via `CapabilityResolver.resolve()` second (Unavailable if no match); declared `excludedDomains` third (Excluded/DECLARED); learned exclusion via `CapabilitySpecializationStore.count()` fourth (Excluded/LEARNED); epistemic domain confidence fifth (EpistemicallyWeak); else Ready
+- **Fail-fast probe order (6 steps)** — Step 1: `AgentStateStore.query()` (Degraded); Step 2: capability resolution via `CapabilityResolver.resolve()` (Unavailable if no match); Step 3: declared `excludedDomains` (Excluded/DECLARED); Step 4: learned exclusion via `BehavioralSignalStore.count(DECLINE)` (Excluded/LEARNED); Step 5: epistemic domain confidence (EpistemicallyWeak); Step 6: behavioral compliance via `BehavioralSignalStore.learned(VIOLATED)` — per-dimension check then aggregate total (BehavioralViolation); else Ready
 - **`AgentStateStore` degradation tracking** — `record(agentId, tenancyId, DegradationReason, Instant expiresAt)`; `NoOpAgentStateStore @DefaultBean`; `InMemoryAgentStateStore @Alternative @Priority(1)` (ConcurrentHashMap with TTL expiry); `JpaAgentStateStore` in runtime (Flyway V2)
+- **`BehavioralSignalStore` compliance signals** — `record/clear/learned/count` parameterized by `BehavioralSignal { DECLINE, SUCCESS, COMPLIANT, VIOLATED }`; qualifier parameter (task domain for DECLINE/SUCCESS, `ComplianceDimension` key for COMPLIANT/VIOLATED); per-signal TTL owned by store implementation; `NoOpBehavioralSignalStore @DefaultBean`; `InMemoryBehavioralSignalStore @Alternative @Priority(1)`; `JpaBehavioralSignalStore` in runtime (Flyway V5)
+- **Behavioral compliance checking (Step 6)** — queries accumulated VIOLATED signals per capability; per-dimension threshold (default 3, configurable per-tenancy via `PreferenceProvider`); aggregate threshold (default 5) catches cross-dimensional drift when no single dimension exceeds the per-dimension threshold; `BehavioralViolation(violations, ViolationKind)` where `ViolationKind { PER_DIMENSION, AGGREGATE }`
 - **`CapabilityHealth` probe takes `AgentDescriptor`, not `agentId`** — the caller already has the descriptor from the registry query; no redundant lookup; no tenancy question at probe time
-- **Five `CapabilityStatus` variants** — `Ready`, `Unavailable`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)`; sealed hierarchy; exhaustive switch at call sites
+- **Six `CapabilityStatus` variants** — `Ready`, `Unavailable`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)`, `BehavioralViolation(violations, ViolationKind)`; sealed hierarchy; exhaustive switch at call sites
+- **`BehavioralExpectations` utility** — `latencyBound(AgentCapability)` → `OptionalLong`, `delegationExpected(AgentDisposition)` → `boolean`; extracts testable expectations from descriptor fields for compliance observation
+- **`ComplianceAttestations` utility** — constructs `LedgerAttestation` records from compliance observations for trust scoring impact (attestorId=`eidos:compliance`, trustDimension=`behavioral:<dimension>`)
 
 Not closed here: L5 (rendering pipeline calls health check), L7 (knowledge graph outcome history provides empirical health signal).
 
@@ -1252,9 +1272,14 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | `VocabularyTerm` | Interface implemented by vocabulary enum constants; `exactMatch()` cross-references for equivalence; `axisExactMatch()` for axis-discriminated resolution; `specializes()` declares XKOS-style parent terms for subsumption hierarchy |
 | `MatchDegree` | Sealed interface returned by `VocabularyRegistry.match()`: `Exact` (same term), `Plugin(depth)` (declared is more specific than requested — declared specializes requested), `Specialization(depth)` (declared is more general than requested — requested specializes declared), `None` (no hierarchy relationship) |
 | `CapabilityHealth` / `ReactiveCapabilityHealth` | SPI for probing whether a declared capability is operable at dispatch time; returns sealed `CapabilityStatus` |
-| `CapabilityStatus` | Sealed hierarchy: `Ready`, `Unavailable(message)`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)` |
-| `SpecializationSignal` | Enum: `DECLINE`, `SUCCESS` — discriminator for bidirectional `CapabilitySpecializationStore` methods |
-| `CapabilitySpecializationStore` | SPI accumulating learned domain signals (DECLINE and SUCCESS); signal-parameterized methods: `record`, `clear`, `learned`, `count`; per-signal TTL (30d default via `@ConfigProperty` `decline-ttl-days` / `success-ttl-days`) |
+| `CapabilityStatus` | Sealed hierarchy: `Ready`, `Unavailable(message)`, `Degraded(reason, message)`, `EpistemicallyWeak(domain, confidence)`, `Excluded(domain, ExclusionSource, declineCount)`, `BehavioralViolation(violations, ViolationKind)` |
+| `BehavioralViolation.ViolationKind` | Enum: `PER_DIMENSION` (single dimension exceeds threshold — violations map contains only exceeding dimensions), `AGGREGATE` (cross-dimensional drift — violations map contains all dimensions with violations) |
+| `BehavioralSignal` | Enum: `DECLINE`, `SUCCESS`, `COMPLIANT`, `VIOLATED` — discriminator for `BehavioralSignalStore` methods; DECLINE/SUCCESS track learned domain specialization; COMPLIANT/VIOLATED track behavioral compliance |
+| `BehavioralSignalStore` | SPI accumulating learned behavioral signals; signal-parameterized methods: `record`, `clear`, `learned`, `count`; qualifier parameter (task domain for DECLINE/SUCCESS, `ComplianceDimension` key for COMPLIANT/VIOLATED); per-signal TTL owned by store implementation |
+| `ComplianceDimension` | Constants class: `LATENCY`, `ATTESTATION_RATE` dimension keys; `ATTESTOR_ID` (`eidos:compliance`), `TRUST_DIMENSION_PREFIX` (`behavioral:`), `LATENCY_VIOLATION_MULTIPLIER` (2.0) conventions |
+| `BehavioralExpectations` | Static utility: `latencyBound(AgentCapability)` → `OptionalLong`, `delegationExpected(AgentDisposition)` → `boolean`; extracts testable expectations from descriptor fields |
+| `ComplianceAttestations` | Static utility: constructs `LedgerAttestation` records from compliance observations; attestorId=`eidos:compliance`, trustDimension=`behavioral:<dimension>` |
+| `CapabilityResolver` | Static utility in api/: `resolve(capabilities, tag, registry)` → best-matching `AgentCapability`; `match(capability, tag, registry)` → `MatchDegree`; shared by probe and recording paths; callers of `BehavioralSignalStore.record()` must pass the declared capability name |
 | `DegradationReason` | Top-level enum: `RATE_LIMITED`, `CONTEXT_EXHAUSTED`, `OVERLOADED`, `DOMAIN_MISMATCH` |
 | `AgentStateStore` | SPI for recording and querying runtime degradation state with TTL; `tenancyId` required on all operations |
 | `AgentPromptContext` | Render-time accumulation record: `Optional<GoalContext>`, `List<Resource>`, `situationalContext`, `RenderFormat`; wither methods support incremental build; re-renderable as context evolves |

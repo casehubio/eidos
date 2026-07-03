@@ -26,4 +26,15 @@ public final class EidosPreferenceKeys {
         new PreferenceKey<>("casehub.eidos", "behavioral.compliance-violation-threshold",
                             new ComplianceViolationThresholdPreference(3),
                             s -> new ComplianceViolationThresholdPreference(Integer.parseInt(s)));
+
+    /**
+     * Minimum total count of unexpired VIOLATED records across all compliance
+     * dimensions before eidos reports an aggregate behavioral violation.
+     * Only fires when no individual dimension exceeds the per-dimension threshold.
+     * Default: 5.
+     */
+    public static final PreferenceKey<AggregateViolationThresholdPreference> AGGREGATE_VIOLATION_THRESHOLD =
+        new PreferenceKey<>("casehub.eidos", "behavioral.aggregate-violation-threshold",
+                            new AggregateViolationThresholdPreference(5),
+                            s -> new AggregateViolationThresholdPreference(Integer.parseInt(s)));
 }

@@ -24,7 +24,9 @@ public interface CapabilityHealth {
         record Unavailable(String reason) implements CapabilityStatus {}
         record EpistemicallyWeak(String domain, double confidence) implements CapabilityStatus {}
         record Excluded(String domain, ExclusionSource source, int declineCount) implements CapabilityStatus {}
-        record BehavioralViolation(Map<String, Integer> violations) implements CapabilityStatus {}
+        record BehavioralViolation(Map<String, Integer> violations, ViolationKind kind) implements CapabilityStatus {
+            public enum ViolationKind { PER_DIMENSION, AGGREGATE }
+        }
 
         enum ExclusionSource { DECLARED, LEARNED }
     }

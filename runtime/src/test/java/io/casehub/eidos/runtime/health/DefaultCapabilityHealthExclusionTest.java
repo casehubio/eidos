@@ -38,7 +38,7 @@ class DefaultCapabilityHealthExclusionTest {
         @Override public void clear(String a, String t) {}
     }
 
-    static class StubSpecializationStore implements BehavioralSignalStore {
+    static class StubBehavioralSignalStore implements BehavioralSignalStore {
         private final Map<String, Integer> counts = new HashMap<>();
 
         void setCount(String agentId, String tenancyId, String capability,
@@ -66,15 +66,15 @@ class DefaultCapabilityHealthExclusionTest {
     VocabularyRegistry mockVocabRegistry;
 
     StubStateStore stateStore;
-    StubSpecializationStore specializationStore;
+    StubBehavioralSignalStore signalStore;
     DefaultCapabilityHealth health;
 
     @BeforeEach
     void setUp() {
         stateStore = new StubStateStore();
-        specializationStore = new StubSpecializationStore();
+        signalStore = new StubBehavioralSignalStore();
         lenient().when(preferenceProviderInstance.isUnsatisfied()).thenReturn(true);
-        health = new DefaultCapabilityHealth(0.3, stateStore, specializationStore, preferenceProviderInstance, mockVocabRegistry);
+        health = new DefaultCapabilityHealth(0.3, stateStore, signalStore, preferenceProviderInstance, mockVocabRegistry);
     }
 
     static AgentDescriptor agent(String agentId, AgentCapability... capabilities) {
@@ -137,7 +137,7 @@ class DefaultCapabilityHealthExclusionTest {
 
     @Test
     void learned_exclusion_at_default_threshold_returns_excluded() {
-        specializationStore.setCount("agent5", "default", "code-review", "rust", BehavioralSignal.DECLINE, 3);
+        signalStore.setCount("agent5", "default", "code-review", "rust", BehavioralSignal.DECLINE, 3);
         var descriptor = agent("agent5", capability("code-review"));
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(status).isInstanceOf(CapabilityStatus.Excluded.class);
@@ -149,7 +149,7 @@ class DefaultCapabilityHealthExclusionTest {
 
     @Test
     void learned_exclusion_below_threshold_continues_to_ready() {
-        specializationStore.setCount("agent6", "default", "code-review", "rust", BehavioralSignal.DECLINE, 2);
+        signalStore.setCount("agent6", "default", "code-review", "rust", BehavioralSignal.DECLINE, 2);
         var descriptor = agent("agent6", capability("code-review"));
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
@@ -157,7 +157,7 @@ class DefaultCapabilityHealthExclusionTest {
 
     @Test
     void count_captured_in_single_call_matches_excluded_record() {
-        specializationStore.setCount("agent7", "default", "code-review", "rust", BehavioralSignal.DECLINE, 5);
+        signalStore.setCount("agent7", "default", "code-review", "rust", BehavioralSignal.DECLINE, 5);
         var descriptor = agent("agent7", capability("code-review"));
         var excluded = (CapabilityStatus.Excluded) health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(excluded.declineCount()).isEqualTo(5);
@@ -166,7 +166,7 @@ class DefaultCapabilityHealthExclusionTest {
     @Test
     void null_task_domain_skips_both_exclusion_checks() {
         var descriptor = agent("agent8", capabilityWithExclusions("code-review", Set.of("rust")));
-        specializationStore.setCount("agent8", "default", "code-review", "rust", BehavioralSignal.DECLINE, 10);
+        signalStore.setCount("agent8", "default", "code-review", "rust", BehavioralSignal.DECLINE, 10);
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null));
         assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
     }
@@ -181,7 +181,7 @@ class DefaultCapabilityHealthExclusionTest {
         when(mockPreferences.getOrDefault(EidosPreferenceKeys.EXCLUDE_THRESHOLD))
             .thenReturn(new ExcludeThresholdPreference(2));
 
-        specializationStore.setCount("agent9", "default", "code-review", "rust", BehavioralSignal.DECLINE, 2);
+        signalStore.setCount("agent9", "default", "code-review", "rust", BehavioralSignal.DECLINE, 2);
         var descriptor = agent("agent9", capability("code-review"));
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
 
@@ -191,19 +191,19 @@ class DefaultCapabilityHealthExclusionTest {
     @Test
     void no_preference_provider_falls_back_to_default_threshold_of_3() {
         // isUnsatisfied() = true (setUp default)
-        specializationStore.setCount("agent10", "default", "code-review", "rust", BehavioralSignal.DECLINE, 2);
+        signalStore.setCount("agent10", "default", "code-review", "rust", BehavioralSignal.DECLINE, 2);
         var descriptor = agent("agent10", capability("code-review"));
         assertThat(health.probe(descriptor, "code-review", ProbeContext.of("rust")))
             .isInstanceOf(CapabilityStatus.Ready.class);  // 2 < 3
 
-        specializationStore.setCount("agent10", "default", "code-review", "rust", BehavioralSignal.DECLINE, 3);
+        signalStore.setCount("agent10", "default", "code-review", "rust", BehavioralSignal.DECLINE, 3);
         assertThat(health.probe(descriptor, "code-review", ProbeContext.of("rust")))
             .isInstanceOf(CapabilityStatus.Excluded.class);  // 3 >= 3
     }
 
     @Test
     void success_data_does_not_affect_probe_result() {
-        specializationStore.setCount("agent11", "default", "code-review", "rust", BehavioralSignal.SUCCESS, 10);
+        signalStore.setCount("agent11", "default", "code-review", "rust", BehavioralSignal.SUCCESS, 10);
         var descriptor = agent("agent11", capability("code-review"));
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
         assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
@@ -223,7 +223,7 @@ class DefaultCapabilityHealthExclusionTest {
             .thenReturn(new MatchDegree.Specialization(1));
 
         // Record declines against declared name "security-code-review"
-        specializationStore.setCount("agent-sub1", "default", "security-code-review",
+        signalStore.setCount("agent-sub1", "default", "security-code-review",
             "rust", BehavioralSignal.DECLINE, 3);
 
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
@@ -244,7 +244,7 @@ class DefaultCapabilityHealthExclusionTest {
             .thenReturn(new MatchDegree.Specialization(1));
 
         // Record against query tag — wrong key
-        specializationStore.setCount("agent-sub2", "default", "code-review",
+        signalStore.setCount("agent-sub2", "default", "code-review",
             "rust", BehavioralSignal.DECLINE, 3);
 
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));
@@ -263,7 +263,7 @@ class DefaultCapabilityHealthExclusionTest {
             .thenReturn(new MatchDegree.Plugin(1));
 
         // Record declines against declared name "code-review"
-        specializationStore.setCount("agent-sub3", "default", "code-review",
+        signalStore.setCount("agent-sub3", "default", "code-review",
             "rust", BehavioralSignal.DECLINE, 3);
 
         var status = health.probe(descriptor, "security-code-review", ProbeContext.of("rust"));
@@ -277,7 +277,7 @@ class DefaultCapabilityHealthExclusionTest {
         // Exact match: declared and query tag are the same — regression guard
         var descriptor = agent("agent-sub4", capability("code-review"));
 
-        specializationStore.setCount("agent-sub4", "default", "code-review",
+        signalStore.setCount("agent-sub4", "default", "code-review",
             "rust", BehavioralSignal.DECLINE, 3);
 
         var status = health.probe(descriptor, "code-review", ProbeContext.of("rust"));

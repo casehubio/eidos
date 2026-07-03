@@ -56,24 +56,10 @@ public class InMemoryAgentRegistry implements AgentRegistry {
     }
 
     private boolean matchesCapability(AgentCapability capability, String requestedName) {
-        // Exact match always works
-        if (capability.name().equals(requestedName)) {
-            return true;
+        if (!vocabularyRegistry.isResolvable()) {
+            return capability.name().equals(requestedName);
         }
-
-        // No vocabulary grounding or no registry → exact match only
-        if (capability.capabilityVocabulary() == null || !vocabularyRegistry.isResolvable()) {
-            return false;
-        }
-
-        // Check subsumption via vocabulary
-        var registry = vocabularyRegistry.get();
-        MatchDegree degree = registry.match(
-            capability.capabilityVocabulary(),
-            capability.name(),
-            requestedName
-        );
-
-        return !(degree instanceof MatchDegree.None);
+        return !(CapabilityResolver.match(capability, requestedName,
+                                          vocabularyRegistry.get()) instanceof MatchDegree.None);
     }
 }
