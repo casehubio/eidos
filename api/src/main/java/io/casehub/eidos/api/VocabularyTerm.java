@@ -44,4 +44,19 @@ public interface VocabularyTerm {
     default Optional<VocabularyTerm> axisExactMatch(Class<?> targetVocab, DispositionAxis axis) {
         return Optional.empty();
     }
+
+    /**
+     * Returns {@code true} if this term indicates the entity operates under
+     * supervision and should escalate to a supervisor when encountering
+     * uncertain or high-stakes decisions.
+     *
+     * <p>Primarily meaningful for {@link DispositionAxis#AUTONOMY AUTONOMY} axis
+     * terms. Slot terms, capability terms, and other axis terms inherit the
+     * default {@code false} — semantically correct and harmless if called in a
+     * non-autonomy context.
+     *
+     * <p>Used by {@link BehavioralExpectations#escalationExpected} to determine
+     * whether escalation compliance should be monitored for an agent.
+     */
+    default boolean impliesSupervision() { return false; }
 }

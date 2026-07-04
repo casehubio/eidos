@@ -172,7 +172,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── AgentQuery.java              — criteria record for find(): slot, capabilityName, tenancyId (required), taskDomain (optional pre-filter by excludedDomains)
 │       ├── DispositionAxis.java         — enum: SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY, CONFLICT_MODE; jsonKey() → camelCase JSON key; description() → axis description for LLM judge prompts
 │       ├── VocabularyMetadata.java      — annotation: uri (required), name, version on vocabulary enum classes
-│       ├── VocabularyTerm.java          — interface implemented by vocabulary enum constants; exactMatch + axisExactMatch
+│       ├── VocabularyTerm.java          — interface implemented by vocabulary enum constants; exactMatch + axisExactMatch + impliesSupervision()
 │       ├── VocabularyRegistry.java      — SPI: register(Class<T>), isRegistered, resolve, allTerms, equivalentValues (typed + string-based + axis-aware)
 │       └── spi/
 │           ├── VocabularyRegistrar.java — @FunctionalInterface CDI SPI; @ApplicationScoped beans auto-register vocab enums
@@ -185,8 +185,8 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── CapabilityResolver.java      — static utility: resolve(capabilities, capabilityTag, registry) → best-matching AgentCapability; match(capability, tag, registry) → MatchDegree; shared by probe and recording paths
 │       ├── BehavioralSignalStore.java   — SPI: record/clear/learned/count — signal-parameterized (BehavioralSignal { DECLINE, SUCCESS, COMPLIANT, VIOLATED }); qualifier parameter (ComplianceDimension); store-owned per-signal TTL via @ConfigProperty
 │       ├── BehavioralSignal.java        — enum: DECLINE, SUCCESS, COMPLIANT, VIOLATED — discriminator for BehavioralSignalStore methods
-│       ├── ComplianceDimension.java     — constants: LATENCY, ATTESTATION_RATE dimension keys; ATTESTOR_ID, TRUST_DIMENSION_PREFIX, LATENCY_VIOLATION_MULTIPLIER conventions
-│       ├── BehavioralExpectations.java  — static utility: latencyBound(AgentCapability) → OptionalLong, delegationExpected(AgentDisposition) → boolean
+│       ├── ComplianceDimension.java     — constants: LATENCY, ATTESTATION_RATE, DELEGATION, ESCALATION dimension keys; ATTESTOR_ID, TRUST_DIMENSION_PREFIX, LATENCY_VIOLATION_MULTIPLIER conventions
+│       ├── BehavioralExpectations.java  — static utility: latencyBound(AgentCapability) → OptionalLong, delegationExpected(AgentDisposition) → boolean, escalationExpected(AgentDisposition, String, VocabularyRegistry) → boolean
 │       ├── DegradationReason.java       — top-level enum: RATE_LIMITED, CONTEXT_EXHAUSTED, OVERLOADED, DOMAIN_MISMATCH
 │       ├── GoalContext.java             — structured goal: description, subGoals, caseRef
 │       ├── ReactiveCapabilityHealth.java — SPI: Uni<CapabilityStatus> probe(...)

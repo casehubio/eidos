@@ -58,6 +58,8 @@ public enum DiscTerm implements VocabularyTerm {
             }
             return Optional.empty();
         }
+
+        @Override public boolean impliesSupervision() { return true; }
     },
 
     STEADINESS("steadiness", "Steadiness",
@@ -82,6 +84,8 @@ public enum DiscTerm implements VocabularyTerm {
             }
             return Optional.empty();
         }
+
+        @Override public boolean impliesSupervision() { return true; }
     },
 
     CONSCIENTIOUSNESS_DISC("conscientiousness-disc", "Analytical (DISC-C)",
@@ -106,6 +110,8 @@ public enum DiscTerm implements VocabularyTerm {
             }
             return Optional.empty();
         }
+
+        @Override public boolean impliesSupervision() { return true; }
     };
 
     public static final String URI = "urn:casehub:vocab:disc";

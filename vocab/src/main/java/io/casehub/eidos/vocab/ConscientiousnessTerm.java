@@ -36,9 +36,13 @@ public enum ConscientiousnessTerm implements VocabularyTerm {
 
     // AUTONOMY axis
     DIRECTED    ("directed",       "Directed Autonomy",
-                 "Follows explicit instructions",       List.of("instruction-following")),
+                 "Follows explicit instructions",       List.of("instruction-following")) {
+        @Override public boolean impliesSupervision() { return true; }
+    },
     SEMI_AUTONOMOUS("semi-autonomous", "Semi-Autonomous",
-                 "Acts within defined boundaries",      List.of("bounded-autonomy")),
+                 "Acts within defined boundaries",      List.of("bounded-autonomy")) {
+        @Override public boolean impliesSupervision() { return true; }
+    },
     AUTONOMOUS  ("autonomous",     "Autonomous",
                  "Acts on own judgment",                List.of("self-governing", "agentic"));
 

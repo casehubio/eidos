@@ -21,6 +21,9 @@ class DefaultCapabilityHealthTest {
     @Inject
     VocabularyRegistry vocabRegistry;
 
+    @Inject
+    BehavioralSignalStore signalStore;
+
     // Test vocabulary for capability hierarchy
     @VocabularyMetadata(uri = "urn:test:health-capabilities", name = "Test Capabilities", version = "1.0")
     enum TestCapabilityTerm implements VocabularyTerm {
@@ -219,5 +222,48 @@ class DefaultCapabilityHealthTest {
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null));
         // Should match via Specialization (agent declares more specific capability than requested)
         assertThat(status).isInstanceOf(CapabilityStatus.Ready.class);
+    }
+
+    @Test
+    void probe_returns_behavioral_violation_for_delegation_dimension() {
+        var cap = AgentCapability.builder().name("code-review").build();
+        var desc = agent("delegation-test-agent", cap);
+
+        // Record 3 VIOLATED signals for delegation dimension (meets default threshold of 3)
+        signalStore.record("delegation-test-agent", "default", "code-review",
+                ComplianceDimension.DELEGATION, BehavioralSignal.VIOLATED);
+        signalStore.record("delegation-test-agent", "default", "code-review",
+                ComplianceDimension.DELEGATION, BehavioralSignal.VIOLATED);
+        signalStore.record("delegation-test-agent", "default", "code-review",
+                ComplianceDimension.DELEGATION, BehavioralSignal.VIOLATED);
+
+        var status = health.probe(desc, "code-review", ProbeContext.of(null));
+
+        assertThat(status).isInstanceOf(CapabilityStatus.BehavioralViolation.class);
+        var violation = (CapabilityStatus.BehavioralViolation) status;
+        assertThat(violation.violations()).containsEntry(ComplianceDimension.DELEGATION, 3);
+        assertThat(violation.kind())
+                .isEqualTo(CapabilityStatus.BehavioralViolation.ViolationKind.PER_DIMENSION);
+    }
+
+    @Test
+    void probe_returns_behavioral_violation_for_escalation_dimension() {
+        var cap = AgentCapability.builder().name("code-review").build();
+        var desc = agent("escalation-test-agent", cap);
+
+        signalStore.record("escalation-test-agent", "default", "code-review",
+                ComplianceDimension.ESCALATION, BehavioralSignal.VIOLATED);
+        signalStore.record("escalation-test-agent", "default", "code-review",
+                ComplianceDimension.ESCALATION, BehavioralSignal.VIOLATED);
+        signalStore.record("escalation-test-agent", "default", "code-review",
+                ComplianceDimension.ESCALATION, BehavioralSignal.VIOLATED);
+
+        var status = health.probe(desc, "code-review", ProbeContext.of(null));
+
+        assertThat(status).isInstanceOf(CapabilityStatus.BehavioralViolation.class);
+        var violation = (CapabilityStatus.BehavioralViolation) status;
+        assertThat(violation.violations()).containsEntry(ComplianceDimension.ESCALATION, 3);
+        assertThat(violation.kind())
+                .isEqualTo(CapabilityStatus.BehavioralViolation.ViolationKind.PER_DIMENSION);
     }
 }
