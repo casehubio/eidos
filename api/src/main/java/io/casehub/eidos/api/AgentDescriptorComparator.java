@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 public final class AgentDescriptorComparator {
 
     static final int COMPARED_FIELD_COUNT = 16;
-    static final int COMPARED_CAPABILITY_FIELD_COUNT = 9;
+    static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
     static final int COMPARED_DISPOSITION_FIELD_COUNT = 6;
 
     public record ComparisonResult(List<FieldDrift> drifts) {
@@ -105,6 +105,7 @@ public final class AgentDescriptorComparator {
     private static void compareCapability(List<FieldDrift> drifts, String capName,
                                            AgentCapability desired, AgentCapability actual) {
         String prefix = "capabilities[" + capName + "].";
+        compareField(drifts, prefix + "description", desired.description(), actual.description());
         compareField(drifts, prefix + "capabilityVocabulary", desired.capabilityVocabulary(), actual.capabilityVocabulary());
         compareField(drifts, prefix + "qualityHint", desired.qualityHint(), actual.qualityHint());
         compareField(drifts, prefix + "latencyHintP50Ms", desired.latencyHintP50Ms(), actual.latencyHintP50Ms());

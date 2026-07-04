@@ -206,6 +206,7 @@ class AgentCapabilityTest {
     void builder_round_trips_all_fields() {
         var cap = AgentCapability.builder()
             .name("code-review")
+            .description("Reviews code for quality and correctness")
             .qualityHint(0.9)
             .latencyHintP50Ms(100L)
             .costHint("low")
@@ -216,6 +217,7 @@ class AgentCapabilityTest {
             .excludedDomains(java.util.Set.of("rust"))
             .build();
         assertThat(cap.name()).isEqualTo("code-review");
+        assertThat(cap.description()).isEqualTo("Reviews code for quality and correctness");
         assertThat(cap.qualityHint()).isEqualTo(0.9);
         assertThat(cap.latencyHintP50Ms()).isEqualTo(100L);
         assertThat(cap.costHint()).isEqualTo("low");
@@ -243,5 +245,44 @@ class AgentCapabilityTest {
             .name("code-review")
             .build();
         assertThat(cap.capabilityVocabulary()).isNull();
+    }
+
+    // ── description (optional) ────────────────────────────────────────────────
+
+    @Test
+    void description_null_is_allowed() {
+        assertThatNoException().isThrownBy(() ->
+            AgentCapability.builder().name("review").build());
+    }
+
+    @Test
+    void description_blank_throws() {
+        assertThatThrownBy(() ->
+            AgentCapability.builder().name("review").description("  ").build())
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("description"));
+    }
+
+    @Test
+    void description_exceeds_max_throws() {
+        assertThatThrownBy(() ->
+            AgentCapability.builder().name("review").description("d".repeat(501)).build())
+            .isInstanceOf(AgentValidationException.class)
+            .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                .isEqualTo("description"));
+    }
+
+    @Test
+    void description_at_exactly_max_is_valid() {
+        assertThatNoException().isThrownBy(() ->
+            AgentCapability.builder().name("review").description("d".repeat(500)).build());
+    }
+
+    @Test
+    void description_with_bidi_control_throws() {
+        assertThatThrownBy(() ->
+            AgentCapability.builder().name("review").description("desc‮text").build())
+            .isInstanceOf(AgentValidationException.class);
     }
 }

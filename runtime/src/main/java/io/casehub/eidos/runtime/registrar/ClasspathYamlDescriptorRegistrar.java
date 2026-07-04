@@ -94,7 +94,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
 
         if (cfg.capabilities != null) {
             builder.capabilities(cfg.capabilities.stream().map(c ->
-                new AgentCapability(c.name, c.capabilityVocabulary, c.qualityHint, c.latencyHintP50Ms, c.costHint,
+                new AgentCapability(c.name, c.description, c.capabilityVocabulary, c.qualityHint, c.latencyHintP50Ms, c.costHint,
                     c.inputTypes, c.outputTypes, c.tags, c.epistemicDomains, c.excludedDomains)
             ).toList());
         }
@@ -123,6 +123,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
 
     static class CapabilityConfig {
         public String name;
+        public String description;
         public String capabilityVocabulary;
         public Double qualityHint;
         public Long latencyHintP50Ms;

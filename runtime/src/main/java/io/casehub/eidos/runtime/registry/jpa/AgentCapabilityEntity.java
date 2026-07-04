@@ -28,6 +28,8 @@ public class AgentCapabilityEntity {
     @Column(nullable = false)
     String name;
 
+    @Column(columnDefinition = "TEXT") String description;
+
     @Column(name = "capability_vocabulary") String capabilityVocabulary;
 
     @Column(name = "quality_hint")        Double qualityHint;

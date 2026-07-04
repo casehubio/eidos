@@ -482,6 +482,130 @@ class EidosRenderPipelineTest {
         assertThat(result.content()).contains("Conflict mode: avoiding");
     }
 
+    // ── capability description rendering ──────────────────────────────────
+
+    @Test
+    void descriptor_payload_includes_description_for_all_formats() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a1").name("Agent").version("1.0").provider("p")
+            .modelFamily("m").modelVersion("v").slot("s")
+            .capabilities(List.of(AgentCapability.builder()
+                .name("review").description("Reviews code for quality").build()))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent").ruleFollowing("strict")
+                .riskAppetite("conservative").autonomy("directed").build())
+            .tenancyId("default").build();
+
+        for (var format : new RenderFormat[]{MARKDOWN, PROSE, A2A_CARD}) {
+            var payload = pipeline.buildDescriptorPayload(desc, format);
+            var cap = payload.get("capabilities").get(0);
+            assertThat(cap.has("description")).as("description present in " + format).isTrue();
+            assertThat(cap.get("description").asText()).isEqualTo("Reviews code for quality");
+        }
+    }
+
+    @Test
+    void descriptor_payload_omits_description_when_null() {
+        var desc = fullDescriptor();
+        var payload = pipeline.buildDescriptorPayload(desc, MARKDOWN);
+        var cap = payload.get("capabilities").get(0);
+        assertThat(cap.has("description")).isFalse();
+    }
+
+    @Test
+    void structural_markdown_includes_description_after_name() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a1").name("Agent").version("1.0").provider("p")
+            .modelFamily("m").modelVersion("v").slot("reviewer")
+            .capabilities(List.of(AgentCapability.builder()
+                .name("code-review").description("Reviews code for quality")
+                .inputTypes(List.of("code")).outputTypes(List.of("review")).build()))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent").ruleFollowing("strict")
+                .riskAppetite("conservative").autonomy("directed").build())
+            .tenancyId("default").build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var result = pipeline.assemble(
+            pipeline.buildStage1(desc, ctx), Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("**code-review** — Reviews code for quality");
+    }
+
+    @Test
+    void structural_prose_includes_description_in_parentheses() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a1").name("Agent").version("1.0").provider("p")
+            .modelFamily("m").modelVersion("v").slot("reviewer")
+            .capabilities(List.of(
+                AgentCapability.builder().name("code-review")
+                    .description("Reviews code for quality").build(),
+                AgentCapability.builder().name("test-writing").build()))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent").ruleFollowing("strict")
+                .riskAppetite("conservative").autonomy("directed").build())
+            .tenancyId("default").build();
+        var ctx = AgentPromptContext.forFormat(PROSE);
+        var result = pipeline.assemble(
+            pipeline.buildStage1(desc, ctx), Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("code-review (Reviews code for quality)");
+        assertThat(result.content()).contains("test-writing");
+        assertThat(result.content()).doesNotContain("test-writing (");
+    }
+
+    @Test
+    void a2a_card_uses_declared_description_when_no_enrichment() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a1").name("Agent").version("1.0").provider("p")
+            .modelFamily("m").modelVersion("v").slot("reviewer")
+            .capabilities(List.of(AgentCapability.builder()
+                .name("review").description("Declared description").build()))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent").ruleFollowing("strict")
+                .riskAppetite("conservative").autonomy("directed").build())
+            .tenancyId("default").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.at("/capabilities/0/description").asText()).isEqualTo("Declared description");
+    }
+
+    @Test
+    void a2a_card_enriched_description_wins_over_declared() throws Exception {
+        var desc = AgentDescriptor.builder()
+            .agentId("a1").name("Agent").version("1.0").provider("p")
+            .modelFamily("m").modelVersion("v").slot("reviewer")
+            .capabilities(List.of(AgentCapability.builder()
+                .name("review").description("Declared description").build()))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent").ruleFollowing("strict")
+                .riskAppetite("conservative").autonomy("directed").build())
+            .tenancyId("default").build();
+        var enrichment = Optional.of(new A2AEnrichment(
+            List.of(new A2AEnrichment.CapabilityNarrative("review", "Enriched description"))));
+        var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        var result = pipeline.assemble(
+            pipeline.buildStage1(desc, ctx), Optional.empty(), enrichment, desc, ctx);
+        var card = MAPPER.readTree(result.content());
+        assertThat(card.at("/capabilities/0/description").asText()).isEqualTo("Enriched description");
+    }
+
+    @Test
+    void a2a_card_blank_enriched_description_falls_through_to_declared() throws Exception {
+        var desc = AgentDescriptor.builder()
+            .agentId("a1").name("Agent").version("1.0").provider("p")
+            .modelFamily("m").modelVersion("v").slot("reviewer")
+            .capabilities(List.of(AgentCapability.builder()
+                .name("review").description("Declared description").build()))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent").ruleFollowing("strict")
+                .riskAppetite("conservative").autonomy("directed").build())
+            .tenancyId("default").build();
+        var enrichment = Optional.of(new A2AEnrichment(
+            List.of(new A2AEnrichment.CapabilityNarrative("review", ""))));
+        var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        var result = pipeline.assemble(
+            pipeline.buildStage1(desc, ctx), Optional.empty(), enrichment, desc, ctx);
+        var card = MAPPER.readTree(result.content());
+        assertThat(card.at("/capabilities/0/description").asText()).isEqualTo("Declared description");
+    }
+
     // ── A2A card assembly ────────────────────────────────────────────────────
 
     private com.fasterxml.jackson.databind.JsonNode renderA2aCard(final AgentDescriptor desc) {

@@ -186,6 +186,7 @@ class EidosRenderPipeline {
             for (final AgentCapability cap : descriptor.capabilities()) {
                 final ObjectNode capNode = capsArray.addObject();
                 capNode.put("name", cap.name());
+                if (cap.description() != null) capNode.put("description", cap.description());
                 if (format == RenderFormat.A2A_CARD) {
                     if (cap.qualityHint() != null)      capNode.put("qualityHint", cap.qualityHint());
                     if (cap.latencyHintP50Ms() != null) capNode.put("latencyHintP50Ms", cap.latencyHintP50Ms());
@@ -358,6 +359,8 @@ class EidosRenderPipeline {
             sb.append("\n## Capabilities\n");
             for (final AgentCapability cap : descriptor.capabilities()) {
                 sb.append("- **").append(cap.name()).append("**");
+                if (cap.description() != null)
+                    sb.append(" — ").append(cap.description());
                 if (cap.inputTypes() != null && !cap.inputTypes().isEmpty())
                     sb.append(": accepts ").append(String.join(", ", cap.inputTypes()));
                 if (cap.outputTypes() != null && !cap.outputTypes().isEmpty())
@@ -479,10 +482,12 @@ class EidosRenderPipeline {
         // Capabilities — always structural
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             sb.append("\nCapabilities: ");
-            final var names = descriptor.capabilities().stream()
-                    .map(AgentCapability::name)
+            final var parts = descriptor.capabilities().stream()
+                    .map(cap -> cap.description() != null
+                        ? cap.name() + " (" + cap.description() + ")"
+                        : cap.name())
                     .collect(Collectors.joining(", "));
-            sb.append(names).append(".\n");
+            sb.append(parts).append(".\n");
         }
 
         // Disposition — enriched OR structural (selective override)
@@ -636,8 +641,12 @@ class EidosRenderPipeline {
                     final ArrayNode arr = capNode.putArray("excludedDomains");
                     cap.excludedDomains().forEach(arr::add);
                 }
-                final String desc = descriptionByName.get(cap.name());
-                if (desc != null) capNode.put("description", desc);
+                final String enrichedDesc = descriptionByName.get(cap.name());
+                if (enrichedDesc != null && !enrichedDesc.isBlank()) {
+                    capNode.put("description", enrichedDesc);
+                } else if (cap.description() != null) {
+                    capNode.put("description", cap.description());
+                }
             }
         }
 
