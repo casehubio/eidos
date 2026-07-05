@@ -552,6 +552,42 @@ class EidosRenderPipelineTest {
     }
 
     @Test
+    void a2a_card_declared_descriptions_satisfy_completeness_without_enrichment() {
+        var desc = AgentDescriptor.builder()
+            .agentId("a1").name("Agent").version("1.0").provider("p")
+            .modelFamily("m").modelVersion("v").slot("engineer")
+            .capabilities(List.of(
+                AgentCapability.builder()
+                    .name("pipeline-orchestration")
+                    .description("Designs and operates data pipelines").build(),
+                AgentCapability.builder()
+                    .name("data-quality")
+                    .description("Evaluates dataset completeness").build(),
+                AgentCapability.builder()
+                    .name("schema-evolution")
+                    .description("Manages schema changes").build()))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("independent").ruleFollowing("strict")
+                .riskAppetite("conservative").autonomy("directed").build())
+            .tenancyId("default").build();
+        var card = renderA2aCard(desc);
+        var caps = card.get("capabilities");
+        assertThat(caps).hasSize(3);
+        for (int i = 0; i < caps.size(); i++) {
+            var cap = caps.get(i);
+            assertThat(cap.has("description"))
+                .as("capability %d (%s) has description", i, cap.get("name").asText())
+                .isTrue();
+            assertThat(cap.get("description").asText())
+                .as("capability %d description is non-blank", i)
+                .isNotBlank();
+        }
+        assertThat(caps.get(0).get("description").asText()).isEqualTo("Designs and operates data pipelines");
+        assertThat(caps.get(1).get("description").asText()).isEqualTo("Evaluates dataset completeness");
+        assertThat(caps.get(2).get("description").asText()).isEqualTo("Manages schema changes");
+    }
+
+    @Test
     void a2a_card_uses_declared_description_when_no_enrichment() {
         var desc = AgentDescriptor.builder()
             .agentId("a1").name("Agent").version("1.0").provider("p")
