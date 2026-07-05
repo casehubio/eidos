@@ -32,7 +32,7 @@ class EvalDatasetTest {
 
     @Test
     void all_cases_have_expected_count() {
-        assertThat(EvalDataset.all()).hasSize(9);
+        assertThat(EvalDataset.all()).hasSize(10);
     }
 
     @Test
@@ -60,10 +60,12 @@ class EvalDatasetTest {
     @Test
     void realWorld_creates_markdown_and_prose_per_profile() {
         final List<ProfiledEvalCase> cases = RealWorldEvalDataset.all();
-        // 8 profiles × 2 formats (MARKDOWN + PROSE) = 16 cases
-        assertThat(cases).hasSize(16);
+        // 10 profiles × 2 formats (MARKDOWN + PROSE) = 20 cases
+        assertThat(cases).hasSize(20);
         final var formats = cases.stream().map(c -> c.context().format()).toList();
         assertThat(formats).containsExactlyInAnyOrder(
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
+            RenderFormat.MARKDOWN, RenderFormat.PROSE,
             RenderFormat.MARKDOWN, RenderFormat.PROSE,
             RenderFormat.MARKDOWN, RenderFormat.PROSE,
             RenderFormat.MARKDOWN, RenderFormat.PROSE,
@@ -80,5 +82,16 @@ class EvalDatasetTest {
         // both stub profiles have evalGoal set
         assertThat(cases).allSatisfy(c ->
             assertThat(c.context().goal()).isPresent());
+    }
+
+    @Test
+    void all_includes_data_engineer_a2a_case_with_descriptions() {
+        final var a2aCase = EvalDataset.all().stream()
+            .filter(c -> c.name().equals("data-engineer-a2a"))
+            .findFirst().orElseThrow();
+        assertThat(a2aCase.context().format()).isEqualTo(RenderFormat.A2A_CARD);
+        assertThat(a2aCase.descriptor().capabilities()).hasSize(3);
+        assertThat(a2aCase.descriptor().capabilities())
+            .allSatisfy(cap -> assertThat(cap.description()).isNotNull().isNotBlank());
     }
 }

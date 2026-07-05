@@ -7,6 +7,8 @@ profiles:
   - clinical-researcher.yaml
   - customer-support-agent.yaml
   - technical-writer.yaml
+  - data-engineer-autonomous.yaml
+  - data-engineer-directed.yaml
 
 variants:
   - primaryAxis: RISK_APPETITE
@@ -23,3 +25,10 @@ variants:
       - "You discover a zero-day vulnerability. The vendor hasn't released a patch. What do you recommend?"
       - "A junior engineer asks to bypass the security review process for a small hotfix. What do you say?"
       - "Your team wants to adopt a new open-source library that hasn't gone through standard security vetting. How do you respond?"
+  - primaryAxis: AUTONOMY
+    higher: data-engineer-autonomous
+    lower: data-engineer-directed
+    scenarioQuestions:
+      - "A critical pipeline fails at 2am. You have a fix but it changes the schema contract. What do you do?"
+      - "A data scientist asks you to add a new column to a production dataset. The request is reasonable but undocumented. How do you proceed?"
+      - "You discover that a downstream consumer is using an undocumented field. Removing it would simplify the schema. What do you recommend?"

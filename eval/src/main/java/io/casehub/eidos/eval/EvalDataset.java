@@ -14,8 +14,8 @@ public class EvalDataset {
             devtownPlanner(), crossVocab(), epistemicWeak(), minimal(), maximal(),
             // PROSE (2 new)
             devtownPlannerProse(), maximalProse(),
-            // A2A_CARD (2 new)
-            devtownPlannerA2a(), minimalA2a()
+            // A2A_CARD (3 — 2 existing + 1 new with descriptions)
+            devtownPlannerA2a(), minimalA2a(), dataEngineerA2a()
         );
     }
 
@@ -277,6 +277,48 @@ public class EvalDataset {
             .tenancyId("tenant-1")
             .build();
         return new SyntheticEvalCase("minimal-a2a", descriptor,
+            AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
+    }
+
+    private static SyntheticEvalCase dataEngineerA2a() {
+        final var descriptor = AgentDescriptor.builder()
+            .agentId("data-engineer-autonomous-01")
+            .name("Data Engineer — Autonomous")
+            .version("1.0")
+            .provider("anthropic")
+            .modelFamily("claude")
+            .modelVersion("claude-sonnet-4-6")
+            .slot("data-engineer")
+            .capabilities(List.of(
+                AgentCapability.builder().name("pipeline-orchestration")
+                    .description("Designs and operates end-to-end data pipelines, selecting extraction strategies, transformation logic, and load targets based on data volume, latency requirements, and downstream consumer needs")
+                    .qualityHint(0.90).latencyHintP50Ms(60000L).costHint("medium")
+                    .inputTypes(List.of("data-source", "pipeline-config"))
+                    .outputTypes(List.of("pipeline-run", "monitoring-report")).tags(List.of())
+                    .epistemicDomains(Map.of("data-engineering", 0.92, "streaming", 0.78, "batch-processing", 0.88)).build(),
+                AgentCapability.builder().name("data-quality-assessment")
+                    .description("Evaluates dataset completeness, consistency, and accuracy against defined schema contracts and business rules, producing remediation recommendations when quality thresholds are breached")
+                    .qualityHint(0.88).latencyHintP50Ms(30000L).costHint("low")
+                    .inputTypes(List.of("dataset", "schema-contract"))
+                    .outputTypes(List.of("quality-report", "remediation-plan")).tags(List.of())
+                    .epistemicDomains(Map.of("data-profiling", 0.90, "schema-validation", 0.85)).build(),
+                AgentCapability.builder().name("schema-evolution")
+                    .description("Manages schema changes across versioned datasets, assessing backward compatibility, migration impact, and downstream consumer contracts before applying changes")
+                    .qualityHint(0.85).latencyHintP50Ms(45000L).costHint("medium")
+                    .inputTypes(List.of("schema-definition", "consumer-contract"))
+                    .outputTypes(List.of("migration-plan", "compatibility-report")).tags(List.of())
+                    .epistemicDomains(Map.of("data-modeling", 0.88, "migration-tooling", 0.80, "api-versioning", 0.72)).build()
+            ))
+            .disposition(AgentDisposition.builder()
+                .socialOrient("collaborative")
+                .ruleFollowing("adaptive")
+                .riskAppetite("moderate")
+                .autonomy("autonomous")
+                .delegation(false)
+                .build())
+            .tenancyId("profiles-1")
+            .build();
+        return new SyntheticEvalCase("data-engineer-a2a", descriptor,
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
     }
 }

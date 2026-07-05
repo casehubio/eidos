@@ -17,7 +17,7 @@ class AgentProfileLoaderTest {
     @Test
     void load_returns_all_profiles_from_index() {
         final List<AgentProfile> profiles = new AgentProfileLoader().load();
-        assertThat(profiles).hasSize(8);
+        assertThat(profiles).hasSize(10);
         assertThat(profiles).extracting(AgentProfile::name)
             .containsExactlyInAnyOrder(
                 "sw-engineer-careful",
@@ -27,7 +27,9 @@ class AgentProfileLoaderTest {
                 "product-manager",
                 "clinical-researcher",
                 "customer-support-agent",
-                "technical-writer");
+                "technical-writer",
+                "data-engineer-autonomous",
+                "data-engineer-directed");
     }
 
     @Test
@@ -64,9 +66,42 @@ class AgentProfileLoaderTest {
     @Test
     void loadIndex_returns_typed_variant_pairs() {
         final var index = new AgentProfileLoader().loadIndex();
-        assertThat(index.variants()).hasSize(2);
+        assertThat(index.variants()).hasSize(3);
         assertThat(index.variants().get(0).primaryAxis()).isEqualTo(RISK_APPETITE);
         assertThat(index.variants().get(0).higher()).isEqualTo("sw-engineer-bold");
+    }
+
+    @Test
+    void loadIndex_returns_autonomy_variant_pair() {
+        final var index = new AgentProfileLoader().loadIndex();
+        assertThat(index.variants()).hasSize(3);
+        final var autonomyPair = index.variants().stream()
+            .filter(p -> p.primaryAxis() == DispositionAxis.AUTONOMY)
+            .findFirst().orElseThrow();
+        assertThat(autonomyPair.higher()).isEqualTo("data-engineer-autonomous");
+        assertThat(autonomyPair.lower()).isEqualTo("data-engineer-directed");
+        assertThat(autonomyPair.scenarioQuestions()).hasSize(3);
+    }
+
+    @Test
+    void load_deserializes_capability_description() {
+        final var profile = new AgentProfileLoader().load().stream()
+            .filter(p -> p.name().equals("data-engineer-autonomous")).findFirst().orElseThrow();
+        assertThat(profile.descriptor().capabilities()).hasSize(3);
+        assertThat(profile.descriptor().capabilities().get(0).description())
+            .isNotNull()
+            .startsWith("Designs and operates end-to-end data pipelines");
+        assertThat(profile.descriptor().capabilities().get(0).name())
+            .isEqualTo("pipeline-orchestration");
+    }
+
+    @Test
+    void load_existing_profiles_have_null_capability_descriptions() {
+        final var profile = new AgentProfileLoader().load().stream()
+            .filter(p -> p.name().equals("sw-engineer-careful")).findFirst().orElseThrow();
+        assertThat(profile.descriptor().capabilities()).isNotEmpty();
+        assertThat(profile.descriptor().capabilities())
+            .allSatisfy(cap -> assertThat(cap.description()).isNull());
     }
 
     @Test
