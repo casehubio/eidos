@@ -69,25 +69,10 @@ Before any git operation, run `git rev-parse --show-toplevel` to confirm which r
 
 # CaseHub Eidos — Claude Code Project Guide
 
-## Platform Context
-
-This repo is one component of the casehubio multi-repo platform. **Before implementing anything — any feature, SPI, data model, or abstraction — run the Platform Coherence Protocol.**
-
-**Platform architecture (fetch before any implementation decision):**
-```
-https://raw.githubusercontent.com/casehubio/parent/main/docs/PLATFORM.md
-```
-
-**This repo's deep-dive:**
-```
-https://raw.githubusercontent.com/casehubio/parent/main/docs/repos/casehub-eidos.md
-```
-
-**Other repo deep-dives** (fetch when your implementation touches their domain):
-- casehub-ledger: `https://raw.githubusercontent.com/casehubio/parent/main/docs/repos/casehub-ledger.md`
-- casehub-engine: `https://raw.githubusercontent.com/casehubio/parent/main/docs/repos/casehub-engine.md`
-
----
+## Platform Docs
+- [Platform Index](https://raw.githubusercontent.com/casehubio/parent/main/docs/INDEX.md) — discovery index (start here)
+- [Building Platform](https://raw.githubusercontent.com/casehubio/parent/main/docs/guides/building-platform.md) — platform contributor guide
+- [This repo's deep-dive](https://raw.githubusercontent.com/casehubio/parent/main/docs/repos/casehub-eidos.md)
 
 ## Reference Documents (casehub-parent)
 
