@@ -7,4 +7,5 @@ public record ExcludeThresholdPreference(int value) implements SingleValuePrefer
         if (value < 1) throw new IllegalArgumentException(
             "specialization.exclude-threshold must be >= 1, got: " + value);
     }
+    @Override public String toSerializedValue() { return String.valueOf(value); }
 }
