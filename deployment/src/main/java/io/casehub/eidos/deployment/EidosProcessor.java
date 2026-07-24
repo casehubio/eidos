@@ -9,7 +9,7 @@ class EidosProcessor {
     private static final String FEATURE = "eidos";
 
     @BuildStep
-    FeatureBuildItem feature(EidosBuildTimeConfig config) {
+    FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
     }
 

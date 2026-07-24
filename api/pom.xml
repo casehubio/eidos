@@ -15,13 +15,6 @@
   <description>Agent descriptor types and SPI interfaces — pure Java, no Quarkus, safe for any module to depend on</description>
 
   <dependencies>
-    <!-- Mutiny for reactive SPI variants -->
-    <dependency>
-      <groupId>io.smallrye.reactive</groupId>
-      <artifactId>mutiny</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- Testing — pure JUnit 5, no Quarkus runtime -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>

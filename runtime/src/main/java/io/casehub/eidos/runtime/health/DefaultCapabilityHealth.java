@@ -120,7 +120,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return EidosPreferenceKeys.EXCLUDE_THRESHOLD.defaultValue().value();
         }
         return preferenceProviderInstance.get()
-            .resolve(SettingsScope.of(tenancyId))
+            .resolve(SettingsScope.root(tenancyId))
             .getOrDefault(EidosPreferenceKeys.EXCLUDE_THRESHOLD).value();
     }
 
@@ -129,7 +129,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return EidosPreferenceKeys.COMPLIANCE_VIOLATION_THRESHOLD.defaultValue().value();
         }
         return preferenceProviderInstance.get()
-            .resolve(SettingsScope.of(tenancyId))
+            .resolve(SettingsScope.root(tenancyId))
             .getOrDefault(EidosPreferenceKeys.COMPLIANCE_VIOLATION_THRESHOLD).value();
     }
 
@@ -138,7 +138,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return EidosPreferenceKeys.AGGREGATE_VIOLATION_THRESHOLD.defaultValue().value();
         }
         return preferenceProviderInstance.get()
-            .resolve(SettingsScope.of(tenancyId))
+            .resolve(SettingsScope.root(tenancyId))
             .getOrDefault(EidosPreferenceKeys.AGGREGATE_VIOLATION_THRESHOLD).value();
     }
 }
