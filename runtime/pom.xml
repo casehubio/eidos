@@ -45,21 +45,24 @@
       <artifactId>quarkus-arc</artifactId>
     </dependency>
 
+    <!-- Vert.x + virtual threads (previously transitive via hibernate-reactive) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-vertx</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-netty</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-virtual-threads</artifactId>
+    </dependency>
+
     <!-- JPA for registry persistence -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-orm</artifactId>
-    </dependency>
-
-    <!-- Reactive JPA — activated when casehub.eidos.reactive.enabled=true -->
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-hibernate-reactive-panache</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-reactive-pg-client</artifactId>
-      <optional>true</optional>
     </dependency>
 
     <!-- JSON for descriptor serialisation — quarkus-jackson registers ObjectMapper as CDI bean -->
@@ -72,12 +75,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
-    </dependency>
-
-    <!-- Mutiny for reactive variants -->
-    <dependency>
-      <groupId>io.smallrye.reactive</groupId>
-      <artifactId>mutiny</artifactId>
     </dependency>
 
     <!-- LangChain4j core — ChatLanguageModel interface for ClaudeMarkdownRenderer -->

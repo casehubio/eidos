@@ -36,7 +36,7 @@ class EidosSystemPromptRendererTest {
     ChatModel mockLlm;
     EidosSystemPromptRenderer rendererWithLlm;
     EidosSystemPromptRenderer rendererStructural;
-    TestReactiveRenderedPromptCache testCache; // freshly assigned in setUp() @BeforeEach
+    TestRenderedPromptCache testCache; // freshly assigned in setUp() @BeforeEach
 
     @BeforeEach
     void setUp() {
@@ -46,12 +46,12 @@ class EidosSystemPromptRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(LLM_JSON_RESPONSE)).build();
             }
         };
-        testCache = new TestReactiveRenderedPromptCache();
+        testCache = new TestRenderedPromptCache();
         final var vocab = new CdiVocabularyRegistry();
         rendererWithLlm  = new EidosSystemPromptRenderer(mockLlm,
                 new EidosRenderPipeline(vocab, MAPPER), testCache, MAPPER);
         rendererStructural = new EidosSystemPromptRenderer((ChatModel) null,
-                new EidosRenderPipeline(vocab, MAPPER), new TestReactiveRenderedPromptCache(), MAPPER);
+                new EidosRenderPipeline(vocab, MAPPER), new TestRenderedPromptCache(), MAPPER);
     }
 
     static AgentDescriptor fullDescriptor() {
@@ -95,7 +95,7 @@ class EidosSystemPromptRendererTest {
         };
         return new EidosSystemPromptRenderer(a2aLlm,
                 new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
-                new TestReactiveRenderedPromptCache(), MAPPER);
+                new TestRenderedPromptCache(), MAPPER);
     }
 
     /** Renders and returns the user message payload sent to the LLM. */
@@ -117,7 +117,7 @@ class EidosSystemPromptRendererTest {
         };
         new EidosSystemPromptRenderer(capturingLlm,
                 new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
-                new TestReactiveRenderedPromptCache(), MAPPER).render(desc, ctx);
+                new TestRenderedPromptCache(), MAPPER).render(desc, ctx);
         return captured[0];
     }
 
@@ -297,7 +297,7 @@ class EidosSystemPromptRendererTest {
         };
         final var renderer = new EidosSystemPromptRenderer(mismatchLlm,
                 new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
-                new TestReactiveRenderedPromptCache(), MAPPER);
+                new TestRenderedPromptCache(), MAPPER);
         final var ctx = AgentPromptContext.forFormat(A2A_CARD);
 
         final var result = renderer.render(fullDescriptor(), ctx);
@@ -321,7 +321,7 @@ class EidosSystemPromptRendererTest {
         };
         final var renderer = new EidosSystemPromptRenderer(capturingLlm,
                 new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
-                new TestReactiveRenderedPromptCache(), MAPPER);
+                new TestRenderedPromptCache(), MAPPER);
         renderer.render(fullDescriptor(), AgentPromptContext.forFormat(A2A_CARD)
                 .withGoal(new GoalContext("Review PR #42", List.of(), "case-123")));
 
@@ -342,7 +342,7 @@ class EidosSystemPromptRendererTest {
                 return ChatResponse.builder().aiMessage(AiMessage.from(LLM_JSON_RESPONSE)).build();
             }
         };
-        final TestReactiveRenderedPromptCache freshCache = new TestReactiveRenderedPromptCache();
+        final TestRenderedPromptCache freshCache = new TestRenderedPromptCache();
         final var renderer = new EidosSystemPromptRenderer(trackingLlm,
                 new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
                 freshCache, MAPPER);
@@ -370,7 +370,7 @@ class EidosSystemPromptRendererTest {
         rendererStructural.render(fullDescriptor(), proseCtx);
 
         // Two distinct formats = two distinct cache entries
-        // rendererStructural uses TestReactiveRenderedPromptCache (live store); test is on content not cache state
+        // rendererStructural uses TestRenderedPromptCache (live store); test is on content not cache state
         final var markdownResult = rendererStructural.render(fullDescriptor(), markdownCtx);
         final var proseResult = rendererStructural.render(fullDescriptor(), proseCtx);
         assertThat(markdownResult.content()).isNotEqualTo(proseResult.content());
@@ -436,7 +436,7 @@ class EidosSystemPromptRendererTest {
         final EidosSystemPromptRenderer renderer = new EidosSystemPromptRenderer(
             dispositionOnlyLlm,
             new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
-            new TestReactiveRenderedPromptCache(), MAPPER);
+            new TestRenderedPromptCache(), MAPPER);
 
         final String content = renderer.render(fullDescriptor(), fullContext()).content();
 
@@ -460,7 +460,7 @@ class EidosSystemPromptRendererTest {
         final EidosSystemPromptRenderer renderer = new EidosSystemPromptRenderer(
             goalOnlyLlm,
             new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
-            new TestReactiveRenderedPromptCache(), MAPPER);
+            new TestRenderedPromptCache(), MAPPER);
 
         final String content = renderer.render(fullDescriptor(), fullContext()).content();
 
@@ -484,7 +484,7 @@ class EidosSystemPromptRendererTest {
         final EidosSystemPromptRenderer renderer = new EidosSystemPromptRenderer(
             proseLlm,
             new EidosRenderPipeline(new CdiVocabularyRegistry(), MAPPER),
-            new TestReactiveRenderedPromptCache(), MAPPER);
+            new TestRenderedPromptCache(), MAPPER);
 
         final AgentPromptContext proseCtx = AgentPromptContext.forFormat(PROSE)
             .withGoal(new GoalContext("Review PR #42", List.of(), null));
