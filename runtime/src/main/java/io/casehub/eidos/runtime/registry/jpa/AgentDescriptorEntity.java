@@ -69,4 +69,12 @@ public class AgentDescriptorEntity {
     @OneToMany(mappedBy = "descriptor", cascade = CascadeType.ALL,
                fetch = FetchType.LAZY, orphanRemoval = true)
     List<AgentCapabilityEntity> capabilities = new ArrayList<>();
+
+    @OneToMany(mappedBy = "descriptor", cascade = CascadeType.ALL,
+               fetch = FetchType.LAZY, orphanRemoval = true)
+    List<AgentGoalEntity> goals = new ArrayList<>();
+
+    @OneToMany(mappedBy = "descriptor", cascade = CascadeType.ALL,
+               fetch = FetchType.LAZY, orphanRemoval = true)
+    List<AgentConstraintEntity> constraints = new ArrayList<>();
 }

@@ -161,4 +161,73 @@ class ClasspathYamlDescriptorRegistrarTest {
         assertThat(cap.epistemicDomains()).containsEntry("java", 0.95);
         assertThat(cap.excludedDomains()).containsExactly("cobol");
     }
+
+    @Test
+    void goals_and_constraints_deserialized() {
+        var yaml = """
+                   descriptors:
+                     - agentId: hooded-claw
+                       name: The Hooded Claw
+                       slot: villain
+                       tenancyId: wacky-manor
+                       goals:
+                         - name: eliminate-penelope
+                           description: "Kill Penelope Pitstop"
+                           priority: PRIMARY
+                           visibility: PRIVATE
+                         - name: win-treasure
+                           description: "Win the treasure hunt"
+                           priority: SECONDARY
+                           visibility: PUBLIC
+                       constraints:
+                         - name: never-break-cover
+                           description: "Never reveal your true identity"
+                           visibility: PRIVATE
+                         - name: elaborate-schemes
+                           description: "Schemes must be elaborate"
+                           visibility: PUBLIC
+                   """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(1);
+        var d = result.get(0);
+        assertThat(d.goals()).hasSize(2);
+        assertThat(d.goals().get(0).name()).isEqualTo("eliminate-penelope");
+        assertThat(d.goals().get(0).priority()).isEqualTo(io.casehub.eidos.api.GoalPriority.PRIMARY);
+        assertThat(d.goals().get(0).visibility()).isEqualTo(io.casehub.eidos.api.Visibility.PRIVATE);
+        assertThat(d.goals().get(1).priority()).isEqualTo(io.casehub.eidos.api.GoalPriority.SECONDARY);
+        assertThat(d.constraints()).hasSize(2);
+        assertThat(d.constraints().get(0).name()).isEqualTo("never-break-cover");
+        assertThat(d.constraints().get(0).visibility()).isEqualTo(io.casehub.eidos.api.Visibility.PRIVATE);
+    }
+
+    @Test
+    void missing_goals_and_constraints_defaults_to_empty() {
+        var yaml = """
+                   descriptors:
+                     - agentId: minimal
+                       name: Minimal
+                       slot: s
+                       tenancyId: t
+                   """;
+        var result = parse(yaml);
+        assertThat(result.get(0).goals()).isEmpty();
+        assertThat(result.get(0).constraints()).isEmpty();
+    }
+
+    @Test
+    void goal_missing_visibility_throws() {
+        var yaml = """
+                   descriptors:
+                     - agentId: bad
+                       name: N
+                       slot: s
+                       tenancyId: t
+                       goals:
+                         - name: g
+                           description: d
+                           priority: PRIMARY
+                   """;
+        assertThatThrownBy(() -> parse(yaml))
+                .isInstanceOf(NullPointerException.class);
+    }
 }

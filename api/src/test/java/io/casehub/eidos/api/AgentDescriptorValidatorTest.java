@@ -282,4 +282,78 @@ class AgentDescriptorValidatorTest {
                 Set.of("java؜injection"), 200))
             .isInstanceOf(AgentValidationException.class);
     }
+
+    @Test
+    void goals_default_to_empty_list() {
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t").build();
+        assertThat(d.goals()).isEmpty();
+        assertThat(d.constraints()).isEmpty();
+    }
+
+    @Test
+    void duplicate_goal_names_throws() {
+        var goals = List.of(
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC),
+                new AgentGoal("find-diamond", "Find it again", GoalPriority.SECONDARY, Visibility.PUBLIC));
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("a").name("n").slot("s").tenancyId("t").goals(goals).build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("find-diamond");
+    }
+
+    @Test
+    void duplicate_constraint_names_throws() {
+        var constraints = List.of(
+                new AgentConstraint("no-violence", "No violence", Visibility.PUBLIC),
+                new AgentConstraint("no-violence", "Avoid violence", Visibility.PUBLIC));
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("a").name("n").slot("s").tenancyId("t").constraints(constraints).build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("no-violence");
+    }
+
+    @Test
+    void goals_exceeding_max_throws() {
+        var goals = java.util.stream.IntStream.rangeClosed(1, 11)
+                                              .mapToObj(i -> new AgentGoal("g-" + i, "desc", GoalPriority.PRIMARY, Visibility.PUBLIC))
+                                              .toList();
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("a").name("n").slot("s").tenancyId("t").goals(goals).build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("goals");
+    }
+
+    @Test
+    void constraints_exceeding_max_throws() {
+        var constraints = java.util.stream.IntStream.rangeClosed(1, 11)
+                                                    .mapToObj(i -> new AgentConstraint("c-" + i, "desc", Visibility.PUBLIC))
+                                                    .toList();
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("a").name("n").slot("s").tenancyId("t").constraints(constraints).build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("constraints");
+    }
+
+    @Test
+    void publicGoals_filters_by_visibility() {
+        var goals = List.of(
+                new AgentGoal("public-goal", "Visible", GoalPriority.PRIMARY, Visibility.PUBLIC),
+                new AgentGoal("private-goal", "Hidden", GoalPriority.SECONDARY, Visibility.PRIVATE));
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t").goals(goals).build();
+        assertThat(d.publicGoals()).hasSize(1);
+        assertThat(d.publicGoals().get(0).name()).isEqualTo("public-goal");
+    }
+
+    @Test
+    void publicConstraints_filters_by_visibility() {
+        var constraints = List.of(
+                new AgentConstraint("public-c", "Visible", Visibility.PUBLIC),
+                new AgentConstraint("private-c", "Hidden", Visibility.PRIVATE));
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t").constraints(constraints).build();
+        assertThat(d.publicConstraints()).hasSize(1);
+        assertThat(d.publicConstraints().get(0).name()).isEqualTo("public-c");
+    }
 }

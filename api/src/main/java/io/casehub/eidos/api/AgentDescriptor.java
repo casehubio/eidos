@@ -23,11 +23,15 @@ public record AgentDescriptor(
         String dataHandlingPolicy,
         String tenancyId,
         String briefing,
-        List<TemplateRef> templates
+        List<TemplateRef> templates,
+        List<AgentGoal> goals,
+        List<AgentConstraint> constraints
 ) {
     public AgentDescriptor {
         capabilities = capabilities != null ? List.copyOf(capabilities) : List.of();
         templates    = templates != null ? List.copyOf(templates) : null;
+        goals        = goals != null ? List.copyOf(goals) : List.of();
+        constraints  = constraints != null ? List.copyOf(constraints) : List.of();
         if (axisVocabularies != null) {
             axisVocabularies.forEach((axis, uri) ->
                                              AgentDescriptorValidator.validateRequired(
@@ -47,6 +51,34 @@ public record AgentDescriptor(
         AgentDescriptorValidator.validateOptional("jurisdiction", jurisdiction, AgentDescriptorValidator.MAX_JURISDICTION);
         AgentDescriptorValidator.validateOptional("dataHandlingPolicy", dataHandlingPolicy, AgentDescriptorValidator.MAX_DATA_HANDLING_POLICY);
         AgentDescriptorValidator.validateOptional("briefing", briefing, AgentDescriptorValidator.MAX_BRIEFING, 0x000A);
+        if (goals.size() > AgentDescriptorValidator.MAX_GOALS) {
+            throw new AgentValidationException("goals",
+                                               "exceeds maximum count " + AgentDescriptorValidator.MAX_GOALS + " (was " + goals.size() + ")");
+        }
+        if (constraints.size() > AgentDescriptorValidator.MAX_CONSTRAINTS) {
+            throw new AgentValidationException("constraints",
+                                               "exceeds maximum count " + AgentDescriptorValidator.MAX_CONSTRAINTS + " (was " + constraints.size() + ")");
+        }
+        if (goals.size() > 1) {
+            long distinctNames = goals.stream().map(AgentGoal::name).distinct().count();
+            if (distinctNames < goals.size()) {
+                String dup = goals.stream().map(AgentGoal::name)
+                                  .collect(java.util.stream.Collectors.groupingBy(n -> n, java.util.stream.Collectors.counting()))
+                                  .entrySet().stream().filter(e -> e.getValue() > 1).map(java.util.Map.Entry::getKey)
+                                  .findFirst().orElse("?");
+                throw new AgentValidationException("goals", "duplicate goal name: " + dup);
+            }
+        }
+        if (constraints.size() > 1) {
+            long distinctNames = constraints.stream().map(AgentConstraint::name).distinct().count();
+            if (distinctNames < constraints.size()) {
+                String dup = constraints.stream().map(AgentConstraint::name)
+                                        .collect(java.util.stream.Collectors.groupingBy(n -> n, java.util.stream.Collectors.counting()))
+                                        .entrySet().stream().filter(e -> e.getValue() > 1).map(java.util.Map.Entry::getKey)
+                                        .findFirst().orElse("?");
+                throw new AgentValidationException("constraints", "duplicate constraint name: " + dup);
+            }
+        }
     }
 
     public Optional<String> vocabUriForSlot() {
@@ -65,6 +97,14 @@ public record AgentDescriptor(
         return Optional.empty();
     }
 
+    public List<AgentGoal> publicGoals() {
+        return goals.stream().filter(g -> g.visibility() == Visibility.PUBLIC).toList();
+    }
+
+    public List<AgentConstraint> publicConstraints() {
+        return constraints.stream().filter(c -> c.visibility() == Visibility.PUBLIC).toList();
+    }
+
     public static Builder builder() {return new Builder();}
 
     public static final class Builder {
@@ -77,6 +117,8 @@ public record AgentDescriptor(
         private AgentDisposition             disposition;
         private String                       jurisdiction, dataHandlingPolicy, tenancyId, briefing;
         private List<TemplateRef> templates;
+        private List<AgentGoal>       goals;
+        private List<AgentConstraint> constraints;
 
         public Builder agentId(String v)                                {
                                                                             this.agentId = v;
@@ -173,6 +215,16 @@ public record AgentDescriptor(
                                                                             return this;
                                                                         }
 
+        public Builder goals(List<AgentGoal> v)                         {
+                                                                            this.goals = v;
+                                                                            return this;
+                                                                        }
+
+        public Builder constraints(List<AgentConstraint> v)             {
+                                                                            this.constraints = v;
+                                                                            return this;
+                                                                        }
+
         public AgentDescriptor build() {
             return new AgentDescriptor(
                     agentId, name, version, provider,
@@ -180,7 +232,8 @@ public record AgentDescriptor(
                     domainVocabulary, slotVocabulary, dispositionVocabulary,
                     axisVocabularies, slot, capabilities, disposition,
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
-                    templates);
+                    templates,
+                    goals, constraints);
         }
     }
 }

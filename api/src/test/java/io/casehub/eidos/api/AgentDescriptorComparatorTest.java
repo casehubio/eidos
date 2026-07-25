@@ -1,11 +1,12 @@
 package io.casehub.eidos.api;
 
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AgentDescriptorComparatorTest {
 
@@ -391,5 +392,99 @@ class AgentDescriptorComparatorTest {
         assertThat(result.matches()).isFalse();
         assertThat(result.drifts()).anyMatch(d ->
             d.field().contains("capabilityVocabulary"));
+    }
+
+    @Test
+    void comparatorCoversAllGoalComponents() {
+        int total    = AgentGoal.class.getRecordComponents().length;
+        int matchKey = 1;
+        assertThat(AgentDescriptorComparator.COMPARED_GOAL_FIELD_COUNT).isEqualTo(total - matchKey);
+    }
+
+    @Test
+    void comparatorCoversAllConstraintComponents() {
+        int total    = AgentConstraint.class.getRecordComponents().length;
+        int matchKey = 1;
+        assertThat(AgentDescriptorComparator.COMPARED_CONSTRAINT_FIELD_COUNT).isEqualTo(total - matchKey);
+    }
+
+    @Test
+    void goal_added() {
+        var desired = withField(b -> b.goals(List.of(
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC))));
+        var actual = base();
+        var result = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("goals[find-diamond]")
+                                                  && d.desiredValue().equals("(present)") && d.actualValue().equals("(absent)"));
+    }
+
+    @Test
+    void goal_removed() {
+        var desired = base();
+        var actual = withField(b -> b.goals(List.of(
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC))));
+        var result = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("goals[find-diamond]")
+                                                  && d.desiredValue().equals("(absent)") && d.actualValue().equals("(present)"));
+    }
+
+    @Test
+    void goal_description_drifted() {
+        var g1      = new AgentGoal("g", "Old", GoalPriority.PRIMARY, Visibility.PUBLIC);
+        var g2      = new AgentGoal("g", "New", GoalPriority.PRIMARY, Visibility.PUBLIC);
+        var desired = withField(b -> b.goals(List.of(g1)));
+        var actual  = withField(b -> b.goals(List.of(g2)));
+        var result  = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("goals[g].description"));
+    }
+
+    @Test
+    void goal_priority_drifted() {
+        var g1      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC);
+        var g2      = new AgentGoal("g", "d", GoalPriority.SECONDARY, Visibility.PUBLIC);
+        var desired = withField(b -> b.goals(List.of(g1)));
+        var actual  = withField(b -> b.goals(List.of(g2)));
+        var result  = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("goals[g].priority"));
+    }
+
+    @Test
+    void goal_visibility_drifted() {
+        var g1      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC);
+        var g2      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PRIVATE);
+        var desired = withField(b -> b.goals(List.of(g1)));
+        var actual  = withField(b -> b.goals(List.of(g2)));
+        var result  = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("goals[g].visibility"));
+    }
+
+    @Test
+    void constraint_added() {
+        var desired = withField(b -> b.constraints(List.of(
+                new AgentConstraint("no-violence", "desc", Visibility.PUBLIC))));
+        var actual = base();
+        var result = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("constraints[no-violence]")
+                                                  && d.desiredValue().equals("(present)"));
+    }
+
+    @Test
+    void constraint_description_drifted() {
+        var c1      = new AgentConstraint("c", "Old", Visibility.PUBLIC);
+        var c2      = new AgentConstraint("c", "New", Visibility.PUBLIC);
+        var desired = withField(b -> b.constraints(List.of(c1)));
+        var actual  = withField(b -> b.constraints(List.of(c2)));
+        var result  = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("constraints[c].description"));
+    }
+
+    @Test
+    void constraint_visibility_drifted() {
+        var c1      = new AgentConstraint("c", "d", Visibility.PUBLIC);
+        var c2      = new AgentConstraint("c", "d", Visibility.PRIVATE);
+        var desired = withField(b -> b.constraints(List.of(c1)));
+        var actual  = withField(b -> b.constraints(List.of(c2)));
+        var result  = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("constraints[c].visibility"));
     }
 }

@@ -1,6 +1,21 @@
 package io.casehub.eidos.runtime.registry;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentConstraint;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
+import io.casehub.eidos.api.AgentQuery;
+import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.AgentValidationException;
+import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.MatchDegree;
+import io.casehub.eidos.api.TestCapabilityVocab;
+import io.casehub.eidos.api.Visibility;
+import io.casehub.eidos.api.VocabularyMetadata;
+import io.casehub.eidos.api.VocabularyRegistry;
+import io.casehub.eidos.api.VocabularyTerm;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -12,7 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @QuarkusTest
 class JpaAgentRegistryTest {
@@ -611,4 +628,34 @@ class JpaAgentRegistryTest {
         });
     }
 
+
+    @Test
+    @TestTransaction
+    void goals_and_constraints_persist_and_retrieve() {
+        var goals = List.of(
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC),
+                new AgentGoal("help-others", "Help", GoalPriority.SECONDARY, Visibility.PRIVATE));
+        var constraints = List.of(
+                new AgentConstraint("trust-everyone", "Trust by default", Visibility.PUBLIC),
+                new AgentConstraint("oblivious", "Do not notice danger", Visibility.PRIVATE));
+        var d = AgentDescriptor.builder()
+                               .agentId("penelope").name("Penelope").slot("heroine").tenancyId("wacky-manor")
+                               .goals(goals).constraints(constraints).build();
+
+        registry.register(d);
+        var retrieved = registry.findById("penelope", "wacky-manor").orElseThrow();
+
+        assertThat(retrieved.goals()).hasSize(2);
+        assertThat(retrieved.goals().stream().map(AgentGoal::name))
+                .containsExactlyInAnyOrder("find-diamond", "help-others");
+        var findDiamond = retrieved.goals().stream()
+                                   .filter(g -> g.name().equals("find-diamond")).findFirst().orElseThrow();
+        assertThat(findDiamond.priority()).isEqualTo(GoalPriority.PRIMARY);
+        assertThat(findDiamond.visibility()).isEqualTo(Visibility.PUBLIC);
+
+        assertThat(retrieved.constraints()).hasSize(2);
+        var trust = retrieved.constraints().stream()
+                             .filter(c -> c.name().equals("trust-everyone")).findFirst().orElseThrow();
+        assertThat(trust.visibility()).isEqualTo(Visibility.PUBLIC);
+    }
 }
