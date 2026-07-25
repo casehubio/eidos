@@ -1,8 +1,19 @@
 package io.casehub.eidos.runtime.renderer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentConstraint;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
+import io.casehub.eidos.api.AgentPromptContext;
+import io.casehub.eidos.api.GoalContext;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
+import io.casehub.eidos.api.Visibility;
+import io.casehub.eidos.api.VocabularyMetadata;
+import io.casehub.eidos.api.VocabularyTerm;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.*;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.A2A_CARD;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.MARKDOWN;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.PROSE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EidosRenderPipelineTest {
@@ -973,5 +986,138 @@ class EidosRenderPipelineTest {
         var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
         assertThat(result.content()).doesNotContain("excludedDomains");
         assertThat(result.content()).doesNotContain("rust");
+    }
+
+    static AgentDescriptor descriptorWithGoalsAndConstraints() {
+        return AgentDescriptor.builder()
+                              .agentId("hooded-claw").name("The Hooded Claw").slot("villain").tenancyId("wacky-manor")
+                              .goals(List.of(
+                                      new AgentGoal("win-treasure", "Win the treasure hunt",
+                                                    GoalPriority.SECONDARY, Visibility.PUBLIC),
+                                      new AgentGoal("eliminate-penelope", "Kill Penelope Pitstop",
+                                                    GoalPriority.PRIMARY, Visibility.PRIVATE)))
+                              .constraints(List.of(
+                                      new AgentConstraint("elaborate-schemes", "Schemes must be elaborate", Visibility.PUBLIC),
+                                      new AgentConstraint("never-break-cover", "Never reveal your true identity", Visibility.PRIVATE)))
+                              .build();
+    }
+
+    @Test
+    void markdown_renders_objectives_section_sorted_by_priority_then_name() {
+        var d   = descriptorWithGoalsAndConstraints();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).contains("## Objectives");
+        int primaryIdx   = result.content().indexOf("Kill Penelope");
+        int secondaryIdx = result.content().indexOf("Win the treasure");
+        assertThat(primaryIdx).isGreaterThan(-1);
+        assertThat(secondaryIdx).isGreaterThan(-1);
+        assertThat(primaryIdx).isLessThan(secondaryIdx);
+    }
+
+    @Test
+    void markdown_renders_constraints_section_sorted_alphabetically() {
+        var d   = descriptorWithGoalsAndConstraints();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).contains("## Constraints");
+        int elaborateIdx = result.content().indexOf("Schemes must be elaborate");
+        int neverIdx     = result.content().indexOf("Never reveal your true identity");
+        assertThat(elaborateIdx).isLessThan(neverIdx);
+    }
+
+    @Test
+    void markdown_objectives_before_disposition() {
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t")
+                               .goals(List.of(new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                               .disposition(AgentDisposition.builder().autonomy("high").build())
+                               .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        int objectivesIdx  = result.content().indexOf("## Objectives");
+        int dispositionIdx = result.content().indexOf("## How You Operate");
+        assertThat(objectivesIdx).isLessThan(dispositionIdx);
+    }
+
+    @Test
+    void prose_renders_goals_and_constraints() {
+        var d   = descriptorWithGoalsAndConstraints();
+        var ctx = AgentPromptContext.forFormat(PROSE);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).contains("Kill Penelope");
+        assertThat(result.content()).contains("Schemes must be elaborate");
+    }
+
+    @Test
+    void a2a_card_excludes_private_goals_and_constraints() {
+        var d   = descriptorWithGoalsAndConstraints();
+        var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).contains("win-treasure");
+        assertThat(result.content()).doesNotContain("eliminate-penelope");
+        assertThat(result.content()).contains("elaborate-schemes");
+        assertThat(result.content()).doesNotContain("never-break-cover");
+    }
+
+    @Test
+    void empty_goals_omits_objectives_section() {
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t").build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).doesNotContain("Objectives");
+    }
+
+    @Test
+    void empty_constraints_omits_constraints_section() {
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t").build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).doesNotContain("Constraints");
+    }
+
+    @Test
+    void a2a_card_omits_goals_key_when_no_public_goals() {
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t")
+                               .goals(List.of(new AgentGoal("secret", "d", GoalPriority.PRIMARY, Visibility.PRIVATE)))
+                               .build();
+        var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).doesNotContain("\"goals\"");
+    }
+
+    @Test
+    void combined_standing_and_current_goals_both_render() {
+        var d = AgentDescriptor.builder()
+                               .agentId("a").name("n").slot("s").tenancyId("t")
+                               .goals(List.of(new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                               .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN)
+                                    .withGoal(GoalContext.of("Search room 3 for clues"));
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).contains("## Objectives");
+        assertThat(result.content()).contains("Find it");
+        assertThat(result.content()).contains("## Current Goal");
+        assertThat(result.content()).contains("Search room 3");
+    }
+
+    @Test
+    void descriptor_payload_includes_goals_for_cache_key() {
+        var d       = descriptorWithGoalsAndConstraints();
+        var payload = pipeline.buildDescriptorPayload(d, MARKDOWN);
+        assertThat(payload.has("goals")).isTrue();
+        assertThat(payload.has("constraints")).isTrue();
     }
 }

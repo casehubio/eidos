@@ -1,13 +1,22 @@
 package io.casehub.eidos.api;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public final class AgentDescriptorComparator {
 
-    static final int COMPARED_FIELD_COUNT = 16;
+    static final int COMPARED_FIELD_COUNT = 18;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
     static final int COMPARED_DISPOSITION_FIELD_COUNT = 6;
+    static final int COMPARED_GOAL_FIELD_COUNT = 3;
+    static final int COMPARED_CONSTRAINT_FIELD_COUNT = 2;
 
     public record ComparisonResult(List<FieldDrift> drifts) {
         public boolean matches() { return drifts.isEmpty(); }
@@ -24,6 +33,8 @@ public final class AgentDescriptorComparator {
         compareAxisVocabularies(drifts, desired.axisVocabularies(), actual.axisVocabularies());
         compareDisposition(drifts, desired.disposition(), actual.disposition());
         compareCapabilities(drifts, desired.capabilities(), actual.capabilities());
+        compareGoals(drifts, desired.goals(), actual.goals());
+        compareConstraints(drifts, desired.constraints(), actual.constraints());
 
         return new ComparisonResult(List.copyOf(drifts));
     }
@@ -116,6 +127,64 @@ public final class AgentDescriptorComparator {
         compareField(drifts, prefix + "epistemicDomains", desired.epistemicDomains(), actual.epistemicDomains());
         compareField(drifts, prefix + "excludedDomains", desired.excludedDomains(), actual.excludedDomains());
     }
+
+    private static void compareGoals(List<FieldDrift> drifts,
+                                     List<AgentGoal> desired,
+                                     List<AgentGoal> actual) {
+        Map<String, AgentGoal> desiredByName = desired.stream()
+                                                      .collect(Collectors.toMap(AgentGoal::name, g -> g));
+        Map<String, AgentGoal> actualByName = actual.stream()
+                                                    .collect(Collectors.toMap(AgentGoal::name, g -> g));
+
+        for (String name : new TreeSet<>(desiredByName.keySet())) {
+            if (!actualByName.containsKey(name)) {
+                drifts.add(new FieldDrift("goals[" + name + "]", "(present)", "(absent)"));
+            }
+        }
+        for (String name : new TreeSet<>(actualByName.keySet())) {
+            if (!desiredByName.containsKey(name)) {
+                drifts.add(new FieldDrift("goals[" + name + "]", "(absent)", "(present)"));
+            }
+        }
+        for (var entry : new TreeMap<>(desiredByName).entrySet()) {
+            AgentGoal actualGoal = actualByName.get(entry.getKey());
+            if (actualGoal != null) {
+                String prefix = "goals[" + entry.getKey() + "].";
+                compareField(drifts, prefix + "description", entry.getValue().description(), actualGoal.description());
+                compareField(drifts, prefix + "priority", entry.getValue().priority(), actualGoal.priority());
+                compareField(drifts, prefix + "visibility", entry.getValue().visibility(), actualGoal.visibility());
+            }
+        }
+    }
+
+    private static void compareConstraints(List<FieldDrift> drifts,
+                                           List<AgentConstraint> desired,
+                                           List<AgentConstraint> actual) {
+        Map<String, AgentConstraint> desiredByName = desired.stream()
+                                                            .collect(Collectors.toMap(AgentConstraint::name, c -> c));
+        Map<String, AgentConstraint> actualByName = actual.stream()
+                                                          .collect(Collectors.toMap(AgentConstraint::name, c -> c));
+
+        for (String name : new TreeSet<>(desiredByName.keySet())) {
+            if (!actualByName.containsKey(name)) {
+                drifts.add(new FieldDrift("constraints[" + name + "]", "(present)", "(absent)"));
+            }
+        }
+        for (String name : new TreeSet<>(actualByName.keySet())) {
+            if (!desiredByName.containsKey(name)) {
+                drifts.add(new FieldDrift("constraints[" + name + "]", "(absent)", "(present)"));
+            }
+        }
+        for (var entry : new TreeMap<>(desiredByName).entrySet()) {
+            AgentConstraint actualC = actualByName.get(entry.getKey());
+            if (actualC != null) {
+                String prefix = "constraints[" + entry.getKey() + "].";
+                compareField(drifts, prefix + "description", entry.getValue().description(), actualC.description());
+                compareField(drifts, prefix + "visibility", entry.getValue().visibility(), actualC.visibility());
+            }
+        }
+    }
+
 
     private static void compareField(List<FieldDrift> drifts, String field, Object desired, Object actual) {
         if (!Objects.equals(desired, actual)) {

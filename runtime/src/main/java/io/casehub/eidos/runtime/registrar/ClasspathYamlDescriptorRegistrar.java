@@ -4,9 +4,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -99,6 +103,18 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
             ).toList());
         }
 
+        if (cfg.goals != null) {
+            builder.goals(cfg.goals.stream().map(g ->
+                new AgentGoal(g.name, g.description, g.priority, g.visibility)
+            ).toList());
+        }
+
+        if (cfg.constraints != null) {
+            builder.constraints(cfg.constraints.stream().map(c ->
+                new AgentConstraint(c.name, c.description, c.visibility)
+            ).toList());
+        }
+
         return builder.build();
     }
 
@@ -114,6 +130,8 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         public Map<String, String> axisVocabularies;
         public DispositionConfig disposition;
         public List<CapabilityConfig> capabilities;
+        public List<GoalConfig> goals;
+        public List<ConstraintConfig> constraints;
     }
 
     static class DispositionConfig {
@@ -132,4 +150,19 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         public Map<String, Double> epistemicDomains;
         public Set<String> excludedDomains;
     }
+
+    static class GoalConfig {
+        public String       name;
+        public String       description;
+        public GoalPriority priority;
+        public Visibility   visibility;
+    }
+
+    static class ConstraintConfig {
+        public String     name;
+        public String     description;
+        public Visibility visibility;
+    }
+
+
 }

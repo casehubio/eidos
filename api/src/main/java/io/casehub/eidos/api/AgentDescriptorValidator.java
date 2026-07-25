@@ -23,6 +23,12 @@ class AgentDescriptorValidator {
     static final int MAX_CAPABILITY_STRING   = 200;
     static final int MAX_BRIEFING            = 2000;
     static final int MAX_DESCRIPTION         = 500;
+    static final int MAX_GOAL_NAME              = 100;
+    static final int MAX_GOAL_DESCRIPTION       = 500;
+    static final int MAX_CONSTRAINT_NAME        = 100;
+    static final int MAX_CONSTRAINT_DESCRIPTION = 500;
+    static final int MAX_GOALS                  = 10;
+    static final int MAX_CONSTRAINTS            = 10;
 
     static void validate(final String agentId, final String name,
                           final String slot, final String tenancyId) {

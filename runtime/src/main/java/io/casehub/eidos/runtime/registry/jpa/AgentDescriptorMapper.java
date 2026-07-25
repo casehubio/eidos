@@ -3,12 +3,11 @@ package io.casehub.eidos.runtime.registry.jpa;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.casehub.eidos.api.*;
-import io.casehub.eidos.api.DispositionAxis;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @ApplicationScoped
 class AgentDescriptorMapper {
@@ -26,7 +25,9 @@ class AgentDescriptorMapper {
             e.capabilities.stream().map(this::toCapability).toList(),
             readJson(e.disposition, AgentDisposition.class),
             e.jurisdiction, e.dataHandlingPolicy, e.tenancyId,
-            e.briefing
+            e.briefing,
+            e.goals.stream().map(this::toGoal).toList(),
+            e.constraints.stream().map(this::toConstraint).toList()
         );
     }
 
@@ -52,6 +53,12 @@ class AgentDescriptorMapper {
         d.capabilities().stream()
             .map(c -> toCapabilityEntity(c, e))
             .forEach(e.capabilities::add);
+        d.goals().stream()
+            .map(g -> toGoalEntity(g, e))
+            .forEach(e.goals::add);
+        d.constraints().stream()
+            .map(c -> toConstraintEntity(c, e))
+            .forEach(e.constraints::add);
         return e;
     }
 
@@ -89,6 +96,41 @@ class AgentDescriptorMapper {
         e.excludedDomains = c.excludedDomains();
         return e;
     }
+
+    private AgentGoal toGoal(AgentGoalEntity g) {
+        return new AgentGoal(g.name, g.description,
+                             GoalPriority.valueOf(g.priority),
+                             Visibility.valueOf(g.visibility));
+    }
+
+    private AgentGoalEntity toGoalEntity(AgentGoal g, AgentDescriptorEntity parent) {
+        var e = new AgentGoalEntity();
+        e.descriptor  = parent;
+        e.agentId     = parent.agentId;
+        e.tenancyId   = parent.tenancyId;
+        e.name        = g.name();
+        e.description = g.description();
+        e.priority    = g.priority().name();
+        e.visibility  = g.visibility().name();
+        return e;
+    }
+
+    private AgentConstraint toConstraint(AgentConstraintEntity c) {
+        return new AgentConstraint(c.name, c.description,
+                                   Visibility.valueOf(c.visibility));
+    }
+
+    private AgentConstraintEntity toConstraintEntity(AgentConstraint c, AgentDescriptorEntity parent) {
+        var e = new AgentConstraintEntity();
+        e.descriptor  = parent;
+        e.agentId     = parent.agentId;
+        e.tenancyId   = parent.tenancyId;
+        e.name        = c.name();
+        e.description = c.description();
+        e.visibility  = c.visibility().name();
+        return e;
+    }
+
 
     private <T> T readJson(String json, Class<T> type) {
         if (json == null) return null;

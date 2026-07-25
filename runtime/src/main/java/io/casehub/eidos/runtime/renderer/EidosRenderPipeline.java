@@ -9,13 +9,16 @@ import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchema;
 import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.Resource;
-import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
+import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
@@ -234,6 +237,35 @@ class EidosRenderPipeline {
         addIfPresent(node, "dataHandlingPolicy", descriptor.dataHandlingPolicy());
         addIfPresent(node, "briefing",           descriptor.briefing());
 
+        if (!descriptor.goals().isEmpty()) {
+            final List<AgentGoal> goalsToInclude = format == RenderFormat.A2A_CARD
+                ? descriptor.publicGoals() : descriptor.goals();
+            if (!goalsToInclude.isEmpty()) {
+                final ArrayNode goalsArray = node.putArray("goals");
+                for (final AgentGoal goal : goalsToInclude) {
+                    final ObjectNode goalNode = goalsArray.addObject();
+                    goalNode.put("name", goal.name());
+                    goalNode.put("description", goal.description());
+                    goalNode.put("priority", goal.priority().name());
+                    goalNode.put("visibility", goal.visibility().name());
+                }
+            }
+        }
+
+        if (!descriptor.constraints().isEmpty()) {
+            final List<AgentConstraint> constraintsToInclude = format == RenderFormat.A2A_CARD
+                ? descriptor.publicConstraints() : descriptor.constraints();
+            if (!constraintsToInclude.isEmpty()) {
+                final ArrayNode constraintsArray = node.putArray("constraints");
+                for (final AgentConstraint c : constraintsToInclude) {
+                    final ObjectNode cNode = constraintsArray.addObject();
+                    cNode.put("name", c.name());
+                    cNode.put("description", c.description());
+                    cNode.put("visibility", c.visibility().name());
+                }
+            }
+        }
+
         return node;
     }
 
@@ -370,6 +402,25 @@ class EidosRenderPipeline {
         }
     }
 
+    private void assembleMarkdownObjectives(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.goals().isEmpty()) {return;}
+        sb.append("\n## Objectives\n");
+        descriptor.goals().stream()
+                  .sorted(java.util.Comparator.comparing(AgentGoal::priority)
+                                              .thenComparing(AgentGoal::name))
+                  .forEach(g -> sb.append("- **[").append(g.priority().name()).append("]** ")
+                                  .append(g.description()).append("\n"));
+    }
+
+    private void assembleMarkdownConstraints(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.constraints().isEmpty()) {return;}
+        sb.append("\n## Constraints\n");
+        descriptor.constraints().stream()
+                  .sorted(java.util.Comparator.comparing(AgentConstraint::name))
+                  .forEach(c -> sb.append("- ").append(c.description()).append("\n"));
+    }
+
+
     private void assembleMarkdownDisposition(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.disposition() != null) {
             final AgentDisposition d = descriptor.disposition();
@@ -423,6 +474,10 @@ class EidosRenderPipeline {
         // Capabilities — always structural
         assembleMarkdownCapabilities(sb, descriptor);
 
+        // Goals and constraints — always structural, after capabilities, before disposition
+        assembleMarkdownObjectives(sb, descriptor);
+        assembleMarkdownConstraints(sb, descriptor);
+
         // Disposition — enriched OR structural (selective override)
         if (enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent()) {
             sb.append("\n## How You Operate\n")
@@ -468,29 +523,51 @@ class EidosRenderPipeline {
     }
 
     private String assembleProse(final Optional<SemanticEnrichment> enrichment,
-                                  final AgentDescriptor descriptor,
-                                  final AgentPromptContext context) {
+                                 final AgentDescriptor descriptor,
+                                 final AgentPromptContext context) {
         final var sb = new StringBuilder();
 
-        // Identity + Role — always structural (dense prose, no headers)
         sb.append(descriptor.name());
-        if (descriptor.slot() != null) sb.append(", ").append(descriptor.slot());
+        if (descriptor.slot() != null) {sb.append(", ").append(descriptor.slot());}
         sb.append(".");
-        if (descriptor.version() != null) sb.append(" Version ").append(descriptor.version()).append(".");
+        if (descriptor.version() != null) {sb.append(" Version ").append(descriptor.version()).append(".");}
         sb.append("\n");
 
-        // Capabilities — always structural
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             sb.append("\nCapabilities: ");
             final var parts = descriptor.capabilities().stream()
-                    .map(cap -> cap.description() != null
-                        ? cap.name() + " (" + cap.description() + ")"
-                        : cap.name())
-                    .collect(Collectors.joining(", "));
+                                        .map(cap -> cap.description() != null
+                                                    ? cap.name() + " (" + cap.description() + ")"
+                                                    : cap.name())
+                                        .collect(Collectors.joining(", "));
             sb.append(parts).append(".\n");
         }
 
-        // Disposition — enriched OR structural (selective override)
+        if (!descriptor.goals().isEmpty()) {
+            var sorted = descriptor.goals().stream()
+                                   .sorted(java.util.Comparator.comparing(AgentGoal::priority).thenComparing(AgentGoal::name))
+                                   .toList();
+            var primary   = sorted.stream().filter(g -> g.priority() == GoalPriority.PRIMARY).toList();
+            var secondary = sorted.stream().filter(g -> g.priority() == GoalPriority.SECONDARY).toList();
+            sb.append("\nPrimary objectives: ");
+            sb.append(primary.stream().map(AgentGoal::description).collect(Collectors.joining("; ")));
+            sb.append(".");
+            if (!secondary.isEmpty()) {
+                sb.append(" Also: ");
+                sb.append(secondary.stream().map(AgentGoal::description).collect(Collectors.joining("; ")));
+                sb.append(".");
+            }
+            sb.append("\n");
+        }
+
+        if (!descriptor.constraints().isEmpty()) {
+            sb.append("\nConstraints: ");
+            sb.append(descriptor.constraints().stream()
+                                .sorted(java.util.Comparator.comparing(AgentConstraint::name))
+                                .map(AgentConstraint::description).collect(Collectors.joining(". ")));
+            sb.append(".\n");
+        }
+
         if (enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent()) {
             sb.append("\n").append(enrichment.get().dispositionNarrative().get()).append("\n");
         } else if (descriptor.disposition() != null) {
@@ -498,19 +575,17 @@ class EidosRenderPipeline {
             sb.append("\nOperating style:");
             for (DispositionAxis axis : DispositionAxis.values()) {
                 d.get(axis).ifPresent(raw ->
-                    sb.append(" ").append(axisLabel(axis)).append(": ")
-                      .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
+                                              sb.append(" ").append(axisLabel(axis)).append(": ")
+                                                .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
             }
             sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
         }
 
-        // Briefing structural fallback in PROSE — paragraph, no header
         if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())
-                && descriptor.briefing() != null) {
+            && descriptor.briefing() != null) {
             sb.append("\n").append(descriptor.briefing()).append("\n");
         }
 
-        // Goal — enriched OR structural (selective override)
         if (enrichment.isPresent() && enrichment.get().goalNarrative().isPresent()) {
             sb.append("\n").append(enrichment.get().goalNarrative().get()).append("\n");
         } else {
@@ -522,12 +597,11 @@ class EidosRenderPipeline {
             });
         }
 
-        // Resources — always structural
         if (!context.resources().isEmpty()) {
             sb.append("\nResources: ");
             final var resources = context.resources().stream()
-                    .map(r -> (r.label() != null ? r.label() : r.uri()) + " (" + r.uri() + ")")
-                    .collect(Collectors.joining(", "));
+                                         .map(r -> (r.label() != null ? r.label() : r.uri()) + " (" + r.uri() + ")")
+                                         .collect(Collectors.joining(", "));
             sb.append(resources).append(".\n");
         }
 
@@ -647,6 +721,31 @@ class EidosRenderPipeline {
                 } else if (cap.description() != null) {
                     capNode.put("description", cap.description());
                 }
+            }
+        }
+
+        final List<AgentGoal> publicGoals = descriptor.publicGoals();
+        if (!publicGoals.isEmpty()) {
+            final ArrayNode goalsArray = card.putArray("goals");
+            for (final AgentGoal goal : publicGoals.stream()
+                    .sorted(java.util.Comparator.comparing(AgentGoal::priority).thenComparing(AgentGoal::name))
+                    .toList()) {
+                final ObjectNode goalNode = goalsArray.addObject();
+                goalNode.put("name", goal.name());
+                goalNode.put("description", goal.description());
+                goalNode.put("priority", goal.priority().name());
+            }
+        }
+
+        final List<AgentConstraint> publicConstraints = descriptor.publicConstraints();
+        if (!publicConstraints.isEmpty()) {
+            final ArrayNode constraintsArray = card.putArray("constraints");
+            for (final AgentConstraint c : publicConstraints.stream()
+                    .sorted(java.util.Comparator.comparing(AgentConstraint::name))
+                    .toList()) {
+                final ObjectNode cNode = constraintsArray.addObject();
+                cNode.put("name", c.name());
+                cNode.put("description", c.description());
             }
         }
 
