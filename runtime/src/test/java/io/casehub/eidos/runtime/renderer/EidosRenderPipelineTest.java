@@ -1,8 +1,15 @@
 package io.casehub.eidos.runtime.renderer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentPromptContext;
+import io.casehub.eidos.api.GoalContext;
+import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
+import io.casehub.eidos.api.VocabularyMetadata;
+import io.casehub.eidos.api.VocabularyTerm;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,10 +18,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.*;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.A2A_CARD;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.MARKDOWN;
+import static io.casehub.eidos.api.SystemPromptRenderer.RenderFormat.PROSE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EidosRenderPipelineTest {
+    static io.casehub.eidos.api.TemplateRegistry emptyTemplateRegistry() {
+        return new io.casehub.eidos.api.TemplateRegistry() {
+            @Override
+            public void register(io.casehub.eidos.api.DescriptorTemplate t)                       {}
+
+            @Override
+            public java.util.Optional<io.casehub.eidos.api.DescriptorTemplate> resolve(String id) {return java.util.Optional.empty();}
+
+            @Override
+            public java.util.List<io.casehub.eidos.api.DescriptorTemplate> all()                  {return java.util.List.of();}
+        };
+    }
+
 
     // Used in disposition payload tests and structural renderer tests
     @VocabularyMetadata(uri = "urn:test:disp", name = "Test Disposition Vocab", version = "1.0",
@@ -81,7 +103,7 @@ class EidosRenderPipelineTest {
     @BeforeEach
     void setUp() {
         vocab = new CdiVocabularyRegistry();
-        pipeline = new EidosRenderPipeline(vocab, MAPPER);
+        pipeline = new EidosRenderPipeline(vocab, emptyTemplateRegistry(), MAPPER);
     }
 
     static AgentDescriptor fullDescriptor() {

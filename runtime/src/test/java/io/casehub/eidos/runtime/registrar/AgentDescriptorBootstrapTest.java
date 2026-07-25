@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.registrar;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentMatch;
 import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,20 @@ class AgentDescriptorBootstrapTest {
             .agentId(agentId).name("N").slot("s").tenancyId(tenancyId).build();
     }
 
+    static TemplateRegistry emptyTemplateRegistry() {
+        return new TemplateRegistry() {
+            @Override
+            public void register(io.casehub.eidos.api.DescriptorTemplate t)                       {}
+
+            @Override
+            public java.util.Optional<io.casehub.eidos.api.DescriptorTemplate> resolve(String id) {return java.util.Optional.empty();}
+
+            @Override
+            public List<io.casehub.eidos.api.DescriptorTemplate> all()                            {return List.of();}
+        };
+    }
+
+
     @Test
     void duplicate_agentId_tenancyId_pair_throws() {
         var registrars = List.<AgentDescriptorRegistrar>of(
@@ -26,7 +41,7 @@ class AgentDescriptorBootstrapTest {
             () -> List.of(desc("a1", "t1"))
         );
 
-        assertThatThrownBy(() -> AgentDescriptorBootstrap.registerAll(registrars, new ListRegistry()))
+        assertThatThrownBy(() -> AgentDescriptorBootstrap.registerAll(registrars, new ListRegistry(), emptyTemplateRegistry()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Duplicate descriptor")
             .hasMessageContaining("a1")
@@ -41,14 +56,14 @@ class AgentDescriptorBootstrapTest {
             () -> List.of(desc("a1", "t2"))
         );
 
-        AgentDescriptorBootstrap.registerAll(registrars, registry);
+        AgentDescriptorBootstrap.registerAll(registrars, registry, emptyTemplateRegistry());
         assertThat(registry.registered).hasSize(2);
     }
 
     @Test
     void empty_registrars_registers_nothing() {
         var registry = new ListRegistry();
-        AgentDescriptorBootstrap.registerAll(List.of(), registry);
+        AgentDescriptorBootstrap.registerAll(List.of(), registry, emptyTemplateRegistry());
         assertThat(registry.registered).isEmpty();
     }
 

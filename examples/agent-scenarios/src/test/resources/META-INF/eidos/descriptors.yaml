@@ -13,6 +13,12 @@ descriptors:
     capabilities:
       - name: document-review
         tags: [structural]
+    templates:
+      - ref: document-review-conventions
+      - ref: communication-style
+        args:
+          formality: professional
+          feedback_approach: collaborative
     briefing: >-
       You are the Structural Reviewer for DraftHouse. Your focus is document
       organisation, logical flow, and section coherence. You verify that headings

@@ -14,8 +14,9 @@ import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.Resource;
-import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
+import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
+import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
@@ -30,6 +31,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -52,12 +55,14 @@ class EidosRenderPipeline {
             "label", "vocabularyName"
             - goal: the current task (when present)
             - briefing: additional behavioral principles not expressible as structured axes (when present)
+            - templates: shared behavioral conventions — genre/style guides that frame \
+            the agent's personality (when present)
 
             FIELDS:
             - dispositionNarrative (2-4 sentences): Use name and slot to frame the narrative for this \
             agent's specific role. Cover ALL disposition axes present in the payload — omitting any \
             present axis is incorrect. Use vocabulary framework language when vocabularyName is present \
-            on an axis. Weave briefing principles naturally when present — do not quote verbatim. \
+            on an axis. Weave briefing principles and template conventions naturally when present — do not quote verbatim. \
             Empty string if no disposition object is in the payload.
             - goalNarrative (1-3 sentences): The agent's current task and objectives in flowing prose. \
             Sub-goals as natural continuation, not bullets. Empty string if no goal is present.
@@ -138,13 +143,16 @@ class EidosRenderPipeline {
     static final int STREAMING_TIMEOUT_SECONDS = 30;
 
     private final VocabularyRegistry vocab;
+    private final TemplateRegistry templateRegistry;
     private final ObjectMapper mapper;
 
     @Inject
     EidosRenderPipeline(final VocabularyRegistry vocab,
+                        final TemplateRegistry templateRegistry,
                         final ObjectMapper mapper) {
-        this.vocab = vocab;
-        this.mapper = mapper;
+        this.vocab            = vocab;
+        this.templateRegistry = templateRegistry;
+        this.mapper           = mapper;
     }
 
     // ── Stage 1: payload building ─────────────────────────────────────────────
@@ -234,6 +242,11 @@ class EidosRenderPipeline {
         addIfPresent(node, "dataHandlingPolicy", descriptor.dataHandlingPolicy());
         addIfPresent(node, "briefing",           descriptor.briefing());
 
+        String resolvedTemplates = resolveTemplates(descriptor);
+        if (resolvedTemplates != null) {
+            node.put("templates", resolvedTemplates);
+        }
+
         return node;
     }
 
@@ -285,6 +298,7 @@ class EidosRenderPipeline {
         copyIfPresent(payload, descriptorNode, "disposition");
         copyIfPresent(payload, contextNode,    "goal");
         copyIfPresent(payload, descriptorNode, "briefing");
+        copyIfPresent(payload, descriptorNode, "templates");
         return payload;
     }
 
@@ -337,6 +351,29 @@ class EidosRenderPipeline {
     }
 
     // ── Format-specific assembly ─────────────────────────────────────────────
+
+
+    private static final Pattern TEMPLATE_PLACEHOLDER = Pattern.compile("\\$\\{([^}]+)}");
+
+    String resolveTemplates(AgentDescriptor descriptor) {
+        if (descriptor.templates() == null || descriptor.templates().isEmpty()) {return null;}
+        var sb = new StringBuilder();
+        for (var ref : descriptor.templates()) {
+            var template = templateRegistry.resolve(ref.templateId())
+                                           .orElseThrow(() -> new IllegalStateException("Unknown template: " + ref.templateId()));
+            sb.append(substitute(template.content(), ref.args())).append("\n\n");
+        }
+        return sb.toString().trim();
+    }
+
+    static String substitute(String content, Map<String, String> args) {
+        if (args == null || args.isEmpty()) {return content;}
+        return TEMPLATE_PLACEHOLDER.matcher(content).replaceAll(match -> {
+            var param = match.group(1);
+            var value = args.get(param);
+            return value != null ? Matcher.quoteReplacement(value) : match.group();
+        });
+    }
 
     private void assembleMarkdownRole(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.slot() != null) {
@@ -413,8 +450,8 @@ class EidosRenderPipeline {
         sb.append("# ").append(descriptor.name()).append("\n");
         sb.append("**Agent ID:** ").append(descriptor.agentId());
         final String model = combinedModel(descriptor);
-        if (model != null)                   sb.append("  **Model:** ").append(model);
-        if (descriptor.provider() != null)   sb.append("  **Provider:** ").append(descriptor.provider());
+        if (model != null) {sb.append("  **Model:** ").append(model);}
+        if (descriptor.provider() != null) {sb.append("  **Provider:** ").append(descriptor.provider());}
         sb.append("\n");
 
         // Role — always structural
@@ -422,6 +459,12 @@ class EidosRenderPipeline {
 
         // Capabilities — always structural
         assembleMarkdownCapabilities(sb, descriptor);
+
+        // Templates — resolved prose, before disposition
+        String templates = resolveTemplates(descriptor);
+        if (templates != null) {
+            sb.append("\n## Behavioral Conventions\n").append(templates).append("\n");
+        }
 
         // Disposition — enriched OR structural (selective override)
         if (enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent()) {
@@ -431,10 +474,9 @@ class EidosRenderPipeline {
             assembleMarkdownDisposition(sb, descriptor);
         }
 
-        // Briefing structural fallback — only when enrichment absent or disposition not enriched,
-        // and briefing is non-null. When enrichment succeeds, briefing is woven into dispositionNarrative.
+        // Briefing structural fallback
         if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())
-                && descriptor.briefing() != null) {
+            && descriptor.briefing() != null) {
             sb.append("\n## Operating Principles\n").append(descriptor.briefing()).append("\n");
         }
 
@@ -454,7 +496,7 @@ class EidosRenderPipeline {
             sb.append("\n## Resources\n");
             for (final Resource r : context.resources()) {
                 sb.append("- **").append(r.label() != null ? r.label() : r.uri()).append("**: ").append(r.uri());
-                if (r.type() != null) sb.append(" (").append(r.type()).append(")");
+                if (r.type() != null) {sb.append(" (").append(r.type()).append(")");}
                 sb.append("\n");
             }
         }
@@ -464,8 +506,7 @@ class EidosRenderPipeline {
             sb.append("\n## Context\n").append(context.situationalContext()).append("\n");
         }
 
-        return sb.toString().trim();
-    }
+        return sb.toString().trim();}
 
     private String assembleProse(final Optional<SemanticEnrichment> enrichment,
                                   final AgentDescriptor descriptor,
@@ -474,20 +515,26 @@ class EidosRenderPipeline {
 
         // Identity + Role — always structural (dense prose, no headers)
         sb.append(descriptor.name());
-        if (descriptor.slot() != null) sb.append(", ").append(descriptor.slot());
+        if (descriptor.slot() != null) {sb.append(", ").append(descriptor.slot());}
         sb.append(".");
-        if (descriptor.version() != null) sb.append(" Version ").append(descriptor.version()).append(".");
+        if (descriptor.version() != null) {sb.append(" Version ").append(descriptor.version()).append(".");}
         sb.append("\n");
 
         // Capabilities — always structural
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             sb.append("\nCapabilities: ");
             final var parts = descriptor.capabilities().stream()
-                    .map(cap -> cap.description() != null
-                        ? cap.name() + " (" + cap.description() + ")"
-                        : cap.name())
-                    .collect(Collectors.joining(", "));
+                                        .map(cap -> cap.description() != null
+                                                    ? cap.name() + " (" + cap.description() + ")"
+                                                    : cap.name())
+                                        .collect(Collectors.joining(", "));
             sb.append(parts).append(".\n");
+        }
+
+        // Templates — resolved prose, before disposition
+        String proseTemplates = resolveTemplates(descriptor);
+        if (proseTemplates != null) {
+            sb.append("\n").append(proseTemplates).append("\n");
         }
 
         // Disposition — enriched OR structural (selective override)
@@ -498,15 +545,15 @@ class EidosRenderPipeline {
             sb.append("\nOperating style:");
             for (DispositionAxis axis : DispositionAxis.values()) {
                 d.get(axis).ifPresent(raw ->
-                    sb.append(" ").append(axisLabel(axis)).append(": ")
-                      .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
+                                              sb.append(" ").append(axisLabel(axis)).append(": ")
+                                                .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
             }
             sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
         }
 
         // Briefing structural fallback in PROSE — paragraph, no header
         if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())
-                && descriptor.briefing() != null) {
+            && descriptor.briefing() != null) {
             sb.append("\n").append(descriptor.briefing()).append("\n");
         }
 
@@ -526,8 +573,8 @@ class EidosRenderPipeline {
         if (!context.resources().isEmpty()) {
             sb.append("\nResources: ");
             final var resources = context.resources().stream()
-                    .map(r -> (r.label() != null ? r.label() : r.uri()) + " (" + r.uri() + ")")
-                    .collect(Collectors.joining(", "));
+                                         .map(r -> (r.label() != null ? r.label() : r.uri()) + " (" + r.uri() + ")")
+                                         .collect(Collectors.joining(", "));
             sb.append(resources).append(".\n");
         }
 
@@ -535,8 +582,7 @@ class EidosRenderPipeline {
             sb.append("\n").append(context.situationalContext()).append("\n");
         }
 
-        return sb.toString().trim();
-    }
+        return sb.toString().trim();}
 
     private String assembleA2aCard(final Optional<A2AEnrichment> enrichment,
                                     final AgentDescriptor descriptor) {

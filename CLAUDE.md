@@ -117,6 +117,8 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 
 **Generative** — `SystemPromptRenderer` renders an `AgentDescriptor + AgentPromptContext` into LLM instructions. `EidosSystemPromptRenderer` is `@ApplicationScoped` (no `@DefaultBean`): two-step pipeline — structural assembly then optional LangChain4j `ChatModel` semantic pass for MARKDOWN/PROSE; separate `A2ASemanticEnrichmentStep` for capability descriptions in A2A_CARD. Falls back to structural output when no `ChatModel` is available. `AgentPromptContext` accumulates goal (`GoalContext`), resources (`Resource`), and situational context — re-renderable as the agent's context evolves. Capability rendering is format-discriminated: PROSE/MARKDOWN surface names, `description` (when present), and `inputTypes`/`outputTypes`; numeric routing signals (`qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains`) appear in A2A_CARD only — protocol PP-20260611-228599. A2A_CARD: LLM-enriched description wins when non-blank, declared `description` is the fallback.
 
+**Descriptor templates** — `DescriptorTemplate` records (id, name, parameters, content) provide reusable prose fragments for agent system prompts. Templates are identity — declared on `AgentDescriptor.templates()` as ordered `List<TemplateRef>`, each carrying `templateId` + `args`. `TemplateRegistry` SPI with `CdiTemplateRegistry` (@PostConstruct, discovers `Instance<TemplateRegistrar>`) in runtime, `InMemoryTemplateRegistry` (@Alternative) in persistence-memory. `ClasspathYamlTemplateRegistrar` loads from `META-INF/eidos/templates.yaml`. Three-layer validation: compact constructors (structural), `CdiTemplateRegistry.register()` (placeholder vs declared parameters), `DescriptorCollector` (ref resolution + arg completeness). Single-pass regex substitution (`${variable}` → arg value, no cross-parameter injection). Render pipeline composes templates after capabilities, before disposition/briefing in MARKDOWN/PROSE; excluded from A2A_CARD.
+
 **Research backing:** `research/eidos.md` in the eidos workspace contains full research, rationale, and ecosystem position.
 
 ---
@@ -159,9 +161,13 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── VocabularyMetadata.java      — annotation: uri (required), name, version on vocabulary enum classes
 │       ├── VocabularyTerm.java          — interface implemented by vocabulary enum constants; exactMatch + axisExactMatch + impliesSupervision()
 │       ├── VocabularyRegistry.java      — SPI: register(Class<T>), isRegistered, resolve, allTerms, equivalentValues (typed + string-based + axis-aware)
+│       ├── DescriptorTemplate.java     — reusable prose fragment record: id, name, parameters, content; compact constructor validation
+│       ├── TemplateRef.java            — descriptor's reference to a template: templateId + args (Map<String, String>)
+│       ├── TemplateRegistry.java       — SPI: register, resolve(id), all()
 │       └── spi/
 │           ├── VocabularyRegistrar.java — @FunctionalInterface CDI SPI; @ApplicationScoped beans auto-register vocab enums
-│           └── AgentDescriptorRegistrar.java — @FunctionalInterface CDI SPI; declarative List<AgentDescriptor> descriptors()
+│           ├── AgentDescriptorRegistrar.java — @FunctionalInterface CDI SPI; declarative List<AgentDescriptor> descriptors()
+│           └── TemplateRegistrar.java  — @FunctionalInterface CDI SPI; List<DescriptorTemplate> templates()
 │       ├── AgentRegistry.java           — SPI: register, findById(id,tenancyId), find(AgentQuery)
 │       ├── ReactiveAgentRegistry.java   — SPI: Uni<T> reactive mirror
 │       ├── AgentPromptContext.java      — render-time context: Optional<GoalContext>, List<Resource>, situationalContext, RenderFormat
@@ -183,9 +189,10 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── vocabulary/                  — CdiVocabularyRegistry (@ApplicationScoped, discovers Instance<VocabularyRegistrar>; three-map: byUri/byClass/byClassOrdered)
 │       ├── health/                      — DefaultCapabilityHealth (checks AgentStateStore + BehavioralSignalStore; Instance<PreferenceProvider> for per-tenancy exclude + compliance thresholds), DefaultReactiveCapabilityHealth, NoOpAgentStateStore (@DefaultBean), NoOpBehavioralSignalStore (@DefaultBean), JpaBehavioralSignalStore (@IfBuildProperty blocking-mode, Flyway V5, per-signal TTL), JpaAgentStateStore (@IfBuildProperty blocking-mode), ComplianceAttestations (static utility: constructs LedgerAttestation from compliance observations)
 │       ├── preferences/                 — EidosPreferenceKeys (EXCLUDE_THRESHOLD, COMPLIANCE_VIOLATION_THRESHOLD, AGGREGATE_VIOLATION_THRESHOLD PreferenceKeys), ExcludeThresholdPreference (SingleValuePreference, default 3), ComplianceViolationThresholdPreference (SingleValuePreference, default 3), AggregateViolationThresholdPreference (SingleValuePreference, default 5)
-│       ├── registrar/                   — AgentDescriptorBootstrap (@Observes StartupEvent, @IfBuildProperty blocking-mode), ReactiveAgentDescriptorBootstrap (@IfBuildProperty reactive-mode), DescriptorCollector (shared validation), ClasspathYamlDescriptorRegistrar (META-INF/eidos/descriptors.yaml)
+│       ├── registrar/                   — AgentDescriptorBootstrap (@Observes StartupEvent, @IfBuildProperty blocking-mode, injects TemplateRegistry), ReactiveAgentDescriptorBootstrap (@IfBuildProperty reactive-mode), DescriptorCollector (shared validation + template ref validation), ClasspathYamlDescriptorRegistrar (META-INF/eidos/descriptors.yaml)
+│       ├── template/                    — CdiTemplateRegistry (@ApplicationScoped, @PostConstruct discovers Instance<TemplateRegistrar>), ClasspathYamlTemplateRegistrar (META-INF/eidos/templates.yaml)
 │       └── renderer/                    — EidosSystemPromptRenderer (@ApplicationScoped, LangChain4j ChatModel optional)
-├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryAgentStateStore, InMemoryBehavioralSignalStore (per-signal TTL via @ConfigProperty <signal>-ttl-days)
+├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryTemplateRegistry, InMemoryAgentStateStore, InMemoryBehavioralSignalStore (per-signal TTL via @ConfigProperty <signal>-ttl-days)
 ├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
 ├── vocab/                               — casehub-eidos-vocab: SvoTerm, ConscientiousnessTerm, CasehubSlotTerm, BelbinTerm, DiscTerm, ThomasKilmannTerm, CasehubCapabilityTerm enums + VocabularyRegistrar beans
 ├── eval/                                — casehub-eidos-eval: offline quality evaluation harness (not deployed); judges: PromptJudge, ProximityJudge, VocabularyExpressivenessJudge, TraitExpressionJudge, PairContrastJudge, BehavioralJudge; AgentProviderChatModel bridge (ChatModel → AgentProvider SPI); 8 YAML agent profiles; pair-contrast behavioral validation (Phase 3 — eidos#46)

@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public final class AgentDescriptorComparator {
 
-    static final int COMPARED_FIELD_COUNT = 16;
+    static final int COMPARED_FIELD_COUNT = 17;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
     static final int COMPARED_DISPOSITION_FIELD_COUNT = 6;
 
@@ -42,6 +42,7 @@ public final class AgentDescriptorComparator {
         compareField(drifts, "jurisdiction", desired.jurisdiction(), actual.jurisdiction());
         compareField(drifts, "dataHandlingPolicy", desired.dataHandlingPolicy(), actual.dataHandlingPolicy());
         compareField(drifts, "briefing", desired.briefing(), actual.briefing());
+        compareField(drifts, "templates", desired.templates(), actual.templates());
     }
 
     private static void compareAxisVocabularies(List<FieldDrift> drifts,

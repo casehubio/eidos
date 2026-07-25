@@ -1,0 +1,12 @@
+templates:
+  - id: test-style-guide
+    name: Test Style Guide
+    content: |
+      You follow the test style conventions.
+      Always be explicit about your intentions.
+
+  - id: test-role-template
+    name: Test Role Template
+    parameters: [role_name, communication_style]
+    content: |
+      As a ${role_name}, you communicate in a ${communication_style} manner.

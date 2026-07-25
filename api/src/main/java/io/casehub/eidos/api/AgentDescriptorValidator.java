@@ -23,6 +23,11 @@ class AgentDescriptorValidator {
     static final int MAX_CAPABILITY_STRING   = 200;
     static final int MAX_BRIEFING            = 2000;
     static final int MAX_DESCRIPTION         = 500;
+    static final int MAX_TEMPLATE_ID         = 100;
+    static final int MAX_TEMPLATE_NAME       = 200;
+    static final int MAX_TEMPLATE_CONTENT    = 4000;
+    static final int MAX_PARAMETER_NAME      = 100;
+
 
     static void validate(final String agentId, final String name,
                           final String slot, final String tenancyId) {
@@ -36,6 +41,12 @@ class AgentDescriptorValidator {
     static void validateRequired(final String fieldName, final String value, final int maxLength) {
         validateField(fieldName, value, maxLength);
     }
+
+    static void validateRequired(final String fieldName, final String value, final int maxLength,
+                                 final int... allowedCodePoints) {
+        validateField(fieldName, value, maxLength, allowedCodePoints);
+    }
+
 
     static void validateOptional(final String fieldName, final String value, final int maxLength) {
         if (value == null) return;

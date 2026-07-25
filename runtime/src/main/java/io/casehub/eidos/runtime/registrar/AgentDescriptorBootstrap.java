@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.registrar;
 
 import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.runtime.StartupEvent;
@@ -15,15 +16,20 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class AgentDescriptorBootstrap {
 
-    @Inject AgentRegistry registry;
-    @Inject @Any Instance<AgentDescriptorRegistrar> registrars;
-
-    void onStartup(@Observes StartupEvent ev) {
-        registerAll(registrars, registry);
-    }
+    @Inject
+    AgentRegistry                      registry;
+    @Inject
+    @Any
+    Instance<AgentDescriptorRegistrar> registrars;
+    @Inject
+    TemplateRegistry                   templateRegistry;
 
     static void registerAll(Iterable<AgentDescriptorRegistrar> registrars,
-                            AgentRegistry registry) {
-        DescriptorCollector.collectAndValidate(registrars).forEach(registry::register);
+                            AgentRegistry registry, TemplateRegistry templateRegistry) {
+        DescriptorCollector.collectAndValidate(registrars, templateRegistry).forEach(registry::register);
+    }
+
+    void onStartup(@Observes StartupEvent ev) {
+        registerAll(registrars, registry, templateRegistry);
     }
 }
