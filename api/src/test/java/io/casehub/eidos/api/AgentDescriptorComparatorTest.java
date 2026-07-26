@@ -461,7 +461,7 @@ class AgentDescriptorComparatorTest {
     @Test
     void constraint_added() {
         var desired = withField(b -> b.constraints(List.of(
-                new AgentConstraint("no-violence", "desc", Visibility.PUBLIC))));
+                new AgentConstraint("no-violence", "desc", Visibility.PUBLIC, ConstraintSeverity.HARD))));
         var actual = base();
         var result = AgentDescriptorComparator.compare(desired, actual);
         assertThat(result.drifts()).anyMatch(d -> d.field().equals("constraints[no-violence]")
@@ -470,8 +470,8 @@ class AgentDescriptorComparatorTest {
 
     @Test
     void constraint_description_drifted() {
-        var c1      = new AgentConstraint("c", "Old", Visibility.PUBLIC);
-        var c2      = new AgentConstraint("c", "New", Visibility.PUBLIC);
+        var c1      = new AgentConstraint("c", "Old", Visibility.PUBLIC, ConstraintSeverity.HARD);
+        var c2      = new AgentConstraint("c", "New", Visibility.PUBLIC, ConstraintSeverity.HARD);
         var desired = withField(b -> b.constraints(List.of(c1)));
         var actual  = withField(b -> b.constraints(List.of(c2)));
         var result  = AgentDescriptorComparator.compare(desired, actual);
@@ -480,11 +480,22 @@ class AgentDescriptorComparatorTest {
 
     @Test
     void constraint_visibility_drifted() {
-        var c1      = new AgentConstraint("c", "d", Visibility.PUBLIC);
-        var c2      = new AgentConstraint("c", "d", Visibility.PRIVATE);
+        var c1      = new AgentConstraint("c", "d", Visibility.PUBLIC, ConstraintSeverity.HARD);
+        var c2      = new AgentConstraint("c", "d", Visibility.PRIVATE, ConstraintSeverity.HARD);
         var desired = withField(b -> b.constraints(List.of(c1)));
         var actual  = withField(b -> b.constraints(List.of(c2)));
         var result  = AgentDescriptorComparator.compare(desired, actual);
         assertThat(result.drifts()).anyMatch(d -> d.field().equals("constraints[c].visibility"));
     }
+
+    @Test
+    void constraint_severity_drifted() {
+        var c1      = new AgentConstraint("c", "d", Visibility.PUBLIC, ConstraintSeverity.HARD);
+        var c2      = new AgentConstraint("c", "d", Visibility.PUBLIC, ConstraintSeverity.SOFT);
+        var desired = withField(b -> b.constraints(List.of(c1)));
+        var actual  = withField(b -> b.constraints(List.of(c2)));
+        var result  = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("constraints[c].severity"));
+    }
+
 }

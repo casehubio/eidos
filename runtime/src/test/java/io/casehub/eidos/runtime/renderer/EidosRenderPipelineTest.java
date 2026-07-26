@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.renderer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
+import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentGoal;
@@ -1010,8 +1011,8 @@ class EidosRenderPipelineTest {
                                       new AgentGoal("eliminate-penelope", "Kill Penelope Pitstop",
                                                     GoalPriority.PRIMARY, Visibility.PRIVATE)))
                               .constraints(List.of(
-                                      new AgentConstraint("elaborate-schemes", "Schemes must be elaborate", Visibility.PUBLIC),
-                                      new AgentConstraint("never-break-cover", "Never reveal your true identity", Visibility.PRIVATE)))
+                                      new AgentConstraint("elaborate-schemes", "Schemes must be elaborate", Visibility.PUBLIC, ConstraintSeverity.SOFT),
+                                      new AgentConstraint("never-break-cover", "Never reveal your true identity", Visibility.PRIVATE, ConstraintSeverity.HARD)))
                               .build();
     }
 

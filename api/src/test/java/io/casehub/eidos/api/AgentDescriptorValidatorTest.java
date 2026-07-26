@@ -305,8 +305,8 @@ class AgentDescriptorValidatorTest {
     @Test
     void duplicate_constraint_names_throws() {
         var constraints = List.of(
-                new AgentConstraint("no-violence", "No violence", Visibility.PUBLIC),
-                new AgentConstraint("no-violence", "Avoid violence", Visibility.PUBLIC));
+                new AgentConstraint("no-violence", "No violence", Visibility.PUBLIC, ConstraintSeverity.HARD),
+                new AgentConstraint("no-violence", "Avoid violence", Visibility.PUBLIC, ConstraintSeverity.HARD));
         assertThatThrownBy(() -> AgentDescriptor.builder()
                                                 .agentId("a").name("n").slot("s").tenancyId("t").constraints(constraints).build())
                 .isInstanceOf(AgentValidationException.class)
@@ -327,7 +327,7 @@ class AgentDescriptorValidatorTest {
     @Test
     void constraints_exceeding_max_throws() {
         var constraints = java.util.stream.IntStream.rangeClosed(1, 11)
-                                                    .mapToObj(i -> new AgentConstraint("c-" + i, "desc", Visibility.PUBLIC))
+                                                    .mapToObj(i -> new AgentConstraint("c-" + i, "desc", Visibility.PUBLIC, ConstraintSeverity.HARD))
                                                     .toList();
         assertThatThrownBy(() -> AgentDescriptor.builder()
                                                 .agentId("a").name("n").slot("s").tenancyId("t").constraints(constraints).build())
@@ -375,8 +375,8 @@ class AgentDescriptorValidatorTest {
     @Test
     void publicConstraints_filters_by_visibility() {
         var constraints = List.of(
-                new AgentConstraint("public-c", "Visible", Visibility.PUBLIC),
-                new AgentConstraint("private-c", "Hidden", Visibility.PRIVATE));
+                new AgentConstraint("public-c", "Visible", Visibility.PUBLIC, ConstraintSeverity.HARD),
+                new AgentConstraint("private-c", "Hidden", Visibility.PRIVATE, ConstraintSeverity.SOFT));
         var d = AgentDescriptor.builder()
                                .agentId("a").name("n").slot("s").tenancyId("t").constraints(constraints).build();
         assertThat(d.publicConstraints()).hasSize(1);

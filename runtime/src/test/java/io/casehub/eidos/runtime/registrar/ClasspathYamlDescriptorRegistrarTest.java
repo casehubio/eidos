@@ -183,9 +183,11 @@ class ClasspathYamlDescriptorRegistrarTest {
                          - name: never-break-cover
                            description: "Never reveal your true identity"
                            visibility: PRIVATE
+                           severity: HARD
                          - name: elaborate-schemes
                            description: "Schemes must be elaborate"
                            visibility: PUBLIC
+                           severity: SOFT
                    """;
         var result = parse(yaml);
         assertThat(result).hasSize(1);

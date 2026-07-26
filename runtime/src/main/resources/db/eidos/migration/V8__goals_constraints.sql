@@ -18,5 +18,6 @@ CREATE TABLE agent_constraint (
     name           VARCHAR(100) NOT NULL,
     description    TEXT         NOT NULL,
     visibility     VARCHAR(20)  NOT NULL,
+    severity       VARCHAR(20)  NOT NULL,
     UNIQUE (descriptor_id, name)
 );

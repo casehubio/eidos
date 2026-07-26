@@ -2,7 +2,16 @@ package io.casehub.eidos.runtime.registry.jpa;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentConstraint;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
+import io.casehub.eidos.api.ConstraintSeverity;
+import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.TemplateRef;
+import io.casehub.eidos.api.Visibility;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -119,8 +128,8 @@ class AgentDescriptorMapper {
 
     private AgentConstraint toConstraint(AgentConstraintEntity c) {
         return new AgentConstraint(c.name, c.description,
-                                   Visibility.valueOf(c.visibility));
-    }
+                                   Visibility.valueOf(c.visibility),
+                                   ConstraintSeverity.valueOf(c.severity));}
 
     private AgentConstraintEntity toConstraintEntity(AgentConstraint c, AgentDescriptorEntity parent) {
         var e = new AgentConstraintEntity();
@@ -130,8 +139,8 @@ class AgentDescriptorMapper {
         e.name        = c.name();
         e.description = c.description();
         e.visibility  = c.visibility().name();
-        return e;
-    }
+        e.severity    = c.severity().name();
+        return e;}
 
 
     private <T> T readJson(String json, Class<T> type) {
