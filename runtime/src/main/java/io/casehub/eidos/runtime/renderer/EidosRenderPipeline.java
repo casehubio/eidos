@@ -103,13 +103,6 @@ class EidosRenderPipeline {
             "Capability name — must match exactly as given.",
             "1-2 sentences, second person, what this agent can do with this capability."
     );
-
-    private static final String TEMPLATE_HASH = fingerprint(
-            PROMPT_TEMPLATE + A2A_PROMPT_TEMPLATE
-            + String.join("", RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
-            + String.join("", A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
-    ).substring(0, 8);
-
     static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
             .type(ResponseFormatType.JSON)
             .jsonSchema(JsonSchema.builder()
@@ -123,7 +116,6 @@ class EidosRenderPipeline {
                             .build())
                     .build())
             .build();
-
     static final ResponseFormat A2A_RESPONSE_FORMAT = ResponseFormat.builder()
             .type(ResponseFormatType.JSON)
             .jsonSchema(JsonSchema.builder()
@@ -143,12 +135,18 @@ class EidosRenderPipeline {
                             .build())
                     .build())
             .build();
-
     static final int STREAMING_TIMEOUT_SECONDS = 30;
-
+    private static final String TEMPLATE_HASH = fingerprint(
+            PROMPT_TEMPLATE + A2A_PROMPT_TEMPLATE
+            + String.join("", RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
+            + String.join("", A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
+    ).substring(0, 8);
+    private static final Pattern TEMPLATE_PLACEHOLDER = Pattern.compile("\\$\\{([^}]+)}");
     private final VocabularyRegistry vocab;
     private final TemplateRegistry templateRegistry;
     private final ObjectMapper mapper;
+
+    // ── Stage 1: payload building ─────────────────────────────────────────────
 
     @Inject
     EidosRenderPipeline(final VocabularyRegistry vocab,
@@ -159,7 +157,87 @@ class EidosRenderPipeline {
         this.mapper           = mapper;
     }
 
-    // ── Stage 1: payload building ─────────────────────────────────────────────
+    private static void copyIfPresent(final ObjectNode dest, final ObjectNode src, final String key) {
+        if (src != null && src.has(key)) dest.set(key, src.get(key).deepCopy());
+    }
+
+    static boolean usesEnrichment(final RenderFormat format) {
+        return switch (format) {
+            case MARKDOWN, PROSE -> true;
+            case A2A_CARD        -> false;
+        };
+    }
+
+    static String substitute(String content, Map<String, String> args) {
+        if (args == null || args.isEmpty()) {return content;}
+        return TEMPLATE_PLACEHOLDER.matcher(content).replaceAll(match -> {
+            var param = match.group(1);
+            var value = args.get(param);
+            return value != null ? Matcher.quoteReplacement(value) : match.group();
+        });
+    }
+
+    // ── Stage 1: build + fingerprint ─────────────────────────────────────────
+
+    private static String combinedModel(final AgentDescriptor descriptor) {
+        if (descriptor.modelFamily() != null && descriptor.modelVersion() != null)
+            return descriptor.modelFamily() + "/" + descriptor.modelVersion();
+        if (descriptor.modelFamily() != null) return descriptor.modelFamily();
+        return descriptor.modelVersion();
+    }
+
+    // ── Cache utilities ──────────────────────────────────────────────────────
+
+    private static void addIfPresent(final ObjectNode node, final String key, final String value) {
+        if (value != null) node.put(key, value);
+    }
+
+    // ── Stage 2 predicate ────────────────────────────────────────────────────
+
+    private static void addIfNonBlank(final ObjectNode node, final String key, final String value) {
+        if (value != null && !value.isEmpty()) node.put(key, value);
+    }
+
+    // ── Stage 3: format assembly ──────────────────────────────────────────────
+
+    private static String axisJsonKey(final DispositionAxis axis) {
+        return switch (axis) {
+            case SOCIAL_ORIENTATION -> "socialOrient";
+            case RULE_FOLLOWING     -> "ruleFollowing";
+            case RISK_APPETITE      -> "riskAppetite";
+            case AUTONOMY           -> "autonomy";
+            case CONFLICT_MODE      -> "conflictMode";
+        };
+    }
+
+    // ── Format-specific assembly ─────────────────────────────────────────────
+
+    private static String axisLabel(final DispositionAxis axis) {
+        return switch (axis) {
+            case SOCIAL_ORIENTATION -> "Social orientation";
+            case RULE_FOLLOWING     -> "Rule following";
+            case RISK_APPETITE      -> "Risk appetite";
+            case AUTONOMY           -> "Autonomy";
+            case CONFLICT_MODE      -> "Conflict mode";
+        };
+    }
+
+    /**
+     * Returns a 16-char hex prefix of the SHA-256 hash of {@code input}.
+     * 16 hex chars = 64 bits. Birthday-bound collision probability is negligible
+     * for the number of descriptors and contexts in a single deployment.
+     * Not a full SHA-256 hash — use only for cache keys and display fingerprints,
+     * not for security-sensitive purposes.
+     */
+    static String fingerprint(final String input) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            final byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).substring(0, 16);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
 
     ObjectNode buildDescriptorPayload(final AgentDescriptor descriptor, final RenderFormat format) {
         final ObjectNode node = mapper.createObjectNode();
@@ -336,12 +414,6 @@ class EidosRenderPipeline {
         return payload;
     }
 
-    private static void copyIfPresent(final ObjectNode dest, final ObjectNode src, final String key) {
-        if (src != null && src.has(key)) dest.set(key, src.get(key).deepCopy());
-    }
-
-    // ── Stage 1: build + fingerprint ─────────────────────────────────────────
-
     StageOneResult buildStage1(final AgentDescriptor descriptor, final AgentPromptContext context) {
         final ObjectNode descriptorNode = buildDescriptorPayload(descriptor, context.format());
         final ObjectNode contextNode    = buildContextPayload(context);
@@ -351,23 +423,10 @@ class EidosRenderPipeline {
         return new StageOneResult(descriptorNode, contextNode, descriptorHash, contextHash, key);
     }
 
-    // ── Cache utilities ──────────────────────────────────────────────────────
-
     String cacheKey(final String descriptorHash, final String contextHash,
                     final RenderFormat format) {
         return descriptorHash + ":" + contextHash + ":" + format.name() + ":" + TEMPLATE_HASH;
     }
-
-    // ── Stage 2 predicate ────────────────────────────────────────────────────
-
-    static boolean usesEnrichment(final RenderFormat format) {
-        return switch (format) {
-            case MARKDOWN, PROSE -> true;
-            case A2A_CARD        -> false;
-        };
-    }
-
-    // ── Stage 3: format assembly ──────────────────────────────────────────────
 
     RenderedPrompt assemble(final StageOneResult s1,
                              final Optional<SemanticEnrichment> enrichment,
@@ -384,11 +443,6 @@ class EidosRenderPipeline {
         return new RenderedPrompt(content, context.format(), s1.descriptorHash(), s1.contextHash(), enriched);
     }
 
-    // ── Format-specific assembly ─────────────────────────────────────────────
-
-
-    private static final Pattern TEMPLATE_PLACEHOLDER = Pattern.compile("\\$\\{([^}]+)}");
-
     String resolveTemplates(AgentDescriptor descriptor) {
         if (descriptor.templates() == null || descriptor.templates().isEmpty()) {return null;}
         var sb = new StringBuilder();
@@ -398,15 +452,6 @@ class EidosRenderPipeline {
             sb.append(substitute(template.content(), ref.args())).append("\n\n");
         }
         return sb.toString().trim();
-    }
-
-    static String substitute(String content, Map<String, String> args) {
-        if (args == null || args.isEmpty()) {return content;}
-        return TEMPLATE_PLACEHOLDER.matcher(content).replaceAll(match -> {
-            var param = match.group(1);
-            var value = args.get(param);
-            return value != null ? Matcher.quoteReplacement(value) : match.group();
-        });
     }
 
     private void assembleMarkdownRole(final StringBuilder sb, final AgentDescriptor descriptor) {
@@ -458,8 +503,10 @@ class EidosRenderPipeline {
                   .sorted(java.util.Comparator.comparing(AgentConstraint::severity)
                                               .thenComparing(AgentConstraint::name))
                   .forEach(c -> sb.append("- **[").append(c.severity().name()).append("]** ")
-                                  .append(c.description()).append("\n"));}
+                                  .append(c.description()).append("\n"));
+    }
 
+    // ── Shared utilities ───────────────────────────────────────────────────────
 
     private void assembleMarkdownDisposition(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.disposition() != null) {
@@ -820,43 +867,6 @@ class EidosRenderPipeline {
         }
     }
 
-    // ── Shared utilities ───────────────────────────────────────────────────────
-
-    private static String combinedModel(final AgentDescriptor descriptor) {
-        if (descriptor.modelFamily() != null && descriptor.modelVersion() != null)
-            return descriptor.modelFamily() + "/" + descriptor.modelVersion();
-        if (descriptor.modelFamily() != null) return descriptor.modelFamily();
-        return descriptor.modelVersion();
-    }
-
-    private static void addIfPresent(final ObjectNode node, final String key, final String value) {
-        if (value != null) node.put(key, value);
-    }
-
-    private static void addIfNonBlank(final ObjectNode node, final String key, final String value) {
-        if (value != null && !value.isEmpty()) node.put(key, value);
-    }
-
-    private static String axisJsonKey(final DispositionAxis axis) {
-        return switch (axis) {
-            case SOCIAL_ORIENTATION -> "socialOrient";
-            case RULE_FOLLOWING     -> "ruleFollowing";
-            case RISK_APPETITE      -> "riskAppetite";
-            case AUTONOMY           -> "autonomy";
-            case CONFLICT_MODE      -> "conflictMode";
-        };
-    }
-
-    private static String axisLabel(final DispositionAxis axis) {
-        return switch (axis) {
-            case SOCIAL_ORIENTATION -> "Social orientation";
-            case RULE_FOLLOWING     -> "Rule following";
-            case RISK_APPETITE      -> "Risk appetite";
-            case AUTONOMY           -> "Autonomy";
-            case CONFLICT_MODE      -> "Conflict mode";
-        };
-    }
-
     private String resolveAxisDisplay(final DispositionAxis axis, final String raw,
                                        final AgentDescriptor descriptor) {
         final Optional<String> vocabUri = descriptor.vocabUriForAxis(axis);
@@ -871,22 +881,5 @@ class EidosRenderPipeline {
             .filter(n -> !n.isEmpty())
             .orElse(null);
         return vocabName != null ? label + " (" + vocabName + ")" : label;
-    }
-
-    /**
-     * Returns a 16-char hex prefix of the SHA-256 hash of {@code input}.
-     * 16 hex chars = 64 bits. Birthday-bound collision probability is negligible
-     * for the number of descriptors and contexts in a single deployment.
-     * Not a full SHA-256 hash — use only for cache keys and display fingerprints,
-     * not for security-sensitive purposes.
-     */
-    static String fingerprint(final String input) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            final byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash).substring(0, 16);
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
     }
 }

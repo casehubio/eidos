@@ -18,12 +18,6 @@ public final class AgentDescriptorComparator {
     static final int COMPARED_GOAL_FIELD_COUNT = 3;
     static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
 
-    public record ComparisonResult(List<FieldDrift> drifts) {
-        public boolean matches() { return drifts.isEmpty(); }
-    }
-
-    public record FieldDrift(String field, String desiredValue, String actualValue) {}
-
     private AgentDescriptorComparator() {}
 
     public static ComparisonResult compare(AgentDescriptor desired, AgentDescriptor actual) {
@@ -184,12 +178,18 @@ public final class AgentDescriptorComparator {
                 compareField(drifts, prefix + "visibility", entry.getValue().visibility(), actualC.visibility());
                 compareField(drifts, prefix + "severity", entry.getValue().severity(), actualC.severity());
             }
-        }}
-
+        }
+    }
 
     private static void compareField(List<FieldDrift> drifts, String field, Object desired, Object actual) {
         if (!Objects.equals(desired, actual)) {
             drifts.add(new FieldDrift(field, String.valueOf(desired), String.valueOf(actual)));
         }
     }
+
+    public record ComparisonResult(List<FieldDrift> drifts) {
+        public boolean matches() { return drifts.isEmpty(); }
+    }
+
+    public record FieldDrift(String field, String desiredValue, String actualValue) {}
 }

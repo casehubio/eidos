@@ -23,3 +23,5 @@ target/
 .worktrees/
 .claude/settings.local.json
 wksp
+.claude
+package-lock.json

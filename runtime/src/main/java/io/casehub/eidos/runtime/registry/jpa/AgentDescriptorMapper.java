@@ -129,7 +129,8 @@ class AgentDescriptorMapper {
     private AgentConstraint toConstraint(AgentConstraintEntity c) {
         return new AgentConstraint(c.name, c.description,
                                    Visibility.valueOf(c.visibility),
-                                   ConstraintSeverity.valueOf(c.severity));}
+                                   ConstraintSeverity.valueOf(c.severity));
+    }
 
     private AgentConstraintEntity toConstraintEntity(AgentConstraint c, AgentDescriptorEntity parent) {
         var e = new AgentConstraintEntity();
@@ -140,7 +141,8 @@ class AgentDescriptorMapper {
         e.description = c.description();
         e.visibility  = c.visibility().name();
         e.severity    = c.severity().name();
-        return e;}
+        return e;
+    }
 
 
     private <T> T readJson(String json, Class<T> type) {
