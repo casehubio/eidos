@@ -336,6 +336,32 @@ class AgentDescriptorValidatorTest {
     }
 
     @Test
+    void duplicate_capability_names_throws() {
+        var cap1 = AgentCapability.builder().name("code-review").build();
+        var cap2 = AgentCapability.builder().name("code-review").build();
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("a").name("A").slot("s").tenancyId("t")
+                                                .capabilities(List.of(cap1, cap2))
+                                                .build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("duplicate capability name: code-review");
+    }
+
+    @Test
+    void capabilities_exceeding_max_throws() {
+        var caps = java.util.stream.IntStream.range(0, 21)
+                                             .mapToObj(i -> AgentCapability.builder().name("cap-" + i).build())
+                                             .toList();
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("a").name("A").slot("s").tenancyId("t")
+                                                .capabilities(caps)
+                                                .build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("exceeds maximum count 20");
+    }
+
+
+    @Test
     void publicGoals_filters_by_visibility() {
         var goals = List.of(
                 new AgentGoal("public-goal", "Visible", GoalPriority.PRIMARY, Visibility.PUBLIC),

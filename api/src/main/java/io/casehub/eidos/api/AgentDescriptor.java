@@ -32,6 +32,20 @@ public record AgentDescriptor(
         templates    = templates != null ? List.copyOf(templates) : null;
         goals        = goals != null ? List.copyOf(goals) : List.of();
         constraints  = constraints != null ? List.copyOf(constraints) : List.of();
+        if (capabilities.size() > AgentDescriptorValidator.MAX_CAPABILITIES) {
+            throw new AgentValidationException("capabilities",
+                "exceeds maximum count " + AgentDescriptorValidator.MAX_CAPABILITIES + " (was " + capabilities.size() + ")");
+        }
+        if (capabilities.size() > 1) {
+            long distinctNames = capabilities.stream().map(AgentCapability::name).distinct().count();
+            if (distinctNames < capabilities.size()) {
+                String dup = capabilities.stream().map(AgentCapability::name)
+                    .collect(java.util.stream.Collectors.groupingBy(n -> n, java.util.stream.Collectors.counting()))
+                    .entrySet().stream().filter(e -> e.getValue() > 1).map(java.util.Map.Entry::getKey)
+                    .findFirst().orElse("?");
+                throw new AgentValidationException("capabilities", "duplicate capability name: " + dup);
+            }
+        }
         if (axisVocabularies != null) {
             axisVocabularies.forEach((axis, uri) ->
                                              AgentDescriptorValidator.validateRequired(
