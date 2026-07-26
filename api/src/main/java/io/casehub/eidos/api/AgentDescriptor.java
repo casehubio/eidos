@@ -119,6 +119,15 @@ public record AgentDescriptor(
         return constraints.stream().filter(c -> c.visibility() == Visibility.PUBLIC).toList();
     }
 
+    public boolean hasGoal(String name) {
+        return goals.stream().anyMatch(g -> g.name().equals(name));
+    }
+
+    public boolean hasConstraint(String name) {
+        return constraints.stream().anyMatch(c -> c.name().equals(name));
+    }
+
+
     public static Builder builder() {return new Builder();}
 
     public static final class Builder {
