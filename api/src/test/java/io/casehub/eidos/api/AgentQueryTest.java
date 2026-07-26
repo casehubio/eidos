@@ -1,14 +1,16 @@
 package io.casehub.eidos.api;
 
 import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 class AgentQueryTest {
 
     @Test
     void null_tenancy_id_throws() {
         assertThatNullPointerException()
-            .isThrownBy(() -> new AgentQuery("reviewer", null, null, null))
+            .isThrownBy(() -> new AgentQuery("reviewer", null, null, null, null))
             .withMessageContaining("tenancyId");
     }
 
@@ -53,4 +55,15 @@ class AgentQueryTest {
         assertThat(q.taskDomain()).isEqualTo("java");
         assertThat(q.tenancyId()).isEqualTo("default");
     }
+
+    @Test
+    void byGoal_sets_goalName_and_tenancyId() {
+        var q = AgentQuery.byGoal("quality-review", "t1");
+        assertThat(q.goalName()).isEqualTo("quality-review");
+        assertThat(q.tenancyId()).isEqualTo("t1");
+        assertThat(q.slot()).isNull();
+        assertThat(q.capabilityName()).isNull();
+        assertThat(q.taskDomain()).isNull();
+    }
+
 }

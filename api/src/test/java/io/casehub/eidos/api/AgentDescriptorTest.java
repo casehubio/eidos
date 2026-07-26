@@ -1,9 +1,13 @@
 package io.casehub.eidos.api;
 
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
 import java.util.Map;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AgentDescriptorTest {
 
@@ -347,5 +351,25 @@ class AgentDescriptorTest {
             .tenancyId("default")
             .build();
         assertThat(explicit).isEqualTo(omitted);
+    }
+
+    @Test
+    void hasGoal_returns_true_for_existing_goal() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("A").slot("s").tenancyId("t")
+                                  .goals(List.of(new AgentGoal("quality", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                                  .build();
+        assertThat(desc.hasGoal("quality")).isTrue();
+        assertThat(desc.hasGoal("nonexistent")).isFalse();
+    }
+
+    @Test
+    void hasConstraint_returns_true_for_existing_constraint() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("A").slot("s").tenancyId("t")
+                                  .constraints(List.of(new AgentConstraint("no-pii", "Never expose PII", Visibility.PUBLIC, ConstraintSeverity.HARD)))
+                                  .build();
+        assertThat(desc.hasConstraint("no-pii")).isTrue();
+        assertThat(desc.hasConstraint("nonexistent")).isFalse();
     }
 }
