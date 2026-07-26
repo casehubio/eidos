@@ -96,6 +96,7 @@ public class JpaAgentRegistry implements AgentRegistry {
         }
 
         if (query.taskDomain() != null) jpql.append(" AND :taskDomain NOT MEMBER OF c.excludedDomains");
+        if (query.goalName() != null) jpql.append(" AND EXISTS (SELECT 1 FROM AgentGoalEntity g WHERE g.descriptor = a AND g.name = :goalName)");
 
         var q = em.createQuery(jpql.toString(), AgentDescriptorEntity.class)
                   .setParameter("tenancyId", query.tenancyId());
@@ -114,6 +115,7 @@ public class JpaAgentRegistry implements AgentRegistry {
         }
 
         if (query.taskDomain() != null) q.setParameter("taskDomain", query.taskDomain());
+        if (query.goalName() != null) q.setParameter("goalName", query.goalName());
 
         var descriptors = q.getResultList().stream().map(mapper::toRecord).toList();
 

@@ -1,6 +1,17 @@
 package io.casehub.eidos.memory;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
+import io.casehub.eidos.api.AgentQuery;
+import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.AgentValidationException;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.MatchDegree;
+import io.casehub.eidos.api.TestCapabilityVocab;
+import io.casehub.eidos.api.Visibility;
+import io.casehub.eidos.api.VocabularyRegistry;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @QuarkusTest
 class InMemoryAgentRegistryTest {
@@ -275,4 +288,34 @@ class InMemoryAgentRegistryTest {
             .hasMessageContaining("nonexistent-capability");
     }
 
+
+    @Test
+    void find_by_goal_returns_matching_agents() {
+        var desc1 = AgentDescriptor.builder()
+                                   .agentId("g1").name("G1").slot("s").tenancyId("t")
+                                   .goals(List.of(new AgentGoal("quality-review", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                                   .build();
+        var desc2 = AgentDescriptor.builder()
+                                   .agentId("g2").name("G2").slot("s").tenancyId("t")
+                                   .build();
+        registry.register(desc1);
+        registry.register(desc2);
+
+        var results = registry.find(AgentQuery.byGoal("quality-review", "t"));
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).descriptor().agentId()).isEqualTo("g1");
+        assertThat(results.get(0).resolvedCapability()).isNull();
+    }
+
+    @Test
+    void find_by_goal_returns_empty_when_no_match() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("g3").name("G3").slot("s").tenancyId("t")
+                                  .goals(List.of(new AgentGoal("quality", "Q", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                                  .build();
+        registry.register(desc);
+
+        var results = registry.find(AgentQuery.byGoal("nonexistent", "t"));
+        assertThat(results).isEmpty();
+    }
 }
