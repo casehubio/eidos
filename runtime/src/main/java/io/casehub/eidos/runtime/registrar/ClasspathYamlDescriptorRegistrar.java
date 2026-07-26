@@ -6,11 +6,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentGoal;
-import io.casehub.eidos.api.TemplateRef;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.TemplateRef;
 import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -79,7 +80,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
 
         if (cfg.constraints != null) {
             builder.constraints(cfg.constraints.stream().map(c ->
-                new AgentConstraint(c.name, c.description, c.visibility)
+                new AgentConstraint(c.name, c.description, c.visibility, c.severity)
             ).toList());
         }
 
@@ -173,9 +174,10 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
     }
 
     static class ConstraintConfig {
-        public String     name;
-        public String     description;
-        public Visibility visibility;
+        public String             name;
+        public String             description;
+        public Visibility         visibility;
+        public ConstraintSeverity severity;
     }
 
 }

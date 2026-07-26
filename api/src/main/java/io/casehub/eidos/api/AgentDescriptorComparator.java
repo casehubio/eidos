@@ -16,7 +16,7 @@ public final class AgentDescriptorComparator {
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
     static final int COMPARED_DISPOSITION_FIELD_COUNT = 6;
     static final int COMPARED_GOAL_FIELD_COUNT = 3;
-    static final int COMPARED_CONSTRAINT_FIELD_COUNT = 2;
+    static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
 
     public record ComparisonResult(List<FieldDrift> drifts) {
         public boolean matches() { return drifts.isEmpty(); }
@@ -182,9 +182,9 @@ public final class AgentDescriptorComparator {
                 String prefix = "constraints[" + entry.getKey() + "].";
                 compareField(drifts, prefix + "description", entry.getValue().description(), actualC.description());
                 compareField(drifts, prefix + "visibility", entry.getValue().visibility(), actualC.visibility());
+                compareField(drifts, prefix + "severity", entry.getValue().severity(), actualC.severity());
             }
-        }
-    }
+        }}
 
 
     private static void compareField(List<FieldDrift> drifts, String field, Object desired, Object actual) {

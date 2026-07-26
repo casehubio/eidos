@@ -2,6 +2,7 @@ package io.casehub.eidos.runtime.registry;
 
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
+import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentGoal;
@@ -636,8 +637,8 @@ class JpaAgentRegistryTest {
                 new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC),
                 new AgentGoal("help-others", "Help", GoalPriority.SECONDARY, Visibility.PRIVATE));
         var constraints = List.of(
-                new AgentConstraint("trust-everyone", "Trust by default", Visibility.PUBLIC),
-                new AgentConstraint("oblivious", "Do not notice danger", Visibility.PRIVATE));
+                new AgentConstraint("trust-everyone", "Trust by default", Visibility.PUBLIC, ConstraintSeverity.SOFT),
+                new AgentConstraint("oblivious", "Do not notice danger", Visibility.PRIVATE, ConstraintSeverity.HARD));
         var d = AgentDescriptor.builder()
                                .agentId("penelope").name("Penelope").slot("heroine").tenancyId("wacky-manor")
                                .goals(goals).constraints(constraints).build();

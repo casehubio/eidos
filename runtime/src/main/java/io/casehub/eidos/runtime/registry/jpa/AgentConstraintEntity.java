@@ -1,6 +1,15 @@
 package io.casehub.eidos.runtime.registry.jpa;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "agent_constraint",
@@ -21,4 +30,7 @@ public class AgentConstraintEntity {
     @Column(nullable = false) String name;
     @Column(columnDefinition = "TEXT", nullable = false) String description;
     @Column(nullable = false) String visibility;
+    @Column(nullable = false)
+                              String severity;
+
 }
