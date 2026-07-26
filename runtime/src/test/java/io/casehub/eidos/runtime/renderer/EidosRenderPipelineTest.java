@@ -3,11 +3,11 @@ package io.casehub.eidos.runtime.renderer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
-import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.AgentPromptContext;
+import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.GoalContext;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.Resource;
@@ -1031,16 +1031,38 @@ class EidosRenderPipelineTest {
     }
 
     @Test
-    void markdown_renders_constraints_section_sorted_alphabetically() {
+    void markdown_renders_constraints_sorted_by_severity_then_name() {
         var d   = descriptorWithGoalsAndConstraints();
         var ctx = AgentPromptContext.forFormat(MARKDOWN);
         var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
                                        Optional.empty(), Optional.empty(), d, ctx);
         assertThat(result.content()).contains("## Constraints");
-        int elaborateIdx = result.content().indexOf("Schemes must be elaborate");
-        int neverIdx     = result.content().indexOf("Never reveal your true identity");
-        assertThat(elaborateIdx).isLessThan(neverIdx);
+        assertThat(result.content()).contains("**[HARD]**");
+        assertThat(result.content()).contains("**[SOFT]**");
+        int hardIdx = result.content().indexOf("[HARD]");
+        int softIdx = result.content().indexOf("[SOFT]");
+        assertThat(hardIdx).isLessThan(softIdx);
     }
+
+    @Test
+    void prose_renders_constraints_grouped_by_severity() {
+        var d   = descriptorWithGoalsAndConstraints();
+        var ctx = AgentPromptContext.forFormat(PROSE);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).contains("Hard constraints:");
+        assertThat(result.content()).contains("Also:");
+    }
+
+    @Test
+    void a2a_card_includes_constraint_severity() {
+        var d   = descriptorWithGoalsAndConstraints();
+        var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
+                                       Optional.empty(), Optional.empty(), d, ctx);
+        assertThat(result.content()).contains("\"severity\":\"SOFT\"");
+    }
+
 
     @Test
     void markdown_objectives_before_disposition() {

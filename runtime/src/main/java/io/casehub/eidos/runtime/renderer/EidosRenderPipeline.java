@@ -14,6 +14,7 @@ import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.AgentPromptContext;
+import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.Resource;
@@ -275,6 +276,7 @@ class EidosRenderPipeline {
                     cNode.put("name", c.name());
                     cNode.put("description", c.description());
                     cNode.put("visibility", c.visibility().name());
+                    cNode.put("severity", c.severity().name());
                 }
             }
         }
@@ -453,9 +455,10 @@ class EidosRenderPipeline {
         if (descriptor.constraints().isEmpty()) {return;}
         sb.append("\n## Constraints\n");
         descriptor.constraints().stream()
-                  .sorted(java.util.Comparator.comparing(AgentConstraint::name))
-                  .forEach(c -> sb.append("- ").append(c.description()).append("\n"));
-    }
+                  .sorted(java.util.Comparator.comparing(AgentConstraint::severity)
+                                              .thenComparing(AgentConstraint::name))
+                  .forEach(c -> sb.append("- **[").append(c.severity().name()).append("]** ")
+                                  .append(c.description()).append("\n"));}
 
 
     private void assembleMarkdownDisposition(final StringBuilder sb, final AgentDescriptor descriptor) {
@@ -608,11 +611,23 @@ class EidosRenderPipeline {
         }
 
         if (!descriptor.constraints().isEmpty()) {
-            sb.append("\nConstraints: ");
-            sb.append(descriptor.constraints().stream()
-                                .sorted(java.util.Comparator.comparing(AgentConstraint::name))
-                                .map(AgentConstraint::description).collect(Collectors.joining(". ")));
-            sb.append(".\n");
+            var csorted = descriptor.constraints().stream()
+                                    .sorted(java.util.Comparator.comparing(AgentConstraint::severity)
+                                                                .thenComparing(AgentConstraint::name))
+                                    .toList();
+            var hard = csorted.stream().filter(c -> c.severity() == ConstraintSeverity.HARD).toList();
+            var soft = csorted.stream().filter(c -> c.severity() == ConstraintSeverity.SOFT).toList();
+            if (!hard.isEmpty()) {
+                sb.append("\nHard constraints: ");
+                sb.append(hard.stream().map(AgentConstraint::description).collect(Collectors.joining(". ")));
+                sb.append(".");
+            }
+            if (!soft.isEmpty()) {
+                sb.append(hard.isEmpty() ? "\nConstraints: " : " Also: ");
+                sb.append(soft.stream().map(AgentConstraint::description).collect(Collectors.joining(". ")));
+                sb.append(".");
+            }
+            sb.append("\n");
         }
 
         // Disposition — enriched OR structural (selective override)
@@ -788,11 +803,13 @@ class EidosRenderPipeline {
         if (!publicConstraints.isEmpty()) {
             final ArrayNode constraintsArray = card.putArray("constraints");
             for (final AgentConstraint c : publicConstraints.stream()
-                    .sorted(java.util.Comparator.comparing(AgentConstraint::name))
+                    .sorted(java.util.Comparator.comparing(AgentConstraint::severity)
+                                                .thenComparing(AgentConstraint::name))
                     .toList()) {
                 final ObjectNode cNode = constraintsArray.addObject();
                 cNode.put("name", c.name());
                 cNode.put("description", c.description());
+                cNode.put("severity", c.severity().name());
             }
         }
 
