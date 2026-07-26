@@ -50,7 +50,9 @@ public class InMemoryAgentRegistry implements AgentRegistry {
             .filter(d -> query.slot() == null || Objects.equals(d.slot(), query.slot()))
             .filter(d -> query.taskDomain() == null
                 || d.capabilities().stream().noneMatch(c ->
-                    c.excludedDomains() != null && c.excludedDomains().contains(query.taskDomain())));
+                    c.excludedDomains() != null && c.excludedDomains().contains(query.taskDomain())))
+            .filter(d -> query.goalName() == null
+                || d.goals().stream().anyMatch(g -> g.name().equals(query.goalName())));
 
         if (query.capabilityName() == null) {
             return stream

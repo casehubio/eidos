@@ -2,13 +2,13 @@ package io.casehub.eidos.runtime.registry;
 
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
-import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.AgentQuery;
 import io.casehub.eidos.api.AgentRegistry;
 import io.casehub.eidos.api.AgentValidationException;
+import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.MatchDegree;
@@ -658,5 +658,35 @@ class JpaAgentRegistryTest {
         var trust = retrieved.constraints().stream()
                              .filter(c -> c.name().equals("trust-everyone")).findFirst().orElseThrow();
         assertThat(trust.visibility()).isEqualTo(Visibility.PUBLIC);
+    }
+
+    @Test
+    void find_by_goal_returns_matching_agents() {
+        var desc1 = AgentDescriptor.builder()
+                                   .agentId("goal-a1").name("G1").slot("s").tenancyId("test-tenant")
+                                   .goals(List.of(new AgentGoal("quality-review", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                                   .build();
+        var desc2 = AgentDescriptor.builder()
+                                   .agentId("goal-a2").name("G2").slot("s").tenancyId("test-tenant")
+                                   .build();
+        registry.register(desc1);
+        registry.register(desc2);
+
+        var results = registry.find(AgentQuery.byGoal("quality-review", "test-tenant"));
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).descriptor().agentId()).isEqualTo("goal-a1");
+        assertThat(results.get(0).resolvedCapability()).isNull();
+    }
+
+    @Test
+    void find_by_goal_returns_empty_when_no_match() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("goal-a3").name("G3").slot("s").tenancyId("test-tenant")
+                                  .goals(List.of(new AgentGoal("quality", "Q", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                                  .build();
+        registry.register(desc);
+
+        var results = registry.find(AgentQuery.byGoal("nonexistent", "test-tenant"));
+        assertThat(results).isEmpty();
     }
 }
