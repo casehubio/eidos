@@ -59,4 +59,7 @@ public interface VocabularyTerm {
      * whether escalation compliance should be monitored for an agent.
      */
     default boolean impliesSupervision() { return false; }
+
+    default Optional<VocabularyTerm> opposite() {return Optional.empty();}
+
 }

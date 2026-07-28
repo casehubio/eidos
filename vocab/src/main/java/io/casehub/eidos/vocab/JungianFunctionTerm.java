@@ -204,6 +204,12 @@ public enum JungianFunctionTerm implements VocabularyTerm {
         };
     }
 
+    @Override
+    public Optional<VocabularyTerm> opposite() {
+        return Optional.of(shadow());
+    }
+
+
     public List<JungianFunctionTerm> compatibleAuxiliaries() {
         FunctionCategory opposite = category == FunctionCategory.JUDGING
                 ? FunctionCategory.PERCEIVING : FunctionCategory.JUDGING;
