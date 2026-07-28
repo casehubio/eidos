@@ -213,5 +213,6 @@ class DefaultCapabilityHealthBehavioralViolationTest {
         @Override public java.util.List<? extends VocabularyTerm> ancestors(String uri, String term) { return List.of(); }
         @Override public java.util.List<? extends VocabularyTerm> descendants(String uri, String term) { return List.of(); }
         @Override public Map<String, java.util.Set<String>> expandForMatchingByVocabulary(String termName) { return Map.of(); }
+        @Override public java.util.Set<String> registeredUris() { return java.util.Set.of(); }
     }
 }

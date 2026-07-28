@@ -60,8 +60,8 @@ class ClasspathYamlDescriptorRegistrarTest {
         assertThat(d.slot()).isEqualTo("reviewer");
         assertThat(d.tenancyId()).isEqualTo("default");
         assertThat(d.version()).isEqualTo("1.0");
-        assertThat(d.disposition().conflictMode()).isEqualTo("collaborating");
-        assertThat(d.disposition().ruleFollowing()).isEqualTo("strict");
+        assertThat(d.disposition().primaryTerm(DispositionAxis.CONFLICT_MODE)).isEqualTo("collaborating");
+        assertThat(d.disposition().primaryTerm(DispositionAxis.RULE_FOLLOWING)).isEqualTo("strict");
         assertThat(d.disposition().delegation()).isFalse();
         assertThat(d.capabilities()).hasSize(1);
         assertThat(d.capabilities().get(0).name()).isEqualTo("code-review");

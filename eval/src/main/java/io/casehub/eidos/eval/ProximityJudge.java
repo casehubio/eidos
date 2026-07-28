@@ -90,7 +90,8 @@ public class ProximityJudge {
         if (disp != null) {
             final ObjectNode dispNode = mapper.createObjectNode();
             for (final DispositionAxis axis : DispositionAxis.values()) {
-                disp.get(axis).ifPresent(raw -> dispNode.put(axis.jsonKey(), raw));
+                String raw = disp.primaryTerm(axis);
+                if (raw != null) dispNode.put(axis.jsonKey(), raw);
             }
             dispNode.put("canDelegate", disp.delegation());
             payload.set("disposition", dispNode);

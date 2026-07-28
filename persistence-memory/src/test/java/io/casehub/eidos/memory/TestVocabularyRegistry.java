@@ -1,9 +1,19 @@
 package io.casehub.eidos.memory;
 
-import io.casehub.eidos.api.*;
-
+import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.MatchDegree;
+import io.casehub.eidos.api.VocabularyMetadata;
+import io.casehub.eidos.api.VocabularyRegistry;
+import io.casehub.eidos.api.VocabularyTerm;
 import jakarta.enterprise.context.ApplicationScoped;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -41,6 +51,12 @@ public class TestVocabularyRegistry implements VocabularyRegistry {
     public boolean isRegistered(String vocabUri) {
         return byUri.containsKey(vocabUri);
     }
+
+    @Override
+    public Set<String> registeredUris() {
+        return Set.copyOf(byUri.keySet());
+    }
+
 
     @Override
     public Optional<? extends VocabularyTerm> resolve(String vocabUri, String value) {

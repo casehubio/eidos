@@ -375,43 +375,43 @@ class EidosRenderPipelineTest {
     void disposition_payload_is_nested_object_per_axis() {
         vocab.register(TestDispTerm.class);
         var desc = AgentDescriptor.builder()
-            .agentId("a").name("N").slot("s")
-            .dispositionVocabulary("urn:test:disp")
-            .disposition(AgentDisposition.builder().socialOrient("independent").build())
-            .tenancyId("t").build();
-        var dispNode = pipeline.buildDescriptorPayload(desc, MARKDOWN).get("disposition");
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary("urn:test:disp")
+                                  .disposition(AgentDisposition.builder().socialOrient("independent").build())
+                                  .tenancyId("t").build();
+        var dispNode     = pipeline.buildDescriptorPayload(desc, MARKDOWN).get("disposition");
         var socialOrient = dispNode.get("socialOrient");
         assertThat(socialOrient.isObject()).isTrue();
-        assertThat(socialOrient.get("value").asText()).isEqualTo("independent");
-        assertThat(socialOrient.get("label").asText()).isEqualTo("Independent");
+        assertThat(socialOrient.get("values").get(0).get("term").asText()).isEqualTo("independent");
+        assertThat(socialOrient.get("values").get(0).get("label").asText()).isEqualTo("Independent");
         assertThat(socialOrient.get("vocabularyName").asText()).isEqualTo("Test Disposition Vocab");
         assertThat(socialOrient.get("vocabularyDescription").asText()).isEqualTo("A test disposition vocabulary description");
-        assertThat(socialOrient.get("description").asText()).isEqualTo("Works alone by preference");
+        assertThat(socialOrient.get("values").get(0).get("description").asText()).isEqualTo("Works alone by preference");
     }
 
     @Test
     void conflict_mode_included_in_payload_when_set() {
         var desc = AgentDescriptor.builder()
-            .agentId("a").name("N").slot("s")
-            .disposition(AgentDisposition.builder().conflictMode("avoiding").build())
-            .tenancyId("t").build();
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder().conflictMode("avoiding").build())
+                                  .tenancyId("t").build();
         var dispNode = pipeline.buildDescriptorPayload(desc, MARKDOWN).get("disposition");
         assertThat(dispNode.has("conflictMode")).isTrue();
-        assertThat(dispNode.get("conflictMode").get("value").asText()).isEqualTo("avoiding");
+        assertThat(dispNode.get("conflictMode").get("values").get(0).get("term").asText()).isEqualTo("avoiding");
         assertThat(dispNode.has("socialOrient")).isFalse();
     }
 
     @Test
     void disposition_without_registered_vocab_has_value_only() {
         var desc = AgentDescriptor.builder()
-            .agentId("a").name("N").slot("s")
-            .dispositionVocabulary("urn:test:unregistered")
-            .disposition(AgentDisposition.builder().socialOrient("custom-value").build())
-            .tenancyId("t").build();
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary("urn:test:unregistered")
+                                  .disposition(AgentDisposition.builder().socialOrient("custom-value").build())
+                                  .tenancyId("t").build();
         var axisNode = pipeline.buildDescriptorPayload(desc, MARKDOWN).get("disposition").get("socialOrient");
         assertThat(axisNode.isObject()).isTrue();
-        assertThat(axisNode.get("value").asText()).isEqualTo("custom-value");
-        assertThat(axisNode.has("label")).isFalse();
+        assertThat(axisNode.get("values").get(0).get("term").asText()).isEqualTo("custom-value");
+        assertThat(axisNode.get("values").get(0).has("label")).isFalse();
         assertThat(axisNode.has("vocabularyName")).isFalse();
     }
 
@@ -775,12 +775,12 @@ class EidosRenderPipelineTest {
     @Test
     void a2a_card_disposition_axis_present_when_value_set() {
         var desc = AgentDescriptor.builder()
-            .agentId("a").name("N").slot("s")
-            .disposition(AgentDisposition.builder().socialOrient("independent").build())
-            .tenancyId("t").build();
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder().socialOrient("independent").build())
+                                  .tenancyId("t").build();
         var disp = renderA2aCard(desc).get("disposition");
         assertThat(disp.has("socialOrient")).isTrue();
-        assertThat(disp.get("socialOrient").get("value").asText()).isEqualTo("independent");
+        assertThat(disp.get("socialOrient").get("values").get(0).get("term").asText()).isEqualTo("independent");
     }
 
     @Test
@@ -815,15 +815,14 @@ class EidosRenderPipelineTest {
     void a2a_card_disposition_includes_vocab_uri_and_name_when_registered() {
         vocab.register(TestDispTerm.class);
         var desc = AgentDescriptor.builder()
-            .agentId("a").name("N").slot("s")
-            .dispositionVocabulary("urn:test:disp")
-            .disposition(AgentDisposition.builder().socialOrient("independent").build())
-            .tenancyId("t").build();
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary("urn:test:disp")
+                                  .disposition(AgentDisposition.builder().socialOrient("independent").build())
+                                  .tenancyId("t").build();
         var axis = renderA2aCard(desc).get("disposition").get("socialOrient");
         assertThat(axis.get("vocabularyUri").asText()).isEqualTo("urn:test:disp");
         assertThat(axis.get("vocabularyName").asText()).isEqualTo("Test Disposition Vocab");
-        assertThat(axis.get("label").asText()).isEqualTo("Independent");
-        // A2A excludes term-level description and vocabularyDescription (doc, not routing data)
+        assertThat(axis.get("values").get(0).get("label").asText()).isEqualTo("Independent");
         assertThat(axis.has("description")).isFalse();
         assertThat(axis.has("vocabularyDescription")).isFalse();
     }
@@ -831,14 +830,14 @@ class EidosRenderPipelineTest {
     @Test
     void a2a_card_disposition_omits_vocab_fields_when_no_uri() {
         var desc = AgentDescriptor.builder()
-            .agentId("a").name("N").slot("s")
-            .disposition(AgentDisposition.builder().socialOrient("custom-value").build())
-            .tenancyId("t").build();
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder().socialOrient("custom-value").build())
+                                  .tenancyId("t").build();
         var axis = renderA2aCard(desc).get("disposition").get("socialOrient");
-        assertThat(axis.get("value").asText()).isEqualTo("custom-value");
+        assertThat(axis.get("values").get(0).get("term").asText()).isEqualTo("custom-value");
         assertThat(axis.has("vocabularyUri")).isFalse();
         assertThat(axis.has("vocabularyName")).isFalse();
-        assertThat(axis.has("label")).isFalse();
+        assertThat(axis.get("values").get(0).has("label")).isFalse();
     }
 
     @Test
@@ -1155,5 +1154,260 @@ class EidosRenderPipelineTest {
         var payload = pipeline.buildDescriptorPayload(d, MARKDOWN);
         assertThat(payload.has("goals")).isTrue();
         assertThat(payload.has("constraints")).isTrue();
+    }
+
+// ── weighted axis rendering ──────────────────────────────────────────
+
+    @Test
+    void weighted_markdown_single_value_renders_without_weight() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder().socialOrient("independent").build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("Social orientation: independent");
+        assertThat(result.content()).doesNotContain("primarily");
+        assertThat(result.content()).doesNotContain("tendencies");
+    }
+
+    @Test
+    void weighted_markdown_two_values_renders_primarily_with_tendencies() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder()
+                                                               .socialOrient(
+                                                                       new io.casehub.eidos.api.DispositionValue("independent", 0.7),
+                                                                       new io.casehub.eidos.api.DispositionValue("collaborative", 0.3))
+                                                               .build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("Social orientation: primarily independent (0.7), with collaborative tendencies (0.3)");
+    }
+
+    @Test
+    void weighted_markdown_three_values_omits_tendencies_phrasing() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder()
+                                                               .riskAppetite(
+                                                                       new io.casehub.eidos.api.DispositionValue("bold", 0.5),
+                                                                       new io.casehub.eidos.api.DispositionValue("measured", 0.3),
+                                                                       new io.casehub.eidos.api.DispositionValue("conservative", 0.2))
+                                                               .build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("Risk appetite: primarily bold (0.5), measured (0.3), conservative (0.2)");
+        assertThat(result.content()).doesNotContain("tendencies");
+    }
+
+    @Test
+    void weighted_markdown_with_vocab_resolves_labels() {
+        vocab.register(io.casehub.eidos.vocab.ConscientiousnessTerm.class);
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.ConscientiousnessTerm.URI)
+                                  .disposition(AgentDisposition.builder()
+                                                               .socialOrient(
+                                                                       new io.casehub.eidos.api.DispositionValue("independent", 0.7),
+                                                                       new io.casehub.eidos.api.DispositionValue("collaborative", 0.3))
+                                                               .build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("primarily Independent (0.7), with Collaborative tendencies (0.3)");
+    }
+
+    @Test
+    void weighted_prose_two_values_renders_weighted() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder()
+                                                               .socialOrient(
+                                                                       new io.casehub.eidos.api.DispositionValue("independent", 0.7),
+                                                                       new io.casehub.eidos.api.DispositionValue("collaborative", 0.3))
+                                                               .build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(PROSE);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("primarily independent (0.7), with collaborative tendencies (0.3)");
+    }
+
+    // ── A2A weighted axis format ─────────────────────────────────────────
+
+    @Test
+    void a2a_card_axis_uses_values_array_format() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder()
+                                                               .socialOrient(
+                                                                       new io.casehub.eidos.api.DispositionValue("independent", 0.7),
+                                                                       new io.casehub.eidos.api.DispositionValue("collaborative", 0.3))
+                                                               .build())
+                                  .tenancyId("t").build();
+        var axis = renderA2aCard(desc).get("disposition").get("socialOrient");
+        assertThat(axis.has("values")).isTrue();
+        assertThat(axis.get("values").isArray()).isTrue();
+        assertThat(axis.get("values").size()).isEqualTo(2);
+        assertThat(axis.get("values").get(0).get("term").asText()).isEqualTo("independent");
+        assertThat(axis.get("values").get(0).get("weight").asDouble()).isEqualTo(0.7);
+        assertThat(axis.get("values").get(1).get("term").asText()).isEqualTo("collaborative");
+        assertThat(axis.get("values").get(1).get("weight").asDouble()).isEqualTo(0.3);
+    }
+
+    @Test
+    void a2a_card_single_value_axis_uses_values_array() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder().socialOrient("independent").build())
+                                  .tenancyId("t").build();
+        var axis = renderA2aCard(desc).get("disposition").get("socialOrient");
+        assertThat(axis.has("values")).isTrue();
+        assertThat(axis.get("values").isArray()).isTrue();
+        assertThat(axis.get("values").size()).isEqualTo(1);
+        assertThat(axis.get("values").get(0).get("term").asText()).isEqualTo("independent");
+        assertThat(axis.get("values").get(0).get("weight").asDouble()).isEqualTo(1.0);
+    }
+
+    // ── cognitive profile rendering ──────────────────────────────────────
+
+    @Test
+    void jungian_profile_renders_cognitive_style_before_disposition() {
+        vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
+        vocab.register(io.casehub.eidos.vocab.ConscientiousnessTerm.class);
+        vocab.register(io.casehub.eidos.vocab.ThomasKilmannTerm.class);
+        var profile = io.casehub.eidos.vocab.MbtiTypeTerm.INTP.defaultProfile();
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.JungianFunctionTerm.URI)
+                                  .disposition(AgentDisposition.builder()
+                                                               .dispositionProfile(profile)
+                                                               .socialOrient(
+                                                                       new io.casehub.eidos.api.DispositionValue("independent", 0.65),
+                                                                       new io.casehub.eidos.api.DispositionValue("collaborative", 0.35))
+                                                               .build())
+                                  .tenancyId("t").build();
+        var ctx         = AgentPromptContext.forFormat(MARKDOWN);
+        var s1          = pipeline.buildStage1(desc, ctx);
+        var result      = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        int cogStyleIdx = result.content().indexOf("## Cognitive Style");
+        int howOpIdx    = result.content().indexOf("## How You Operate");
+        assertThat(cogStyleIdx).as("Cognitive Style section present").isGreaterThan(-1);
+        assertThat(howOpIdx).as("How You Operate section present").isGreaterThan(-1);
+        assertThat(cogStyleIdx).as("Cognitive Style before How You Operate").isLessThan(howOpIdx);
+    }
+
+    @Test
+    void cognitive_style_identifies_dominant_and_auxiliary_from_weights() {
+        vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
+        var profile = io.casehub.eidos.vocab.MbtiTypeTerm.INTP.defaultProfile();
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.JungianFunctionTerm.URI)
+                                  .disposition(AgentDisposition.builder().dispositionProfile(profile).build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("Dominant — Introverted Thinking (Ti)");
+        assertThat(result.content()).contains("Auxiliary — Extraverted Intuition (Ne)");
+    }
+
+    @Test
+    void cognitive_style_includes_compensation_instructions() {
+        vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
+        var profile = io.casehub.eidos.vocab.MbtiTypeTerm.INTP.defaultProfile();
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.JungianFunctionTerm.URI)
+                                  .disposition(AgentDisposition.builder().dispositionProfile(profile).build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("compensatory");
+    }
+
+    @Test
+    void empty_profile_no_cognitive_style_section() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder().socialOrient("independent").build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).doesNotContain("Cognitive Style");
+    }
+
+    // ── A2A disposition profile ──────────────────────────────────────────
+
+    @Test
+    void a2a_card_includes_disposition_profile_with_roles_and_mbti() {
+        vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
+        vocab.register(io.casehub.eidos.vocab.MbtiTypeTerm.class);
+        var profile = io.casehub.eidos.vocab.MbtiTypeTerm.INTP.defaultProfile();
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.JungianFunctionTerm.URI)
+                                  .disposition(AgentDisposition.builder().dispositionProfile(profile).build())
+                                  .tenancyId("t").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("dispositionProfile")).isTrue();
+        var profileNode = card.get("dispositionProfile");
+        assertThat(profileNode.get("vocabulary").asText()).isEqualTo(io.casehub.eidos.vocab.JungianFunctionTerm.URI);
+        assertThat(profileNode.get("functions").isArray()).isTrue();
+        assertThat(profileNode.get("functions").get(0).get("role").asText()).isEqualTo("dominant");
+        assertThat(profileNode.get("functions").get(1).get("role").asText()).isEqualTo("auxiliary");
+        assertThat(profileNode.get("derivedMbtiType").asText()).isEqualTo("INTP");
+    }
+
+    @Test
+    void a2a_card_no_disposition_profile_when_empty() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder().socialOrient("independent").build())
+                                  .tenancyId("t").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("dispositionProfile")).isFalse();
+    }
+
+    // ── descriptor payload weighted values ───────────────────────────────
+
+    @Test
+    void descriptor_payload_includes_all_weighted_axis_values() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .disposition(AgentDisposition.builder()
+                                                               .socialOrient(
+                                                                       new io.casehub.eidos.api.DispositionValue("independent", 0.7),
+                                                                       new io.casehub.eidos.api.DispositionValue("collaborative", 0.3))
+                                                               .build())
+                                  .tenancyId("t").build();
+        var payload = pipeline.buildDescriptorPayload(desc, MARKDOWN);
+        var axis    = payload.get("disposition").get("socialOrient");
+        assertThat(axis.has("values")).isTrue();
+        assertThat(axis.get("values").size()).isEqualTo(2);
+    }
+
+    @Test
+    void descriptor_payload_includes_disposition_profile() {
+        var profile = List.of(
+                new io.casehub.eidos.api.DispositionValue("ti", 0.35),
+                new io.casehub.eidos.api.DispositionValue("ne", 0.20));
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.JungianFunctionTerm.URI)
+                                  .disposition(AgentDisposition.builder().dispositionProfile(profile).build())
+                                  .tenancyId("t").build();
+        var payload = pipeline.buildDescriptorPayload(desc, MARKDOWN);
+        assertThat(payload.get("disposition").has("dispositionProfile")).isTrue();
     }
 }

@@ -36,7 +36,7 @@ class DescriptorCollectorTest {
                 new TemplateRef("role", Map.of("role_name", "reviewer")));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatNoException().isThrownBy(() ->
-                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry()));
+                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE));
     }
 
     @Test
@@ -44,7 +44,7 @@ class DescriptorCollectorTest {
         var                      refs      = List.of(new TemplateRef("nonexistent", Map.of()));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatThrownBy(() ->
-                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry()))
+                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonexistent");
     }
@@ -54,7 +54,7 @@ class DescriptorCollectorTest {
         var                      refs      = List.of(new TemplateRef("role", Map.of()));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatThrownBy(() ->
-                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry()))
+                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("role_name");
     }
@@ -64,7 +64,7 @@ class DescriptorCollectorTest {
         var                      refs      = List.of(new TemplateRef("style", Map.of("bogus", "value")));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatThrownBy(() ->
-                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry()))
+                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("bogus");
     }
@@ -74,7 +74,7 @@ class DescriptorCollectorTest {
         var                      d         = AgentDescriptor.builder().agentId("a").name("n").slot("s").tenancyId("t").build();
         AgentDescriptorRegistrar registrar = () -> List.of(d);
         assertThatNoException().isThrownBy(() ->
-                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry()));
+                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE));
     }
 
     @Test
@@ -83,7 +83,7 @@ class DescriptorCollectorTest {
                                .templates(List.of()).build();
         AgentDescriptorRegistrar registrar = () -> List.of(d);
         assertThatNoException().isThrownBy(() ->
-                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry()));
+                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE));
     }
 
     static class SimpleTemplateRegistry implements TemplateRegistry {
@@ -98,4 +98,57 @@ class DescriptorCollectorTest {
         @Override
         public List<DescriptorTemplate> all()                            {return List.copyOf(store.values());}
     }
+
+    enum NoOpVocabRegistry implements io.casehub.eidos.api.VocabularyRegistry {
+        INSTANCE;
+
+        @Override
+        public <T extends Enum<T> & io.casehub.eidos.api.VocabularyTerm> void register(Class<T> vocab)                                                                                                                                            {}
+
+        @Override
+        public boolean isRegistered(String vocabUri)                                                                                                                                                                                              {return false;}
+
+        @Override
+        public java.util.Set<String> registeredUris()                                                                                                                                                                                             {return java.util.Set.of();}
+
+        @Override
+        public java.util.Optional<? extends io.casehub.eidos.api.VocabularyTerm> resolve(String vocabUri, String value)                                                                                                                           {return java.util.Optional.empty();}
+
+        @Override
+        public List<? extends io.casehub.eidos.api.VocabularyTerm> allTerms(String vocabUri)                                                                                                                                                      {return List.of();}
+
+        @Override
+        public java.util.Optional<String> equivalentValues(String f, String v, String t)                                                                                                                                                          {return java.util.Optional.empty();}
+
+        @Override
+        public java.util.Optional<String> equivalentValues(String f, String v, String t, io.casehub.eidos.api.DispositionAxis a)                                                                                                                  {return java.util.Optional.empty();}
+
+        @Override
+        public <T extends Enum<T> & io.casehub.eidos.api.VocabularyTerm> java.util.Optional<T> resolve(Class<T> vocab, String value)                                                                                                              {return java.util.Optional.empty();}
+
+        @Override
+        public <S extends Enum<S> & io.casehub.eidos.api.VocabularyTerm, T extends Enum<T> & io.casehub.eidos.api.VocabularyTerm> java.util.Optional<T> equivalentValues(S from, Class<T> targetVocab)                                            {return java.util.Optional.empty();}
+
+        @Override
+        public <S extends Enum<S> & io.casehub.eidos.api.VocabularyTerm, T extends Enum<T> & io.casehub.eidos.api.VocabularyTerm> java.util.Optional<T> equivalentValues(S from, Class<T> targetVocab, io.casehub.eidos.api.DispositionAxis axis) {return java.util.Optional.empty();}
+
+        @Override
+        public java.util.Optional<io.casehub.eidos.api.VocabularyMetadata> vocabularyMetadata(String uri)                                                                                                                                         {return java.util.Optional.empty();}
+
+        @Override
+        public boolean subsumes(String vocabUri, String generalValue, String specificValue)                                                                                                                                                       {return false;}
+
+        @Override
+        public io.casehub.eidos.api.MatchDegree match(String vocabUri, String declaredValue, String requestedValue)                                                                                                                               {return new io.casehub.eidos.api.MatchDegree.None();}
+
+        @Override
+        public List<? extends io.casehub.eidos.api.VocabularyTerm> ancestors(String vocabUri, String value)                                                                                                                                       {return List.of();}
+
+        @Override
+        public List<? extends io.casehub.eidos.api.VocabularyTerm> descendants(String vocabUri, String value)                                                                                                                                     {return List.of();}
+
+        @Override
+        public java.util.Map<String, java.util.Set<String>> expandForMatchingByVocabulary(String value)                                                                                                                                           {return java.util.Map.of();}
+    }
+
 }

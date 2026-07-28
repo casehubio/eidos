@@ -71,16 +71,16 @@ class AgentProfileLoader {
             final AgentDisposition dh = hi.descriptor().disposition();
             final AgentDisposition dl = lo.descriptor().disposition();
 
-            final Optional<String> axHi = dh != null ? dh.get(pair.primaryAxis()) : Optional.empty();
-            final Optional<String> axLo = dl != null ? dl.get(pair.primaryAxis()) : Optional.empty();
+            final String axHi = dh != null ? dh.primaryTerm(pair.primaryAxis()) : null;
+            final String axLo = dl != null ? dl.primaryTerm(pair.primaryAxis()) : null;
             if (Objects.equals(axHi, axLo)) throw new IllegalStateException(
                 "Pair " + pair.higher() + " vs " + pair.lower()
-                + ": primaryAxis '" + pair.primaryAxis() + "' has same value: " + axHi.orElse("null"));
+                + ": primaryAxis '" + pair.primaryAxis() + "' has same value: " + axHi);
 
             for (final DispositionAxis other : DispositionAxis.values()) {
                 if (other != pair.primaryAxis()) {
-                    final Optional<String> dhVal = dh != null ? dh.get(other) : Optional.empty();
-                    final Optional<String> dlVal = dl != null ? dl.get(other) : Optional.empty();
+                    final String dhVal = dh != null ? dh.primaryTerm(other) : null;
+                    final String dlVal = dl != null ? dl.primaryTerm(other) : null;
                     if (!Objects.equals(dhVal, dlVal)) throw new IllegalStateException(
                         "Pair " + pair.higher() + " vs " + pair.lower()
                         + ": non-primary axis '" + other + "' differs");
