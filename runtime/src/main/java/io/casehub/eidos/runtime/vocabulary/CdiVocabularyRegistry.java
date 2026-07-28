@@ -409,6 +409,12 @@ public class CdiVocabularyRegistry implements VocabularyRegistry {
     }
 
     @Override
+    public Set<String> registeredUris() {
+        return Set.copyOf(byUri.keySet());
+    }
+
+
+    @Override
     public Optional<? extends VocabularyTerm> resolve(String vocabUri, String value) {
         var clazz = byUri.get(vocabUri);
         if (clazz == null) return Optional.empty();

@@ -19,13 +19,13 @@ public final class BehavioralExpectations {
     public static boolean escalationExpected(final AgentDisposition disposition,
                                              final String autonomyVocabUri,
                                              final VocabularyRegistry registry) {
-        if (disposition == null || disposition.autonomy() == null) return false;
-        if (autonomyVocabUri == null || registry == null) return false;
-
-        return registry.resolve(autonomyVocabUri, disposition.autonomy())
-                .map(VocabularyTerm::impliesSupervision)
-                .orElse(false);
-    }
+        if (disposition == null || disposition.autonomy().isEmpty()) {return false;}
+        if (autonomyVocabUri == null || registry == null) {return false;}
+        final String autonomyValue = disposition.primaryTerm(DispositionAxis.AUTONOMY);
+        if (autonomyValue == null) {return false;}
+        return registry.resolve(autonomyVocabUri, autonomyValue)
+                       .map(VocabularyTerm::impliesSupervision)
+                       .orElse(false);}
 
     public static boolean escalationExpected(final AgentDescriptor descriptor,
                                              final VocabularyRegistry registry) {

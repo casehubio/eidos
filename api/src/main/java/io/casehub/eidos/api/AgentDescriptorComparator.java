@@ -14,7 +14,7 @@ public final class AgentDescriptorComparator {
 
     static final int COMPARED_FIELD_COUNT = 19;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
-    static final int COMPARED_DISPOSITION_FIELD_COUNT = 6;
+    static final int COMPARED_DISPOSITION_FIELD_COUNT = 7;
     static final int COMPARED_GOAL_FIELD_COUNT = 3;
     static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
 
@@ -66,7 +66,7 @@ public final class AgentDescriptorComparator {
     private static void compareDisposition(List<FieldDrift> drifts,
                                             AgentDisposition desired,
                                             AgentDisposition actual) {
-        if (desired == null && actual == null) return;
+        if (desired == null && actual == null) {return;}
         if (desired == null || actual == null) {
             drifts.add(new FieldDrift("disposition", String.valueOf(desired), String.valueOf(actual)));
             return;
@@ -78,9 +78,9 @@ public final class AgentDescriptorComparator {
         compareField(drifts, "disposition.conflictMode", desired.conflictMode(), actual.conflictMode());
         if (desired.delegation() != actual.delegation()) {
             drifts.add(new FieldDrift("disposition.delegation",
-                    String.valueOf(desired.delegation()), String.valueOf(actual.delegation())));
+                                      String.valueOf(desired.delegation()), String.valueOf(actual.delegation())));
         }
-    }
+        compareField(drifts, "disposition.dispositionProfile", desired.dispositionProfile(), actual.dispositionProfile());}
 
     private static void compareCapabilities(List<FieldDrift> drifts,
                                              List<AgentCapability> desired,

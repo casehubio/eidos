@@ -53,10 +53,14 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         }
 
         if (cfg.disposition != null) {
-            builder.disposition(new AgentDisposition(
-                    cfg.disposition.socialOrient, cfg.disposition.ruleFollowing,
-                    cfg.disposition.riskAppetite, cfg.disposition.autonomy,
-                    cfg.disposition.conflictMode, cfg.disposition.delegation));
+            builder.disposition(AgentDisposition.builder()
+                    .socialOrient(cfg.disposition.socialOrient)
+                    .ruleFollowing(cfg.disposition.ruleFollowing)
+                    .riskAppetite(cfg.disposition.riskAppetite)
+                    .autonomy(cfg.disposition.autonomy)
+                    .conflictMode(cfg.disposition.conflictMode)
+                    .delegation(cfg.disposition.delegation)
+                    .build());
         }
 
         if (cfg.capabilities != null) {

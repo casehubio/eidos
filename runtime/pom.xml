@@ -97,6 +97,12 @@
 
     <!-- Testing -->
     <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-vocab</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit</artifactId>
       <scope>test</scope>

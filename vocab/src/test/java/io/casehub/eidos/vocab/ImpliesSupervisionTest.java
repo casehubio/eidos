@@ -133,6 +133,7 @@ class ImpliesSupervisionTest {
             @Override public List<? extends VocabularyTerm> ancestors(String vocabUri, String value) { return List.of(); }
             @Override public List<? extends VocabularyTerm> descendants(String vocabUri, String value) { return List.of(); }
             @Override public java.util.Map<String, java.util.Set<String>> expandForMatchingByVocabulary(String value) { return java.util.Map.of(); }
+            @Override public java.util.Set<String> registeredUris() { return java.util.Set.of(DiscTerm.URI); }
         };
     }
 }

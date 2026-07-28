@@ -22,6 +22,9 @@ public interface VocabularyRegistry {
 
     boolean isRegistered(String vocabUri);
 
+    Set<String> registeredUris();
+
+
     // --- String-based resolution (runtime values / unknown vocab class at compile time) ---
 
     Optional<? extends VocabularyTerm> resolve(String vocabUri, String value);

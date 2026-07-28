@@ -16,6 +16,7 @@ import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.DispositionValue;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
@@ -27,9 +28,12 @@ import io.casehub.eidos.api.VocabularyTerm;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,6 +46,8 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 class EidosRenderPipeline {
 
+
+    private static final String JUNGIAN_VOCAB_URI = "urn:casehub:vocab:jungian";
     // PROMPT_TEMPLATE must be declared before TEMPLATE_HASH — static initializers run
     // in declaration order. Reversing them causes fingerprint(null) at class load:
     // NullPointerException wrapped in ExceptionInInitializerError, not a quiet wrong value.
@@ -297,27 +303,41 @@ class EidosRenderPipeline {
             }
         }
 
-        // Disposition — per-axis nested objects with vocabulary context
+        // Disposition — per-axis objects with values array + vocabulary context
         if (descriptor.disposition() != null) {
             final AgentDisposition d = descriptor.disposition();
             final ObjectNode dispNode = node.putObject("disposition");
             for (DispositionAxis axis : DispositionAxis.values()) {
-                d.get(axis).ifPresent(rawValue -> {
+                var axisValues = d.get(axis);
+                if (!axisValues.isEmpty()) {
                     final ObjectNode axisNode = dispNode.putObject(axisJsonKey(axis));
-                    axisNode.put("value", rawValue);
-                    descriptor.vocabUriForAxis(axis).ifPresent(uri -> {
-                        vocab.resolve(uri, rawValue).ifPresent(term -> {
-                            addIfNonBlank(axisNode, "label",       term.label());
-                            addIfNonBlank(axisNode, "description", term.description());
-                        });
+                    final ArrayNode valuesArray = axisNode.putArray("values");
+                    for (final DispositionValue dv : axisValues) {
+                        final ObjectNode valNode = valuesArray.addObject();
+                        valNode.put("term", dv.term());
+                        valNode.put("weight", dv.weight());
+                        descriptor.vocabUriForAxis(axis).ifPresent(uri ->
+                            vocab.resolve(uri, dv.term()).ifPresent(term -> {
+                                addIfNonBlank(valNode, "label", term.label());
+                                addIfNonBlank(valNode, "description", term.description());
+                            }));
+                    }
+                    descriptor.vocabUriForAxis(axis).ifPresent(uri ->
                         vocab.vocabularyMetadata(uri).ifPresent(meta -> {
-                            addIfNonBlank(axisNode, "vocabularyName",        meta.name());
+                            addIfNonBlank(axisNode, "vocabularyName", meta.name());
                             addIfNonBlank(axisNode, "vocabularyDescription", meta.description());
-                        });
-                    });
-                });
+                        }));
+                }
             }
             dispNode.put("canDelegate", d.delegation());
+            if (!d.dispositionProfile().isEmpty()) {
+                final ArrayNode profileArray = dispNode.putArray("dispositionProfile");
+                for (final DispositionValue dv : d.dispositionProfile()) {
+                    final ObjectNode pNode = profileArray.addObject();
+                    pNode.put("term", dv.term());
+                    pNode.put("weight", dv.weight());
+                }
+            }
         }
 
         addIfPresent(node, "jurisdiction",       descriptor.jurisdiction());
@@ -512,14 +532,89 @@ class EidosRenderPipeline {
         if (descriptor.disposition() != null) {
             final AgentDisposition d = descriptor.disposition();
             sb.append("\n## How You Operate\n");
-            for (DispositionAxis axis : DispositionAxis.values()) {
-                d.get(axis).ifPresent(raw ->
-                    sb.append("- ").append(axisLabel(axis)).append(": ")
-                      .append(resolveAxisDisplay(axis, raw, descriptor)).append("\n"));
+            for (final DispositionAxis axis : DispositionAxis.values()) {
+                final List<DispositionValue> values = d.get(axis);
+                if (!values.isEmpty()) {
+                    sb.append("- ").append(axisLabel(axis)).append(": ");
+                    if (values.size() == 1 && values.getFirst().weight() == 1.0) {
+                        sb.append(resolveAxisDisplay(axis, values.getFirst().term(), descriptor));
+                    } else {
+                        sb.append(renderWeightedValues(axis, values, descriptor));
+                    }
+                    sb.append("\n");
+                }
             }
             sb.append("- Can delegate: ").append(d.delegation() ? "yes" : "no").append("\n");
         }
     }
+
+    private void assembleMarkdownCognitiveProfile(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.disposition() == null) {return;}
+        final List<DispositionValue> profile = descriptor.disposition().dispositionProfile();
+        if (profile.isEmpty()) {return;}
+
+        final String vocabUri = descriptor.dispositionVocabulary();
+        if (!JUNGIAN_VOCAB_URI.equals(vocabUri)) {return;}
+
+        final var sorted = profile.stream()
+                                  .sorted(Comparator.comparingDouble(DispositionValue::weight).reversed())
+                                  .toList();
+
+        sb.append("\n## Cognitive Style\n\nYour personality is structured around Jungian cognitive functions:\n");
+
+        if (sorted.size() >= 1) {
+            final DispositionValue dominant = sorted.get(0);
+            vocab.resolve(vocabUri, dominant.term()).ifPresent(term -> {
+                sb.append("\n**Dominant — ").append(term.label()).append(" (")
+                  .append(capitalizeAbbrev(dominant.term())).append("):** ")
+                  .append(term.description()).append(" This is your primary mode of engagement.\n");
+            });
+        }
+
+        if (sorted.size() >= 2) {
+            final DispositionValue auxiliary = sorted.get(1);
+            vocab.resolve(vocabUri, auxiliary.term()).ifPresent(term -> {
+                sb.append("\n**Auxiliary — ").append(term.label()).append(" (")
+                  .append(capitalizeAbbrev(auxiliary.term())).append("):** ")
+                  .append(term.description()).append(" This complements your ")
+                  .append(cognitiveCoreName(sorted.get(0).term())).append(" core.\n");
+            });
+        }
+
+        sb.append("\nWhen your dominant and auxiliary functions cannot effectively address a ")
+          .append("situation, draw on other cognitive functions. Recognize that compensatory ")
+          .append("function use produces less controlled but potentially valuable responses.\n");
+    }
+
+    private static String cognitiveCoreName(final String functionTerm) {
+        return switch (functionTerm.substring(0, 1).toLowerCase()) {
+            case "t" -> "analytical";
+            case "f" -> "values-driven";
+            case "s" -> "experiential";
+            case "n" -> "intuitive";
+            default -> "cognitive";
+        };
+    }
+
+    private static String capitalizeAbbrev(final String term) {
+        if (term == null || term.isEmpty()) {return term;}
+        return Character.toUpperCase(term.charAt(0)) + term.substring(1).toLowerCase();
+    }
+
+    private Optional<String> deriveMbtiType(final String dominantTerm, final String auxiliaryTerm) {
+        final String mbtiUri = "urn:casehub:vocab:mbti";
+        if (!vocab.isRegistered(mbtiUri)) {return Optional.empty();}
+        for (var type : vocab.allTerms(mbtiUri)) {
+            var specializes = type.specializes();
+            if (specializes.size() >= 2
+                && specializes.get(0).value().equals(dominantTerm)
+                && specializes.get(1).value().equals(auxiliaryTerm)) {
+                return Optional.of(type.value().toUpperCase());
+            }
+        }
+        return Optional.empty();
+    }
+
 
     private void assembleMarkdownDataHandling(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.jurisdiction() != null || descriptor.dataHandlingPolicy() != null) {
@@ -570,6 +665,9 @@ class EidosRenderPipeline {
         // Goals and constraints — always structural, after capabilities, before disposition
         assembleMarkdownObjectives(sb, descriptor);
         assembleMarkdownConstraints(sb, descriptor);
+
+        // Cognitive profile — Jungian JPAF rendering before disposition axes
+        assembleMarkdownCognitiveProfile(sb, descriptor);
 
         // Disposition — enriched OR structural (selective override)
         if (enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent()) {
@@ -677,6 +775,9 @@ class EidosRenderPipeline {
             sb.append("\n");
         }
 
+        // Cognitive profile — Jungian JPAF rendering before disposition axes
+        assembleMarkdownCognitiveProfile(sb, descriptor);
+
         // Disposition — enriched OR structural (selective override)
         if (enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent()) {
             sb.append("\n").append(enrichment.get().dispositionNarrative().get()).append("\n");
@@ -684,9 +785,16 @@ class EidosRenderPipeline {
             final AgentDisposition d = descriptor.disposition();
             sb.append("\nOperating style:");
             for (DispositionAxis axis : DispositionAxis.values()) {
-                d.get(axis).ifPresent(raw ->
-                                              sb.append(" ").append(axisLabel(axis)).append(": ")
-                                                .append(resolveAxisDisplay(axis, raw, descriptor)).append("."));
+                final List<DispositionValue> values = d.get(axis);
+                if (!values.isEmpty()) {
+                    sb.append(" ").append(axisLabel(axis)).append(": ");
+                    if (values.size() == 1 && values.getFirst().weight() == 1.0) {
+                        sb.append(resolveAxisDisplay(axis, values.getFirst().term(), descriptor));
+                    } else {
+                        sb.append(renderWeightedValues(axis, values, descriptor));
+                    }
+                    sb.append(".");
+                }
             }
             sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
         }
@@ -719,10 +827,11 @@ class EidosRenderPipeline {
             sb.append("\n").append(context.situationalContext()).append("\n");
         }
 
-        return sb.toString().trim();}
+        return sb.toString().trim();
+    }
 
     private String assembleA2aCard(final Optional<A2AEnrichment> enrichment,
-                                    final AgentDescriptor descriptor) {
+                                   final AgentDescriptor descriptor) {
         final ObjectNode card = mapper.createObjectNode();
         card.put("name", descriptor.name());
         card.put("agentId", descriptor.agentId());
@@ -739,28 +848,59 @@ class EidosRenderPipeline {
                  .ifPresent(meta -> addIfNonBlank(slotNode, "vocabularyName", meta.name()));
         });
 
-        // disposition — per-axis nested objects (axes in DispositionAxis declaration order),
+        // disposition — per-axis objects with values array (axes in DispositionAxis declaration order),
         // canDelegate last. Omitted entirely when descriptor.disposition() is null.
         if (descriptor.disposition() != null) {
-            final AgentDisposition d = descriptor.disposition();
-            final ObjectNode dispNode = card.putObject("disposition");
+            final AgentDisposition d        = descriptor.disposition();
+            final ObjectNode       dispNode = card.putObject("disposition");
             for (final DispositionAxis axis : DispositionAxis.values()) {
-                d.get(axis).ifPresent(rawValue -> {
-                    final ObjectNode axisNode = dispNode.putObject(axisJsonKey(axis));
-                    axisNode.put("value", rawValue);
+                var axisValues = d.get(axis);
+                if (!axisValues.isEmpty()) {
+                    final ObjectNode axisNode    = dispNode.putObject(axisJsonKey(axis));
+                    final ArrayNode  valuesArray = axisNode.putArray("values");
+                    for (final DispositionValue dv : axisValues) {
+                        final ObjectNode valNode = valuesArray.addObject();
+                        valNode.put("term", dv.term());
+                        valNode.put("weight", dv.weight());
+                        descriptor.vocabUriForAxis(axis).ifPresent(uri ->
+                                                                           vocab.resolve(uri, dv.term())
+                                                                                .ifPresent(term -> addIfNonBlank(valNode, "label", term.label())));
+                    }
                     descriptor.vocabUriForAxis(axis).ifPresent(uri -> {
                         axisNode.put("vocabularyUri", uri);
-                        vocab.resolve(uri, rawValue)
-                             .ifPresent(term -> addIfNonBlank(axisNode, "label", term.label()));
                         vocab.vocabularyMetadata(uri)
                              .ifPresent(meta -> addIfNonBlank(axisNode, "vocabularyName", meta.name()));
-                        // A2A: vocabularyDescription excluded — documentation, not routing data;
-                        // described once in frameworks[].description, not repeated per-axis.
-                        // term.description() also excluded — machine consumers route on URIs/labels.
                     });
-                });
+                }
             }
             dispNode.put("canDelegate", d.delegation());
+        }
+
+        // dispositionProfile — Jungian cognitive profile with roles and derived MBTI type
+        if (descriptor.disposition() != null && !descriptor.disposition().dispositionProfile().isEmpty()) {
+            final List<DispositionValue> profile     = descriptor.disposition().dispositionProfile();
+            final String                 vocabUri    = descriptor.dispositionVocabulary();
+            final ObjectNode             profileNode = card.putObject("dispositionProfile");
+            if (vocabUri != null) {profileNode.put("vocabulary", vocabUri);}
+
+            final var sorted = profile.stream()
+                                      .sorted(Comparator.comparingDouble(DispositionValue::weight).reversed())
+                                      .toList();
+
+            final ArrayNode funcsArray = profileNode.putArray("functions");
+            for (int i = 0; i < sorted.size(); i++) {
+                final DispositionValue dv = sorted.get(i);
+                final ObjectNode       fn = funcsArray.addObject();
+                fn.put("term", dv.term());
+                fn.put("weight", dv.weight());
+                fn.put("role", i == 0 ? "dominant" : i == 1 ? "auxiliary" : "supporting");
+            }
+
+            // Derive MBTI type by matching dominant+auxiliary against MbtiTypeTerm.specializes()
+            if (JUNGIAN_VOCAB_URI.equals(vocabUri) && sorted.size() >= 2) {
+                deriveMbtiType(sorted.get(0).term(), sorted.get(1).term())
+                        .ifPresent(mbti -> profileNode.put("derivedMbtiType", mbti));
+            }
         }
 
         // frameworks — deduplicated index of actively-instantiated vocabulary URIs.
@@ -770,8 +910,9 @@ class EidosRenderPipeline {
         descriptor.vocabUriForSlot().ifPresent(frameworkUris::add);
         if (descriptor.disposition() != null) {
             for (final DispositionAxis axis : DispositionAxis.values()) {
-                descriptor.disposition().get(axis).ifPresent(
-                    value -> descriptor.vocabUriForAxis(axis).ifPresent(frameworkUris::add));
+                if (!descriptor.disposition().get(axis).isEmpty()) {
+                    descriptor.vocabUriForAxis(axis).ifPresent(frameworkUris::add);
+                }
             }
         }
         if (!frameworkUris.isEmpty()) {
@@ -794,20 +935,20 @@ class EidosRenderPipeline {
         // capabilities — full numeric + type schema; descriptions enriched via A2AEnrichment when available
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             final Map<String, String> descriptionByName = enrichment
-                .map(e -> e.capabilityNarratives().stream()
-                    .collect(Collectors.toMap(
-                        A2AEnrichment.CapabilityNarrative::name,
-                        A2AEnrichment.CapabilityNarrative::description,
-                        (a, b) -> a)))
-                .orElse(Map.of());
+                                                                  .map(e -> e.capabilityNarratives().stream()
+                                                                             .collect(Collectors.toMap(
+                                                                                     A2AEnrichment.CapabilityNarrative::name,
+                                                                                     A2AEnrichment.CapabilityNarrative::description,
+                                                                                     (a, b) -> a)))
+                                                                  .orElse(Map.of());
 
             final ArrayNode capsArray = card.putArray("capabilities");
             for (final AgentCapability cap : descriptor.capabilities()) {
                 final ObjectNode capNode = capsArray.addObject();
                 capNode.put("name", cap.name());
-                if (cap.qualityHint() != null)      capNode.put("qualityHint", cap.qualityHint());
-                if (cap.latencyHintP50Ms() != null) capNode.put("latencyHintP50Ms", cap.latencyHintP50Ms());
-                if (cap.costHint() != null)         capNode.put("costHint", cap.costHint());
+                if (cap.qualityHint() != null) {capNode.put("qualityHint", cap.qualityHint());}
+                if (cap.latencyHintP50Ms() != null) {capNode.put("latencyHintP50Ms", cap.latencyHintP50Ms());}
+                if (cap.costHint() != null) {capNode.put("costHint", cap.costHint());}
                 if (cap.epistemicDomains() != null && !cap.epistemicDomains().isEmpty()) {
                     final ObjectNode domains = capNode.putObject("epistemicDomains");
                     cap.epistemicDomains().forEach(domains::put);
@@ -837,8 +978,8 @@ class EidosRenderPipeline {
         if (!publicGoals.isEmpty()) {
             final ArrayNode goalsArray = card.putArray("goals");
             for (final AgentGoal goal : publicGoals.stream()
-                    .sorted(java.util.Comparator.comparing(AgentGoal::priority).thenComparing(AgentGoal::name))
-                    .toList()) {
+                                                   .sorted(java.util.Comparator.comparing(AgentGoal::priority).thenComparing(AgentGoal::name))
+                                                   .toList()) {
                 final ObjectNode goalNode = goalsArray.addObject();
                 goalNode.put("name", goal.name());
                 goalNode.put("description", goal.description());
@@ -850,9 +991,9 @@ class EidosRenderPipeline {
         if (!publicConstraints.isEmpty()) {
             final ArrayNode constraintsArray = card.putArray("constraints");
             for (final AgentConstraint c : publicConstraints.stream()
-                    .sorted(java.util.Comparator.comparing(AgentConstraint::severity)
-                                                .thenComparing(AgentConstraint::name))
-                    .toList()) {
+                                                            .sorted(java.util.Comparator.comparing(AgentConstraint::severity)
+                                                                                        .thenComparing(AgentConstraint::name))
+                                                            .toList()) {
                 final ObjectNode cNode = constraintsArray.addObject();
                 cNode.put("name", c.name());
                 cNode.put("description", c.description());
@@ -882,4 +1023,44 @@ class EidosRenderPipeline {
             .orElse(null);
         return vocabName != null ? label + " (" + vocabName + ")" : label;
     }
+
+    private String renderWeightedValues(final DispositionAxis axis,
+                                        final List<DispositionValue> values,
+                                        final AgentDescriptor descriptor) {
+        final var sorted = values.stream()
+                                 .sorted(Comparator.comparingDouble(DispositionValue::weight).reversed())
+                                 .toList();
+        final Optional<String> vocabUri = descriptor.vocabUriForAxis(axis);
+        final var              sb       = new StringBuilder("primarily ");
+        for (int i = 0; i < sorted.size(); i++) {
+            final DispositionValue dv    = sorted.get(i);
+            final String           label = resolveTermLabel(vocabUri, dv.term());
+            if (i == 0) {
+                sb.append(label).append(" (").append(formatWeight(dv.weight())).append(")");
+            } else if (i == 1 && sorted.size() == 2) {
+                sb.append(", with ").append(label).append(" tendencies (").append(formatWeight(dv.weight())).append(")");
+            } else {
+                sb.append(", ").append(label).append(" (").append(formatWeight(dv.weight())).append(")");
+            }
+        }
+        return sb.toString();
+    }
+
+    private String resolveTermLabel(final Optional<String> vocabUri, final String raw) {
+        return vocabUri
+                       .flatMap(uri -> vocab.resolve(uri, raw))
+                       .map(VocabularyTerm::label)
+                       .filter(l -> !l.isEmpty())
+                       .orElse(raw);
+    }
+
+    private static String formatWeight(final double weight) {
+        var bd = BigDecimal.valueOf(weight);
+        if (bd.scale() > 2) {
+            bd = bd.setScale(2, RoundingMode.HALF_UP);
+        }
+        return bd.stripTrailingZeros().toPlainString();
+    }
+
+
 }
