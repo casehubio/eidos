@@ -41,7 +41,7 @@ class AgentDescriptorBootstrapTest {
             () -> List.of(desc("a1", "t1"))
         );
 
-        assertThatThrownBy(() -> AgentDescriptorBootstrap.registerAll(registrars, new ListRegistry(), emptyTemplateRegistry()))
+        assertThatThrownBy(() -> AgentDescriptorBootstrap.registerAll(registrars, new ListRegistry(), emptyTemplateRegistry(), DescriptorCollectorTest.NoOpVocabRegistry.INSTANCE))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Duplicate descriptor")
             .hasMessageContaining("a1")
@@ -56,14 +56,14 @@ class AgentDescriptorBootstrapTest {
             () -> List.of(desc("a1", "t2"))
         );
 
-        AgentDescriptorBootstrap.registerAll(registrars, registry, emptyTemplateRegistry());
+        AgentDescriptorBootstrap.registerAll(registrars, registry, emptyTemplateRegistry(), DescriptorCollectorTest.NoOpVocabRegistry.INSTANCE);
         assertThat(registry.registered).hasSize(2);
     }
 
     @Test
     void empty_registrars_registers_nothing() {
         var registry = new ListRegistry();
-        AgentDescriptorBootstrap.registerAll(List.of(), registry, emptyTemplateRegistry());
+        AgentDescriptorBootstrap.registerAll(List.of(), registry, emptyTemplateRegistry(), DescriptorCollectorTest.NoOpVocabRegistry.INSTANCE);
         assertThat(registry.registered).isEmpty();
     }
 

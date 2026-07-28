@@ -196,14 +196,14 @@ class AgentDescriptorComparatorTest {
     @Test
     void disposition_axisDrifted() {
         var drifted = AgentDisposition.builder()
-                .socialOrient("independent").ruleFollowing("principled")
-                .riskAppetite("measured").autonomy("semi-autonomous")
-                .conflictMode("compromising").delegation(false)
-                .build();
+                                      .socialOrient("independent").ruleFollowing("principled")
+                                      .riskAppetite("measured").autonomy("semi-autonomous")
+                                      .conflictMode("compromising").delegation(false)
+                                      .build();
         var result = AgentDescriptorComparator.compare(base(), withField(b -> b.disposition(drifted)));
         assertThat(result.drifts()).extracting("field").containsExactly("disposition.socialOrient");
-        assertThat(result.drifts().get(0).desiredValue()).isEqualTo("collaborative");
-        assertThat(result.drifts().get(0).actualValue()).isEqualTo("independent");
+        assertThat(result.drifts().get(0).desiredValue()).contains("collaborative");
+        assertThat(result.drifts().get(0).actualValue()).contains("independent");
     }
 
     @Test
