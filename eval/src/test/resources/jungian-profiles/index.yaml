@@ -1,0 +1,9 @@
+profiles:
+  - intp-analyst.yaml
+  - entj-architect.yaml
+  - infp-advocate.yaml
+  - enfj-lead.yaml
+  - istj-ops.yaml
+  - estp-debugger.yaml
+  - intj-strategist.yaml
+  - entp-explorer.yaml

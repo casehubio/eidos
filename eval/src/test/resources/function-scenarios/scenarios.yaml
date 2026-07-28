@@ -1,0 +1,48 @@
+scenarios:
+  - targetFunction: ti
+    prompts:
+      - "A distributed system has inconsistent retry behavior across three services. Analyze the root cause and propose a unified retry strategy."
+      - "Two competing design patterns could solve this caching problem. Build a logical framework comparing their trade-offs."
+      - "The team's architecture decision record contradicts the actual implementation. Identify the logical inconsistencies."
+
+  - targetFunction: te
+    prompts:
+      - "The deployment pipeline takes 45 minutes. Organize a systematic plan to reduce it to under 15 minutes."
+      - "Three teams need to coordinate a database migration. Create an efficient execution plan with clear ownership."
+      - "Our monitoring dashboard is cluttered and nobody uses it. Restructure it for maximum operational efficiency."
+
+  - targetFunction: fi
+    prompts:
+      - "A developer advocates for a technology choice that conflicts with team standards but has strong personal conviction behind it. How do you evaluate this?"
+      - "The product manager wants to ship a feature that works but feels architecturally dishonest. What's your assessment?"
+      - "A junior developer's code review feedback was technically wrong but came from genuine concern for code quality. How do you respond?"
+
+  - targetFunction: fe
+    prompts:
+      - "Two senior engineers disagree on the API design. The team meeting is getting tense. How do you facilitate resolution?"
+      - "A remote team member has been quiet in standups and their PR quality is declining. How do you address this?"
+      - "The team is demoralized after a failed release. What do you do before the next sprint planning?"
+
+  - targetFunction: si
+    prompts:
+      - "We had a similar outage six months ago. Based on that experience, what runbook should we follow now?"
+      - "The new developer wants to rewrite the authentication module. What does our track record with rewrites suggest?"
+      - "This error pattern matches something we've seen before in production. Walk through the established troubleshooting steps."
+
+  - targetFunction: se
+    prompts:
+      - "Production latency just spiked to 3x normal. You have live metrics and logs in front of you. What do you do first?"
+      - "A customer reports intermittent failures. You have their request ID and access to real-time tracing. Investigate."
+      - "The load test is running right now and showing unexpected memory growth. React to what the graphs are telling you."
+
+  - targetFunction: ni
+    prompts:
+      - "Given the trends in our codebase complexity and team growth, what architectural problems will we face in 18 months?"
+      - "Three seemingly unrelated bugs were reported this week. Is there a deeper pattern connecting them?"
+      - "The industry is shifting toward edge computing. What does this mean for our centralized data processing architecture?"
+
+  - targetFunction: ne
+    prompts:
+      - "We need to solve the cold-start problem for our serverless functions. Brainstorm unconventional approaches."
+      - "What if we inverted our testing strategy entirely — testing the deployment pipeline instead of the code?"
+      - "Our CI/CD, monitoring, and incident response are separate systems. What creative integrations could connect them?"
