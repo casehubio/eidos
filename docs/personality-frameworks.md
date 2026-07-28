@@ -230,8 +230,81 @@ must be translated.
 | Judging (J) | High Conscientiousness | `ruleFollowing: strict` (partial) |
 | Perceiving (P) | Low Conscientiousness | `ruleFollowing: flexible` (partial) |
 
-**Do not create a MBTI vocabulary module.** The instability of type assignments makes
-any vocabulary built on MBTI terms unreliable over time.
+**Do not create a MBTI vocabulary module for human-assessed personality.** The instability
+of type assignments derived from human assessment makes any vocabulary built on those
+MBTI terms unreliable over time.
+
+#### Jungian Rehabilitation
+
+The test-retest critique above assumes personality is *measured* from observed behavior.
+For LLM agents, personality is *specified* — declared and injected via structured
+prompting. No measurement error because no measurement. The instability is in the
+assessment instrument, not the type system itself.
+
+MBTI types are now supported via `MbtiTypeTerm` in `casehub-eidos-vocab`, grounded in
+`JungianFunctionTerm` via `specializes()`. Each of the 16 types decomposes into its
+dominant + auxiliary cognitive functions. The type label is an emergent property of the
+weighted function stack — not an injected identity. The dichotomous scoring problem is
+resolved: function weights are continuous [0.0–1.0].
+
+This distinction matters: "INTP" as a human-assessed label is unstable; "Ti-dominant,
+Ne-auxiliary with weights [0.35, 0.20, ...]" as a specified cognitive profile is
+deterministic and reproducible. See §2.4 Jungian Cognitive Functions.
+
+---
+
+### 2.4 Jungian Cognitive Functions
+
+**What it models:** Eight cognitive functions describing how agents process information
+and make decisions. Based on Carl Jung's typological model, operationalized for LLM
+agents by the JPAF paper (arXiv:2601.10025). Functions are arranged in two dimensions:
+category (Judging vs. Perceiving) and attitude (Introverted vs. Extraverted).
+
+| Function | Label | Category | Attitude | Description |
+|----------|-------|----------|----------|-------------|
+| Ti | Introverted Thinking | Judging | Introverted | Builds internal logical frameworks; analytical, precision-focused |
+| Te | Extraverted Thinking | Judging | Extraverted | Applies logical organization externally; systematic, efficiency-oriented |
+| Fi | Introverted Feeling | Judging | Introverted | Evaluates through deeply held personal values; authentic, principled |
+| Fe | Extraverted Feeling | Judging | Extraverted | Harmonizes group values and social dynamics; attentive to others |
+| Si | Introverted Sensation | Perceiving | Introverted | Draws on internalized sensory impressions and past experience |
+| Se | Extraverted Sensation | Perceiving | Extraverted | Focuses on immediate sensory data; concrete, present-moment |
+| Ni | Introverted Intuition | Perceiving | Introverted | Synthesizes internal patterns into singular insights; foresight |
+| Ne | Extraverted Intuition | Perceiving | Extraverted | Explores external patterns, possibilities, and connections |
+
+**Scientific validity:** Medium-High — Jung's cognitive function theory is the most
+enduring part of his typological work. The JPAF paper demonstrates 100% MBTI alignment
+across GPT-4, Llama, and Qwen using function-level specification, with TAA (trait
+activation accuracy) >90% and PSA (personality shift accuracy) 100% for capable models.
+Independent validation via activation steering (arXiv:2607.20803, July 2026) confirms
+function-level personality control in LLMs.
+
+**Workplace adoption:** Growing — Jungian cognitive functions underpin MBTI (§2.3) but
+are increasingly used directly, bypassing the dichotomous type system.
+
+**Vocabulary role:** Disposition vocabulary (`urn:casehub:vocab:jungian`). Agents declare
+a weighted cognitive function profile via `dispositionProfile` on `AgentDisposition`.
+Functions resolve to all five disposition axes via `axisExactMatch` (cross-vocabulary
+projection to Conscientiousness and Thomas-Kilmann terms).
+
+**Why function-level specification works for LLM agents:**
+- **Weighted profiles, not dichotomies:** Each function carries a continuous weight
+  [0.0–1.0], avoiding the MBTI dichotomous scoring problem
+- **Compensation mechanism:** Dominant functions are balanced by auxiliary functions
+  from the opposite category (Judging ↔ Perceiving), creating nuanced behavioral profiles
+- **Personality is specified, not measured:** No assessment instrument error — the function
+  stack is declared and injected via structured prompting
+
+**Structural rules:**
+- **Shadow:** Each function has an opposite-attitude counterpart (Ti↔Te, Fi↔Fe, Si↔Se,
+  Ni↔Ne). Shadow activation signals personality evolution
+- **Dominant-auxiliary pairing:** Valid pairs use opposite categories (a Judging dominant
+  requires a Perceiving auxiliary and vice versa)
+- **Weight tiers:** Dominant [0.31–1.0], auxiliary [0.06–0.30], undifferentiated [0–0.06]
+
+**Implementation:** `JungianFunctionTerm` enum in `casehub-eidos-vocab` with `shadow()`,
+`opposite()`, `category()`, `attitude()`, `compatibleAuxiliaries()`. `MbtiTypeTerm`
+provides 16 MBTI types grounded via `specializes()` to their dominant + auxiliary
+JungianFunctionTerms.
 
 ---
 
@@ -381,19 +454,23 @@ simultaneously adds no signal — SFIA is an IT-specific subset of the O*NET kno
 
 Rows = AgentDescriptor fields. Columns = all frameworks except BDI (appendix only).
 
-| Field | Belbin | MM | Big Five | DISC | MBTI | TK | SL | KAI | O\*NET | SFIA |
-|-------|--------|----|----------|------|------|----|----|-----|--------|------|
-| `slot` | **slot** | — | — | — | — | — | — | — | capabilities* | — |
-| `capabilities` | — | — | — | — | — | — | — | — | **capabilities** | **capabilities** |
-| `socialOrient` | **disposition** | reference | partial | **disposition** | partial | partial | — | — | partial | — |
-| `ruleFollowing` | **disposition** | reference | partial | **disposition** | partial | — | — | partial | — | — |
-| `riskAppetite` | **disposition** | reference | partial | **disposition** | partial | — | — | partial | — | — |
-| `autonomy` | **disposition** | reference | partial | **disposition** | — | — | reference | — | partial | partial |
-| `conflictMode` | — | — | — | **disposition** | — | **disposition** | — | — | — | — |
-| `delegation` | **disposition** | — | — | — | — | — | — | — | — | — |
+| Field | Belbin | MM | Big Five | DISC | MBTI | TK | Jungian | SL | KAI | O\*NET | SFIA |
+|-------|--------|----|----------|------|------|----|---------|----|-----|--------|------|
+| `slot` | **slot** | — | — | — | — | — | — | — | — | capabilities* | — |
+| `capabilities` | — | — | — | — | — | — | — | — | — | **capabilities** | **capabilities** |
+| `socialOrient` | **disposition** | reference | partial | **disposition** | partial | partial | **disposition** | — | — | partial | — |
+| `ruleFollowing` | **disposition** | reference | partial | **disposition** | partial | — | **disposition** | — | partial | — | — |
+| `riskAppetite` | **disposition** | reference | partial | **disposition** | partial | — | **disposition** | — | partial | — | — |
+| `autonomy` | **disposition** | reference | partial | **disposition** | — | — | **disposition** | reference | — | partial | partial |
+| `conflictMode` | — | — | — | **disposition** | — | **disposition** | **disposition** | — | — | — | — |
+| `delegation` | **disposition** | — | — | — | — | — | — | — | — | — | — |
 
 Key: **bold** = primary vocabulary source for this field · `partial` = partial/approximate mapping ·
 `reference` = conceptual grounding only, no vocabulary terms · `Partial` (compatibility) = meaningful overlap but insufficient to justify dual vocabulary · `—` = no claim
+
+Note: Jungian maps to all 5 disposition axes via `axisExactMatch` cross-vocabulary projection
+(→ Conscientiousness for socialOrient, ruleFollowing, riskAppetite, autonomy; → Thomas-Kilmann
+for conflictMode). It does not map to slot, capabilities, or delegation.
 
 Note on DISC × conflictMode: DISC types resolve to TK conflict modes via `axisExactMatch` (D→competing, i→collaborating, S→accommodating, C→avoiding). They appear as `**disposition**` here because an agent using `dispositionVocabulary="urn:casehub:vocab:disc"` will have its `conflictMode` value axis-resolved to TK terms automatically — DISC is a usable vocabulary source for this field even though TK defines the underlying terms. COMPROMISING has no DISC equivalent.
 
@@ -417,7 +494,11 @@ orthogonal.
 | Big Five + Situational Leadership | Reference | SL describes leader response to follower readiness, not agent trait; useful as autonomy axis framing only |
 | O*NET + Big Five | Additive | Occupational competence (capabilities) + behavioral trait (disposition) are orthogonal |
 | SFIA + O*NET | Redundant | Both are occupational competence frameworks; SFIA is an IT-specific subset |
-| MBTI + anything | Inadvisable | Low test-retest reliability makes any vocabulary built on MBTI types unstable; not a conceptual contradiction but any combination produces unreliable encodings |
+| MBTI (human-assessed) + anything | Inadvisable | Low test-retest reliability makes any vocabulary built on human-assessed MBTI types unstable; not a conceptual contradiction but any combination produces unreliable encodings |
+| MBTI (agent-specified) + Jungian | Hierarchical | MBTI types emerge from Jungian function stacks via `specializes()`. The type label is an emergent property — see §2.3 Jungian Rehabilitation |
+| Jungian + Belbin | Additive | Cognitive style (Jungian functions) and team role (Belbin slot) are orthogonal — both contribute independent signal |
+| Jungian + DISC | Redundant | Both describe behavioral style; Jungian is deeper (8 functions with structural rules vs. 4 quadrants). Jungian projects onto the same disposition axes as DISC |
+| Jungian + Conscientiousness | Redundant | Jungian functions project onto all Conscientiousness axes via `axisExactMatch` — using both creates contradictory encodings |
 | KAI + DISC | Partial | Adaptor/Innovator overlaps with DISC C/D on ruleFollowing and riskAppetite; KAI adds precision but not enough to justify two vocabularies |
 
 ---
@@ -655,15 +736,47 @@ security analysis). Use O*NET for general roles; SFIA for IT-specific roles. Add
 
 ---
 
+### Jungian Profile
+
+*Jungian cognitive function disposition profile with auto-derived axes*
+
+```
+dispositionVocabulary = "urn:casehub:vocab:jungian"
+dispositionProfile      = [{ti, 0.45}, {ne, 0.20}, {si, 0.10}, {fe, 0.08}, ...]
+// axes auto-derived via cross-vocabulary projection
+```
+
+**What it expresses:** Complete cognitive style via weighted function stack. All five
+disposition axes are auto-derived from the function profile via `axisExactMatch`
+cross-vocabulary projection (Jungian → Conscientiousness for axes 1–4, Jungian →
+Thomas-Kilmann for conflictMode). No explicit axis values needed.
+
+**What it leaves unspecified:** Team role (add Belbin `slotVocabulary` if needed),
+occupational domain (add capabilities separately).
+
+**When to use:** Agents whose behavioral profile should emerge from cognitive style
+rather than being directly specified per axis. Particularly suited for agents that need
+personality evolution via `DispositionHealth` / `DispositionEvolution` — the Jungian
+function stack provides the structural rules for valid transitions.
+
+**MBTI convenience:** For agents with a known MBTI type, use
+`MbtiTypeTerm.INTP.defaultProfile()` to generate the 8-function weight distribution
+automatically. The MBTI type label is emergent — never inject it directly.
+
+---
+
 ## Anti-Patterns
 
 ### Framework Selection Errors
 
-**1. MBTI as vocabulary basis**
-MBTI types are unstable (~50% type-change one month later). Any vocabulary built on MBTI
-terms becomes unreliable as agents are re-assessed. Use Big Five / Conscientiousness
-vocabulary instead. MBTI→Big Five approximate mappings (§2.3) are provided for legacy
-translation only.
+**1. MBTI as vocabulary basis (human-measured)**
+When MBTI types are derived from human personality assessment, ~50% type-change one month
+later makes any vocabulary built on MBTI terms unreliable. Use Big Five /
+Conscientiousness vocabulary instead for assessment-derived personality. MBTI→Big Five
+approximate mappings (§2.3) are provided for legacy translation only.
+**Exception:** For LLM agents, personality is *specified* not *measured* —
+`MbtiTypeTerm` provides MBTI types grounded through Jungian cognitive functions
+(`specializes()` → `JungianFunctionTerm`). See §2.4 Jungian Cognitive Functions.
 
 **2. DISC + Conscientiousness vocabulary simultaneously**
 DISC is a quadrant simplification of Big Five Extraversion × Agreeableness. Using
