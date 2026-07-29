@@ -62,4 +62,6 @@ public interface VocabularyTerm {
 
     default Optional<VocabularyTerm> opposite() {return Optional.empty();}
 
+    default List<DispositionValue> defaultProfile() { return List.of(); }
+
 }

@@ -56,6 +56,7 @@ public enum MbtiTypeTerm implements VocabularyTerm {
         return List.of(dominant, auxiliary);
     }
 
+    @Override
     public List<DispositionValue> defaultProfile() {
         JungianFunctionTerm[] others = Arrays.stream(JungianFunctionTerm.values())
                 .filter(f -> f != dominant && f != auxiliary)
