@@ -6,13 +6,14 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
-import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentGoal;
+import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.TemplateRef;
 import io.casehub.eidos.api.Visibility;
+import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -33,7 +34,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
     private static final ObjectMapper YAML_MAPPER   = new ObjectMapper(new YAMLFactory())
                                                               .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
-    private static AgentDescriptor toDescriptor(final DescriptorConfig cfg) {
+    private static AgentDescriptor toDescriptor(final DescriptorConfig cfg, final VocabularyRegistry vocabRegistry) {
         final var builder = AgentDescriptor.builder()
                                            .agentId(cfg.agentId).name(cfg.name).slot(cfg.slot).tenancyId(cfg.tenancyId)
                                            .version(cfg.version).provider(cfg.provider)
@@ -53,14 +54,24 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         }
 
         if (cfg.disposition != null) {
-            builder.disposition(AgentDisposition.builder()
+            var dispBuilder = AgentDisposition.builder()
                     .socialOrient(cfg.disposition.socialOrient)
                     .ruleFollowing(cfg.disposition.ruleFollowing)
                     .riskAppetite(cfg.disposition.riskAppetite)
                     .autonomy(cfg.disposition.autonomy)
                     .conflictMode(cfg.disposition.conflictMode)
-                    .delegation(cfg.disposition.delegation)
-                    .build());
+                    .delegation(cfg.disposition.delegation);
+
+            if (cfg.disposition.dispositionProfile != null && !cfg.disposition.dispositionProfile.isEmpty()) {
+                dispBuilder.dispositionProfile(cfg.disposition.dispositionProfile.stream()
+                        .map(dv -> new io.casehub.eidos.api.DispositionValue(dv.term, dv.weight))
+                        .toList());
+            } else if (cfg.disposition.mbtiType != null && vocabRegistry != null) {
+                vocabRegistry.resolve("urn:casehub:vocab:mbti", cfg.disposition.mbtiType.toLowerCase(java.util.Locale.ROOT))
+                        .ifPresent(term -> dispBuilder.dispositionProfile(term.defaultProfile()));
+            }
+
+            builder.disposition(dispBuilder.build());
         }
 
         if (cfg.capabilities != null) {
@@ -114,6 +125,10 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
     }
 
     List<AgentDescriptor> loadFrom(final InputStream yaml) {
+        return loadFrom(yaml, null);
+    }
+
+    public List<AgentDescriptor> loadFrom(final InputStream yaml, final VocabularyRegistry vocabRegistry) {
         if (yaml == null) {return List.of();}
         final DescriptorFile file;
         try {
@@ -125,7 +140,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
 
         final var result = new ArrayList<AgentDescriptor>(file.descriptors.size());
         for (final var cfg : file.descriptors) {
-            result.add(toDescriptor(cfg));
+            result.add(toDescriptor(cfg, vocabRegistry));
         }
         return result;
     }
@@ -150,7 +165,14 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
 
     static class DispositionConfig {
         public String socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode;
-        public boolean delegation;
+        public boolean                      delegation;
+        public String                       mbtiType;
+        public List<DispositionValueConfig> dispositionProfile;
+    }
+
+    static class DispositionValueConfig {
+        public String term;
+        public double weight;
     }
 
     static class CapabilityConfig {
