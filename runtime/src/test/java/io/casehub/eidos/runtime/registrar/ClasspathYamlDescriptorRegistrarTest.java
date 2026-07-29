@@ -232,4 +232,103 @@ class ClasspathYamlDescriptorRegistrarTest {
         assertThatThrownBy(() -> parse(yaml))
                 .isInstanceOf(NullPointerException.class);
     }
+
+    @Test
+    void dispositionProfile_parsed_from_yaml() {
+        var yaml = """
+                   descriptors:
+                     - agentId: jungian-test
+                       name: Test
+                       slot: s
+                       tenancyId: t
+                       dispositionVocabulary: urn:casehub:vocab:jungian
+                       disposition:
+                         dispositionProfile:
+                           - term: te
+                             weight: 0.35
+                           - term: ni
+                             weight: 0.20
+                   """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(1);
+        var profile = result.get(0).disposition().dispositionProfile();
+        assertThat(profile).hasSize(2);
+        assertThat(profile.get(0).term()).isEqualTo("te");
+        assertThat(profile.get(0).weight()).isEqualTo(0.35);
+        assertThat(profile.get(1).term()).isEqualTo("ni");
+        assertThat(profile.get(1).weight()).isEqualTo(0.20);
+    }
+
+    @Test
+    void mbtiType_resolved_to_dispositionProfile() {
+        var yaml = """
+                   descriptors:
+                     - agentId: mbti-test
+                       name: Test
+                       slot: s
+                       tenancyId: t
+                       dispositionVocabulary: urn:casehub:vocab:jungian
+                       disposition:
+                         mbtiType: ENTJ
+                   """;
+        var result = registrar.loadFrom(
+                new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
+                testVocabRegistry());
+        assertThat(result).hasSize(1);
+        var profile = result.get(0).disposition().dispositionProfile();
+        assertThat(profile).hasSize(8);
+        assertThat(profile.get(0).term()).isEqualTo("te");
+        assertThat(profile.get(0).weight()).isEqualTo(0.35);
+    }
+
+    @Test
+    void mbtiType_case_insensitive() {
+        var yaml = """
+                   descriptors:
+                     - agentId: case-test
+                       name: Test
+                       slot: s
+                       tenancyId: t
+                       dispositionVocabulary: urn:casehub:vocab:jungian
+                       disposition:
+                         mbtiType: entj
+                   """;
+        var result = registrar.loadFrom(
+                new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
+                testVocabRegistry());
+        var profile = result.get(0).disposition().dispositionProfile();
+        assertThat(profile).hasSize(8);
+        assertThat(profile.get(0).term()).isEqualTo("te");
+    }
+
+    @Test
+    void explicit_dispositionProfile_wins_over_mbtiType() {
+        var yaml = """
+                   descriptors:
+                     - agentId: both-test
+                       name: Test
+                       slot: s
+                       tenancyId: t
+                       dispositionVocabulary: urn:casehub:vocab:jungian
+                       disposition:
+                         mbtiType: ENTJ
+                         dispositionProfile:
+                           - term: ti
+                             weight: 0.50
+                           - term: ne
+                             weight: 0.50
+                   """;
+        var result  = parse(yaml);
+        var profile = result.get(0).disposition().dispositionProfile();
+        assertThat(profile).hasSize(2);
+        assertThat(profile.get(0).term()).isEqualTo("ti");
+        assertThat(profile.get(0).weight()).isEqualTo(0.50);
+    }
+
+    private io.casehub.eidos.api.VocabularyRegistry testVocabRegistry() {
+        var registry = new io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry();
+        registry.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
+        registry.register(io.casehub.eidos.vocab.MbtiTypeTerm.class);
+        return registry;
+    }
 }
