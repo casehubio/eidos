@@ -69,16 +69,14 @@ final class VocabularyImbueFixtures {
 
     static AgentDescriptor composite(AgentDescriptor base, AgentDescriptor overlay) {
         return AgentDescriptor.builder()
-                .agentId(base.agentId() + "+" + overlay.agentId())
-                .name(base.name() + " + " + overlay.name())
-                .slot(overlay.slot() != null ? overlay.slot() : base.slot())
-                .tenancyId(base.tenancyId())
-                .dispositionVocabulary(base.dispositionVocabulary())
-                .slotVocabulary(overlay.slotVocabulary())
-                .briefing(base.briefing())
-                .disposition(AgentDisposition.builder()
-                        .dispositionProfile(base.disposition().dispositionProfile())
-                        .build())
-                .build();
+                              .agentId(base.agentId() + "+" + overlay.agentId())
+                              .name(base.name() + " + " + overlay.name())
+                              .slot(overlay.slot() != null ? overlay.slot() : base.slot())
+                              .tenancyId(base.tenancyId())
+                              .dispositionVocabulary(base.dispositionVocabulary())
+                              .slotVocabulary(overlay.slotVocabulary())
+                              .briefing(base.briefing())
+                              .disposition(base.disposition())
+                              .build();
     }
 }
