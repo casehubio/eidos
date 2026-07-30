@@ -1366,7 +1366,7 @@ class EidosRenderPipelineTest {
     }
 
     @Test
-    void cognitive_style_includes_intuitive_perception_hint_for_n_type() {
+    void cognitive_style_includes_intuitive_perception_for_n_type() {
         vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
         var profile = io.casehub.eidos.vocab.MbtiTypeTerm.ENTJ.defaultProfile();
         var desc = AgentDescriptor.builder()
@@ -1377,12 +1377,12 @@ class EidosRenderPipelineTest {
         var ctx    = AgentPromptContext.forFormat(MARKDOWN);
         var s1     = pipeline.buildStage1(desc, ctx);
         var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("**Perception — Intuitive:**");
         assertThat(result.content()).containsIgnoringCase("patterns");
-        assertThat(result.content()).containsIgnoringCase("big picture");
     }
 
     @Test
-    void cognitive_style_includes_sensing_perception_hint_for_s_type() {
+    void cognitive_style_includes_sensing_perception_for_s_type() {
         vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
         var profile = io.casehub.eidos.vocab.MbtiTypeTerm.ESTP.defaultProfile();
         var desc = AgentDescriptor.builder()
@@ -1393,8 +1393,8 @@ class EidosRenderPipelineTest {
         var ctx    = AgentPromptContext.forFormat(MARKDOWN);
         var s1     = pipeline.buildStage1(desc, ctx);
         var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("**Perception — Concrete:**");
         assertThat(result.content()).containsIgnoringCase("concrete");
-        assertThat(result.content()).containsIgnoringCase("immediate");
     }
 
 

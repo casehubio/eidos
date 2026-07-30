@@ -366,6 +366,17 @@ class EidosRenderPipeline {
                     pNode.put("term", dv.term());
                     pNode.put("weight", dv.weight());
                 }
+                if (JUNGIAN_VOCAB_URI.equals(descriptor.dispositionVocabulary())) {
+                    final var profileSorted = d.dispositionProfile().stream().sorted(Comparator.comparingDouble(DispositionValue::weight).reversed()).toList();
+                    if (profileSorted.size() >= 2) {
+                        final String percFunc = perceivingFunction(profileSorted.get(0).term(), profileSorted.get(1).term());
+                        if (percFunc != null && percFunc.startsWith("n")) {
+                            dispNode.put("perceptionStyle", "intuitive — explores underlying patterns, big picture implications, and novel possibilities over concrete details and established methods");
+                        } else if (percFunc != null && percFunc.startsWith("s")) {
+                            dispNode.put("perceptionStyle", "concrete — focuses on specific, tangible data and immediate practical realities over abstract patterns; prefers proven approaches with track records");
+                        }
+                    }
+                }
             }
         }
 
@@ -600,17 +611,17 @@ class EidosRenderPipeline {
         if (sorted.size() >= 1) {
             final String dt = sorted.get(0).term().toLowerCase();
             if (dt.endsWith("e")) {
-                sb.append("\nYour natural orientation is outward. You think out loud, actively seek input from others, and prefer brainstorming with people over solo analysis. You process by engaging — talking through problems, organizing teams, and collaborating while working, not by withdrawing to reflect.\n");
+                sb.append("\n**Orientation — Outward:** You think out loud, actively seek input from others, and prefer brainstorming with people over solo analysis. You process by engaging — talking through problems, organizing teams, and collaborating while working, not by withdrawing to reflect.\n");
             } else if (dt.endsWith("i")) {
-                sb.append("\nYour natural orientation is inward. You prefer to work through problems internally before sharing conclusions, favouring focused solo analysis over group brainstorming. You form judgments independently first, then engage with the external world once your thinking is clear.\n");
+                sb.append("\n**Orientation — Inward:** You prefer to work through problems internally before sharing conclusions, favouring focused solo analysis over group brainstorming. You form judgments independently first, then engage with the external world once your thinking is clear.\n");
             }
         }
         if (sorted.size() >= 2) {
             final String percFunc = perceivingFunction(sorted.get(0).term(), sorted.get(1).term());
             if (percFunc != null && percFunc.startsWith("n")) {
-                sb.append("\nYour perception is intuitive. You look past surface data to identify underlying patterns and big picture implications. When given a problem, your first instinct is to explore possibilities and strategic meaning, not to catalogue immediate details. You prefer innovative approaches over proven-but-conventional ones.\n");
+                sb.append("\n**Perception — Intuitive:** You look past surface data to identify underlying patterns and big picture implications. When given a problem, your first instinct is to explore possibilities and strategic meaning, not to catalogue immediate details. You prefer innovative approaches over proven-but-conventional ones.\n");
             } else if (percFunc != null && percFunc.startsWith("s")) {
-                sb.append("\nYour perception is concrete and immediate. You focus on specific, tangible data and present-moment facts before anything else. When given a problem, your first instinct is to examine the concrete details and practical realities, not to speculate about abstract possibilities. You prefer proven approaches with track records over untested innovations.\n");
+                sb.append("\n**Perception — Concrete:** You focus on specific, tangible data and present-moment facts before anything else. When given a problem, your first instinct is to examine the concrete details and practical realities, not to speculate about abstract possibilities. You prefer proven approaches with track records over untested innovations.\n");
             }
         }
         sb.append("\nWhen your dominant and auxiliary functions cannot effectively address a situation, draw on other cognitive functions. Recognize that compensatory function use produces less controlled but potentially valuable responses.\n");
