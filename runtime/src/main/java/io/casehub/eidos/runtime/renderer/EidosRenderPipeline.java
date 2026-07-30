@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 class EidosRenderPipeline {
 
 
-    private static final String JUNGIAN_VOCAB_URI = "urn:casehub:vocab:jungian";
     // PROMPT_TEMPLATE must be declared before TEMPLATE_HASH — static initializers run
     // in declaration order. Reversing them causes fingerprint(null) at class load:
     // NullPointerException wrapped in ExceptionInInitializerError, not a quiet wrong value.
@@ -82,7 +81,6 @@ class EidosRenderPipeline {
             - Plain prose. No markdown, no bullet points, no headers.
             - Be concise. Every sentence must carry information the agent needs to act on.
             - Return ONLY the JSON object. No explanation, no preamble, no code fences.""";
-
     static final String A2A_PROMPT_TEMPLATE = """
             You are writing per-capability descriptions for an AI agent's A2A (agent-to-agent) card.
 
@@ -95,7 +93,6 @@ class EidosRenderPipeline {
             - Plain prose. No markdown, no bullet points.
             - Return ONLY the JSON object. No explanation, no preamble, no code fences.
             - If no capabilities are declared, return {"capabilityNarratives": []}.""";
-
     // Schema descriptions extracted as constants so TEMPLATE_HASH can include them.
     // Changing any description changes the LLM output contract — cache must invalidate.
     static final List<String> RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
@@ -103,7 +100,6 @@ class EidosRenderPipeline {
             "Use vocabulary framework language when present. 2-4 sentences. Empty string if no disposition.",
             "Current task and objectives in flowing prose. Empty string if no goal."
     );
-
     static final List<String> A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
             "One entry per declared capability. Empty array [] if none.",
             "Capability name — must match exactly as given.",
@@ -142,6 +138,7 @@ class EidosRenderPipeline {
                     .build())
             .build();
     static final int STREAMING_TIMEOUT_SECONDS = 30;
+    private static final String JUNGIAN_VOCAB_URI = "urn:casehub:vocab:jungian";
     private static final String TEMPLATE_HASH = fingerprint(
             PROMPT_TEMPLATE + A2A_PROMPT_TEMPLATE
             + String.join("", RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS)
@@ -243,6 +240,29 @@ class EidosRenderPipeline {
         } catch (final NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
+    }
+
+    private static String cognitiveCoreName(final String functionTerm) {
+        return switch (functionTerm.substring(0, 1).toLowerCase()) {
+            case "t" -> "analytical";
+            case "f" -> "values-driven";
+            case "s" -> "experiential";
+            case "n" -> "intuitive";
+            default -> "cognitive";
+        };
+    }
+
+    private static String capitalizeAbbrev(final String term) {
+        if (term == null || term.isEmpty()) {return term;}
+        return Character.toUpperCase(term.charAt(0)) + term.substring(1).toLowerCase();
+    }
+
+    private static String formatWeight(final double weight) {
+        var bd = BigDecimal.valueOf(weight);
+        if (bd.scale() > 2) {
+            bd = bd.setScale(2, RoundingMode.HALF_UP);
+        }
+        return bd.stripTrailingZeros().toPlainString();
     }
 
     ObjectNode buildDescriptorPayload(final AgentDescriptor descriptor, final RenderFormat format) {
@@ -490,6 +510,8 @@ class EidosRenderPipeline {
         }
     }
 
+    // ── Shared utilities ───────────────────────────────────────────────────────
+
     private void assembleMarkdownCapabilities(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.capabilities() != null && !descriptor.capabilities().isEmpty()) {
             sb.append("\n## Capabilities\n");
@@ -526,8 +548,6 @@ class EidosRenderPipeline {
                                   .append(c.description()).append("\n"));
     }
 
-    // ── Shared utilities ───────────────────────────────────────────────────────
-
     private void assembleMarkdownDisposition(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.disposition() != null) {
             final AgentDisposition d = descriptor.disposition();
@@ -549,6 +569,7 @@ class EidosRenderPipeline {
     }
 
     private void assembleMarkdownCognitiveProfile(final StringBuilder sb, final AgentDescriptor descriptor) {
+
         if (descriptor.disposition() == null) {return;}
         final List<DispositionValue> profile = descriptor.disposition().dispositionProfile();
         if (profile.isEmpty()) {return;}
@@ -581,24 +602,18 @@ class EidosRenderPipeline {
             });
         }
 
+        if (sorted.size() >= 1) {
+            final String dominantTerm = sorted.get(0).term().toLowerCase();
+            if (dominantTerm.endsWith("e")) {
+                sb.append("\nYour natural orientation is outward. You think out loud, actively seek input from others, and prefer brainstorming with people over solo analysis. You process by engaging — talking through problems, organizing teams, and collaborating while working, not by withdrawing to reflect.\n");
+            } else if (dominantTerm.endsWith("i")) {
+                sb.append("\nYour natural orientation is inward. You prefer to work through problems internally before sharing conclusions, favouring focused solo analysis over group brainstorming. You form judgments independently first, then engage with the external world once your thinking is clear.\n");
+            }
+        }
+
         sb.append("\nWhen your dominant and auxiliary functions cannot effectively address a ")
           .append("situation, draw on other cognitive functions. Recognize that compensatory ")
           .append("function use produces less controlled but potentially valuable responses.\n");
-    }
-
-    private static String cognitiveCoreName(final String functionTerm) {
-        return switch (functionTerm.substring(0, 1).toLowerCase()) {
-            case "t" -> "analytical";
-            case "f" -> "values-driven";
-            case "s" -> "experiential";
-            case "n" -> "intuitive";
-            default -> "cognitive";
-        };
-    }
-
-    private static String capitalizeAbbrev(final String term) {
-        if (term == null || term.isEmpty()) {return term;}
-        return Character.toUpperCase(term.charAt(0)) + term.substring(1).toLowerCase();
     }
 
     private Optional<String> deriveMbtiType(final String dominantTerm, final String auxiliaryTerm) {
@@ -614,7 +629,6 @@ class EidosRenderPipeline {
         }
         return Optional.empty();
     }
-
 
     private void assembleMarkdownDataHandling(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.jurisdiction() != null || descriptor.dataHandlingPolicy() != null) {
@@ -1052,14 +1066,6 @@ class EidosRenderPipeline {
                        .map(VocabularyTerm::label)
                        .filter(l -> !l.isEmpty())
                        .orElse(raw);
-    }
-
-    private static String formatWeight(final double weight) {
-        var bd = BigDecimal.valueOf(weight);
-        if (bd.scale() > 2) {
-            bd = bd.setScale(2, RoundingMode.HALF_UP);
-        }
-        return bd.stripTrailingZeros().toPlainString();
     }
 
 
