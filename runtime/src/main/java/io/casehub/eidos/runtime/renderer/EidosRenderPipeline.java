@@ -242,6 +242,15 @@ class EidosRenderPipeline {
         }
     }
 
+
+    private static String perceivingFunction(final String dominant, final String auxiliary) {
+        final String domLower = dominant.toLowerCase();
+        final String auxLower = auxiliary.toLowerCase();
+        if (domLower.startsWith("s") || domLower.startsWith("n")) {return domLower;}
+        if (auxLower.startsWith("s") || auxLower.startsWith("n")) {return auxLower;}
+        return null;
+    }
+
     private static String cognitiveCoreName(final String functionTerm) {
         return switch (functionTerm.substring(0, 1).toLowerCase()) {
             case "t" -> "analytical";
@@ -569,51 +578,42 @@ class EidosRenderPipeline {
     }
 
     private void assembleMarkdownCognitiveProfile(final StringBuilder sb, final AgentDescriptor descriptor) {
-
         if (descriptor.disposition() == null) {return;}
         final List<DispositionValue> profile = descriptor.disposition().dispositionProfile();
         if (profile.isEmpty()) {return;}
-
         final String vocabUri = descriptor.dispositionVocabulary();
         if (!JUNGIAN_VOCAB_URI.equals(vocabUri)) {return;}
-
-        final var sorted = profile.stream()
-                                  .sorted(Comparator.comparingDouble(DispositionValue::weight).reversed())
-                                  .toList();
-
+        final var sorted = profile.stream().sorted(Comparator.comparingDouble(DispositionValue::weight).reversed()).toList();
         sb.append("\n## Cognitive Style\n\nYour personality is structured around Jungian cognitive functions:\n");
-
         if (sorted.size() >= 1) {
             final DispositionValue dominant = sorted.get(0);
             vocab.resolve(vocabUri, dominant.term()).ifPresent(term -> {
-                sb.append("\n**Dominant — ").append(term.label()).append(" (")
-                  .append(capitalizeAbbrev(dominant.term())).append("):** ")
-                  .append(term.description()).append(" This is your primary mode of engagement.\n");
+                sb.append("\n**Dominant — ").append(term.label()).append(" (").append(capitalizeAbbrev(dominant.term())).append("):** ").append(term.description()).append(" This is your primary mode of engagement.\n");
             });
         }
-
         if (sorted.size() >= 2) {
             final DispositionValue auxiliary = sorted.get(1);
             vocab.resolve(vocabUri, auxiliary.term()).ifPresent(term -> {
-                sb.append("\n**Auxiliary — ").append(term.label()).append(" (")
-                  .append(capitalizeAbbrev(auxiliary.term())).append("):** ")
-                  .append(term.description()).append(" This complements your ")
-                  .append(cognitiveCoreName(sorted.get(0).term())).append(" core.\n");
+                sb.append("\n**Auxiliary — ").append(term.label()).append(" (").append(capitalizeAbbrev(auxiliary.term())).append("):** ").append(term.description()).append(" This complements your ").append(cognitiveCoreName(sorted.get(0).term())).append(" core.\n");
             });
         }
-
         if (sorted.size() >= 1) {
-            final String dominantTerm = sorted.get(0).term().toLowerCase();
-            if (dominantTerm.endsWith("e")) {
+            final String dt = sorted.get(0).term().toLowerCase();
+            if (dt.endsWith("e")) {
                 sb.append("\nYour natural orientation is outward. You think out loud, actively seek input from others, and prefer brainstorming with people over solo analysis. You process by engaging — talking through problems, organizing teams, and collaborating while working, not by withdrawing to reflect.\n");
-            } else if (dominantTerm.endsWith("i")) {
+            } else if (dt.endsWith("i")) {
                 sb.append("\nYour natural orientation is inward. You prefer to work through problems internally before sharing conclusions, favouring focused solo analysis over group brainstorming. You form judgments independently first, then engage with the external world once your thinking is clear.\n");
             }
         }
-
-        sb.append("\nWhen your dominant and auxiliary functions cannot effectively address a ")
-          .append("situation, draw on other cognitive functions. Recognize that compensatory ")
-          .append("function use produces less controlled but potentially valuable responses.\n");
+        if (sorted.size() >= 2) {
+            final String percFunc = perceivingFunction(sorted.get(0).term(), sorted.get(1).term());
+            if (percFunc != null && percFunc.startsWith("n")) {
+                sb.append("\nYour perception is intuitive. You look past surface data to identify underlying patterns and big picture implications. When given a problem, your first instinct is to explore possibilities and strategic meaning, not to catalogue immediate details. You prefer innovative approaches over proven-but-conventional ones.\n");
+            } else if (percFunc != null && percFunc.startsWith("s")) {
+                sb.append("\nYour perception is concrete and immediate. You focus on specific, tangible data and present-moment facts before anything else. When given a problem, your first instinct is to examine the concrete details and practical realities, not to speculate about abstract possibilities. You prefer proven approaches with track records over untested innovations.\n");
+            }
+        }
+        sb.append("\nWhen your dominant and auxiliary functions cannot effectively address a situation, draw on other cognitive functions. Recognize that compensatory function use produces less controlled but potentially valuable responses.\n");
     }
 
     private Optional<String> deriveMbtiType(final String dominantTerm, final String auxiliaryTerm) {

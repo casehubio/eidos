@@ -1365,6 +1365,38 @@ class EidosRenderPipelineTest {
         assertThat(result.content()).containsIgnoringCase("inward");
     }
 
+    @Test
+    void cognitive_style_includes_intuitive_perception_hint_for_n_type() {
+        vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
+        var profile = io.casehub.eidos.vocab.MbtiTypeTerm.ENTJ.defaultProfile();
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.JungianFunctionTerm.URI)
+                                  .disposition(AgentDisposition.builder().dispositionProfile(profile).build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).containsIgnoringCase("patterns");
+        assertThat(result.content()).containsIgnoringCase("big picture");
+    }
+
+    @Test
+    void cognitive_style_includes_sensing_perception_hint_for_s_type() {
+        vocab.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
+        var profile = io.casehub.eidos.vocab.MbtiTypeTerm.ESTP.defaultProfile();
+        var desc = AgentDescriptor.builder()
+                                  .agentId("a").name("N").slot("s")
+                                  .dispositionVocabulary(io.casehub.eidos.vocab.JungianFunctionTerm.URI)
+                                  .disposition(AgentDisposition.builder().dispositionProfile(profile).build())
+                                  .tenancyId("t").build();
+        var ctx    = AgentPromptContext.forFormat(MARKDOWN);
+        var s1     = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).containsIgnoringCase("concrete");
+        assertThat(result.content()).containsIgnoringCase("immediate");
+    }
+
 
     @Test
     void empty_profile_no_cognitive_style_section() {
