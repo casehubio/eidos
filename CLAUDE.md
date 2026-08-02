@@ -72,7 +72,16 @@ Before any git operation, run `git rev-parse --show-toplevel` to confirm which r
 ## Platform Docs
 - [Platform Index](https://raw.githubusercontent.com/casehubio/parent/main/docs/INDEX.md) — discovery index (start here)
 - [Building Platform](https://raw.githubusercontent.com/casehubio/parent/main/docs/guides/building-platform.md) — platform contributor guide
-- [This repo's deep-dive](https://raw.githubusercontent.com/casehubio/parent/main/docs/repos/casehub-eidos.md)
+
+## Repo Guide
+
+This repo owns its own documentation, synced to parent via CI:
+- `docs/guides/consumer-guide.md` — for app builders: modules, APIs, quick start
+- `docs/guides/contributor-guide.md` — for platform builders: architecture, SPIs, internals
+
+Update the relevant guide in the same session when implementation changes modules, SPIs, or public APIs. Do not defer — drift compounds.
+
+Read `docs/guides/consumer-guide.md` for app-level work. Only read `docs/guides/contributor-guide.md` when modifying this repo's internals or extension points.
 
 ## Reference Documents (casehub-parent)
 
@@ -102,7 +111,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 - **DispositionHealth** — disposition-level health probing paralleling CapabilityHealth; `DispositionSignalStore` SPI accumulates function activation counts (no TTL, explicit decay/clear); `DispositionHealth.probe()` returns sealed `DispositionStatus` (Aligned/Drifted/EvolutionPending); `DispositionEvolution.evaluate()` returns sealed `EvolutionResult` (Evolved/Dampened); `EvolutionType` interface in api, `JungianEvolutionType` enum in vocab (4 JPAF reflection types). `DefaultDispositionHealth` @ApplicationScoped computes effective weights (base + activationCount × REINFORCEMENT_DELTA, normalized), checks 4 evolution conditions: dominant-auxiliary swap, dominant replacement (shadow via `VocabularyTerm.opposite()`), auxiliary replacement, structural reorganization. Over-reinforcement ceiling via `DispositionPreferenceKeys.OVER_REINFORCEMENT_THRESHOLD`. CDI ladder: `NoOpDispositionSignalStore` @DefaultBean, `InMemoryDispositionSignalStore` @Alternative in casehub-eidos-memory, `JpaDispositionSignalStore` @IfBuildProperty (Flyway V9). Auto-derivation in `DescriptorCollector`: when dispositionProfile is populated and axes empty, projects function weights onto 5 axes via cross-vocabulary `equivalentValues()`, populates `axisVocabularies`.
 - **AgentDescriptorRegistrar** — declarative SPI (`List<AgentDescriptor> descriptors()`); consumers provide `@ApplicationScoped` beans or a `META-INF/eidos/descriptors.yaml` classpath resource (YAML-driven via `ClasspathYamlDescriptorRegistrar`); `AgentDescriptorBootstrap` (@Observes StartupEvent, @IfBuildProperty blocking-mode gated) auto-discovers all registrars and registers descriptors with duplicate `(agentId, tenancyId)` detection
 - **SystemPromptRenderer** — renders `AgentDescriptor + AgentPromptContext` (goal, resources, situational context) into a format-specific system prompt; `EidosSystemPromptRenderer` @ApplicationScoped (no @DefaultBean — consumers displace with @DefaultBean fallback per Pattern B) supports three formats: `MARKDOWN` (LLM or structural fallback), `PROSE` (LLM or structural fallback), `A2A_CARD` (JSON machine-readable card with slot, vocabulary-grounded disposition, frameworks index, and full capability routing signals — `qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains` — plus `inputTypes`/`outputTypes` type schema)
-- **casehub-eidos-vocab** — optional well-known vocabularies: SVO, Conscientiousness, CasehubSlot, Belbin (team roles), DISC (behavioral styles), Thomas-Kilmann (conflict modes), CasehubCapability (hierarchical capability taxonomy), JungianFunctionTerm (8 cognitive functions with cross-vocab axisExactMatch, shadow(), opposite(), compatibleAuxiliaries()), MbtiTypeTerm (16 MBTI types with specializes() to JungianFunctionTerm, defaultProfile()), JungianEvolutionType (4 JPAF reflection types)
+- **casehub-eidos-vocab** — optional well-known vocabularies: SVO, Conscientiousness, CasehubSlot, Belbin (team roles with axisExactMatch to Conscientiousness + Thomas-Kilmann), DISC (behavioral styles), Thomas-Kilmann (conflict modes), CasehubCapability (hierarchical capability taxonomy), JungianFunctionTerm (8 cognitive functions with cross-vocab axisExactMatch, shadow(), opposite(), compatibleAuxiliaries()), MbtiTypeTerm (16 MBTI types with specializes() to JungianFunctionTerm, defaultProfile()), JungianEvolutionType (4 JPAF reflection types), BigFiveTerm (O/E/A/N high+low poles with axisExactMatch), EnneagramTerm (9 motivation-based types with axisExactMatch), SdiTerm (4 relationship-focused conflict motivation types with axisExactMatch)
 
 ### Key Design Decisions
 
@@ -207,7 +216,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       └── renderer/                    — EidosSystemPromptRenderer (@ApplicationScoped, LangChain4j ChatModel optional)
 ├── persistence-memory/                  — casehub-eidos-memory: @Alternative @Priority(1) in-memory; InMemoryAgentRegistry, InMemoryTemplateRegistry, InMemoryAgentStateStore, InMemoryBehavioralSignalStore (per-signal TTL via @ConfigProperty <signal>-ttl-days), InMemoryDispositionSignalStore (ConcurrentHashMap + AtomicInteger, no TTL)
 ├── deployment/                          — casehub-eidos-deployment: @BuildStep EidosProcessor + EidosBuildTimeConfig
-├── vocab/                               — casehub-eidos-vocab: SvoTerm, ConscientiousnessTerm, CasehubSlotTerm, BelbinTerm, DiscTerm, ThomasKilmannTerm, CasehubCapabilityTerm, JungianFunctionTerm (8 functions, shadow(), opposite(), axisExactMatch), MbtiTypeTerm (16 types, specializes(), defaultProfile()), JungianEvolutionType (4 JPAF reflection types) enums + VocabularyRegistrar beans
+├── vocab/                               — casehub-eidos-vocab: SvoTerm, ConscientiousnessTerm, CasehubSlotTerm, BelbinTerm (9 roles with axisExactMatch), DiscTerm, ThomasKilmannTerm, CasehubCapabilityTerm, JungianFunctionTerm (8 functions, shadow(), opposite(), axisExactMatch), MbtiTypeTerm (16 types, specializes(), defaultProfile()), JungianEvolutionType (4 JPAF reflection types), BigFiveTerm (O/E/A/N), EnneagramTerm (9 types), SdiTerm (4 types) enums + VocabularyRegistrar beans
 ├── eval/                                — casehub-eidos-eval: offline quality evaluation harness (not deployed); judges: PromptJudge, ProximityJudge, VocabularyExpressivenessJudge, TraitExpressionJudge, PairContrastJudge, BehavioralJudge, MbtiAlignmentJudge (MBTI-70 questionnaire alignment), FunctionActivationJudge (TAA — cognitive function activation accuracy), PersonalityEvolutionJudge (PSA — personality shift structural validity); AgentProviderChatModel bridge (ChatModel → AgentProvider SPI); 8 YAML agent profiles + 8 Jungian profiles + 24 function activation scenarios; pair-contrast behavioral validation (Phase 3 — eidos#46)
 └── examples/
     └── agent-scenarios/                 — @QuarkusTest examples: team, cross-vocab, epistemic, tenancy, disposition
