@@ -56,41 +56,40 @@ public class FunctionActivationJudge {
                                               final String agentType,
                                               final List<FunctionScenario> scenarios) {
         final var activations = new ArrayList<Activation>();
-        int correct = 0;
+        int       correct     = 0;
 
         for (final var scenario : scenarios) {
-            final var agentRequest = ChatRequest.builder()
-                    .messages(
-                            SystemMessage.from(agentSystemPrompt),
-                            UserMessage.from(scenario.prompt()))
-                    .build();
-            final String agentResponse = judgeModel.chat(agentRequest).aiMessage().text();
-
-            final var judgeRequest = ChatRequest.builder()
-                    .messages(
-                            SystemMessage.from(JUDGE_PROMPT),
-                            UserMessage.from("Scenario: " + scenario.prompt()
-                                    + "\n\nAgent response:\n" + agentResponse))
-                    .build();
-            final String judgeResponse = judgeModel.chat(judgeRequest).aiMessage().text();
-
             try {
+                final var agentRequest = ChatRequest.builder()
+                                                    .messages(
+                                                            SystemMessage.from(agentSystemPrompt),
+                                                            UserMessage.from(scenario.prompt()))
+                                                    .build();
+                final String agentResponse = judgeModel.chat(agentRequest).aiMessage().text();
+
+                final var judgeRequest = ChatRequest.builder()
+                                                    .messages(
+                                                            SystemMessage.from(JUDGE_PROMPT),
+                                                            UserMessage.from("Scenario: " + scenario.prompt()
+                                                                             + "\n\nAgent response:\n" + agentResponse))
+                                                    .build();
+                final String judgeResponse = judgeModel.chat(judgeRequest).aiMessage().text();
+
                 final JsonNode root = mapper.readTree(PromptJudge.extractJson(judgeResponse));
                 final String activated = root.has("activatedFunction")
-                        ? root.get("activatedFunction").asText().toLowerCase() : "unknown";
+                                         ? root.get("activatedFunction").asText().toLowerCase() : "unknown";
                 final boolean isCorrect = activated.equals(scenario.targetFunction().toLowerCase());
-                if (isCorrect) correct++;
+                if (isCorrect) {correct++;}
                 activations.add(new Activation(scenario.targetFunction(), activated, isCorrect,
-                        root.has("reasoning") ? root.get("reasoning").asText() : ""));
+                                               root.has("reasoning") ? root.get("reasoning").asText() : ""));
             } catch (final Exception e) {
                 activations.add(new Activation(scenario.targetFunction(), "error", false,
-                        e.getMessage()));
+                                               e.toString()));
             }
         }
 
         final double taa = scenarios.isEmpty() ? 0.0 : (double) correct / scenarios.size();
-        return new FunctionActivationResult(agentType, scenarios.size(), correct, taa, activations);
-    }
+        return new FunctionActivationResult(agentType, scenarios.size(), correct, taa, activations);}
 
     public record FunctionScenario(String targetFunction, String prompt) {}
 
