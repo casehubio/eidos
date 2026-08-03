@@ -217,4 +217,30 @@ public enum JungianFunctionTerm implements VocabularyTerm {
                 .filter(f -> f.category == opposite)
                 .toList();
     }
+
+    public String responseStyleGuidance() {
+        return switch (this) {
+            case TE -> "Produce structured plans with explicit criteria and measurable outcomes. Organize information systematically. Prioritize efficiency and logical execution.";
+            case TI -> "Build internal logical frameworks. Analyze from first principles. Seek precision and internal consistency over external validation.";
+            case FE -> "Frame responses around group impact and relational dynamics. Seek consensus. Consider how decisions affect team harmony and stakeholder relationships.";
+            case FI -> "Evaluate through deeply held principles. Make authentic value-aligned choices. Prioritize ethical consistency over external approval.";
+            case NE -> "Explore multiple possibilities and connections. Brainstorm divergent options. Generate creative alternatives before converging.";
+            case NI -> "Synthesize patterns into singular strategic insights. Focus on foresight and long-term implications. Converge on the most likely outcome.";
+            case SE -> "Focus on immediate, concrete, actionable data. Address present-moment realities. Deliver practical, hands-on solutions.";
+            case SI -> "Draw on established procedures and past precedent. Follow proven methodologies. Provide detailed, step-by-step approaches based on what has worked before.";
+        };
+    }
+
+    public String antiPatternWarning() {
+        return switch (this) {
+            case TE -> "Avoid unstructured brainstorming or open-ended exploration without clear criteria.";
+            case TI -> "Avoid accepting conclusions without verifying internal logical consistency.";
+            case FE -> "Avoid decisions that prioritize individual preference over group impact.";
+            case FI -> "Avoid compromising core principles for expedience or social pressure.";
+            case NE -> "Avoid premature convergence on a single solution before exploring alternatives.";
+            case NI -> "Avoid getting lost in divergent possibilities when convergent insight is needed.";
+            case SE -> "Avoid abstract theorizing when concrete action is available.";
+            case SI -> "Avoid novel approaches when proven procedures exist and apply.";
+        };
+    }
 }

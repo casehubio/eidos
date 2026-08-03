@@ -625,7 +625,18 @@ class EidosRenderPipeline {
             }
         }
         sb.append("\nWhen your dominant and auxiliary functions cannot effectively address a situation, draw on other cognitive functions. Recognize that compensatory function use produces less controlled but potentially valuable responses.\n");
-    }
+        if (sorted.size() >= 1) {
+            vocab.resolve(vocabUri, sorted.get(0).term()).ifPresent(term -> {
+                final String style = term.responseStyleGuidance();
+                if (style != null && !style.isEmpty()) {
+                    sb.append("\n**Your Response Style:** ").append(style).append("\n");
+                }
+                final String avoid = term.antiPatternWarning();
+                if (avoid != null && !avoid.isEmpty()) {
+                    sb.append("\n**Avoid:** ").append(avoid).append("\n");
+                }
+            });
+        }}
 
     private Optional<String> deriveMbtiType(final String dominantTerm, final String auxiliaryTerm) {
         final String mbtiUri = "urn:casehub:vocab:mbti";
@@ -919,6 +930,16 @@ class EidosRenderPipeline {
                 fn.put("term", dv.term());
                 fn.put("weight", dv.weight());
                 fn.put("role", i == 0 ? "dominant" : i == 1 ? "auxiliary" : "supporting");
+                if (i == 0 && vocabUri != null) {
+                    vocab.resolve(vocabUri, dv.term()).ifPresent(term -> {
+                        if (!term.responseStyleGuidance().isEmpty()) {
+                            fn.put("responseStyle", term.responseStyleGuidance());
+                        }
+                        if (!term.antiPatternWarning().isEmpty()) {
+                            fn.put("antiPattern", term.antiPatternWarning());
+                        }
+                    });
+                }
             }
 
             // Derive MBTI type by matching dominant+auxiliary against MbtiTypeTerm.specializes()

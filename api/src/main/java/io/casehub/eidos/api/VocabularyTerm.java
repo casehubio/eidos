@@ -64,4 +64,8 @@ public interface VocabularyTerm {
 
     default List<DispositionValue> defaultProfile() { return List.of(); }
 
+    default String responseStyleGuidance() { return ""; }
+
+    default String antiPatternWarning() { return ""; }
+
 }

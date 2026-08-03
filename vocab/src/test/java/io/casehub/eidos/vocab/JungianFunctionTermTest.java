@@ -187,4 +187,28 @@ class JungianFunctionTermTest {
     void all_values_are_lowercase(JungianFunctionTerm fn) {
         assertThat(fn.value()).isEqualTo(fn.value().toLowerCase());
     }
+
+    // ── responseStyleGuidance() and antiPatternWarning() ────────────────
+
+    @ParameterizedTest
+    @EnumSource(JungianFunctionTerm.class)
+    void responseStyleGuidance_nonBlank(JungianFunctionTerm fn) {
+        assertThat(fn.responseStyleGuidance()).isNotBlank();
+    }
+
+    @ParameterizedTest
+    @EnumSource(JungianFunctionTerm.class)
+    void antiPatternWarning_nonBlank(JungianFunctionTerm fn) {
+        assertThat(fn.antiPatternWarning()).isNotBlank();
+    }
+
+    @Test void te_responseStyleGuidance_containsStructured() {
+        assertThat(JungianFunctionTerm.TE.responseStyleGuidance().toLowerCase())
+                .contains("structured");
+    }
+
+    @Test void ne_antiPatternWarning_containsConvergence() {
+        assertThat(JungianFunctionTerm.NE.antiPatternWarning().toLowerCase())
+                .contains("convergence");
+    }
 }
