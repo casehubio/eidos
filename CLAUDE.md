@@ -265,6 +265,10 @@ JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn clean test -pl eval -Peval,eval-ol
   "-Dquarkus.langchain4j.ollama.timeout=300s" \
   -Dcasehub.eval.model.label=qwen3-35b
 
+# Run minimal briefing experiment — isolates framework vs briefing contribution (eidos#129)
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl eval -Peval \
+  -Dtest=MinimalBriefingEvalTest#compareBriefingContribution
+
 # Run eval harness — GPULlama3 via TornadoVM Metal (Apple Silicon)
 # Requires: export TORNADOVM_HOME=~/tornadovm-metal/tornadovm-4.0.0-jdk25-metal
 #           Generate argfile: sed "s|\${TORNADOVM_HOME}|$TORNADOVM_HOME|g" $TORNADOVM_HOME/tornado-argfile.template > $TORNADOVM_HOME/tornado-argfile
