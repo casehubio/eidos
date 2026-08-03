@@ -325,10 +325,60 @@ class ClasspathYamlDescriptorRegistrarTest {
         assertThat(profile.get(0).weight()).isEqualTo(0.50);
     }
 
+    @Test
+    void enneagramType_projects_axes_without_overwriting_explicit_values() {
+        var yaml = """
+                   descriptors:
+                     - agentId: ennea-test
+                       name: Test
+                       slot: s
+                       tenancyId: t
+                       disposition:
+                         enneagramType: challenger
+                         socialOrient: collaborative
+                   """;
+        var result = registrar.loadFrom(
+                new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
+                testVocabRegistry());
+        assertThat(result).hasSize(1);
+        var d = result.get(0).disposition();
+        assertThat(d.primaryTerm(DispositionAxis.SOCIAL_ORIENTATION)).isEqualTo("collaborative");
+        assertThat(d.primaryTerm(DispositionAxis.RULE_FOLLOWING)).isEqualTo("flexible");
+        assertThat(d.primaryTerm(DispositionAxis.RISK_APPETITE)).isEqualTo("bold");
+        assertThat(d.primaryTerm(DispositionAxis.AUTONOMY)).isEqualTo("autonomous");
+        assertThat(d.primaryTerm(DispositionAxis.CONFLICT_MODE)).isEqualTo("competing");
+    }
+
+    @Test
+    void enneagramType_complements_mbtiType_without_overwriting_profile() {
+        var yaml = """
+                   descriptors:
+                     - agentId: both-ennea-mbti
+                       name: Test
+                       slot: s
+                       tenancyId: t
+                       dispositionVocabulary: urn:casehub:vocab:jungian
+                       disposition:
+                         mbtiType: INTJ
+                         enneagramType: reformer
+                   """;
+        var result = registrar.loadFrom(
+                new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
+                testVocabRegistry());
+        assertThat(result).hasSize(1);
+        var d = result.get(0).disposition();
+        assertThat(d.dispositionProfile()).hasSize(8);
+        assertThat(d.dispositionProfile().get(0).term()).isEqualTo("ni");
+        assertThat(d.primaryTerm(DispositionAxis.RULE_FOLLOWING)).isEqualTo("strict");
+    }
+
     private io.casehub.eidos.api.VocabularyRegistry testVocabRegistry() {
         var registry = new io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry();
         registry.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
         registry.register(io.casehub.eidos.vocab.MbtiTypeTerm.class);
+        registry.register(io.casehub.eidos.vocab.EnneagramTerm.class);
+        registry.register(io.casehub.eidos.vocab.ConscientiousnessTerm.class);
+        registry.register(io.casehub.eidos.vocab.ThomasKilmannTerm.class);
         return registry;
     }
 }

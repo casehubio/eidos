@@ -71,6 +71,32 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
                         .ifPresent(term -> dispBuilder.dispositionProfile(term.defaultProfile()));
             }
 
+            if (cfg.disposition.enneagramType != null && vocabRegistry != null) {
+                var enneaValue = cfg.disposition.enneagramType.toLowerCase(java.util.Locale.ROOT);
+                if (vocabRegistry.resolve("urn:casehub:vocab:enneagram", enneaValue).isPresent()) {
+                    for (var axis : DispositionAxis.values()) {
+                        String conscientiousnessMatch = vocabRegistry.equivalentValues(
+                                "urn:casehub:vocab:enneagram", enneaValue,
+                                "urn:casehub:vocab:conscientiousness", axis).orElse(null);
+                        if (conscientiousnessMatch != null) {
+                            switch (axis) {
+                                case SOCIAL_ORIENTATION -> { if (cfg.disposition.socialOrient == null) dispBuilder.socialOrient(conscientiousnessMatch); }
+                                case RULE_FOLLOWING     -> { if (cfg.disposition.ruleFollowing == null) dispBuilder.ruleFollowing(conscientiousnessMatch); }
+                                case RISK_APPETITE      -> { if (cfg.disposition.riskAppetite == null) dispBuilder.riskAppetite(conscientiousnessMatch); }
+                                case AUTONOMY           -> { if (cfg.disposition.autonomy == null) dispBuilder.autonomy(conscientiousnessMatch); }
+                                case CONFLICT_MODE      -> {}
+                            }
+                        }
+                        if (axis == DispositionAxis.CONFLICT_MODE && cfg.disposition.conflictMode == null) {
+                            vocabRegistry.equivalentValues(
+                                    "urn:casehub:vocab:enneagram", enneaValue,
+                                    "urn:casehub:vocab:thomas-kilmann", axis)
+                                    .ifPresent(dispBuilder::conflictMode);
+                        }
+                    }
+                }
+            }
+
             builder.disposition(dispBuilder.build());
         }
 
@@ -167,6 +193,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         public String socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode;
         public boolean                      delegation;
         public String                       mbtiType;
+        public String                       enneagramType;
         public List<DispositionValueConfig> dispositionProfile;
     }
 
