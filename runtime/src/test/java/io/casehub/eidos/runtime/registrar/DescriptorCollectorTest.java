@@ -36,7 +36,7 @@ class DescriptorCollectorTest {
                 new TemplateRef("role", Map.of("role_name", "reviewer")));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatNoException().isThrownBy(() ->
-                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE));
+                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE, null));
     }
 
     @Test
@@ -44,7 +44,7 @@ class DescriptorCollectorTest {
         var                      refs      = List.of(new TemplateRef("nonexistent", Map.of()));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatThrownBy(() ->
-                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE))
+                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonexistent");
     }
@@ -54,7 +54,7 @@ class DescriptorCollectorTest {
         var                      refs      = List.of(new TemplateRef("role", Map.of()));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatThrownBy(() ->
-                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE))
+                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("role_name");
     }
@@ -64,7 +64,7 @@ class DescriptorCollectorTest {
         var                      refs      = List.of(new TemplateRef("style", Map.of("bogus", "value")));
         AgentDescriptorRegistrar registrar = () -> List.of(descriptorWithTemplates(refs));
         assertThatThrownBy(() ->
-                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE))
+                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("bogus");
     }
@@ -74,7 +74,7 @@ class DescriptorCollectorTest {
         var                      d         = AgentDescriptor.builder().agentId("a").name("n").slot("s").tenancyId("t").build();
         AgentDescriptorRegistrar registrar = () -> List.of(d);
         assertThatNoException().isThrownBy(() ->
-                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE));
+                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE, null));
     }
 
     @Test
@@ -83,7 +83,7 @@ class DescriptorCollectorTest {
                                .templates(List.of()).build();
         AgentDescriptorRegistrar registrar = () -> List.of(d);
         assertThatNoException().isThrownBy(() ->
-                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE));
+                                                   DescriptorCollector.collectAndValidate(List.of(registrar), templateRegistry(), NoOpVocabRegistry.INSTANCE, null));
     }
 
     static class SimpleTemplateRegistry implements TemplateRegistry {

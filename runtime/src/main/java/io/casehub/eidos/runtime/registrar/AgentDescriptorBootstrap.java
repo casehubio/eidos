@@ -4,6 +4,7 @@ import io.casehub.eidos.api.AgentRegistry;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
+import io.casehub.eidos.runtime.validator.BriefingCoherenceValidator;
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,15 +27,18 @@ public class AgentDescriptorBootstrap {
     TemplateRegistry                   templateRegistry;
     @Inject
     VocabularyRegistry                 vocabRegistry;
+    @Inject
+    BriefingCoherenceValidator         coherenceValidator;
 
     static void registerAll(Iterable<AgentDescriptorRegistrar> registrars,
                             AgentRegistry registry, TemplateRegistry templateRegistry,
-                            VocabularyRegistry vocabRegistry) {
-        DescriptorCollector.collectAndValidate(registrars, templateRegistry, vocabRegistry)
+                            VocabularyRegistry vocabRegistry,
+                            BriefingCoherenceValidator coherenceValidator) {
+        DescriptorCollector.collectAndValidate(registrars, templateRegistry, vocabRegistry, coherenceValidator)
                            .forEach(registry::register);
     }
 
     void onStartup(@Observes StartupEvent ev) {
-        registerAll(registrars, registry, templateRegistry, vocabRegistry);
+        registerAll(registrars, registry, templateRegistry, vocabRegistry, coherenceValidator);
     }
 }

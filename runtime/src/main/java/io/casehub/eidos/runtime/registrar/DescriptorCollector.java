@@ -2,11 +2,14 @@ package io.casehub.eidos.runtime.registrar;
 
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.CoherenceLevel;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.DispositionValue;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
+import io.casehub.eidos.runtime.validator.BriefingCoherenceValidator;
+import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,11 +19,14 @@ import java.util.TreeSet;
 
 public final class DescriptorCollector {
 
+    private static final Logger LOG = Logger.getLogger(DescriptorCollector.class);
+
     private DescriptorCollector() {}
 
     static List<AgentDescriptor> collectAndValidate(Iterable<AgentDescriptorRegistrar> registrars,
                                                     TemplateRegistry templateRegistry,
-                                                    VocabularyRegistry vocabRegistry) {
+                                                    VocabularyRegistry vocabRegistry,
+                                                    BriefingCoherenceValidator coherenceValidator) {
         var all = new ArrayList<AgentDescriptor>();
         registrars.forEach(r -> all.addAll(r.descriptors()));
 
@@ -56,7 +62,17 @@ public final class DescriptorCollector {
                 }
             }
 
-            result.add(deriveDispositionAxes(d, vocabRegistry));
+            var derived = deriveDispositionAxes(d, vocabRegistry);
+
+            if (coherenceValidator != null) {
+                var coherence = coherenceValidator.validateStructural(derived);
+                if (coherence.overall() != CoherenceLevel.ALIGNED) {
+                    LOG.warnf("Briefing-framework coherence issue for agent '%s': %s (%d violation(s))",
+                        derived.agentId(), coherence.overall(), coherence.violations().size());
+                }
+            }
+
+            result.add(derived);
         }
         return List.copyOf(result);
     }
