@@ -48,21 +48,50 @@ class MinimalBriefingEvalTest {
     @Inject FunctionActivationJudge functionJudge;
     @Inject ObjectMapper mapper;
 
+    @ConfigProperty(name = "casehub.eval.vertex.judge-model", defaultValue = "")
+    String judgeModelName;
+
+    @ConfigProperty(name = "casehub.eval.vertex.project-id", defaultValue = "")
+    String vertexProjectId;
+
+    @ConfigProperty(name = "casehub.eval.vertex.region", defaultValue = "us-east5")
+    String vertexRegion;
+
     @ConfigProperty(name = "casehub.eval.model.label", defaultValue = "claude")
     String modelLabel;
 
     @Test
     void compareBriefingContribution() throws Exception {
         final List<BriefingExperimentReport.ProfileResult> profileResults = new ArrayList<>();
+        final long experimentStart = System.currentTimeMillis();
 
-        for (final JungianProfile profile : profiles) {
+        if (!judgeModelName.isEmpty() && !vertexProjectId.isEmpty()) {
+            final var judgeModel = new VertexChatModel(vertexProjectId, vertexRegion,
+                    judgeModelName, java.time.Duration.ofSeconds(120));
+            functionJudge.setJudgeModel(judgeModel);
+            System.out.println("Judge model: " + judgeModelName + " (separate from agent)");
+        } else {
+            System.out.println("Judge model: same as agent model");
+        }
+
+        System.out.printf("%n=== Minimal Briefing Experiment — %d profiles × %d conditions ===%n%n",
+                profiles.size(), BriefingCondition.values().length);
+
+        for (int p = 0; p < profiles.size(); p++) {
+            final JungianProfile profile = profiles.get(p);
             final List<FunctionScenario> scenarios = Stream.concat(
                 scenariosByFunction.getOrDefault(profile.dominantFunction(), List.of()).stream(),
                 scenariosByFunction.getOrDefault(profile.auxiliaryFunction(), List.of()).stream()
             ).toList();
 
+            final long profileStart = System.currentTimeMillis();
+            System.out.printf("[profile %d/%d] %s (%s) — dom=%s, aux=%s%n",
+                    p + 1, profiles.size(), profile.name(), profile.mbtiType(),
+                    profile.dominantFunction(), profile.auxiliaryFunction());
+
             final Map<BriefingCondition, FunctionActivationResult> conditions = new EnumMap<>(BriefingCondition.class);
             for (final BriefingCondition condition : BriefingCondition.values()) {
+                final long condStart = System.currentTimeMillis();
                 final AgentDescriptor descriptor = condition.apply(profile);
                 final AgentDescriptor derived = DescriptorCollector.deriveDispositionAxes(descriptor, vocabRegistry);
                 final String prompt = renderer.render(derived,
@@ -70,7 +99,13 @@ class MinimalBriefingEvalTest {
                 final FunctionActivationResult result = functionJudge.evaluate(
                     prompt, profile.mbtiType(), scenarios);
                 conditions.put(condition, result);
+                System.out.printf("  [%s] %s TAA=%.2f (%d/%d) — %dms%n",
+                        profile.name(), condition, result.taa(),
+                        result.correctActivations(), result.scenarioCount(),
+                        System.currentTimeMillis() - condStart);
             }
+            System.out.printf("  [%s] profile done — %dms%n", profile.name(),
+                    System.currentTimeMillis() - profileStart);
 
             profileResults.add(new BriefingExperimentReport.ProfileResult(
                 profile.name(), profile.mbtiType(),
@@ -104,6 +139,7 @@ class MinimalBriefingEvalTest {
             .writeValue(Path.of("target/briefing-experiment-report.json").toFile(), report);
 
         System.out.println(summaryTable(report));
+        System.out.printf("Total experiment time: %ds%n", (System.currentTimeMillis() - experimentStart) / 1000);
 
         assertThat(aggregated.get(BriefingCondition.JUNGIAN_RICH).meanTaa())
             .as("JUNGIAN_RICH mean TAA should exceed BASELINE_MINIMAL")

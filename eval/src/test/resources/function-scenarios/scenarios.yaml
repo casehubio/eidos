@@ -37,9 +37,9 @@ scenarios:
 
   - targetFunction: ni
     prompts:
-      - "Given the trends in our codebase complexity and team growth, what architectural problems will we face in 18 months?"
-      - "Three seemingly unrelated bugs were reported this week. Is there a deeper pattern connecting them?"
-      - "The industry is shifting toward edge computing. What does this mean for our centralized data processing architecture?"
+      - "Three seemingly unrelated production metrics shifted this week — CPU down 12%, error rate up 3%, response times unchanged. What is the ONE underlying cause?"
+      - "You've been observing the team's velocity patterns for six sprints. What is the single most important thing that will go wrong if current trends continue?"
+      - "Review these five refactoring proposals. Which ONE will have the most impact, and why is it that one specifically?"
 
   - targetFunction: ne
     prompts:

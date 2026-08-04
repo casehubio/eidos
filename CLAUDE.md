@@ -266,7 +266,15 @@ JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn clean test -pl eval -Peval,eval-ol
   -Dcasehub.eval.model.label=qwen3-35b
 
 # Run minimal briefing experiment — isolates framework vs briefing contribution (eidos#129)
-JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl eval -Peval \
+# Via Vertex AI (recommended — uses ANTHROPIC_VERTEX_PROJECT_ID and CLOUD_ML_REGION env vars):
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn clean test -pl eval -Peval \
+  -Dtest=MinimalBriefingEvalTest#compareBriefingContribution \
+  -Dcasehub.eval.vertex.enabled=true \
+  -Dcasehub.eval.claude-provider.enabled=false \
+  -Dcasehub.eval.model.label=vertex-sonnet
+
+# Via Claude CLI (legacy — requires claude CLI configured):
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn clean test -pl eval -Peval \
   -Dtest=MinimalBriefingEvalTest#compareBriefingContribution
 
 # Run eval harness — GPULlama3 via TornadoVM Metal (Apple Silicon)
