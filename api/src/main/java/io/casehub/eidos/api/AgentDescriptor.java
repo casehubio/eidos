@@ -142,6 +142,22 @@ public record AgentDescriptor(
 
     public static Builder builder() {return new Builder();}
 
+    public Builder toBuilder() {
+        return new Builder()
+                .agentId(this.agentId).name(this.name).version(this.version)
+                .provider(this.provider).modelFamily(this.modelFamily)
+                .modelVersion(this.modelVersion).weightsFingerprint(this.weightsFingerprint)
+                .domainVocabulary(this.domainVocabulary).slotVocabulary(this.slotVocabulary)
+                .dispositionVocabulary(this.dispositionVocabulary)
+                .axisVocabularies(this.axisVocabularies)
+                .slot(this.slot).capabilities(this.capabilities)
+                .disposition(this.disposition).jurisdiction(this.jurisdiction)
+                .dataHandlingPolicy(this.dataHandlingPolicy)
+                .tenancyId(this.tenancyId).briefing(this.briefing)
+                .templates(this.templates).goals(this.goals)
+                .constraints(this.constraints);
+    }
+
     public static final class Builder {
         private String agentId, name, version, provider,
                 modelFamily, modelVersion, weightsFingerprint,

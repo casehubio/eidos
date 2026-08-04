@@ -372,4 +372,38 @@ class AgentDescriptorTest {
         assertThat(desc.hasConstraint("no-pii")).isTrue();
         assertThat(desc.hasConstraint("nonexistent")).isFalse();
     }
+
+    @Test void toBuilder_roundtrip_preserves_all_fields() {
+        var original = AgentDescriptor.builder()
+                .agentId("test-agent").name("Test Agent")
+                .slot("test-slot").tenancyId("test-tenant")
+                .briefing("Original briefing text that is long enough")
+                .build();
+        var copy = original.toBuilder().build();
+        assertThat(copy).isEqualTo(original);
+    }
+
+    @Test void toBuilder_allows_field_override() {
+        var original = AgentDescriptor.builder()
+                .agentId("test-agent").name("Test Agent")
+                .slot("test-slot").tenancyId("test-tenant")
+                .briefing("Original briefing text that is long enough")
+                .build();
+        var modified = original.toBuilder()
+                .briefing("Modified briefing text that is also long enough")
+                .build();
+        assertThat(modified.agentId()).isEqualTo("test-agent");
+        assertThat(modified.briefing()).isEqualTo("Modified briefing text that is also long enough");
+    }
+
+    @Test void toBuilder_with_null_briefing() {
+        var original = AgentDescriptor.builder()
+                .agentId("test-agent").name("Test Agent")
+                .slot("test-slot").tenancyId("test-tenant")
+                .briefing("Original briefing text that is long enough")
+                .build();
+        var nullBriefing = original.toBuilder().briefing(null).build();
+        assertThat(nullBriefing.briefing()).isNull();
+        assertThat(nullBriefing.agentId()).isEqualTo("test-agent");
+    }
 }
