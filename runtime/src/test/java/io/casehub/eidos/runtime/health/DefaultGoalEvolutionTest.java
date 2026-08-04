@@ -1,13 +1,19 @@
 package io.casehub.eidos.runtime.health;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentGoal;
+import io.casehub.eidos.api.GoalEvolutionResult;
+import io.casehub.eidos.api.GoalOutcomeCounts;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.Visibility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultGoalEvolutionTest {
 
@@ -21,7 +27,7 @@ class DefaultGoalEvolutionTest {
     @Test
     void noSignals_returnsUnchanged() {
         var descriptor = descriptorWithGoals(
-            new AgentGoal("deliver", "Deliver results", GoalPriority.PRIMARY, Visibility.PUBLIC));
+            new AgentGoal("deliver", "Deliver results", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()));
         var result = evolution.evaluate(descriptor, Map.of());
         assertInstanceOf(GoalEvolutionResult.Unchanged.class, result);
     }
@@ -39,8 +45,8 @@ class DefaultGoalEvolutionTest {
     @Test
     void secondaryExceedsPromotionThreshold_promotes() {
         var descriptor = descriptorWithGoals(
-            new AgentGoal("primary", "Primary", GoalPriority.PRIMARY, Visibility.PUBLIC),
-            new AgentGoal("rising", "Rising", GoalPriority.SECONDARY, Visibility.PUBLIC));
+            new AgentGoal("primary", "Primary", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
+            new AgentGoal("rising", "Rising", GoalPriority.SECONDARY, Visibility.PUBLIC, List.of()));
         var counts = Map.of("rising", new GoalOutcomeCounts(15, 1));
         var result = evolution.evaluate(descriptor, counts);
         assertInstanceOf(GoalEvolutionResult.Evolved.class, result);
@@ -54,8 +60,8 @@ class DefaultGoalEvolutionTest {
     @Test
     void primaryExceedsDemotionThreshold_demotes() {
         var descriptor = descriptorWithGoals(
-            new AgentGoal("failing", "Failing", GoalPriority.PRIMARY, Visibility.PUBLIC),
-            new AgentGoal("backup", "Backup", GoalPriority.PRIMARY, Visibility.PUBLIC));
+            new AgentGoal("failing", "Failing", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
+            new AgentGoal("backup", "Backup", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()));
         var counts = Map.of("failing", new GoalOutcomeCounts(2, 15));
         var result = evolution.evaluate(descriptor, counts);
         assertInstanceOf(GoalEvolutionResult.Evolved.class, result);
@@ -66,8 +72,8 @@ class DefaultGoalEvolutionTest {
     @Test
     void lastPrimaryDemotion_swapsWithBestSecondary() {
         var descriptor = descriptorWithGoals(
-            new AgentGoal("failing", "Failing", GoalPriority.PRIMARY, Visibility.PUBLIC),
-            new AgentGoal("rising", "Rising", GoalPriority.SECONDARY, Visibility.PUBLIC));
+            new AgentGoal("failing", "Failing", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
+            new AgentGoal("rising", "Rising", GoalPriority.SECONDARY, Visibility.PUBLIC, List.of()));
         var counts = Map.of(
             "failing", new GoalOutcomeCounts(2, 15),
             "rising", new GoalOutcomeCounts(8, 2));
@@ -83,7 +89,7 @@ class DefaultGoalEvolutionTest {
     @Test
     void lastPrimaryDemotion_noSecondaryAvailable_returnsDampened() {
         var descriptor = descriptorWithGoals(
-            new AgentGoal("failing", "Failing", GoalPriority.PRIMARY, Visibility.PUBLIC));
+            new AgentGoal("failing", "Failing", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()));
         var counts = Map.of("failing", new GoalOutcomeCounts(2, 15));
         var result = evolution.evaluate(descriptor, counts);
         assertInstanceOf(GoalEvolutionResult.Dampened.class, result);
@@ -92,8 +98,8 @@ class DefaultGoalEvolutionTest {
     @Test
     void belowMinCount_returnsUnchanged() {
         var descriptor = descriptorWithGoals(
-            new AgentGoal("primary", "Primary", GoalPriority.PRIMARY, Visibility.PUBLIC),
-            new AgentGoal("rising", "Rising", GoalPriority.SECONDARY, Visibility.PUBLIC));
+            new AgentGoal("primary", "Primary", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
+            new AgentGoal("rising", "Rising", GoalPriority.SECONDARY, Visibility.PUBLIC, List.of()));
         var counts = Map.of("rising", new GoalOutcomeCounts(5, 0));
         var result = evolution.evaluate(descriptor, counts);
         assertInstanceOf(GoalEvolutionResult.Unchanged.class, result);
@@ -102,8 +108,8 @@ class DefaultGoalEvolutionTest {
     @Test
     void belowPromotionRate_returnsUnchanged() {
         var descriptor = descriptorWithGoals(
-            new AgentGoal("primary", "Primary", GoalPriority.PRIMARY, Visibility.PUBLIC),
-            new AgentGoal("mediocre", "Mediocre", GoalPriority.SECONDARY, Visibility.PUBLIC));
+            new AgentGoal("primary", "Primary", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
+            new AgentGoal("mediocre", "Mediocre", GoalPriority.SECONDARY, Visibility.PUBLIC, List.of()));
         var counts = Map.of("mediocre", new GoalOutcomeCounts(12, 8));
         var result = evolution.evaluate(descriptor, counts);
         assertInstanceOf(GoalEvolutionResult.Unchanged.class, result);

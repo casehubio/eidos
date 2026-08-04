@@ -78,7 +78,7 @@ Single-valued convenience: `Builder.socialOrient("collaborative")` creates a sin
 
 ### AgentGoal
 
-First-class goal record: `name`, `description`, `priority` (PRIMARY/SECONDARY), `visibility` (PUBLIC/PRIVATE). BDI-inspired naming: goals are what the agent *wants* (standing, identity-level). `GoalContext` on `AgentPromptContext` is what the agent is doing right now (ephemeral, per-invocation).
+First-class goal record: `name`, `description`, `priority` (PRIMARY/SECONDARY), `visibility` (PUBLIC/PRIVATE), `capabilities` (List<String>, maps to declared `AgentCapability.name()` on the same descriptor). Empty list = cross-cutting goal affected by any capability failure; non-empty = affected only when a listed capability fails. Cross-validated at construction: every name must match a declared capability. BDI-inspired naming: goals are what the agent *wants* (standing, identity-level). `GoalContext` on `AgentPromptContext` is what the agent is doing right now (ephemeral, per-invocation).
 
 ### AgentConstraint
 

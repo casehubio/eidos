@@ -68,9 +68,9 @@ class CrossVocabularyAgentDesignTest {
                                 .build()))
                 .goals(List.of(
                         new AgentGoal("architectural-coherence", "Maintain system-wide architectural consistency",
-                                GoalPriority.PRIMARY, Visibility.PUBLIC),
+                                GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
                         new AgentGoal("knowledge-transfer", "Ensure team understands design rationale",
-                                GoalPriority.SECONDARY, Visibility.PUBLIC)))
+                                GoalPriority.SECONDARY, Visibility.PUBLIC, List.of())))
                 .constraints(List.of(
                         new AgentConstraint("no-premature-optimisation", "Do not optimise before measuring",
                                 Visibility.PUBLIC, ConstraintSeverity.HARD),

@@ -7,6 +7,7 @@ CREATE TABLE agent_goal (
     description    TEXT         NOT NULL,
     priority       VARCHAR(20)  NOT NULL,
     visibility     VARCHAR(20)  NOT NULL,
+    capabilities   TEXT,
     UNIQUE (descriptor_id, name)
 );
 

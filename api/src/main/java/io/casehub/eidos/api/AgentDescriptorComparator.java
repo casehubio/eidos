@@ -15,7 +15,7 @@ public final class AgentDescriptorComparator {
     static final int COMPARED_FIELD_COUNT = 19;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
     static final int COMPARED_DISPOSITION_FIELD_COUNT = 7;
-    static final int COMPARED_GOAL_FIELD_COUNT = 3;
+    static final int COMPARED_GOAL_FIELD_COUNT = 4;
     static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
 
     private AgentDescriptorComparator() {}
@@ -148,6 +148,7 @@ public final class AgentDescriptorComparator {
                 compareField(drifts, prefix + "description", entry.getValue().description(), actualGoal.description());
                 compareField(drifts, prefix + "priority", entry.getValue().priority(), actualGoal.priority());
                 compareField(drifts, prefix + "visibility", entry.getValue().visibility(), actualGoal.visibility());
+                compareField(drifts, prefix + "capabilities", entry.getValue().capabilities(), actualGoal.capabilities());
             }
         }
     }

@@ -294,8 +294,8 @@ class AgentDescriptorValidatorTest {
     @Test
     void duplicate_goal_names_throws() {
         var goals = List.of(
-                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC),
-                new AgentGoal("find-diamond", "Find it again", GoalPriority.SECONDARY, Visibility.PUBLIC));
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
+                new AgentGoal("find-diamond", "Find it again", GoalPriority.SECONDARY, Visibility.PUBLIC, List.of()));
         assertThatThrownBy(() -> AgentDescriptor.builder()
                                                 .agentId("a").name("n").slot("s").tenancyId("t").goals(goals).build())
                 .isInstanceOf(AgentValidationException.class)
@@ -316,7 +316,7 @@ class AgentDescriptorValidatorTest {
     @Test
     void goals_exceeding_max_throws() {
         var goals = java.util.stream.IntStream.rangeClosed(1, 11)
-                                              .mapToObj(i -> new AgentGoal("g-" + i, "desc", GoalPriority.PRIMARY, Visibility.PUBLIC))
+                                              .mapToObj(i -> new AgentGoal("g-" + i, "desc", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()))
                                               .toList();
         assertThatThrownBy(() -> AgentDescriptor.builder()
                                                 .agentId("a").name("n").slot("s").tenancyId("t").goals(goals).build())
@@ -364,8 +364,8 @@ class AgentDescriptorValidatorTest {
     @Test
     void publicGoals_filters_by_visibility() {
         var goals = List.of(
-                new AgentGoal("public-goal", "Visible", GoalPriority.PRIMARY, Visibility.PUBLIC),
-                new AgentGoal("private-goal", "Hidden", GoalPriority.SECONDARY, Visibility.PRIVATE));
+                new AgentGoal("public-goal", "Visible", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
+                new AgentGoal("private-goal", "Hidden", GoalPriority.SECONDARY, Visibility.PRIVATE, List.of()));
         var d = AgentDescriptor.builder()
                                .agentId("a").name("n").slot("s").tenancyId("t").goals(goals).build();
         assertThat(d.publicGoals()).hasSize(1);
@@ -381,5 +381,38 @@ class AgentDescriptorValidatorTest {
                                .agentId("a").name("n").slot("s").tenancyId("t").constraints(constraints).build();
         assertThat(d.publicConstraints()).hasSize(1);
         assertThat(d.publicConstraints().get(0).name()).isEqualTo("public-c");
+    }
+
+    @Test
+    void goal_referencing_unknown_capability_throws() {
+        var caps = List.of(AgentCapability.builder().name("code-review").build());
+        var goals = List.of(new AgentGoal("quality", "Ensure quality",
+                                          GoalPriority.PRIMARY, Visibility.PUBLIC, List.of("unknown-cap")));
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("a").name("A").slot("s").tenancyId("t")
+                                                .capabilities(caps).goals(goals).build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("unknown capability")
+                .hasMessageContaining("unknown-cap");
+    }
+
+    @Test
+    void goal_referencing_declared_capability_succeeds() {
+        var caps = List.of(AgentCapability.builder().name("code-review").build());
+        var goals = List.of(new AgentGoal("quality", "Ensure quality",
+                                          GoalPriority.PRIMARY, Visibility.PUBLIC, List.of("code-review")));
+        assertThatNoException().isThrownBy(() -> AgentDescriptor.builder()
+                                                                .agentId("a").name("A").slot("s").tenancyId("t")
+                                                                .capabilities(caps).goals(goals).build());
+    }
+
+    @Test
+    void goal_with_empty_capabilities_succeeds_regardless_of_declared() {
+        var caps = List.of(AgentCapability.builder().name("code-review").build());
+        var goals = List.of(new AgentGoal("quality", "Ensure quality",
+                                          GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()));
+        assertThatNoException().isThrownBy(() -> AgentDescriptor.builder()
+                                                                .agentId("a").name("A").slot("s").tenancyId("t")
+                                                                .capabilities(caps).goals(goals).build());
     }
 }

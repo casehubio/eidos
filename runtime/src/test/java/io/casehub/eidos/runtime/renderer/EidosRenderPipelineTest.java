@@ -1006,9 +1006,9 @@ class EidosRenderPipelineTest {
                               .agentId("hooded-claw").name("The Hooded Claw").slot("villain").tenancyId("wacky-manor")
                               .goals(List.of(
                                       new AgentGoal("win-treasure", "Win the treasure hunt",
-                                                    GoalPriority.SECONDARY, Visibility.PUBLIC),
+                                                    GoalPriority.SECONDARY, Visibility.PUBLIC, List.of()),
                                       new AgentGoal("eliminate-penelope", "Kill Penelope Pitstop",
-                                                    GoalPriority.PRIMARY, Visibility.PRIVATE)))
+                                                    GoalPriority.PRIMARY, Visibility.PRIVATE, List.of())))
                               .constraints(List.of(
                                       new AgentConstraint("elaborate-schemes", "Schemes must be elaborate", Visibility.PUBLIC, ConstraintSeverity.SOFT),
                                       new AgentConstraint("never-break-cover", "Never reveal your true identity", Visibility.PRIVATE, ConstraintSeverity.HARD)))
@@ -1067,7 +1067,7 @@ class EidosRenderPipelineTest {
     void markdown_objectives_before_disposition() {
         var d = AgentDescriptor.builder()
                                .agentId("a").name("n").slot("s").tenancyId("t")
-                               .goals(List.of(new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                               .goals(List.of(new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of())))
                                .disposition(AgentDisposition.builder().autonomy("high").build())
                                .build();
         var ctx = AgentPromptContext.forFormat(MARKDOWN);
@@ -1124,7 +1124,7 @@ class EidosRenderPipelineTest {
     void a2a_card_omits_goals_key_when_no_public_goals() {
         var d = AgentDescriptor.builder()
                                .agentId("a").name("n").slot("s").tenancyId("t")
-                               .goals(List.of(new AgentGoal("secret", "d", GoalPriority.PRIMARY, Visibility.PRIVATE)))
+                               .goals(List.of(new AgentGoal("secret", "d", GoalPriority.PRIMARY, Visibility.PRIVATE, List.of())))
                                .build();
         var ctx = AgentPromptContext.forFormat(A2A_CARD);
         var result = pipeline.assemble(pipeline.buildStage1(d, ctx),
@@ -1136,7 +1136,7 @@ class EidosRenderPipelineTest {
     void combined_standing_and_current_goals_both_render() {
         var d = AgentDescriptor.builder()
                                .agentId("a").name("n").slot("s").tenancyId("t")
-                               .goals(List.of(new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC)))
+                               .goals(List.of(new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of())))
                                .build();
         var ctx = AgentPromptContext.forFormat(MARKDOWN)
                                     .withGoal(GoalContext.of("Search room 3 for clues"));

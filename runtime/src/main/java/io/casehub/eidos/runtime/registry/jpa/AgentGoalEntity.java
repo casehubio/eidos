@@ -22,4 +22,5 @@ public class AgentGoalEntity {
     @Column(columnDefinition = "TEXT", nullable = false) String description;
     @Column(nullable = false) String priority;
     @Column(nullable = false) String visibility;
+    @Column(name = "capabilities") String capabilities;
 }

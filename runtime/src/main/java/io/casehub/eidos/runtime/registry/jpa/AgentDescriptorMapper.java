@@ -111,7 +111,8 @@ class AgentDescriptorMapper {
     private AgentGoal toGoal(AgentGoalEntity g) {
         return new AgentGoal(g.name, g.description,
                              GoalPriority.valueOf(g.priority),
-                             Visibility.valueOf(g.visibility));
+                             Visibility.valueOf(g.visibility),
+                             readJson(g.capabilities, new TypeReference<List<String>>() {}));
     }
 
     private AgentGoalEntity toGoalEntity(AgentGoal g, AgentDescriptorEntity parent) {
@@ -123,6 +124,7 @@ class AgentDescriptorMapper {
         e.description = g.description();
         e.priority    = g.priority().name();
         e.visibility  = g.visibility().name();
+        e.capabilities = writeJson(g.capabilities());
         return e;
     }
 

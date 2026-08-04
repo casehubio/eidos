@@ -93,6 +93,18 @@ public record AgentDescriptor(
                 throw new AgentValidationException("constraints", "duplicate constraint name: " + dup);
             }
         }
+        if (!goals.isEmpty() && !capabilities.isEmpty()) {
+            var capabilityNames = capabilities.stream()
+                .map(AgentCapability::name).collect(java.util.stream.Collectors.toSet());
+            for (var goal : goals) {
+                for (var capName : goal.capabilities()) {
+                    if (!capabilityNames.contains(capName)) {
+                        throw new AgentValidationException("goals",
+                            "goal '" + goal.name() + "' references unknown capability '" + capName + "'");
+                    }
+                }
+            }
+        }
     }
 
     public Optional<String> vocabUriForSlot() {
