@@ -96,3 +96,45 @@ descriptors:
       Work collaboratively — missing coverage is often unintentional. Frame
       findings as gaps to fill rather than failures. Follow strict checklist
       conventions when they exist for the document type.
+
+  - agentId: premium-reviewer
+    name: Premium Code Reviewer
+    slot: reviewer
+    tenancyId: cost-routing
+    capabilities:
+      - name: code-review
+        capabilityVocabulary: urn:casehub:vocab:capability
+        qualityHint: 0.95
+        latencyHintP50Ms: 30000
+        costHint: premium
+        epistemicDomains:
+          java: 0.95
+          rust: 0.85
+
+  - agentId: standard-reviewer
+    name: Standard Code Reviewer
+    slot: reviewer
+    tenancyId: cost-routing
+    capabilities:
+      - name: code-review
+        capabilityVocabulary: urn:casehub:vocab:capability
+        qualityHint: 0.70
+        latencyHintP50Ms: 2000
+        costHint: standard
+        epistemicDomains:
+          java: 0.80
+          python: 0.90
+
+  - agentId: security-specialist
+    name: Security Code Review Specialist
+    slot: security-reviewer
+    tenancyId: cost-routing
+    capabilities:
+      - name: security-code-review
+        capabilityVocabulary: urn:casehub:vocab:capability
+        qualityHint: 0.90
+        latencyHintP50Ms: 5000
+        costHint: premium
+        epistemicDomains:
+          java: 0.95
+        excludedDomains: [rust]
