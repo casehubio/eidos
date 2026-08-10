@@ -1,0 +1,282 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "typora" [level=2] [ref=e4]
+      - paragraph [ref=e5]: /* a truly *| */
+    - generic [ref=e6] [cursor=pointer]: 
+  - banner [ref=e8]:
+    - link "Typora" [ref=e9] [cursor=pointer]:
+      - /url: "#home"
+    - list [ref=e12]:
+      - listitem [ref=e13]:
+        - link "Features" [ref=e14] [cursor=pointer]:
+          - /url: "#feature"
+      - listitem [ref=e15]:
+        - link "Download" [ref=e16] [cursor=pointer]:
+          - /url: "#download"
+      - listitem [ref=e17]:
+        - link "Purchase" [ref=e18] [cursor=pointer]:
+          - /url: "#purchase"
+      - listitem [ref=e19]:
+        - link "Themes" [ref=e20] [cursor=pointer]:
+          - /url: http://theme.typora.io
+      - listitem [ref=e21]:
+        - link "Support" [ref=e22] [cursor=pointer]:
+          - /url: http://support.typora.io
+      - listitem [ref=e23]:
+        - link "About" [ref=e24] [cursor=pointer]:
+          - /url: "#contact"
+  - generic [ref=e28]:
+    - heading "Readable & Writable" [level=3] [ref=e29]
+    - paragraph [ref=e30]: Typora gives you a seamless experience as both a reader and a writer. It removes the preview window, mode switcher, syntax symbols of markdown source code, and all other unnecessary distractions. Instead, it provides a real live preview feature to help you concentrate on the content itself.
+    - heading " Distractions Free" [level=4] [ref=e31]:
+      - generic [ref=e32]: 
+      - text: Distractions Free
+    - heading " Seamless Live Preview" [level=4] [ref=e33]:
+      - generic [ref=e34]: 
+      - text: Seamless Live Preview
+    - heading " What You See Is What You Mean" [level=4] [ref=e35]:
+      - generic [ref=e36]: 
+      - text: What You See Is What You Mean
+  - separator [ref=e40]
+  - generic [ref=e41]:
+    - heading "Simple, yet Powerful" [level=3] [ref=e42]
+    - list [ref=e44]:
+      - listitem [ref=e45]:
+        - generic [ref=e46] [cursor=pointer]: Images,
+      - listitem [ref=e47]:
+        - generic [ref=e48] [cursor=pointer]: Headers,
+      - listitem [ref=e49]:
+        - generic [ref=e50] [cursor=pointer]: Lists,
+      - listitem [ref=e51]:
+        - generic [ref=e52] [cursor=pointer]: Tables,
+      - listitem [ref=e53]:
+        - generic [ref=e54] [cursor=pointer]: Code Fences,
+      - listitem [ref=e55]:
+        - generic [ref=e56] [cursor=pointer]: Mathematics,
+      - listitem [ref=e57]:
+        - generic [ref=e58] [cursor=pointer]: Diagrams,
+      - listitem [ref=e59]:
+        - generic [ref=e60] [cursor=pointer]: Inline Styles.
+      - listitem [ref=e61]:
+        - generic [ref=e62] [cursor=pointer]: etc..
+    - generic [ref=e63]:
+      - list:
+        - listitem [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - generic: 
+              - generic: 
+            - generic [ref=e69]:
+              - generic: 
+              - generic: 
+          - generic [ref=e70]: /* Display images, rather than text for images when writing */
+        - listitem [ref=e71]:
+          - generic [ref=e72]: 
+          - generic [ref=e77]: /* Working with headers */
+        - listitem [ref=e78]:
+          - generic [ref=e84]: /* Ordered, Unordered and Task Lists */
+        - listitem [ref=e85]:
+          - generic [ref=e91]: /* Tables from Markdown Extra */
+        - listitem [ref=e92]:
+          - generic [ref=e93]: 
+          - generic [ref=e98]: /* Highlight your code */
+        - listitem [ref=e99]:
+          - generic [ref=e105]: /* Take notes on math classes */
+        - listitem [ref=e106]:
+          - generic [ref=e111]:
+            - generic: 
+            - generic: 
+          - generic [ref=e112]: /* Draw diagrams from textual representation */
+        - listitem [ref=e113]:
+          - generic [ref=e119]: /* Apply rich styles on texts */
+        - listitem [ref=e120]:
+          - generic [ref=e126]: /* And other block styles */
+  - separator [ref=e127]
+  - generic [ref=e128]:
+    - heading "Accessibility" [level=3] [ref=e129]
+    - paragraph [ref=e130]: /* You focus on the content, Typora helps with the rest */
+    - generic [ref=e132]:
+      - generic [ref=e133]:
+        - generic [ref=e136]: Organize Files
+        - generic [ref=e137]: Typora allows you to manage your files easily, providing both file tree panel and articles (file list) side panel. Fell free to organize files in your own way, including putting in sync services, like Dropbox or iCloud.
+      - generic [ref=e138]:
+        - generic [ref=e141]: Outline Panel
+        - generic [ref=e142]: Automatically see the Outline structure of your documents in outline panel, which allows you to quickly go through the document and jump to any section with one click.
+      - generic [ref=e143]:
+        - generic [ref=e146]: Import & Export
+        - generic [ref=e147]: Export to PDF with bookmarks. Go further and export or import. More formats, including docx, OpenOffice, LaTeX, MediaWiki, Epub, etc, can be exported or imported.
+      - generic [ref=e148]:
+        - generic [ref=e151]: Word Count
+        - generic [ref=e152]: See how large your document is in words, characters, lines, or reading minutes.
+      - generic [ref=e153]:
+        - generic [ref=e156]: Focus Mode & TypeWriter Mode
+        - generic [ref=e157]: Focus mode helps you focus only on the current line, by blurring the others. Typewriter mode always keeps the currently active line in the middle of the window.
+      - generic [ref=e158]:
+        - generic [ref=e161]: Auto Pair
+        - generic [ref=e162]: Auto complete pair of brackets and quotes like a code editor. Also, There's also an option to auto pair markdown symbols, like * or _.
+    - generic [ref=e163]: /* More in Our Documents */
+  - separator [ref=e164]
+  - generic [ref=e166]:
+    - heading "Custom Themes" [level=3] [ref=e167]
+    - generic [ref=e168]:
+      - text: /*
+      - generic [ref=e169] [cursor=pointer]:
+        - text: fully configurable by CSS
+        - generic [ref=e170]: 
+      - text: "*/"
+  - generic [ref=e180]:
+    - list:
+      - listitem [ref=e181]:
+        - generic [ref=e182]:
+          - heading "and, loved by our users" [level=5] [ref=e185]
+          - button [ref=e186] [cursor=pointer]
+      - listitem [ref=e189]:
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - generic [ref=e194]: Markdown is the official text format for AI, and Typora is the best editor for Markdown.
+            - generic [ref=e195]: Charles McGuinness
+          - button [ref=e197] [cursor=pointer]
+      - listitem [ref=e200]:
+        - generic [ref=e201]:
+          - generic [ref=e202]:
+            - 'link "There is just something so natural about writing #markdown with @Typora." [ref=e206] [cursor=pointer]':
+              - /url: https://twitter.com/tastapod/status/739121949104844800
+            - link "Dan North" [ref=e209] [cursor=pointer]:
+              - /url: https://twitter.com/tastapod
+          - button [ref=e210] [cursor=pointer]
+      - listitem [ref=e213]:
+        - generic [ref=e214]:
+          - generic [ref=e215]:
+            - link "Just wanted to say BIG Thank you since I used typora to write my entire book 'Microservices with .NET Core'" [ref=e219] [cursor=pointer]:
+              - /url: https://twitter.com/atechiethought/status/882236312639725568
+            - link "@atechiethought" [ref=e222] [cursor=pointer]:
+              - /url: https://twitter.com/atechiethought
+          - button [ref=e223] [cursor=pointer]
+      - listitem [ref=e226]:
+        - generic [ref=e227]:
+          - generic [ref=e228]:
+            - link "This is one of the nicest Markdown editors I've ever tried." [ref=e232] [cursor=pointer]:
+              - /url: https://twitter.com/avdi/status/785511735373524992
+            - link "Avdi Grimm" [ref=e235] [cursor=pointer]:
+              - /url: https://twitter.com/avdi
+          - button [ref=e236] [cursor=pointer]
+      - listitem [ref=e239]:
+        - generic [ref=e240]:
+          - link "Here are more words from our users." [ref=e243] [cursor=pointer]:
+            - /url: /likes.html
+          - button [ref=e244] [cursor=pointer]
+  - generic [ref=e248]:
+    - heading "want Typora ?" [level=2] [ref=e250]
+    - generic [ref=e251]:
+      - generic [ref=e255]:
+        - generic [ref=e256]: 15 days free trial / up to 3 devices
+        - paragraph [ref=e258]: A minimal Markdown editor and reader.
+        - generic [ref=e259]:
+          - generic "click to edit" [ref=e260]: $ 14.99
+          - text: (without tax)
+          - generic [ref=e261]:
+            - text: 
+            - generic [ref=e262]: x 1
+            - button "" [ref=e263] [cursor=pointer]
+      - button "Purchase" [ref=e266] [cursor=pointer]
+      - generic [ref=e271]:
+        - button "Download" [ref=e272] [cursor=pointer]
+        - button [ref=e282] [cursor=pointer]
+    - paragraph [ref=e287]:
+      - generic [ref=e288]:
+        - link "All / History Releases" [ref=e289] [cursor=pointer]:
+          - /url: /releases/all
+        - text: /
+        - link "Make a Quote" [ref=e290] [cursor=pointer]:
+          - /url: "#"
+        - text: / For Other OS /
+        - link "Purchase FAQ" [ref=e291] [cursor=pointer]:
+          - /url: https://store.typora.io/#faq
+  - generic [ref=e293]:
+    - heading "" [level=3] [ref=e294]
+    - paragraph [ref=e296]:
+      - link "Email" [ref=e297] [cursor=pointer]:
+        - /url: mailto:hi@typora.io
+      - text: ·
+      - link "@typora" [ref=e298] [cursor=pointer]:
+        - /url: https://twitter.com/typora
+      - text: ·
+      - link "Support" [ref=e299] [cursor=pointer]:
+        - /url: https://support.typora.io/
+    - textbox "have something to say?" [ref=e302]
+  - generic [ref=e304]:
+    - generic [ref=e305]:
+      - generic [ref=e306]:
+        - heading "Product" [level=5] [ref=e307]
+        - link "Documents" [ref=e308] [cursor=pointer]:
+          - /url: https://support.typora.io/
+        - link "Themes" [ref=e309] [cursor=pointer]:
+          - /url: https://theme.typora.io
+        - link "What's New" [ref=e310] [cursor=pointer]:
+          - /url: https://support.typora.io/what's-new/
+        - link "Press Kit" [ref=e311] [cursor=pointer]:
+          - /url: https://typora.io/presskit.zip
+      - generic [ref=e312]:
+        - heading "Downloads" [level=5] [ref=e313]
+        - link "macOS" [ref=e314] [cursor=pointer]:
+          - /url: https://downloads.typora.io/mac/Typora.dmg
+        - link "Linux" [ref=e315] [cursor=pointer]:
+          - /url: "#linux"
+        - link "Windows (64 bit)" [ref=e316] [cursor=pointer]:
+          - /url: https://downloads.typora.io/windows/typora-setup-x64.exe
+        - link "Windows (32 bit)" [ref=e317] [cursor=pointer]:
+          - /url: https://downloads.typora.io/windows/typora-setup-ia32.exe
+        - link "Windows (ARM)" [ref=e318] [cursor=pointer]:
+          - /url: https://downloads.typora.io/windows/typora-setup-arm64.exe
+        - link "History Releases" [ref=e319] [cursor=pointer]:
+          - /url: /releases/all
+      - generic [ref=e320]:
+        - heading "Purchase" [level=5] [ref=e321]
+        - link "Price" [ref=e322] [cursor=pointer]:
+          - /url: "#purchase"
+        - link "Activate Typora" [ref=e323] [cursor=pointer]:
+          - /url: https://support.typora.io/activation/#register--activate-typora
+        - link "Purchase FAQ" [ref=e324] [cursor=pointer]:
+          - /url: https://store.typora.io/#faq
+        - link "Find my License" [ref=e325] [cursor=pointer]:
+          - /url: https://store.typora.io/my
+        - link "Order Questions" [ref=e326] [cursor=pointer]:
+          - /url: https://fastspring.com/consumer-support/
+        - link "Make a Quote" [ref=e327] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e328]:
+        - heading "Contact" [level=5] [ref=e329]
+        - link "Home" [ref=e330] [cursor=pointer]:
+          - /url: https://typora.io/
+        - link "Twitter" [ref=e331] [cursor=pointer]:
+          - /url: https://twitter.com/typora/
+        - link "Email" [ref=e332] [cursor=pointer]:
+          - /url: mailto:hi@typora.io
+        - link "Issues" [ref=e333] [cursor=pointer]:
+          - /url: https://github.com/typora/typora-issues/issues
+        - link "Team" [ref=e334] [cursor=pointer]:
+          - /url: https://appmakes.io
+        - link "Affiliate Program" [ref=e335] [cursor=pointer]:
+          - /url: https://www.avangatenetwork.com/affiliates/marketplace/product/typora.html
+      - generic [ref=e336]:
+        - heading "About" [level=5] [ref=e337]
+        - link "License Agreement" [ref=e338] [cursor=pointer]:
+          - /url: https://support.typora.io/License-Agreement/
+        - link "Privacy Policy" [ref=e339] [cursor=pointer]:
+          - /url: https://support.typora.io/Privacy-Policy/
+        - link "Acknowledgement" [ref=e340] [cursor=pointer]:
+          - /url: https://support.typora.io/Acknowledgement/
+        - link "中文站" [ref=e341] [cursor=pointer]:
+          - /url: https://typoraio.cn/
+    - link [ref=e343] [cursor=pointer]:
+      - /url: https://appmakes.io
+  - paragraph [ref=e346]:
+    - link "NEWS • Jul 19 • Typora 1.14" [ref=e347] [cursor=pointer]:
+      - /url: https://support.typora.io//What's-New-1.14/
+      - generic [ref=e348]:
+        - generic [ref=e349]: 
+        - text: NEWS
+      - text: • Jul 19 •
+      - generic [ref=e350]: Typora 1.14
+      - generic [ref=e351]: 
