@@ -27,4 +27,53 @@ public record AgentGoal(
                                                "duplicate capability name in goal '" + name + "'");
         }
     }
+
+    public Builder toBuilder() {
+        return new Builder(name, description, priority, visibility, capabilities);
+    }
+
+    public static final class Builder {
+        private String name, description;
+        private GoalPriority priority;
+        private Visibility   visibility;
+        private List<String> capabilities;
+
+        Builder(String name, String description, GoalPriority priority,
+                Visibility visibility, List<String> capabilities) {
+            this.name         = name;
+            this.description  = description;
+            this.priority     = priority;
+            this.visibility   = visibility;
+            this.capabilities = capabilities != null ? new java.util.ArrayList<>(capabilities) : new java.util.ArrayList<>();
+        }
+
+        public Builder name(String v)               {
+                                                        this.name = v;
+                                                        return this;
+                                                    }
+
+        public Builder description(String v)        {
+                                                        this.description = v;
+                                                        return this;
+                                                    }
+
+        public Builder priority(GoalPriority v)     {
+                                                        this.priority = v;
+                                                        return this;
+                                                    }
+
+        public Builder visibility(Visibility v)     {
+                                                        this.visibility = v;
+                                                        return this;
+                                                    }
+
+        public Builder capabilities(List<String> v) {
+                                                        this.capabilities = v;
+                                                        return this;
+                                                    }
+
+        public AgentGoal build() {
+            return new AgentGoal(name, description, priority, visibility, capabilities);
+        }
+    }
 }
