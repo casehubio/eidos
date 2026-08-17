@@ -43,6 +43,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
                                            .domainVocabulary(cfg.domainVocabulary)
                                            .slotVocabulary(cfg.slotVocabulary)
                                            .dispositionVocabulary(cfg.dispositionVocabulary)
+                                           .styleVocabulary(cfg.styleVocabulary)
                                            .jurisdiction(cfg.jurisdiction)
                                            .dataHandlingPolicy(cfg.dataHandlingPolicy)
                                            .briefing(cfg.briefing);
@@ -95,6 +96,12 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
                         }
                     }
                 }
+            }
+
+            if (cfg.disposition.styleProfile != null && !cfg.disposition.styleProfile.isEmpty()) {
+                dispBuilder.styleProfile(cfg.disposition.styleProfile.stream()
+                        .map(dv -> new io.casehub.eidos.api.DispositionValue(dv.term, dv.weight))
+                        .toList());
             }
 
             builder.disposition(dispBuilder.build());
@@ -180,6 +187,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         public String agentId, name, slot, tenancyId, version, provider,
                 modelFamily, modelVersion, weightsFingerprint,
                 domainVocabulary, slotVocabulary, dispositionVocabulary,
+                styleVocabulary,
                 jurisdiction, dataHandlingPolicy, briefing;
         public Map<String, String>     axisVocabularies;
         public DispositionConfig       disposition;
@@ -195,6 +203,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         public String                       mbtiType;
         public String                       enneagramType;
         public List<DispositionValueConfig> dispositionProfile;
+        public List<DispositionValueConfig> styleProfile;
     }
 
     static class DispositionValueConfig {

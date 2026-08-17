@@ -47,6 +47,7 @@ public class AgentDescriptorEntity {
     @Column(name = "domain_vocabulary")      String domainVocabulary;
     @Column(name = "slot_vocabulary")        String slotVocabulary;
     @Column(name = "disposition_vocabulary") String dispositionVocabulary;
+    @Column(name = "style_vocabulary")      String styleVocabulary;
 
     @Column(name = "axis_vocabularies", columnDefinition = "TEXT")
     String axisVocabularies;

@@ -626,17 +626,20 @@ class EidosRenderPipeline {
         }
         sb.append("\nWhen your dominant and auxiliary functions cannot effectively address a situation, draw on other cognitive functions. Recognize that compensatory function use produces less controlled but potentially valuable responses.\n");
         if (sorted.size() >= 1) {
-            vocab.resolve(vocabUri, sorted.get(0).term()).ifPresent(term -> {
-                final String style = term.responseStyleGuidance();
-                if (style != null && !style.isEmpty()) {
-                    sb.append("\n**Your Response Style:** ").append(style).append("\n");
-                }
-                final String avoid = term.antiPatternWarning();
-                if (avoid != null && !avoid.isEmpty()) {
-                    sb.append("\n**Avoid:** ").append(avoid).append("\n");
-                }
-            });
+            vocab.resolve(vocabUri, sorted.get(0).term()).ifPresent(term ->
+                renderGuidanceBlock(sb, term, "Your Response Style"));
         }}
+
+    private static void renderGuidanceBlock(final StringBuilder sb, final VocabularyTerm term, final String heading) {
+        final String style = term.responseStyleGuidance();
+        if (style != null && !style.isEmpty()) {
+            sb.append("\n**").append(heading).append(":** ").append(style).append("\n");
+        }
+        final String avoid = term.antiPatternWarning();
+        if (avoid != null && !avoid.isEmpty()) {
+            sb.append("\n**Avoid:** ").append(avoid).append("\n");
+        }
+    }
 
     private Optional<String> deriveMbtiType(final String dominantTerm, final String auxiliaryTerm) {
         final String mbtiUri = "urn:casehub:vocab:mbti";

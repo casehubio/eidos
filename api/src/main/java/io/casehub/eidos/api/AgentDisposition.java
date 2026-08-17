@@ -9,7 +9,8 @@ public record AgentDisposition(
         List<DispositionValue> autonomy,
         List<DispositionValue> conflictMode,
         boolean delegation,
-        List<DispositionValue> dispositionProfile
+        List<DispositionValue> dispositionProfile,
+        List<DispositionValue> styleProfile
 ) {
     public AgentDisposition {
         socialOrient       = sanitizeAxis(socialOrient);
@@ -18,6 +19,7 @@ public record AgentDisposition(
         autonomy           = sanitizeAxis(autonomy);
         conflictMode       = sanitizeAxis(conflictMode);
         dispositionProfile = dispositionProfile == null ? List.of() : List.copyOf(dispositionProfile);
+        styleProfile       = styleProfile == null ? List.of() : List.copyOf(styleProfile);
     }
 
     private static List<DispositionValue> sanitizeAxis(List<DispositionValue> values) {
@@ -49,6 +51,7 @@ public record AgentDisposition(
         private List<DispositionValue> conflictMode       = List.of();
         private boolean                delegation;
         private List<DispositionValue> dispositionProfile = List.of();
+        private List<DispositionValue> styleProfile       = List.of();
 
         public Builder socialOrient(String v) {
             this.socialOrient = v == null ? List.of() : List.of(DispositionValue.of(v));
@@ -140,10 +143,20 @@ public record AgentDisposition(
             return this;
         }
 
+        public Builder styleProfile(DispositionValue... values) {
+            this.styleProfile = List.of(values);
+            return this;
+        }
+
+        public Builder styleProfile(List<DispositionValue> v) {
+            this.styleProfile = v == null ? List.of() : List.copyOf(v);
+            return this;
+        }
+
         public AgentDisposition build() {
             return new AgentDisposition(
                     socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
-                    delegation, dispositionProfile);
+                    delegation, dispositionProfile, styleProfile);
         }
     }
 }

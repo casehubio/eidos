@@ -15,6 +15,7 @@ public record AgentDescriptor(
         String domainVocabulary,
         String slotVocabulary,
         String dispositionVocabulary,
+        String styleVocabulary,
         Map<DispositionAxis, String> axisVocabularies,
         String slot,
         List<AgentCapability> capabilities,
@@ -149,6 +150,7 @@ public record AgentDescriptor(
                 .modelVersion(this.modelVersion).weightsFingerprint(this.weightsFingerprint)
                 .domainVocabulary(this.domainVocabulary).slotVocabulary(this.slotVocabulary)
                 .dispositionVocabulary(this.dispositionVocabulary)
+                .styleVocabulary(this.styleVocabulary)
                 .axisVocabularies(this.axisVocabularies)
                 .slot(this.slot).capabilities(this.capabilities)
                 .disposition(this.disposition).jurisdiction(this.jurisdiction)
@@ -161,7 +163,8 @@ public record AgentDescriptor(
     public static final class Builder {
         private String agentId, name, version, provider,
                 modelFamily, modelVersion, weightsFingerprint,
-                domainVocabulary, slotVocabulary, dispositionVocabulary;
+                domainVocabulary, slotVocabulary, dispositionVocabulary,
+                styleVocabulary;
         private Map<DispositionAxis, String> axisVocabularies;
         private String                       slot;
         private List<AgentCapability>        capabilities = List.of();
@@ -218,6 +221,11 @@ public record AgentDescriptor(
 
         public Builder dispositionVocabulary(String v)                  {
                                                                             this.dispositionVocabulary = v;
+                                                                            return this;
+                                                                        }
+
+        public Builder styleVocabulary(String v)                        {
+                                                                            this.styleVocabulary = v;
                                                                             return this;
                                                                         }
 
@@ -281,6 +289,7 @@ public record AgentDescriptor(
                     agentId, name, version, provider,
                     modelFamily, modelVersion, weightsFingerprint,
                     domainVocabulary, slotVocabulary, dispositionVocabulary,
+                    styleVocabulary,
                     axisVocabularies, slot, capabilities, disposition,
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
                     templates,

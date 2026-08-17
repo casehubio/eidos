@@ -14,6 +14,7 @@ CREATE TABLE agent_descriptor (
     domain_vocabulary      TEXT,
     slot_vocabulary        TEXT,
     disposition_vocabulary TEXT,
+    style_vocabulary       TEXT,
     axis_vocabularies      TEXT,
     slot                   VARCHAR(255),
     jurisdiction           TEXT,

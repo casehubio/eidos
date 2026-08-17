@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 
 public final class AgentDescriptorComparator {
 
-    static final int COMPARED_FIELD_COUNT = 19;
+    static final int COMPARED_FIELD_COUNT = 20;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
-    static final int COMPARED_DISPOSITION_FIELD_COUNT = 7;
+    static final int COMPARED_DISPOSITION_FIELD_COUNT = 8;
     static final int COMPARED_GOAL_FIELD_COUNT = 4;
     static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
 
@@ -44,6 +44,7 @@ public final class AgentDescriptorComparator {
         compareField(drifts, "domainVocabulary", desired.domainVocabulary(), actual.domainVocabulary());
         compareField(drifts, "slotVocabulary", desired.slotVocabulary(), actual.slotVocabulary());
         compareField(drifts, "dispositionVocabulary", desired.dispositionVocabulary(), actual.dispositionVocabulary());
+        compareField(drifts, "styleVocabulary", desired.styleVocabulary(), actual.styleVocabulary());
         compareField(drifts, "jurisdiction", desired.jurisdiction(), actual.jurisdiction());
         compareField(drifts, "dataHandlingPolicy", desired.dataHandlingPolicy(), actual.dataHandlingPolicy());
         compareField(drifts, "briefing", desired.briefing(), actual.briefing());
@@ -80,7 +81,8 @@ public final class AgentDescriptorComparator {
             drifts.add(new FieldDrift("disposition.delegation",
                                       String.valueOf(desired.delegation()), String.valueOf(actual.delegation())));
         }
-        compareField(drifts, "disposition.dispositionProfile", desired.dispositionProfile(), actual.dispositionProfile());}
+        compareField(drifts, "disposition.dispositionProfile", desired.dispositionProfile(), actual.dispositionProfile());
+        compareField(drifts, "disposition.styleProfile", desired.styleProfile(), actual.styleProfile());}
 
     private static void compareCapabilities(List<FieldDrift> drifts,
                                              List<AgentCapability> desired,
