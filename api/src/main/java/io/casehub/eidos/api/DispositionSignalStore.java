@@ -24,4 +24,18 @@ public interface DispositionSignalStore {
     void decay(String agentId, String tenancyId, double decayFactor);
 
     void clear(String agentId, String tenancyId);
+
+    default void recordActivation(String agentId, String tenancyId,
+                                  String functionTerm, SignalValence valence) {
+        recordActivation(agentId, tenancyId, functionTerm);
+    }
+
+    default Map<String, ValenceCounts> valenceCounts(String agentId, String tenancyId) {
+        var counts = activationCounts(agentId, tenancyId);
+        var result = new java.util.LinkedHashMap<String, ValenceCounts>();
+        counts.forEach((k, v) -> result.put(k, new ValenceCounts(v, 0)));
+        return result;
+    }
+
+
 }
