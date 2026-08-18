@@ -15,7 +15,9 @@
 
   <modules>
     <module>api</module>
+    <module>annotations</module>
     <module>runtime</module>
+    <module>annotations-deployment</module>
     <module>persistence-memory</module>
     <module>deployment</module>
     <module>vocab</module>

@@ -16,5 +16,7 @@
 
   <modules>
     <module>agent-scenarios</module>
+    <module>agent-identity-annotated</module>
+    <module>goals-constraints-annotated</module>
   </modules>
 </project>

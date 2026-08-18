@@ -111,6 +111,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 - **DispositionHealth** — disposition-level health probing paralleling CapabilityHealth; `DispositionSignalStore` SPI accumulates function activation counts (no TTL, explicit decay/clear); `DispositionHealth.probe()` returns sealed `DispositionStatus` (Aligned/Drifted/EvolutionPending); `DispositionEvolution.evaluate()` returns sealed `EvolutionResult` (Evolved/Dampened); `EvolutionType` interface in api, `JungianEvolutionType` enum in vocab (4 JPAF reflection types). `DefaultDispositionHealth` @ApplicationScoped computes effective weights (base + activationCount × REINFORCEMENT_DELTA, normalized), checks 4 evolution conditions: dominant-auxiliary swap, dominant replacement (shadow via `VocabularyTerm.opposite()`), auxiliary replacement, structural reorganization. Over-reinforcement ceiling via `DispositionPreferenceKeys.OVER_REINFORCEMENT_THRESHOLD`. CDI ladder: `NoOpDispositionSignalStore` @DefaultBean, `InMemoryDispositionSignalStore` @Alternative in casehub-eidos-memory, `JpaDispositionSignalStore` @IfBuildProperty (Flyway V9). Auto-derivation in `DescriptorCollector`: when dispositionProfile is populated and axes empty, projects function weights onto 5 axes via cross-vocabulary `equivalentValues()`, populates `axisVocabularies`.
 - **AgentDescriptorRegistrar** — declarative SPI (`List<AgentDescriptor> descriptors()`); consumers provide `@ApplicationScoped` beans or a `META-INF/eidos/descriptors.yaml` classpath resource (YAML-driven via `ClasspathYamlDescriptorRegistrar`); `AgentDescriptorBootstrap` (@Observes StartupEvent, @IfBuildProperty blocking-mode gated) auto-discovers all registrars and registers descriptors with duplicate `(agentId, tenancyId)` detection
 - **SystemPromptRenderer** — renders `AgentDescriptor + AgentPromptContext` (goal, resources, situational context) into a format-specific system prompt; `EidosSystemPromptRenderer` @ApplicationScoped (no @DefaultBean — consumers displace with @DefaultBean fallback per Pattern B) supports three formats: `MARKDOWN` (LLM or structural fallback), `PROSE` (LLM or structural fallback), `A2A_CARD` (JSON machine-readable card with slot, vocabulary-grounded disposition, frameworks index, and full capability routing signals — `qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains` — plus `inputTypes`/`outputTypes` type schema)
+- **casehub-eidos-annotations** — opt-in Quarkus extension for annotation-driven agent identity; `@Identity`, `@Disposition`, `@AgentGoals`, `@AgentConstraints` generate `AgentDescriptorRegistrar` beans via `EidosAnnotationsProcessor` build extension; `@Discoverable` (in eidos-api) declares capability names for registry auto-registration; hybrid vocabulary validation at build time when vocab modules are on classpath; `AnnotatedAgentConfig` data class + `EidosAnnotationsRecorder` handle build→runtime boundary via Quarkus recorder pattern; `EidosAnnotationProcessedBuildItem` enables coordination with blocks build extension
 - **casehub-eidos-vocab** — optional well-known vocabularies: SVO, Conscientiousness, CasehubSlot, Belbin (team roles with axisExactMatch to Conscientiousness + Thomas-Kilmann), DISC (behavioral styles), Thomas-Kilmann (conflict modes), CasehubCapability (hierarchical capability taxonomy), JungianFunctionTerm (8 cognitive functions with cross-vocab axisExactMatch, shadow(), opposite(), compatibleAuxiliaries()), MbtiTypeTerm (16 MBTI types with specializes() to JungianFunctionTerm, defaultProfile()), JungianEvolutionType (4 JPAF reflection types), BigFiveTerm (O/E/A/N high+low poles with axisExactMatch), EnneagramTerm (9 motivation-based types with axisExactMatch), SdiTerm (4 relationship-focused conflict motivation types with axisExactMatch)
 
 ### Key Design Decisions
@@ -151,7 +152,11 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 | Root Java package | `io.casehub.eidos` |
 | API package | `io.casehub.eidos.api` |
 | Runtime package | `io.casehub.eidos.runtime` |
+| Annotations artifactId | `casehub-eidos-annotations` |
+| Annotations Deployment artifactId | `casehub-eidos-annotations-deployment` |
+| Annotations package | `io.casehub.eidos.annotations` |
 | Feature name | `eidos` |
+| Annotations Feature name | `eidos-annotations` |
 
 ---
 
@@ -205,6 +210,20 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── ReactiveCapabilityHealth.java — SPI: Uni<CapabilityStatus> probe(...)
 │       ├── Resource.java               — uri/label/type record for agent-accessible resources
 │       └── SystemPromptRenderer.java   — SPI: render(AgentDescriptor, AgentPromptContext) → RenderedPrompt
+├── annotations/                         — casehub-eidos-annotations: annotation definitions (@Identity, @Disposition, @AgentGoals, @AgentConstraints) + NameDerivation utility + Quarkus recorder
+│   └── src/main/java/io/casehub/eidos/annotations/
+│       ├── Identity.java                — @Identity: agent identity metadata (id, name, slot, provider, modelFamily, jurisdiction, briefing, vocabulary)
+│       ├── Disposition.java             — @Disposition: 5 personality axes + dispositionProfile + styleProfile + delegation
+│       ├── AgentGoals.java / AgentGoalDef.java — @AgentGoals: standing objectives with priority, visibility, capability references
+│       ├── AgentConstraints.java / AgentConstraintDef.java — @AgentConstraints: behavioral guardrails with severity
+│       ├── NameDerivation.java          — class name → kebab-case agentId / display name derivation (acronym-aware)
+│       └── runtime/
+│           ├── EidosAnnotationsRecorder.java — @Recorder: constructs AgentDescriptor at runtime from build-time-extracted config
+│           └── AnnotatedAgentConfig.java    — recordable data class for build→runtime value transfer
+├── annotations-deployment/              — casehub-eidos-annotations-deployment: Quarkus build extension
+│   └── src/main/java/io/casehub/eidos/annotations/deployment/
+│       ├── EidosAnnotationsProcessor.java — @BuildStep: Jandex scan, annotation extraction, synthetic bean generation, hybrid vocab validation
+│       └── EidosAnnotationProcessedBuildItem.java — coordination build item for blocks interop
 ├── runtime/
 │   └── src/main/java/io/casehub/eidos/runtime/
 │       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)
