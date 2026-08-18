@@ -221,17 +221,10 @@ Activates by classpath presence. JPA-backed with Flyway V3 migration. Runtime pr
 
 JPA/Flyway -- version range V1--V999 in `classpath:db/eidos/migration`. Current migrations:
 
-| Version | Content |
-|---|---|
-| V1 | Initial schema (agent descriptor, capabilities) |
-| V2 | Agent degradation state |
-| V3 | Agent graph (in `casehub-eidos-graph`) |
-| V4 | Capability specialization table |
-| V5 | Behavioral signal table |
-| V6 | Capability description column |
-| V7 | Descriptor templates |
-| V8 | Goals and constraints tables |
-| V9 | Disposition signal table |
+| Version | Module | Content |
+|---|---|---|
+| V1 | runtime | Full schema -- agent descriptor, capabilities, degradation state, capability specialization, behavioral signals, goals, constraints, disposition signals, goal signals |
+| V3 | graph | Agent graph (task, outcome, attestation tables) |
 
 No existing installations -- no deployed instances in production. All schema changes go directly into base migration files.
 

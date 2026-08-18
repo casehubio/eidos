@@ -33,7 +33,7 @@ Signal-parameterized SPI in `casehub-eidos-api` for learned behavioral patterns.
 - `learned(agentId, tenancyId, capabilityName, signal)` returns `Map<String, Integer>` -- qualifier to count
 - `count(agentId, tenancyId, capabilityName, qualifier, signal)` returns `int`
 - Per-signal TTL independently configurable via `@ConfigProperty`
-- V5 schema migration (table with `signal_type` discriminator column)
+- Schema in V1 initial migration (table with `signal_type` discriminator column)
 
 **capabilityName contract:** All methods require the agent's *declared* capability name (from `AgentCapability.name()`), not a query/lookup term. When the caller has a query tag, use `CapabilityResolver.resolve()` to obtain the declared capability first.
 
@@ -84,7 +84,7 @@ SPI for cognitive function activation tracking, used by JPAF personality adaptat
 
 No TTL -- decay is explicit via `decay()` or `clear()`.
 
-CDI ladder: `NoOpDispositionSignalStore @DefaultBean`, `InMemoryDispositionSignalStore @Alternative` in `casehub-eidos-memory` (ConcurrentHashMap + AtomicInteger), `JpaDispositionSignalStore @IfBuildProperty` in runtime (Flyway V9).
+CDI ladder: `NoOpDispositionSignalStore @DefaultBean`, `InMemoryDispositionSignalStore @Alternative` in `casehub-eidos-memory` (ConcurrentHashMap + AtomicInteger), `JpaDispositionSignalStore @IfBuildProperty` in runtime.
 
 ### DispositionHealth and Evolution
 
@@ -327,15 +327,8 @@ Baseline: `eval-baseline-2026-06-10.json` committed as reference.
 
 | Version | Module | Content |
 |---|---|---|
-| V1 | runtime | Initial schema -- agent descriptor, capabilities |
-| V2 | runtime | Agent degradation state |
+| V1 | runtime | Full schema -- agent descriptor, capabilities, degradation state, capability specialization, behavioral signals, goals, constraints, disposition signals, goal signals |
 | V3 | graph | Agent graph (task, outcome, attestation tables) |
-| V4 | runtime | Capability specialization table |
-| V5 | runtime | Behavioral signal table (signal_type discriminator) |
-| V6 | runtime | Capability description column |
-| V7 | runtime | Descriptor templates |
-| V8 | runtime | Goals and constraints tables |
-| V9 | runtime | Disposition signal table |
 
 No existing installations -- no deployed instances in production. All schema changes go directly into base migration files.
 
