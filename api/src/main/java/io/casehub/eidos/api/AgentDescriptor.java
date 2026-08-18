@@ -63,6 +63,7 @@ public record AgentDescriptor(
         AgentDescriptorValidator.validateOptional("domainVocabulary", domainVocabulary, AgentDescriptorValidator.MAX_VOCABULARY_URI);
         AgentDescriptorValidator.validateOptional("slotVocabulary", slotVocabulary, AgentDescriptorValidator.MAX_VOCABULARY_URI);
         AgentDescriptorValidator.validateOptional("dispositionVocabulary", dispositionVocabulary, AgentDescriptorValidator.MAX_VOCABULARY_URI);
+        AgentDescriptorValidator.validateOptional("styleVocabulary", styleVocabulary, AgentDescriptorValidator.MAX_VOCABULARY_URI);
         AgentDescriptorValidator.validateOptional("jurisdiction", jurisdiction, AgentDescriptorValidator.MAX_JURISDICTION);
         AgentDescriptorValidator.validateOptional("dataHandlingPolicy", dataHandlingPolicy, AgentDescriptorValidator.MAX_DATA_HANDLING_POLICY);
         AgentDescriptorValidator.validateOptional("briefing", briefing, AgentDescriptorValidator.MAX_BRIEFING, 0x000A);

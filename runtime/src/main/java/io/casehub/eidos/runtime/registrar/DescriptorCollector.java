@@ -113,7 +113,8 @@ public final class DescriptorCollector {
         var disposition = descriptor.disposition();
         var builder = AgentDisposition.builder()
                                       .delegation(disposition.delegation())
-                                      .dispositionProfile(disposition.dispositionProfile());
+                                      .dispositionProfile(disposition.dispositionProfile())
+                                      .styleProfile(disposition.styleProfile());
 
         var axisVocabularies = new java.util.EnumMap<DispositionAxis, String>(DispositionAxis.class);
         if (descriptor.axisVocabularies() != null) {
@@ -140,24 +141,9 @@ public final class DescriptorCollector {
             }
         }
 
-        return AgentDescriptor.builder()
-                              .agentId(descriptor.agentId()).name(descriptor.name())
-                              .version(descriptor.version()).provider(descriptor.provider())
-                              .modelFamily(descriptor.modelFamily()).modelVersion(descriptor.modelVersion())
-                              .weightsFingerprint(descriptor.weightsFingerprint())
-                              .slot(descriptor.slot()).jurisdiction(descriptor.jurisdiction())
-                              .dataHandlingPolicy(descriptor.dataHandlingPolicy())
-                              .briefing(descriptor.briefing())
-                              .domainVocabulary(descriptor.domainVocabulary())
-                              .slotVocabulary(descriptor.slotVocabulary())
-                              .dispositionVocabulary(descriptor.dispositionVocabulary())
+        return descriptor.toBuilder()
                               .axisVocabularies(axisVocabularies.isEmpty() ? null : new java.util.HashMap<>(axisVocabularies))
-                              .capabilities(descriptor.capabilities())
-                              .goals(descriptor.goals())
-                              .constraints(descriptor.constraints())
-                              .templates(descriptor.templates())
                               .disposition(builder.build())
-                              .tenancyId(descriptor.tenancyId())
                               .build();
     }
 
