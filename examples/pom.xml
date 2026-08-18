@@ -16,7 +16,11 @@
 
   <modules>
     <module>agent-scenarios</module>
-    <module>agent-identity-annotated</module>
-    <module>goals-constraints-annotated</module>
+    <module>customer-support-triage</module>
+    <module>code-review-agent</module>
+    <module>medical-scribe-agent</module>
+    <module>creative-director-agent</module>
+    <module>child-companion-bot</module>
+    <module>tutor-agent</module>
   </modules>
 </project>
