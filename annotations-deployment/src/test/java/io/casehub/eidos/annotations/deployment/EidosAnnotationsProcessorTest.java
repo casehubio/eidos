@@ -9,14 +9,17 @@ import io.quarkus.test.QuarkusUnitTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class EidosAnnotationsProcessorTest {
 
     @RegisterExtension
     static final QuarkusUnitTest unitTest = new QuarkusUnitTest()
             .withApplicationRoot(root -> root
-                    .addPackage("io.casehub.eidos.annotations.deployment.test"))
+                    .addClass(io.casehub.eidos.annotations.deployment.test.SimpleAnnotatedAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.FullAnnotatedAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.IdentityOnlyAgent.class))
             .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
             .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
             .overrideConfigKey("quarkus.datasource.db-kind", "h2")
@@ -91,4 +94,16 @@ class EidosAnnotationsProcessorTest {
         var d = registry.findById("full-agent", "test-tenant").orElseThrow();
         assertThat(d.tenancyId()).isEqualTo("test-tenant");
     }
+
+    @Test
+    void identityOnlyAgentIsRegisteredWithNullDisposition() {
+        var d = registry.findById("identity-only-agent", "test-tenant").orElseThrow();
+        assertThat(d.slot()).isEqualTo("identity-only-agent");
+        assertThat(d.briefing()).isEqualTo("No disposition, no goals, no constraints");
+        assertThat(d.disposition()).isNull();
+        assertThat(d.goals()).isEmpty();
+        assertThat(d.constraints()).isEmpty();
+        assertThat(d.capabilities()).isEmpty();
+    }
+
 }

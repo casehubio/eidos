@@ -15,7 +15,11 @@ class NameDerivationTest {
         "HTMLParser, html-parser",
         "APIGatewayAgent, api-gateway-agent",
         "NLPAnalyser, nlp-analyser",
-        "A, a"
+        "A, a",
+        "HTML, html",
+        "DocumentHTML, document-html",
+        "Agent2, agent2",
+        "HTTPClient, http-client"
     })
     void toKebabCase(String input, String expected) {
         assertThat(NameDerivation.toKebabCase(input)).isEqualTo(expected);
@@ -30,7 +34,11 @@ class NameDerivationTest {
     @CsvSource({
         "LegalAnalystAgent, Legal Analyst Agent",
         "Reviewer, Reviewer",
-        "DocumentAnalyst, Document Analyst"
+        "DocumentAnalyst, Document Analyst",
+        "HTMLParser, HTML Parser",
+        "APIGatewayAgent, API Gateway Agent",
+        "HTML, HTML",
+        "DocumentHTML, Document HTML"
     })
     void toDisplayName(String input, String expected) {
         assertThat(NameDerivation.toDisplayName(input)).isEqualTo(expected);

@@ -76,6 +76,7 @@ class EidosAnnotationsProcessor {
         }
 
         validateVocabularyTerms(index);
+        warnDiscoverableWithoutIdentity(index, processedClasses);
 
         return new EidosAnnotationProcessedBuildItem(processedClasses);
     }
@@ -128,6 +129,17 @@ class EidosAnnotationsProcessor {
             }
         }
     }
+
+    private void warnDiscoverableWithoutIdentity(CombinedIndexBuildItem index, Set<String> processedClasses) {
+        for (var ann : index.getIndex().getAnnotations(DISCOVERABLE)) {
+            if (ann.target().kind() != AnnotationTarget.Kind.CLASS) {continue;}
+            var className = ann.target().asClass().name().toString();
+            if (!processedClasses.contains(className)) {
+                LOG.warnf("Class %s has @Discoverable but no @Identity — capabilities will not be registered", className);
+            }
+        }
+    }
+
 
     private void validateTerm(AnnotationInstance ann, String field,
                               java.util.Set<String> validTerms, String vocabUri, ClassInfo classInfo) {
@@ -186,17 +198,15 @@ class EidosAnnotationsProcessor {
 
     private String resolveAgentId(AnnotationInstance identity, ClassInfo classInfo,
                                    HashMap<String, String> derivedIds) {
-        var explicit = stringValue(identity, "id");
-        if (!explicit.isEmpty()) return explicit;
-
-        var derived = NameDerivation.toKebabCase(classInfo.simpleName());
-        var existing = derivedIds.put(derived, classInfo.name().toString());
+        var    explicit = stringValue(identity, "id");
+        String agentId  = explicit.isEmpty() ? NameDerivation.toKebabCase(classInfo.simpleName()) : explicit;
+        var    existing = derivedIds.put(agentId, classInfo.name().toString());
         if (existing != null) {
             throw new IllegalStateException(
-                "Duplicate derived agentId '" + derived + "' from classes " + existing
-                + " and " + classInfo.name() + " — add explicit id() to at least one @Identity");
+                    "Duplicate agentId '" + agentId + "' from classes " + existing
+                    + " and " + classInfo.name() + " — add explicit id() to at least one @Identity");
         }
-        return derived;
+        return agentId;
     }
 
     private String resolveDisplayName(AnnotationInstance identity, ClassInfo classInfo) {

@@ -24,13 +24,17 @@ public final class NameDerivation {
     }
 
     public static String toDisplayName(String className) {
-        if (className == null || className.isEmpty()) return "";
+        if (className == null || className.isEmpty()) {return "";}
         int dollar = className.lastIndexOf('$');
-        if (dollar >= 0) className = className.substring(dollar + 1);
+        if (dollar >= 0) {className = className.substring(dollar + 1);}
         var sb = new StringBuilder();
         for (int i = 0; i < className.length(); i++) {
             char c = className.charAt(i);
-            if (Character.isUpperCase(c) && i > 0) sb.append(' ');
+            if (Character.isUpperCase(c) && i > 0) {
+                boolean prevIsUpper = Character.isUpperCase(className.charAt(i - 1));
+                boolean nextIsLower = i + 1 < className.length() && Character.isLowerCase(className.charAt(i + 1));
+                if (!prevIsUpper || nextIsLower) {sb.append(' ');}
+            }
             sb.append(c);
         }
         return sb.toString();
