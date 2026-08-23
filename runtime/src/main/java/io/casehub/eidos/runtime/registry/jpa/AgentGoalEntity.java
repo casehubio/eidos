@@ -1,6 +1,15 @@
 package io.casehub.eidos.runtime.registry.jpa;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "agent_goal",
@@ -23,4 +32,7 @@ public class AgentGoalEntity {
     @Column(nullable = false) String priority;
     @Column(nullable = false) String visibility;
     @Column(name = "capabilities") String capabilities;
+    @Column(name = "attributes")
+                                   String attributes;
+
 }

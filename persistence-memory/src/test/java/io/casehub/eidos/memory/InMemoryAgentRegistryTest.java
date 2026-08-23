@@ -293,7 +293,7 @@ class InMemoryAgentRegistryTest {
     void find_by_goal_returns_matching_agents() {
         var desc1 = AgentDescriptor.builder()
                                    .agentId("g1").name("G1").slot("s").tenancyId("t")
-                                   .goals(List.of(new AgentGoal("quality-review", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of())))
+                                   .goals(List.of(new AgentGoal("quality-review", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null)))
                                    .build();
         var desc2 = AgentDescriptor.builder()
                                    .agentId("g2").name("G2").slot("s").tenancyId("t")
@@ -311,7 +311,7 @@ class InMemoryAgentRegistryTest {
     void find_by_goal_returns_empty_when_no_match() {
         var desc = AgentDescriptor.builder()
                                   .agentId("g3").name("G3").slot("s").tenancyId("t")
-                                  .goals(List.of(new AgentGoal("quality", "Q", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of())))
+                                  .goals(List.of(new AgentGoal("quality", "Q", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null)))
                                   .build();
         registry.register(desc);
 

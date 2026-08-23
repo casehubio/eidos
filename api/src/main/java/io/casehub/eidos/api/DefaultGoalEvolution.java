@@ -39,12 +39,12 @@ public class DefaultGoalEvolution implements GoalEvolution {
 
             if (goal.priority() == GoalPriority.SECONDARY && successRate > PROMOTION_THRESHOLD) {
                 newGoals.add(new AgentGoal(goal.name(), goal.description(), GoalPriority.PRIMARY,
-                                           goal.visibility(), goal.capabilities()));
+                                           goal.visibility(), goal.capabilities(), null));
                 promoted.add(goal.name());
                 anyChanged = true;
             } else if (goal.priority() == GoalPriority.PRIMARY && failureRate > DEMOTION_THRESHOLD) {
                 newGoals.add(new AgentGoal(goal.name(), goal.description(), GoalPriority.SECONDARY,
-                                           goal.visibility(), goal.capabilities()));
+                                           goal.visibility(), goal.capabilities(), null));
                 demoted.add(goal.name());
                 anyChanged = true;
             } else {

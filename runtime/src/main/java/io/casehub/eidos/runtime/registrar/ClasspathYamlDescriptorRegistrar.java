@@ -122,7 +122,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
 
         if (cfg.goals != null) {
             builder.goals(cfg.goals.stream().map(g ->
-                new AgentGoal(g.name, g.description, g.priority, g.visibility, g.capabilities)
+                new AgentGoal(g.name, g.description, g.priority, g.visibility, g.capabilities, null)
             ).toList());
         }
 

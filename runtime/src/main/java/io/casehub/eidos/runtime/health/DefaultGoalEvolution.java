@@ -95,10 +95,10 @@ public class DefaultGoalEvolution implements GoalEvolution {
 
         final var newGoals = descriptor.goals().stream().map(g -> {
             if (promoted.contains(g.name())) {
-                return new AgentGoal(g.name(), g.description(), GoalPriority.PRIMARY, g.visibility(), g.capabilities());
+                return new AgentGoal(g.name(), g.description(), GoalPriority.PRIMARY, g.visibility(), g.capabilities(), null);
             }
             if (demoted.contains(g.name())) {
-                return new AgentGoal(g.name(), g.description(), GoalPriority.SECONDARY, g.visibility(), g.capabilities());
+                return new AgentGoal(g.name(), g.description(), GoalPriority.SECONDARY, g.visibility(), g.capabilities(), null);
             }
             return g;
         }).toList();

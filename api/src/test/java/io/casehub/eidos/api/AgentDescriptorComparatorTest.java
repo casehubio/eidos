@@ -411,7 +411,7 @@ class AgentDescriptorComparatorTest {
     @Test
     void goal_added() {
         var desired = withField(b -> b.goals(List.of(
-                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()))));
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null))));
         var actual = base();
         var result = AgentDescriptorComparator.compare(desired, actual);
         assertThat(result.drifts()).anyMatch(d -> d.field().equals("goals[find-diamond]")
@@ -422,7 +422,7 @@ class AgentDescriptorComparatorTest {
     void goal_removed() {
         var desired = base();
         var actual = withField(b -> b.goals(List.of(
-                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()))));
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null))));
         var result = AgentDescriptorComparator.compare(desired, actual);
         assertThat(result.drifts()).anyMatch(d -> d.field().equals("goals[find-diamond]")
                                                   && d.desiredValue().equals("(absent)") && d.actualValue().equals("(present)"));
@@ -430,8 +430,8 @@ class AgentDescriptorComparatorTest {
 
     @Test
     void goal_description_drifted() {
-        var g1      = new AgentGoal("g", "Old", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of());
-        var g2      = new AgentGoal("g", "New", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of());
+        var g1      = new AgentGoal("g", "Old", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null);
+        var g2      = new AgentGoal("g", "New", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null);
         var desired = withField(b -> b.goals(List.of(g1)));
         var actual  = withField(b -> b.goals(List.of(g2)));
         var result  = AgentDescriptorComparator.compare(desired, actual);
@@ -440,8 +440,8 @@ class AgentDescriptorComparatorTest {
 
     @Test
     void goal_priority_drifted() {
-        var g1      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of());
-        var g2      = new AgentGoal("g", "d", GoalPriority.SECONDARY, Visibility.PUBLIC, List.of());
+        var g1      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null);
+        var g2      = new AgentGoal("g", "d", GoalPriority.SECONDARY, Visibility.PUBLIC, List.of(), null);
         var desired = withField(b -> b.goals(List.of(g1)));
         var actual  = withField(b -> b.goals(List.of(g2)));
         var result  = AgentDescriptorComparator.compare(desired, actual);
@@ -450,8 +450,8 @@ class AgentDescriptorComparatorTest {
 
     @Test
     void goal_visibility_drifted() {
-        var g1      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of());
-        var g2      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PRIVATE, List.of());
+        var g1      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null);
+        var g2      = new AgentGoal("g", "d", GoalPriority.PRIMARY, Visibility.PRIVATE, List.of(), null);
         var desired = withField(b -> b.goals(List.of(g1)));
         var actual  = withField(b -> b.goals(List.of(g2)));
         var result  = AgentDescriptorComparator.compare(desired, actual);

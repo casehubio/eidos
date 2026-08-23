@@ -634,8 +634,8 @@ class JpaAgentRegistryTest {
     @TestTransaction
     void goals_and_constraints_persist_and_retrieve() {
         var goals = List.of(
-                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of()),
-                new AgentGoal("help-others", "Help", GoalPriority.SECONDARY, Visibility.PRIVATE, List.of()));
+                new AgentGoal("find-diamond", "Find it", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null),
+                new AgentGoal("help-others", "Help", GoalPriority.SECONDARY, Visibility.PRIVATE, List.of(), null));
         var constraints = List.of(
                 new AgentConstraint("trust-everyone", "Trust by default", Visibility.PUBLIC, ConstraintSeverity.SOFT),
                 new AgentConstraint("oblivious", "Do not notice danger", Visibility.PRIVATE, ConstraintSeverity.HARD));
@@ -664,7 +664,7 @@ class JpaAgentRegistryTest {
     void find_by_goal_returns_matching_agents() {
         var desc1 = AgentDescriptor.builder()
                                    .agentId("goal-a1").name("G1").slot("s").tenancyId("test-tenant")
-                                   .goals(List.of(new AgentGoal("quality-review", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of())))
+                                   .goals(List.of(new AgentGoal("quality-review", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null)))
                                    .build();
         var desc2 = AgentDescriptor.builder()
                                    .agentId("goal-a2").name("G2").slot("s").tenancyId("test-tenant")
@@ -682,7 +682,7 @@ class JpaAgentRegistryTest {
     void find_by_goal_returns_empty_when_no_match() {
         var desc = AgentDescriptor.builder()
                                   .agentId("goal-a3").name("G3").slot("s").tenancyId("test-tenant")
-                                  .goals(List.of(new AgentGoal("quality", "Q", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of())))
+                                  .goals(List.of(new AgentGoal("quality", "Q", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null)))
                                   .build();
         registry.register(desc);
 

@@ -67,7 +67,7 @@ public class EidosAnnotationsRecorder {
                 for (var g : config.goals) {
                     goals.add(new AgentGoal(g.name, g.description,
                             GoalPriority.valueOf(g.priority), Visibility.valueOf(g.visibility),
-                            g.capabilities != null ? List.of(g.capabilities) : List.of()));
+                            g.capabilities != null ? List.of(g.capabilities) : List.of(), null));
                 }
                 builder.goals(goals);
             }

@@ -357,7 +357,7 @@ class AgentDescriptorTest {
     void hasGoal_returns_true_for_existing_goal() {
         var desc = AgentDescriptor.builder()
                                   .agentId("a").name("A").slot("s").tenancyId("t")
-                                  .goals(List.of(new AgentGoal("quality", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of())))
+                                  .goals(List.of(new AgentGoal("quality", "Ensure quality", GoalPriority.PRIMARY, Visibility.PUBLIC, List.of(), null)))
                                   .build();
         assertThat(desc.hasGoal("quality")).isTrue();
         assertThat(desc.hasGoal("nonexistent")).isFalse();

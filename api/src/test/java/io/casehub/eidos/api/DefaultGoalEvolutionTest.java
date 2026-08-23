@@ -19,7 +19,7 @@ class DefaultGoalEvolutionTest {
 
     private AgentGoal goal(String name, GoalPriority priority) {
         return new AgentGoal(name, "description for " + name, priority,
-                             Visibility.PUBLIC, List.of());
+                             Visibility.PUBLIC, List.of(), null);
     }
 
     @Test
@@ -102,7 +102,7 @@ class DefaultGoalEvolutionTest {
     @Test
     void promotionPreservesDescription() {
         var original = new AgentGoal("g1", "my description", GoalPriority.SECONDARY,
-                                      Visibility.PUBLIC, List.of("cap-a"));
+                                      Visibility.PUBLIC, List.of("cap-a"), null);
         var descriptor = descriptorWithGoals(original);
         var counts = Map.of("g1", new GoalOutcomeCounts(9, 1));
         var result = evolution.evaluate(descriptor, counts);

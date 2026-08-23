@@ -114,21 +114,21 @@ class AgentDescriptorMapper {
         return new AgentGoal(g.name, g.description,
                              GoalPriority.valueOf(g.priority),
                              Visibility.valueOf(g.visibility),
-                             readJson(g.capabilities, new TypeReference<List<String>>() {}));
-    }
+                             readJson(g.capabilities, new TypeReference<List<String>>() {}),
+                             readJson(g.attributes, new TypeReference<Map<String, String>>() {}));}
 
     private AgentGoalEntity toGoalEntity(AgentGoal g, AgentDescriptorEntity parent) {
         var e = new AgentGoalEntity();
-        e.descriptor  = parent;
-        e.agentId     = parent.agentId;
-        e.tenancyId   = parent.tenancyId;
-        e.name        = g.name();
-        e.description = g.description();
-        e.priority    = g.priority().name();
-        e.visibility  = g.visibility().name();
+        e.descriptor   = parent;
+        e.agentId      = parent.agentId;
+        e.tenancyId    = parent.tenancyId;
+        e.name         = g.name();
+        e.description  = g.description();
+        e.priority     = g.priority().name();
+        e.visibility   = g.visibility().name();
         e.capabilities = writeJson(g.capabilities());
-        return e;
-    }
+        e.attributes   = writeJson(g.attributes());
+        return e;}
 
     private AgentConstraint toConstraint(AgentConstraintEntity c) {
         return new AgentConstraint(c.name, c.description,
