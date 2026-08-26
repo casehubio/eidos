@@ -24,6 +24,7 @@
     <module>examples</module>
     <module>eval</module>
     <module>graph</module>
+    <module>routing</module>
   </modules>
 
   <distributionManagement>
@@ -65,6 +66,7 @@
     <casehub-platform-api.version>0.2-SNAPSHOT</casehub-platform-api.version>
     <casehub-ledger-api.version>0.2-SNAPSHOT</casehub-ledger-api.version>
     <casehub-ledger.version>0.2-SNAPSHOT</casehub-ledger.version>
+    <casehub-engine-api.version>0.2-SNAPSHOT</casehub-engine-api.version>
   </properties>
 
   <dependencyManagement>
@@ -90,6 +92,11 @@
         <groupId>io.casehub</groupId>
         <artifactId>casehub-ledger</artifactId>
         <version>${casehub-ledger.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.casehub</groupId>
+        <artifactId>casehub-engine-api</artifactId>
+        <version>${casehub-engine-api.version}</version>
       </dependency>
       <dependency>
         <groupId>org.assertj</groupId>
