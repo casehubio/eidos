@@ -372,6 +372,163 @@ class ClasspathYamlDescriptorRegistrarTest {
         assertThat(d.primaryTerm(DispositionAxis.RULE_FOLLOWING)).isEqualTo("strict");
     }
 
+    @Test
+    void identity_fields_all_roundtrip() {
+        var yaml = """
+                   descriptors:
+                     - agentId: full-identity
+                       name: Full Identity Agent
+                       slot: analyst
+                       tenancyId: t1
+                       version: "2.1"
+                       provider: acme-ai
+                       modelFamily: gpt-4
+                       modelVersion: "2026-01"
+                       weightsFingerprint: sha256:abc123
+                       domainVocabulary: urn:acme:vocab:domain
+                       slotVocabulary: urn:acme:vocab:slot
+                       dispositionVocabulary: urn:acme:vocab:disposition
+                       styleVocabulary: urn:acme:vocab:style
+                       jurisdiction: EU
+                       dataHandlingPolicy: GDPR-compliant
+                       briefing: You are an analyst specialising in risk.
+                   """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(1);
+        var d = result.get(0);
+        assertThat(d.agentId()).isEqualTo("full-identity");
+        assertThat(d.provider()).isEqualTo("acme-ai");
+        assertThat(d.modelFamily()).isEqualTo("gpt-4");
+        assertThat(d.modelVersion()).isEqualTo("2026-01");
+        assertThat(d.weightsFingerprint()).isEqualTo("sha256:abc123");
+        assertThat(d.domainVocabulary()).isEqualTo("urn:acme:vocab:domain");
+        assertThat(d.slotVocabulary()).isEqualTo("urn:acme:vocab:slot");
+        assertThat(d.dispositionVocabulary()).isEqualTo("urn:acme:vocab:disposition");
+        assertThat(d.styleVocabulary()).isEqualTo("urn:acme:vocab:style");
+        assertThat(d.jurisdiction()).isEqualTo("EU");
+        assertThat(d.dataHandlingPolicy()).isEqualTo("GDPR-compliant");
+    }
+
+    @Test
+    void goal_description_and_capabilities_roundtrip() {
+        var yaml = """
+                   descriptors:
+                     - agentId: goal-caps
+                       name: Goal Caps Agent
+                       slot: planner
+                       tenancyId: t1
+                       capabilities:
+                         - name: code-review
+                         - name: testing
+                       goals:
+                         - name: ensure-quality
+                           description: Ensure all code meets quality standards
+                           priority: PRIMARY
+                           visibility: PUBLIC
+                           capabilities:
+                             - code-review
+                             - testing
+                         - name: mentor-juniors
+                           description: Help junior developers grow
+                           priority: SECONDARY
+                           visibility: PUBLIC
+                   """;
+        var result = parse(yaml);
+        var d      = result.get(0);
+        assertThat(d.goals()).hasSize(2);
+        var g1 = d.goals().get(0);
+        assertThat(g1.name()).isEqualTo("ensure-quality");
+        assertThat(g1.description()).isEqualTo("Ensure all code meets quality standards");
+        assertThat(g1.capabilities()).containsExactly("code-review", "testing");
+        var g2 = d.goals().get(1);
+        assertThat(g2.description()).isEqualTo("Help junior developers grow");
+        assertThat(g2.capabilities()).isEmpty();
+    }
+
+    @Test
+    void constraint_description_and_severity_roundtrip() {
+        var yaml = """
+                   descriptors:
+                     - agentId: constraint-test
+                       name: Constrained Agent
+                       slot: worker
+                       tenancyId: t1
+                       constraints:
+                         - name: no-pii
+                           description: Never process personally identifiable information
+                           visibility: PUBLIC
+                           severity: HARD
+                         - name: prefer-short-responses
+                           description: Keep responses concise when possible
+                           visibility: PUBLIC
+                           severity: SOFT
+                   """;
+        var result = parse(yaml);
+        var d      = result.get(0);
+        assertThat(d.constraints()).hasSize(2);
+        var c1 = d.constraints().get(0);
+        assertThat(c1.name()).isEqualTo("no-pii");
+        assertThat(c1.description()).isEqualTo("Never process personally identifiable information");
+        assertThat(c1.severity()).isEqualTo(io.casehub.eidos.api.ConstraintSeverity.HARD);
+        var c2 = d.constraints().get(1);
+        assertThat(c2.description()).isEqualTo("Keep responses concise when possible");
+        assertThat(c2.severity()).isEqualTo(io.casehub.eidos.api.ConstraintSeverity.SOFT);
+    }
+
+    @Test
+    void templates_roundtrip() {
+        var yaml = """
+                   descriptors:
+                     - agentId: template-test
+                       name: Template Agent
+                       slot: worker
+                       tenancyId: t1
+                       templates:
+                         - ref: safety-preamble
+                           args:
+                             domain: healthcare
+                             severity: critical
+                         - ref: closing-reminder
+                   """;
+        var result = parse(yaml);
+        var d      = result.get(0);
+        assertThat(d.templates()).hasSize(2);
+        var t1 = d.templates().get(0);
+        assertThat(t1.templateId()).isEqualTo("safety-preamble");
+        assertThat(t1.args()).containsEntry("domain", "healthcare");
+        assertThat(t1.args()).containsEntry("severity", "critical");
+        var t2 = d.templates().get(1);
+        assertThat(t2.templateId()).isEqualTo("closing-reminder");
+        assertThat(t2.args()).isEmpty();
+    }
+
+    @Test
+    void disposition_styleProfile_roundtrip() {
+        var yaml = """
+                   descriptors:
+                     - agentId: style-test
+                       name: Style Agent
+                       slot: writer
+                       tenancyId: t1
+                       styleVocabulary: urn:acme:vocab:style
+                       disposition:
+                         styleProfile:
+                           - term: concise
+                             weight: 0.60
+                           - term: formal
+                             weight: 0.40
+                   """;
+        var result = parse(yaml);
+        var d      = result.get(0);
+        var style  = d.disposition().styleProfile();
+        assertThat(style).hasSize(2);
+        assertThat(style.get(0).term()).isEqualTo("concise");
+        assertThat(style.get(0).weight()).isEqualTo(0.60);
+        assertThat(style.get(1).term()).isEqualTo("formal");
+        assertThat(style.get(1).weight()).isEqualTo(0.40);
+    }
+
+
     private io.casehub.eidos.api.VocabularyRegistry testVocabRegistry() {
         var registry = new io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry();
         registry.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);
