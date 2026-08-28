@@ -8,6 +8,7 @@
     <groupId>io.casehub</groupId>
     <artifactId>casehub-eidos-parent</artifactId>
     <version>0.2-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <artifactId>casehub-eidos-annotations-deployment</artifactId>

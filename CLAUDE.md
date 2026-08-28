@@ -153,6 +153,7 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 | Root Java package | `io.casehub.eidos` |
 | API package | `io.casehub.eidos.api` |
 | Runtime package | `io.casehub.eidos.runtime` |
+| Annotations Parent artifactId | `casehub-eidos-annotations-parent` |
 | Annotations artifactId | `casehub-eidos-annotations` |
 | Annotations Deployment artifactId | `casehub-eidos-annotations-deployment` |
 | Annotations package | `io.casehub.eidos.annotations` |
@@ -217,20 +218,21 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │       ├── ReactiveCapabilityHealth.java — SPI: Uni<CapabilityStatus> probe(...)
 │       ├── Resource.java               — uri/label/type record for agent-accessible resources
 │       └── SystemPromptRenderer.java   — SPI: render(AgentDescriptor, AgentPromptContext) → RenderedPrompt
-├── annotations/                         — casehub-eidos-annotations: annotation definitions (@Identity, @Disposition, @AgentGoals, @AgentConstraints) + NameDerivation utility + Quarkus recorder
-│   └── src/main/java/io/casehub/eidos/annotations/
-│       ├── Identity.java                — @Identity: agent identity metadata (id, name, slot, provider, modelFamily, jurisdiction, briefing, vocabulary)
-│       ├── Disposition.java             — @Disposition: 5 personality axes + dispositionProfile + styleProfile + delegation
-│       ├── AgentGoals.java / AgentGoalDef.java — @AgentGoals: standing objectives with priority, visibility, capability references
-│       ├── AgentConstraints.java / AgentConstraintDef.java — @AgentConstraints: behavioral guardrails with severity
-│       ├── NameDerivation.java          — class name → kebab-case agentId / display name derivation (acronym-aware)
-│       └── runtime/
-│           ├── EidosAnnotationsRecorder.java — @Recorder: constructs AgentDescriptor at runtime from build-time-extracted config
-│           └── AnnotatedAgentConfig.java    — recordable data class for build→runtime value transfer
-├── annotations-deployment/              — casehub-eidos-annotations-deployment: Quarkus build extension
-│   └── src/main/java/io/casehub/eidos/annotations/deployment/
-│       ├── EidosAnnotationsProcessor.java — @BuildStep: Jandex scan, annotation extraction, synthetic bean generation, hybrid vocab validation
-│       └── EidosAnnotationProcessedBuildItem.java — coordination build item for blocks interop
+├── annotations/                         — casehub-eidos-annotations: nested aggregator (runtime + deployment)
+│   ├── runtime/                         — annotation definitions (@Identity, @Disposition, @AgentGoals, @AgentConstraints) + NameDerivation utility + Quarkus recorder
+│   │   └── src/main/java/io/casehub/eidos/annotations/
+│   │       ├── Identity.java                — @Identity: agent identity metadata (id, name, slot, provider, modelFamily, jurisdiction, briefing, vocabulary)
+│   │       ├── Disposition.java             — @Disposition: 5 personality axes + dispositionProfile + styleProfile + delegation
+│   │       ├── AgentGoals.java / AgentGoalDef.java — @AgentGoals: standing objectives with priority, visibility, capability references
+│   │       ├── AgentConstraints.java / AgentConstraintDef.java — @AgentConstraints: behavioral guardrails with severity
+│   │       ├── NameDerivation.java          — class name → kebab-case agentId / display name derivation (acronym-aware)
+│   │       └── runtime/
+│   │           ├── EidosAnnotationsRecorder.java — @Recorder: constructs AgentDescriptor at runtime from build-time-extracted config
+│   │           └── AnnotatedAgentConfig.java    — recordable data class for build→runtime value transfer
+│   └── deployment/                      — casehub-eidos-annotations-deployment: Quarkus build extension
+│       └── src/main/java/io/casehub/eidos/annotations/deployment/
+│           ├── EidosAnnotationsProcessor.java — @BuildStep: Jandex scan, annotation extraction, synthetic bean generation, hybrid vocab validation
+│           └── EidosAnnotationProcessedBuildItem.java — coordination build item for blocks interop
 ├── runtime/
 │   └── src/main/java/io/casehub/eidos/runtime/
 │       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)

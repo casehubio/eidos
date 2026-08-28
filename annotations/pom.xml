@@ -10,63 +10,13 @@
     <version>0.2-SNAPSHOT</version>
   </parent>
 
-  <artifactId>casehub-eidos-annotations</artifactId>
-  <name>CaseHub Eidos - Annotations</name>
-  <description>Annotation-driven agent identity — @Identity, @Disposition, @AgentGoals, @AgentConstraints</description>
+  <artifactId>casehub-eidos-annotations-parent</artifactId>
+  <packaging>pom</packaging>
+  <name>CaseHub Eidos - Annotations Parent</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>io.casehub</groupId>
-      <artifactId>casehub-eidos</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.microprofile.config</groupId>
-      <artifactId>microprofile-config-api</artifactId>
-    </dependency>
+  <modules>
+    <module>runtime</module>
+    <module>deployment</module>
+  </modules>
 
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>io.smallrye</groupId>
-        <artifactId>jandex-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>make-index</id>
-            <goals><goal>jandex</goal></goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-extension-maven-plugin</artifactId>
-        <version>${quarkus.version}</version>
-        <executions>
-          <execution>
-            <goals><goal>extension-descriptor</goal></goals>
-            <phase>compile</phase>
-            <configuration>
-              <deployment>${project.groupId}:${project.artifactId}-deployment:${project.version}</deployment>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>

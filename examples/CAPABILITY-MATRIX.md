@@ -74,8 +74,8 @@ Maps every annotation capability to the example that demonstrates it and the tes
 JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl examples/customer-support-triage,examples/code-review-agent,examples/medical-scribe-agent,examples/creative-director-agent,examples/child-companion-bot,examples/tutor-agent
 
 # All deployment tests (includes build-time validation)
-JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl annotations-deployment
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl annotations/deployment
 
 # Everything (annotation examples + deployment tests)
-JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl annotations-deployment,examples/customer-support-triage,examples/code-review-agent,examples/medical-scribe-agent,examples/creative-director-agent,examples/child-companion-bot,examples/tutor-agent
+JAVA_HOME=$(/usr/libexec/java_home -v 26) mvn test -pl annotations/deployment,examples/customer-support-triage,examples/code-review-agent,examples/medical-scribe-agent,examples/creative-director-agent,examples/child-companion-bot,examples/tutor-agent
 ```
