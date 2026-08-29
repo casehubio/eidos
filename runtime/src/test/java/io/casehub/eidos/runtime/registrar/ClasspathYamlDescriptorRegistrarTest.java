@@ -123,7 +123,8 @@ class ClasspathYamlDescriptorRegistrarTest {
             """;
 
         assertThatThrownBy(() -> parse(yaml))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(IllegalStateException.class)
+            .hasRootCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -136,7 +137,8 @@ class ClasspathYamlDescriptorRegistrarTest {
             """;
 
         assertThatThrownBy(() -> parse(yaml))
-            .isInstanceOf(io.casehub.eidos.api.AgentValidationException.class)
+            .isInstanceOf(IllegalStateException.class)
+            .hasRootCauseInstanceOf(io.casehub.eidos.api.AgentValidationException.class)
             .hasMessageContaining("agentId");
     }
 
@@ -230,7 +232,8 @@ class ClasspathYamlDescriptorRegistrarTest {
                            priority: PRIMARY
                    """;
         assertThatThrownBy(() -> parse(yaml))
-                .isInstanceOf(NullPointerException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasRootCauseInstanceOf(NullPointerException.class);
     }
 
     @Test
