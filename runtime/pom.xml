@@ -77,6 +77,12 @@
       <artifactId>jackson-dataformat-yaml</artifactId>
     </dependency>
 
+    <!-- yaml-core — variable resolution, forEach expansion, conditional inclusion, CSV -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform-yaml-core</artifactId>
+    </dependency>
+
     <!-- LangChain4j core — ChatLanguageModel interface for ClaudeMarkdownRenderer -->
     <dependency>
       <groupId>dev.langchain4j</groupId>
