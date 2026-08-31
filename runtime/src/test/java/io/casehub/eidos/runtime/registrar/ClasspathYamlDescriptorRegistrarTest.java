@@ -532,6 +532,122 @@ class ClasspathYamlDescriptorRegistrarTest {
     }
 
 
+    // --- yaml-core preprocessing integration tests ---
+
+    @Test
+    void variable_resolution_produces_correct_descriptors() {
+        var yaml = """
+                variables:
+                  tenant: wacky-races
+                descriptors:
+                  - agentId: racer
+                    name: Racer
+                    slot: driver
+                    tenancyId: ${var.tenant}
+                """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).tenancyId()).isEqualTo("wacky-races");
+    }
+
+    @Test
+    void forEach_expansion_produces_multiple_descriptors() {
+        var yaml = """
+                iterations:
+                  teams:
+                    as: team
+                    in: [frontend, backend]
+                descriptors:
+                  - agentId: ${each.team}-reviewer
+                    name: ${each.team} Reviewer
+                    slot: reviewer
+                    tenancyId: default
+                    forEach: teams
+                    capabilities:
+                      - name: code-review
+                        tags: ["${each.team}"]
+                """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).agentId()).isEqualTo("frontend-reviewer");
+        assertThat(result.get(0).capabilities().get(0).tags())
+                .containsExactly("frontend");
+        assertThat(result.get(1).agentId()).isEqualTo("backend-reviewer");
+    }
+
+    @Test
+    void when_false_excludes_from_result() {
+        var yaml = """
+                variables:
+                  audit_enabled: "false"
+                descriptors:
+                  - agentId: always
+                    name: Always
+                    slot: s
+                    tenancyId: t
+                  - agentId: gated
+                    name: Gated
+                    slot: s
+                    tenancyId: t
+                    when: "${var.audit_enabled}"
+                """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).agentId()).isEqualTo("always");
+    }
+
+    @Test
+    void csv_inline_expansion_produces_correct_descriptors() {
+        var yaml = """
+                dataSources:
+                  roster:
+                    csv: |
+                      name:STRING, role:STRING
+                      alice, reviewer
+                      bob, planner
+                descriptors:
+                  - agentId: ${each.agent.name}-agent
+                    name: ${each.agent.name}
+                    slot: ${each.agent.role}
+                    tenancyId: default
+                    forEach:
+                      as: agent
+                      in: roster
+                """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).agentId()).isEqualTo("alice-agent");
+        assertThat(result.get(0).slot()).isEqualTo("reviewer");
+        assertThat(result.get(1).agentId()).isEqualTo("bob-agent");
+        assertThat(result.get(1).slot()).isEqualTo("planner");
+    }
+
+    @Test
+    void existing_yaml_without_preprocessing_works_unchanged() {
+        var yaml = """
+                descriptors:
+                  - agentId: plain
+                    name: Plain Agent
+                    slot: worker
+                    tenancyId: default
+                    disposition:
+                      conflictMode: collaborating
+                      delegation: false
+                    capabilities:
+                      - name: code-review
+                        tags: [quality]
+                    briefing: You are a plain agent.
+                """;
+        var result = parse(yaml);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).agentId()).isEqualTo("plain");
+        assertThat(result.get(0).disposition().primaryTerm(
+                io.casehub.eidos.api.DispositionAxis.CONFLICT_MODE))
+                .isEqualTo("collaborating");
+        assertThat(result.get(0).capabilities().get(0).name())
+                .isEqualTo("code-review");
+    }
+
     private io.casehub.eidos.api.VocabularyRegistry testVocabRegistry() {
         var registry = new io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry();
         registry.register(io.casehub.eidos.vocab.JungianFunctionTerm.class);

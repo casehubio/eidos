@@ -76,14 +76,18 @@ public final class DescriptorPreprocessor {
 
         var adapter = new DescriptorForEachAdapter();
         var result = new ArrayList<Map<String, Object>>();
+        int syntheticIndex = 0;
 
         for (var desc : descriptorsList) {
             String dsRef = csvDataSourceRef(desc, csvDataSources);
             if (dsRef != null) {
                 result.addAll(expandCsvDescriptor(desc, csvDataSources.get(dsRef), resolver));
             } else {
+                Object agentIdObj = desc.get("agentId");
+                String key = agentIdObj != null ? agentIdObj.toString()
+                        : "__unnamed__" + syntheticIndex++;
                 var singleMap = new LinkedHashMap<String, Map<String, Object>>();
-                singleMap.put(desc.get("agentId").toString(), desc);
+                singleMap.put(key, desc);
                 var expanded = ForEachExpander.expand(
                         singleMap, iterationGroups, resolver, adapter, MAX_EXPANSION);
                 result.addAll(expanded.elements());
