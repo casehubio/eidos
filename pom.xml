@@ -24,6 +24,7 @@
     <module>eval</module>
     <module>graph</module>
     <module>routing</module>
+    <module>org-api</module>
   </modules>
 
   <distributionManagement>
