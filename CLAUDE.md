@@ -114,6 +114,8 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 - **AgentSelector** — SPI for selecting the best agent from `AgentRegistry.find()` results; `SimpleAgentSelector` `@DefaultBean` in runtime (health filtering + optional trust ranking via `Instance<TrustScoreSource>`); `EngineAwareAgentSelector` `@Alternative @Priority(1)` in casehub-eidos-routing (bridges to engine's `AgentRoutingStrategy` trust maturity model). `SelectionContext(tenancyId, capabilityName, taskDomain)` carries query context. `AgentSelection` sealed result: `Selected(agent, resolvedCapability, trustScore, reason)`, `NoneQualified(reason)`, `Escalated(capabilityName, kind, reason)`. `EscalationKind { BORDERLINE_STALEMATE, NO_QUALIFIED_AGENT }`.
 - **casehub-eidos-annotations** — opt-in Quarkus extension for annotation-driven agent identity; `@Identity`, `@Disposition`, `@AgentGoals`, `@AgentConstraints` generate `AgentDescriptorRegistrar` beans via `EidosAnnotationsProcessor` build extension; `@Discoverable` (in eidos-api) declares capability names for registry auto-registration; hybrid vocabulary validation at build time when vocab modules are on classpath; `AnnotatedAgentConfig` data class + `EidosAnnotationsRecorder` handle build→runtime boundary via Quarkus recorder pattern; `EidosAnnotationProcessedBuildItem` enables coordination with blocks build extension
 - **casehub-eidos-vocab** — optional well-known vocabularies: SVO, Conscientiousness, CasehubSlot, Belbin (team roles with axisExactMatch to Conscientiousness + Thomas-Kilmann), DISC (behavioral styles), Thomas-Kilmann (conflict modes), CasehubCapability (hierarchical capability taxonomy), JungianFunctionTerm (8 cognitive functions with cross-vocab axisExactMatch, shadow(), opposite(), compatibleAuxiliaries()), MbtiTypeTerm (16 MBTI types with specializes() to JungianFunctionTerm, defaultProfile()), JungianEvolutionType (4 JPAF reflection types), BigFiveTerm (O/E/A/N high+low poles with axisExactMatch), EnneagramTerm (9 motivation-based types with axisExactMatch), SdiTerm (4 relationship-focused conflict motivation types with axisExactMatch)
+- **casehub-eidos-org** — organizational model for agent relationships; `OrganizationalUnit` (units with members, capabilities, goals, constraints), `AgentRelationship` (supervision, delegation, escalation, backup with `RelationshipKind`, `RelationshipScope`, `AttestationGrant`), `OrgRegistry` SPI (unit/relationship store + hierarchy traversal + escalation path); `OrgStructure.define()` compositional DSL; `OrgRegistrar` SPI with `ClasspathYamlOrgRegistrar` (META-INF/eidos/organization.yaml); `OrgBootstrap` (@Observes StartupEvent) auto-discovers registrars; `OrgGoalCompiler` maps org POJOs to desiredstate graph; `InMemoryOrgRegistry` @Alternative @Priority(1) in org-memory with cycle detection
+- **casehub-eidos-org-annotations** — opt-in Quarkus extension for annotation-driven org structure; `@OrgUnit` declares units with auto-derived IDs, `@OrgMembers`/`@OrgMemberDef` defines membership, `@Supervises` (repeatable) for supervision relationships, `@OrgRelationships`/`@OrgRelationshipDef` for general relationship types; `EidosOrgAnnotationsProcessor` build extension scans Jandex, produces synthetic `OrgRegistrar` beans via `EidosOrgAnnotationsRecorder`
 
 ### Key Design Decisions
 
@@ -161,6 +163,16 @@ Any Quarkus app adds `io.casehub:casehub-eidos` as a dependency and gets:
 | Annotations Feature name | `eidos-annotations` |
 | Routing artifactId | `casehub-eidos-routing` |
 | Routing package | `io.casehub.eidos.routing` |
+| Org API artifactId | `casehub-eidos-org-api` |
+| Org Runtime artifactId | `casehub-eidos-org` |
+| Org In-memory artifactId | `casehub-eidos-org-memory` |
+| Org Annotations Parent artifactId | `casehub-eidos-org-annotations-parent` |
+| Org Annotations artifactId | `casehub-eidos-org-annotations` |
+| Org Annotations Deployment artifactId | `casehub-eidos-org-annotations-deployment` |
+| Org API package | `io.casehub.eidos.org.api` |
+| Org Runtime package | `io.casehub.eidos.org.runtime` |
+| Org Annotations package | `io.casehub.eidos.org.annotations` |
+| Org Annotations Feature name | `eidos-org-annotations` |
 
 ---
 
@@ -248,8 +260,15 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 ├── vocab/                               — casehub-eidos-vocab: SvoTerm, ConscientiousnessTerm, CasehubSlotTerm, BelbinTerm (9 roles with axisExactMatch), DiscTerm, ThomasKilmannTerm, CasehubCapabilityTerm, JungianFunctionTerm (8 functions, shadow(), opposite(), axisExactMatch), MbtiTypeTerm (16 types, specializes(), defaultProfile()), JungianEvolutionType (4 JPAF reflection types), BigFiveTerm (O/E/A/N), EnneagramTerm (9 types), SdiTerm (4 types) enums + VocabularyRegistrar beans
 ├── routing/                             — casehub-eidos-routing: engine-aware agent selection bridge; EngineAwareAgentSelector @Alternative @Priority(1) converts AgentMatch→AgentCandidate, delegates to engine's AgentRoutingStrategy; depends on eidos-api + engine-api + ledger-api
 ├── eval/                                — casehub-eidos-eval: offline quality evaluation harness (not deployed); judges: PromptJudge, ProximityJudge, VocabularyExpressivenessJudge, TraitExpressionJudge, PairContrastJudge, BehavioralJudge, MbtiAlignmentJudge (MBTI-70 questionnaire alignment), FunctionActivationJudge (TAA — cognitive function activation accuracy), PersonalityEvolutionJudge (PSA — personality shift structural validity); AgentProviderChatModel bridge (ChatModel → AgentProvider SPI); 8 YAML agent profiles + 8 Jungian profiles + 24 function activation scenarios; pair-contrast behavioral validation (Phase 3 — eidos#46)
+├── org-api/                             — casehub-eidos-org-api: organizational model POJO core; OrganizationalUnit, AgentRelationship, Membership, RelationshipKind, RelationshipScope, AttestationGrant, OrgQuery, OrgRegistry SPI, OrgRegistrar SPI, OrgStructure DSL
+├── org-memory/                          — casehub-eidos-org-memory: @Alternative @Priority(1) InMemoryOrgRegistry with cycle detection
+├── org-runtime/                         — casehub-eidos-org: OrgBootstrap (startup registrar discovery), OrgGoalCompiler (desiredstate integration), ClasspathYamlOrgRegistrar (META-INF/eidos/organization.yaml), EidosOrgModule (Jackson)
+├── org-annotations/                     — casehub-eidos-org-annotations: nested aggregator (runtime + deployment)
+│   ├── runtime/                         — @OrgUnit, @OrgMembers/@OrgMemberDef, @Supervises (repeatable), @OrgRelationships/@OrgRelationshipDef, NameDerivation, EidosOrgAnnotationsRecorder
+│   └── deployment/                      — EidosOrgAnnotationsProcessor (@BuildStep: Jandex scan, config extraction, synthetic OrgRegistrar bean generation)
 └── examples/
-    └── agent-scenarios/                 — @QuarkusTest examples: team, cross-vocab, epistemic, tenancy, disposition
+    ├── agent-scenarios/                 — @QuarkusTest examples: team, cross-vocab, epistemic, tenancy, disposition
+    └── org-scenarios/                   — @QuarkusTest org examples: Gastown hierarchy, review team, customer support, clinical triage, capability matrix, YAML org
 ```
 
 ---

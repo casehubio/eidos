@@ -23,6 +23,10 @@ Any Quarkus app that depends on `casehub-eidos` can register agents with structu
 | `casehub-eidos-vocab` | Optional -- domain vocabularies | Well-known vocabularies: `SvoTerm`, `ConscientiousnessTerm`, `CasehubSlotTerm`, `BelbinTerm` (9 team roles), `DiscTerm` (4 DISC types, `axisExactMatch`), `ThomasKilmannTerm` (5 conflict modes), `CasehubCapabilityTerm` (hierarchical capability taxonomy), `JungianFunctionTerm` (8 cognitive functions with `axisExactMatch`, `shadow()`, `opposite()`, `compatibleAuxiliaries()`), `MbtiTypeTerm` (16 MBTI types with `specializes()` to `JungianFunctionTerm`, `defaultProfile()`), `JungianEvolutionType` (4 JPAF reflection types). All optional -- consumers define their own vocabularies. |
 | `casehub-eidos-annotations` | Optional -- annotation-driven identity | Quarkus extension: `@Identity`, `@Disposition`, `@AgentGoals`, `@AgentConstraints` generate `AgentDescriptorRegistrar` beans at build time. Also processes `@Discoverable` (from eidos-api) for capability auto-registration. Depends on `casehub-eidos`. |
 | `casehub-eidos-routing` | Optional -- engine-aware selection | `EngineAwareAgentSelector` `@Alternative @Priority(1)`. Bridges `AgentMatch` → `AgentCandidate` → `AgentRoutingStrategy`. Requires `casehub-engine-api` on classpath. Displaces `SimpleAgentSelector` via CDI priority. Add when deploying with casehub-engine for trust-maturity-model-compliant selection. |
+| `casehub-eidos-org-api` | Optional -- org model compile dependency | Organizational model types: `OrganizationalUnit`, `AgentRelationship`, `Membership`, `RelationshipKind`, `RelationshipScope`, `AttestationGrant`, `OrgQuery`, `OrgRegistry` SPI, `OrgRegistrar` SPI, `OrgStructure` DSL. Pure Java, no CDI. |
+| `casehub-eidos-org` | Optional -- org model runtime | `OrgBootstrap` (startup registrar discovery), `OrgGoalCompiler` (desiredstate integration), `ClasspathYamlOrgRegistrar` (META-INF/eidos/organization.yaml), YAML Jackson module. |
+| `casehub-eidos-org-memory` | Tests and prototyping | `@Alternative @Priority(1)` `InMemoryOrgRegistry` with cycle detection. Activate by adding as dependency. |
+| `casehub-eidos-org-annotations` | Optional -- annotation-driven org structure | Quarkus extension: `@OrgUnit`, `@OrgMembers`, `@Supervises` (repeatable), `@OrgRelationships` generate `OrgRegistrar` beans at build time. Depends on `casehub-eidos-org`. |
 | `casehub-eidos-graph` | Optional -- knowledge graph | Graph SPIs: `AgentGraphStore` (write task/outcome/attestation events), `AgentGraphQuery` (read agent history, rank agents by outcome), `AgentGraphBackfill` (ledger ingestion), `TaskSemanticEnricher` (application-tier enrichment). JPA persistence with Flyway V3. Activates by classpath presence. |
 
 **Maven coordinates:** `groupId: io.casehub`, root package: `io.casehub.eidos`, API package: `io.casehub.eidos.api`, SPI package: `io.casehub.eidos.api.spi`.
@@ -209,6 +213,22 @@ Optional module providing agent task and outcome tracking:
 - `TaskSemanticEnricher` -- application-tier enrichment: `dispositionAxes(capabilityTag, taskDomain)`, `semanticallyEquivalent(domainA, domainB)`, `significance(capabilityTag, taskDomain)`
 
 Activates by classpath presence. JPA-backed with Flyway V3 migration. Runtime provides `NoOp*` `@DefaultBean` implementations for all four SPIs when the graph module is absent.
+
+---
+
+## Organizational Model (casehub-eidos-org)
+
+Optional module providing agent organizational structure -- units, memberships, and relationships:
+
+- `OrganizationalUnit` -- groups agents into named units with kind, members, capabilities, goals, constraints. `MAX_MEMBERS = 50`. Hierarchy via `parentUnitId`.
+- `Membership(agentId, role, roleVocabulary)` -- agent's role within a unit.
+- `AgentRelationship` -- directed relationship between agents: `SUPERVISES`, `DELEGATES_TO`, `ESCALATES_TO`, `REPORTS_TO`, `BACKS_UP`, `EXTENDED`. Optional `RelationshipScope` (capability/domain scoping) and `AttestationGrant` (trust dimension delegation).
+- `OrgRegistry` SPI -- register/query units and relationships; `supervisors()`, `subordinates()`, `escalationPath()`, `ancestorUnits()`, `childUnits()`.
+- `OrgRegistrar` SPI -- declarative `OrgDefinition(units, relationships)` provider. Implement as `@ApplicationScoped` beans or use `META-INF/eidos/organization.yaml`.
+- `OrgStructure.define(tenancyId)` -- compositional DSL for programmatic org definition.
+- `OrgGoalCompiler` -- maps org POJOs to desiredstate graph for reconciliation.
+
+**Annotations (casehub-eidos-org-annotations):** `@OrgUnit` on a class declares a unit (ID auto-derived from class name). `@OrgMembers` defines membership list. `@Supervises` (repeatable) declares supervision. `@OrgRelationships` for other relationship types. Build extension produces `OrgRegistrar` CDI beans.
 
 ---
 
