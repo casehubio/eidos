@@ -26,6 +26,7 @@
     <module>routing</module>
     <module>org-api</module>
     <module>org-memory</module>
+    <module>org-runtime</module>
   </modules>
 
   <distributionManagement>
@@ -69,6 +70,7 @@
     <casehub-ledger.version>0.2-SNAPSHOT</casehub-ledger.version>
     <casehub-engine-api.version>0.2-SNAPSHOT</casehub-engine-api.version>
     <casehub-platform-yaml-core.version>0.2-SNAPSHOT</casehub-platform-yaml-core.version>
+    <casehub-desiredstate-api.version>0.2-SNAPSHOT</casehub-desiredstate-api.version>
   </properties>
 
   <dependencyManagement>
@@ -99,6 +101,11 @@
         <groupId>io.casehub</groupId>
         <artifactId>casehub-engine-api</artifactId>
         <version>${casehub-engine-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.casehub</groupId>
+        <artifactId>casehub-desiredstate-api</artifactId>
+        <version>${casehub-desiredstate-api.version}</version>
       </dependency>
       <dependency>
         <groupId>io.casehub</groupId>
