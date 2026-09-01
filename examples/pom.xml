@@ -22,5 +22,6 @@
     <module>creative-director-agent</module>
     <module>child-companion-bot</module>
     <module>tutor-agent</module>
+    <module>org-scenarios</module>
   </modules>
 </project>

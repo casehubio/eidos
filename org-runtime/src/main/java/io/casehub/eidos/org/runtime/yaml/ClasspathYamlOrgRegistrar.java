@@ -44,7 +44,7 @@ public class ClasspathYamlOrgRegistrar implements OrgRegistrar {
     }
 
     @SuppressWarnings("unchecked")
-    OrgDefinition loadFrom(InputStream yaml) {
+    public OrgDefinition loadFrom(InputStream yaml) {
         if (yaml == null) return new OrgDefinition(null, null);
         try {
             var mapper = EidosOrgModule.createMapper();

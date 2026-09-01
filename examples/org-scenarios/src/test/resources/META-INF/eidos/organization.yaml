@@ -1,0 +1,112 @@
+# Gastown — YAML organizational structure
+# Demonstrates: units, hierarchy, supervision, escalation, backup,
+# scoped relationships, attestation grants
+
+organization:
+  units:
+    - unitId: oversight
+      name: Oversight Chain
+      kind: supervision-hierarchy
+      kindVocabulary: urn:gastown:vocab:org
+      tenancyId: gastown
+      members:
+        - agentId: boot
+          role: root-watchdog
+        - agentId: deacon
+          role: cross-rig-watchdog
+
+    - unitId: rig-alpha
+      name: Rig Alpha
+      kind: rig
+      kindVocabulary: urn:gastown:vocab:org
+      tenancyId: gastown
+      members:
+        - agentId: witness-alpha
+          role: witness
+        - agentId: polecat-1
+          role: worker
+        - agentId: polecat-2
+          role: worker
+      capabilities:
+        - name: full-stack-code-work
+
+    - unitId: rig-beta
+      name: Rig Beta
+      kind: rig
+      kindVocabulary: urn:gastown:vocab:org
+      tenancyId: gastown
+      members:
+        - agentId: witness-beta
+          role: witness
+        - agentId: polecat-3
+          role: worker
+      capabilities:
+        - name: full-stack-code-work
+
+  relationships:
+    # Boot → Deacon
+    - sourceAgentId: boot
+      targetAgentId: deacon
+      kind: SUPERVISES
+      tenancyId: gastown
+
+    # Deacon → Witnesses (scoped, with attestation)
+    - sourceAgentId: deacon
+      targetAgentId: witness-alpha
+      kind: SUPERVISES
+      tenancyId: gastown
+      scope:
+        capabilityName: rig-monitoring
+      attestation:
+        dimensions: [LATENCY, ATTESTATION_RATE]
+        signalTypes: [COMPLIANT, VIOLATED]
+
+    - sourceAgentId: deacon
+      targetAgentId: witness-beta
+      kind: SUPERVISES
+      tenancyId: gastown
+      scope:
+        capabilityName: rig-monitoring
+      attestation:
+        dimensions: [LATENCY, ATTESTATION_RATE]
+        signalTypes: [COMPLIANT, VIOLATED]
+
+    # Witness → Polecats
+    - sourceAgentId: witness-alpha
+      targetAgentId: polecat-1
+      kind: SUPERVISES
+      tenancyId: gastown
+
+    - sourceAgentId: witness-alpha
+      targetAgentId: polecat-2
+      kind: SUPERVISES
+      tenancyId: gastown
+
+    - sourceAgentId: witness-beta
+      targetAgentId: polecat-3
+      kind: SUPERVISES
+      tenancyId: gastown
+
+    # Backup within rig
+    - sourceAgentId: polecat-1
+      targetAgentId: polecat-2
+      kind: BACKS_UP
+      tenancyId: gastown
+      scope:
+        capabilityName: code-analysis
+
+    # Escalation chain
+    - sourceAgentId: polecat-1
+      targetAgentId: witness-alpha
+      kind: ESCALATES_TO
+      tenancyId: gastown
+
+    - sourceAgentId: witness-alpha
+      targetAgentId: deacon
+      kind: ESCALATES_TO
+      tenancyId: gastown
+
+    - sourceAgentId: deacon
+      targetAgentId: boot
+      kind: ESCALATES_TO
+      tenancyId: gastown
