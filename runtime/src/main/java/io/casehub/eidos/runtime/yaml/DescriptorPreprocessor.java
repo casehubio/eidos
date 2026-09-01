@@ -90,7 +90,7 @@ public final class DescriptorPreprocessor {
                 singleMap.put(key, desc);
                 var expanded = ForEachExpander.expand(
                         singleMap, iterationGroups, resolver, adapter, MAX_EXPANSION);
-                result.addAll(expanded.elements());
+                result.addAll(expanded.elements().values());
             }
         }
 

@@ -27,6 +27,7 @@
     <module>org-api</module>
     <module>org-memory</module>
     <module>org-runtime</module>
+    <module>org-annotations</module>
   </modules>
 
   <distributionManagement>
