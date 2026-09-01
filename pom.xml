@@ -25,6 +25,7 @@
     <module>graph</module>
     <module>routing</module>
     <module>org-api</module>
+    <module>org-memory</module>
   </modules>
 
   <distributionManagement>
