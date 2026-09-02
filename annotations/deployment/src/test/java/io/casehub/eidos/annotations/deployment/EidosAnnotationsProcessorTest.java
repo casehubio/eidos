@@ -19,7 +19,8 @@ class EidosAnnotationsProcessorTest {
             .withApplicationRoot(root -> root
                     .addClass(io.casehub.eidos.annotations.deployment.test.SimpleAnnotatedAgent.class)
                     .addClass(io.casehub.eidos.annotations.deployment.test.FullAnnotatedAgent.class)
-                    .addClass(io.casehub.eidos.annotations.deployment.test.IdentityOnlyAgent.class))
+                    .addClass(io.casehub.eidos.annotations.deployment.test.IdentityOnlyAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.WeightedDispositionAgent.class))
             .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
             .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
             .overrideConfigKey("quarkus.datasource.db-kind", "h2")
@@ -105,5 +106,39 @@ class EidosAnnotationsProcessorTest {
         assertThat(d.constraints()).isEmpty();
         assertThat(d.capabilities()).isEmpty();
     }
+
+    @Test
+    void identityFieldsWeightsFingerprintAndModelVersion() {
+        var d = registry.findById("weighted-disposition-agent", "test-tenant").orElseThrow();
+        assertThat(d.weightsFingerprint()).isEqualTo("sha256:abc123");
+        assertThat(d.modelVersion()).isEqualTo("2024-Q3");
+    }
+
+    @Test
+    void weightedDispositionProfile() {
+        var d = registry.findById("weighted-disposition-agent", "test-tenant").orElseThrow();
+        assertThat(d.disposition().dispositionProfile()).hasSize(2);
+        assertThat(d.disposition().dispositionProfile().get(0).term()).isEqualTo("collaborative");
+        assertThat(d.disposition().dispositionProfile().get(0).weight()).isEqualTo(0.8);
+        assertThat(d.disposition().dispositionProfile().get(1).term()).isEqualTo("analytical");
+        assertThat(d.disposition().dispositionProfile().get(1).weight()).isEqualTo(0.4);
+    }
+
+    @Test
+    void weightedStyleProfile() {
+        var d = registry.findById("weighted-disposition-agent", "test-tenant").orElseThrow();
+        assertThat(d.disposition().styleProfile()).hasSize(1);
+        assertThat(d.disposition().styleProfile().get(0).term()).isEqualTo("concise");
+        assertThat(d.disposition().styleProfile().get(0).weight()).isEqualTo(0.7);
+    }
+
+    @Test
+    void axisVocabularies() {
+        var d = registry.findById("weighted-disposition-agent", "test-tenant").orElseThrow();
+        assertThat(d.axisVocabularies()).containsEntry(
+                DispositionAxis.CONFLICT_MODE,
+                "urn:casehub:vocab:thomas-kilmann");
+    }
+
 
 }

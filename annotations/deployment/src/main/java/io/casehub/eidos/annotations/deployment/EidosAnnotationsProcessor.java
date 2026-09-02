@@ -71,7 +71,8 @@ class EidosAnnotationsProcessor {
                     .scope(ApplicationScoped.class)
                     .identifier("eidos-ann-" + className)
                     .setRuntimeInit()
-                    .supplier(recorder.createRegistrar(config))
+                    .createWith(recorder.createRegistrar(config))
+                    .addInjectionPoint(org.jboss.jandex.ClassType.create(DotName.createSimple(io.casehub.eidos.api.VocabularyRegistry.class)))
                     .done());
         }
 
@@ -197,6 +198,8 @@ class EidosAnnotationsProcessor {
         config.dispositionVocabulary = stringValue(identity, "dispositionVocabulary");
         config.styleVocabulary = stringValue(identity, "styleVocabulary");
         config.version = stringValue(identity, "version");
+        config.weightsFingerprint = stringValue(identity, "weightsFingerprint");
+        config.modelVersion = stringValue(identity, "modelVersion");
 
         extractDisposition(classInfo, config);
         extractGoals(classInfo, config);
@@ -264,6 +267,19 @@ class EidosAnnotationsProcessor {
                 config.styleProfile[i] = dwc;
             }
         }
+        var av = ann.value("axisVocabularies");
+        if (av != null) {
+            var nested = av.asNestedArray();
+            config.axisVocabularies = new AnnotatedAgentConfig.AxisVocabConfig[nested.length];
+            for (int i = 0; i < nested.length; i++) {
+                var avc = new AnnotatedAgentConfig.AxisVocabConfig();
+                avc.axis = nested[i].value("axis").asEnum();
+                avc.uri = nested[i].value("uri").asString();
+                config.axisVocabularies[i] = avc;
+            }
+        }
+        config.mbtiType = stringValue(ann, "mbtiType");
+        config.enneagramType = stringValue(ann, "enneagramType");
     }
 
     private void extractGoals(ClassInfo classInfo, AnnotatedAgentConfig config) {
