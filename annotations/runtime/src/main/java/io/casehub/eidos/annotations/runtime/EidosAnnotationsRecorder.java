@@ -51,12 +51,16 @@ public class EidosAnnotationsRecorder {
                 if (notEmpty(config.conflictMode)) db.conflictMode(config.conflictMode);
                 if (config.dispositionProfile != null && config.dispositionProfile.length > 0) {
                     var values = new ArrayList<DispositionValue>();
-                    for (var t : config.dispositionProfile) if (notEmpty(t)) values.add(DispositionValue.of(t));
+                    for (var dp : config.dispositionProfile) {
+                        if (notEmpty(dp.value)) values.add(new DispositionValue(dp.value, dp.weight));
+                    }
                     if (!values.isEmpty()) db.dispositionProfile(values);
                 }
                 if (config.styleProfile != null && config.styleProfile.length > 0) {
                     var values = new ArrayList<DispositionValue>();
-                    for (var t : config.styleProfile) if (notEmpty(t)) values.add(DispositionValue.of(t));
+                    for (var sp : config.styleProfile) {
+                        if (notEmpty(sp.value)) values.add(new DispositionValue(sp.value, sp.weight));
+                    }
                     if (!values.isEmpty()) db.styleProfile(values);
                 }
                 builder.disposition(db.build());

@@ -9,16 +9,32 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Identity {
     String id() default "";
+
     String name() default "";
+
     String slot();
+
     String provider() default "";
+
     String modelFamily() default "";
+
+    String modelVersion() default "";
+
+    String weightsFingerprint() default "";
+
     String jurisdiction() default "";
+
     String dataHandlingPolicy() default "";
+
     String briefing() default "";
+
     String vocabulary() default "";
+
     String slotVocabulary() default "";
+
     String dispositionVocabulary() default "";
+
     String styleVocabulary() default "";
+
     String version() default "";
 }

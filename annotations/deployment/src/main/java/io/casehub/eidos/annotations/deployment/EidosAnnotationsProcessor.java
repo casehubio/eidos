@@ -156,12 +156,24 @@ class EidosAnnotationsProcessor {
                                     java.util.Set<String> validTerms, String vocabUri, ClassInfo classInfo) {
         var v = ann.value(field);
         if (v == null) {return;}
-        for (var term : v.asStringArray()) {
-            if (term.isEmpty()) {continue;}
-            if (validTerms.stream().noneMatch(t -> t.equalsIgnoreCase(term))) {
-                LOG.warnf("@Disposition.%s value '%s' on %s may not be a valid term in vocabulary '%s'"
-                          + " (build-time check uses enum constant names, not VocabularyTerm.value())",
-                          field, term, classInfo.name(), vocabUri);
+        if (field.equals("dispositionProfile") || field.equals("styleProfile")) {
+            for (var nested : v.asNestedArray()) {
+                var term = nested.value("value").asString();
+                if (term.isEmpty()) {continue;}
+                if (validTerms.stream().noneMatch(t -> t.equalsIgnoreCase(term))) {
+                    LOG.warnf("@Disposition.%s value '%s' on %s may not be a valid term in vocabulary '%s'"
+                              + " (build-time check uses enum constant names, not VocabularyTerm.value())",
+                              field, term, classInfo.name(), vocabUri);
+                }
+            }
+        } else {
+            for (var term : v.asStringArray()) {
+                if (term.isEmpty()) {continue;}
+                if (validTerms.stream().noneMatch(t -> t.equalsIgnoreCase(term))) {
+                    LOG.warnf("@Disposition.%s value '%s' on %s may not be a valid term in vocabulary '%s'"
+                              + " (build-time check uses enum constant names, not VocabularyTerm.value())",
+                              field, term, classInfo.name(), vocabUri);
+                }
             }
         }
     }
@@ -229,9 +241,29 @@ class EidosAnnotationsProcessor {
         var del = ann.value("delegation");
         config.delegation = del != null && del.asBoolean();
         var dp = ann.value("dispositionProfile");
-        config.dispositionProfile = dp != null ? dp.asStringArray() : new String[0];
+        if (dp != null) {
+            var nested = dp.asNestedArray();
+            config.dispositionProfile = new AnnotatedAgentConfig.DispositionWeightConfig[nested.length];
+            for (int i = 0; i < nested.length; i++) {
+                var dwc = new AnnotatedAgentConfig.DispositionWeightConfig();
+                dwc.value = nested[i].value("value").asString();
+                var w = nested[i].value("weight");
+                dwc.weight = w != null ? w.asDouble() : 1.0;
+                config.dispositionProfile[i] = dwc;
+            }
+        }
         var sp = ann.value("styleProfile");
-        config.styleProfile = sp != null ? sp.asStringArray() : new String[0];
+        if (sp != null) {
+            var nested = sp.asNestedArray();
+            config.styleProfile = new AnnotatedAgentConfig.DispositionWeightConfig[nested.length];
+            for (int i = 0; i < nested.length; i++) {
+                var dwc = new AnnotatedAgentConfig.DispositionWeightConfig();
+                dwc.value = nested[i].value("value").asString();
+                var w = nested[i].value("weight");
+                dwc.weight = w != null ? w.asDouble() : 1.0;
+                config.styleProfile[i] = dwc;
+            }
+        }
     }
 
     private void extractGoals(ClassInfo classInfo, AnnotatedAgentConfig config) {

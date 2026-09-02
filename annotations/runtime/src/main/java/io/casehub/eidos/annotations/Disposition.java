@@ -9,11 +9,24 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Disposition {
     String socialOrient() default "";
+
     String ruleFollowing() default "";
+
     String riskAppetite() default "";
+
     String autonomy() default "";
+
     String conflictMode() default "";
+
     boolean delegation() default false;
-    String[] dispositionProfile() default {};
-    String[] styleProfile() default {};
+
+    DispositionWeight[] dispositionProfile() default {};
+
+    DispositionWeight[] styleProfile() default {};
+
+    String mbtiType() default "";
+
+    String enneagramType() default "";
+
+    AxisVocabulary[] axisVocabularies() default {};
 }
