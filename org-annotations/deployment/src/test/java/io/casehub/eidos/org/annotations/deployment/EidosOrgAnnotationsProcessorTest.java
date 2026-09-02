@@ -18,7 +18,13 @@ class EidosOrgAnnotationsProcessorTest {
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.ExplicitIdOrgUnit.class)
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.MinimalOrgUnit.class)
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.HierarchyChildUnit.class))
-            .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant");
+            .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
+            .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
+            .overrideConfigKey("quarkus.datasource.db-kind", "h2")
+            .overrideConfigKey("quarkus.datasource.jdbc.url", "jdbc:h2:mem:organntest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1")
+            .overrideConfigKey("quarkus.datasource.devservices.enabled", "false")
+            .overrideConfigKey("quarkus.flyway.migrate-at-start", "false")
+            .overrideConfigKey("quarkus.hibernate-orm.database.generation", "none");
 
     @Inject
     OrgRegistry registry;

@@ -501,12 +501,10 @@ class EidosAnnotationsProcessor {
 
 
     private static String stringValue(AnnotationInstance ann, String key) {
-        var v = ann.value(key);
-        return v != null ? v.asString() : "";
+        return AnnotationProcessorUtils.stringValue(ann, key);
     }
 
     private static String enumValue(AnnotationInstance ann, String key, String defaultValue) {
-        var v = ann.value(key);
-        return v != null ? v.asEnum() : defaultValue;
+        return AnnotationProcessorUtils.enumValue(ann, key, defaultValue);
     }
 }

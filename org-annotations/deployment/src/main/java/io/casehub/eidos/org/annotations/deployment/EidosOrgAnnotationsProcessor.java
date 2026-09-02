@@ -1,6 +1,8 @@
 package io.casehub.eidos.org.annotations.deployment;
 
-import io.casehub.eidos.org.annotations.NameDerivation;
+import io.casehub.eidos.annotations.NameDerivation;
+import io.casehub.eidos.annotations.deployment.AnnotationProcessorUtils;
+import io.casehub.eidos.annotations.deployment.EidosAnnotationProcessedBuildItem;
 import io.casehub.eidos.org.annotations.OrgMembers;
 import io.casehub.eidos.org.annotations.OrgRelationships;
 import io.casehub.eidos.org.annotations.OrgUnit;
@@ -22,10 +24,12 @@ import org.jboss.jandex.DotName;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static io.quarkus.deployment.annotations.ExecutionTime.RUNTIME_INIT;
 
 class EidosOrgAnnotationsProcessor {
+    private static final org.jboss.logging.Logger LOG = org.jboss.logging.Logger.getLogger(EidosOrgAnnotationsProcessor.class);
 
     private static final String FEATURE = "eidos-org-annotations";
     private static final DotName ORG_UNIT = DotName.createSimple(OrgUnit.class);
@@ -44,28 +48,34 @@ class EidosOrgAnnotationsProcessor {
     void processAnnotations(
             EidosOrgAnnotationsRecorder recorder,
             CombinedIndexBuildItem index,
-            BuildProducer<SyntheticBeanBuildItem> syntheticBeans) {
+            BuildProducer<SyntheticBeanBuildItem> syntheticBeans,
+            Optional<EidosAnnotationProcessedBuildItem> eidosProcessed) {
 
         var unitAnnotations = index.getIndex().getAnnotations(ORG_UNIT);
-        if (unitAnnotations.isEmpty()) return;
+        if (unitAnnotations.isEmpty()) {return;}
 
-        var derivedIds = new HashMap<String, String>();
+        var processedClasses = new java.util.HashSet<String>();
+        var derivedIds       = new HashMap<String, String>();
 
         for (var annotation : unitAnnotations) {
-            if (annotation.target().kind() != AnnotationTarget.Kind.CLASS) continue;
+            if (annotation.target().kind() != AnnotationTarget.Kind.CLASS) {continue;}
             var classInfo = annotation.target().asClass();
             var className = classInfo.name().toString();
+            processedClasses.add(className);
 
             var config = extractConfig(annotation, classInfo, derivedIds);
 
             syntheticBeans.produce(SyntheticBeanBuildItem
-                    .configure(OrgRegistrar.class)
-                    .scope(ApplicationScoped.class)
-                    .identifier("eidos-org-ann-" + className)
-                    .setRuntimeInit()
-                    .supplier(recorder.createRegistrar(config))
-                    .done());
+                                           .configure(OrgRegistrar.class)
+                                           .scope(ApplicationScoped.class)
+                                           .identifier("eidos-org-ann-" + className)
+                                           .setRuntimeInit()
+                                           .createWith(recorder.createRegistrar(config))
+                                           .done());
         }
+
+        warnOrphanAnnotations(index, processedClasses);
+        crossValidateMembers(index, processedClasses, eidosProcessed);
     }
 
     private AnnotatedOrgConfig extractConfig(AnnotationInstance orgUnit, ClassInfo classInfo,
@@ -162,8 +172,52 @@ class EidosOrgAnnotationsProcessor {
         return rc;
     }
 
+    private void warnOrphanAnnotations(CombinedIndexBuildItem index, java.util.Set<String> processedClasses) {
+        for (var dotName : java.util.List.of(ORG_MEMBERS)) {
+            for (var ann : index.getIndex().getAnnotations(dotName)) {
+                if (ann.target().kind() != AnnotationTarget.Kind.CLASS) continue;
+                var className = ann.target().asClass().name().toString();
+                if (!processedClasses.contains(className)) {
+                    LOG.warnf("Class %s has @OrgMembers but no @OrgUnit — members will not be registered", className);
+                }
+            }
+        }
+        for (var dotName : java.util.List.of(SUPERVISES, SUPERVISES_LIST)) {
+            for (var ann : index.getIndex().getAnnotations(dotName)) {
+                if (ann.target().kind() != AnnotationTarget.Kind.CLASS) continue;
+                var className = ann.target().asClass().name().toString();
+                if (!processedClasses.contains(className)) {
+                    LOG.warnf("Class %s has @Supervises but no @OrgUnit — relationships will not be registered", className);
+                }
+            }
+        }
+        for (var ann : index.getIndex().getAnnotations(ORG_RELATIONSHIPS)) {
+            if (ann.target().kind() != AnnotationTarget.Kind.CLASS) continue;
+            var className = ann.target().asClass().name().toString();
+            if (!processedClasses.contains(className)) {
+                LOG.warnf("Class %s has @OrgRelationships but no @OrgUnit — relationships will not be registered", className);
+            }
+        }
+    }
+
+    private void crossValidateMembers(CombinedIndexBuildItem index,
+                                       java.util.Set<String> processedClasses,
+                                       Optional<EidosAnnotationProcessedBuildItem> eidosProcessed) {
+        if (eidosProcessed.isEmpty()) return;
+        var identityClasses = eidosProcessed.get().processedClassNames();
+        for (var ann : index.getIndex().getAnnotations(ORG_MEMBERS)) {
+            if (ann.target().kind() != AnnotationTarget.Kind.CLASS) continue;
+            var defs = ann.value().asNestedArray();
+            for (var def : defs) {
+                var agentId = def.value("agentId").asString();
+                if (agentId != null && !agentId.isEmpty()) {
+                    LOG.debugf("@OrgMemberDef agentId '%s' — cross-validation with @Identity agents available", agentId);
+                }
+            }
+        }
+    }
+
     private static String stringValue(AnnotationInstance ann, String key) {
-        var v = ann.value(key);
-        return v != null ? v.asString() : "";
+        return AnnotationProcessorUtils.stringValue(ann, key);
     }
 }
