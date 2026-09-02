@@ -14,15 +14,19 @@ class DescriptorForEachAdapterTest {
     private final DescriptorForEachAdapter adapter = new DescriptorForEachAdapter();
 
     @Test
-    void getId_returns_agentId() {
-        var map = Map.<String, Object>of("agentId", "test-agent", "name", "Test");
-        assertThat(adapter.getId(map)).isEqualTo("test-agent");
+    void getForEach_returns_groupRef_for_string() {
+        var map = Map.<String, Object>of("agentId", "a", "forEach", "teams");
+        var result = adapter.getForEach(map);
+        assertThat(result).isInstanceOf(io.casehub.yaml.core.foreach.ForEachDirective.GroupRef.class);
+        assertThat(((io.casehub.yaml.core.foreach.ForEachDirective.GroupRef) result).groupName()).isEqualTo("teams");
     }
 
     @Test
-    void getForEach_returns_forEach_value() {
-        var map = Map.<String, Object>of("agentId", "a", "forEach", "teams");
-        assertThat(adapter.getForEach(map)).isEqualTo("teams");
+    void getForEach_returns_groupRef_for_string_value() {
+        var map = Map.<String, Object>of("agentId", "a", "forEach", "roles");
+        var result = adapter.getForEach(map);
+        assertThat(result).isInstanceOf(io.casehub.yaml.core.foreach.ForEachDirective.GroupRef.class);
+        assertThat(((io.casehub.yaml.core.foreach.ForEachDirective.GroupRef) result).groupName()).isEqualTo("roles");
     }
 
     @Test
