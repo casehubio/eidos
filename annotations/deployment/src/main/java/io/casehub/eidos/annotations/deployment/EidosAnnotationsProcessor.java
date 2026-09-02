@@ -1,7 +1,11 @@
 package io.casehub.eidos.annotations.deployment;
 
+import io.casehub.eidos.annotations.AgentCapabilities;
+import io.casehub.eidos.annotations.AgentCapabilityDef;
 import io.casehub.eidos.annotations.AgentConstraints;
 import io.casehub.eidos.annotations.AgentGoals;
+import io.casehub.eidos.annotations.AgentTemplateRef;
+import io.casehub.eidos.annotations.AgentTemplates;
 import io.casehub.eidos.annotations.Disposition;
 import io.casehub.eidos.annotations.Identity;
 import io.casehub.eidos.annotations.NameDerivation;
@@ -37,6 +41,10 @@ class EidosAnnotationsProcessor {
     private static final DotName AGENT_GOALS = DotName.createSimple(AgentGoals.class);
     private static final DotName AGENT_CONSTRAINTS = DotName.createSimple(AgentConstraints.class);
     private static final DotName DISCOVERABLE = DotName.createSimple(Discoverable.class);
+    private static final DotName AGENT_CAPABILITY_DEF = DotName.createSimple(AgentCapabilityDef.class);
+    private static final DotName AGENT_CAPABILITIES = DotName.createSimple(AgentCapabilities.class);
+    private static final DotName AGENT_TEMPLATE_REF = DotName.createSimple(AgentTemplateRef.class);
+    private static final DotName AGENT_TEMPLATES = DotName.createSimple(AgentTemplates.class);
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -204,7 +212,8 @@ class EidosAnnotationsProcessor {
         extractDisposition(classInfo, config);
         extractGoals(classInfo, config);
         extractConstraints(classInfo, config);
-        extractCapabilities(classInfo, config);
+        extractCapabilities(classInfo, config, index);
+        extractTemplates(classInfo, config, index);
 
         validateGoalCapabilities(classInfo, config);
 
@@ -314,23 +323,107 @@ class EidosAnnotationsProcessor {
         }
     }
 
-    private void extractCapabilities(ClassInfo classInfo, AnnotatedAgentConfig config) {
-        var ann = classInfo.annotation(DISCOVERABLE);
-        if (ann == null) return;
-        config.capabilities = ann.value("capabilities").asStringArray();
+    private void extractCapabilities(ClassInfo classInfo, AnnotatedAgentConfig config, CombinedIndexBuildItem index) {
+        var discAnn = classInfo.annotation(DISCOVERABLE);
+        if (discAnn != null) {
+            config.capabilities = discAnn.value("capabilities").asStringArray();
+        }
+
+        var capDefs = classInfo.annotationsWithRepeatable(AGENT_CAPABILITY_DEF, index.getIndex());
+        if (!capDefs.isEmpty()) {
+            config.richCapabilities = new AnnotatedAgentConfig.CapabilityConfig[capDefs.size()];
+            var richNames = new HashSet<String>();
+            for (int i = 0; i < capDefs.size(); i++) {
+                var ann = capDefs.get(i);
+                var cap = new AnnotatedAgentConfig.CapabilityConfig();
+                cap.name = ann.value("name").asString();
+                if (!richNames.add(cap.name)) {
+                    throw new IllegalStateException(
+                            "Duplicate @AgentCapabilityDef name '" + cap.name + "' on " + classInfo.name());
+                }
+                cap.description          = stringValue(ann, "description");
+                cap.capabilityVocabulary = stringValue(ann, "capabilityVocabulary");
+                var qh = ann.value("qualityHint");
+                cap.qualityHint = qh != null ? qh.asDouble() : -1;
+                var lh = ann.value("latencyHintP50Ms");
+                cap.latencyHintP50Ms = lh != null ? lh.asLong() : -1;
+                cap.costHint         = stringValue(ann, "costHint");
+                var it = ann.value("inputTypes");
+                cap.inputTypes = it != null ? it.asStringArray() : new String[0];
+                var ot = ann.value("outputTypes");
+                cap.outputTypes = ot != null ? ot.asStringArray() : new String[0];
+                var tg = ann.value("tags");
+                cap.tags = tg != null ? tg.asStringArray() : new String[0];
+                var ed = ann.value("epistemicDomains");
+                if (ed != null) {
+                    var nested = ed.asNestedArray();
+                    cap.epistemicDomains = new AnnotatedAgentConfig.EpistemicDomainConfig[nested.length];
+                    for (int j = 0; j < nested.length; j++) {
+                        var edc = new AnnotatedAgentConfig.EpistemicDomainConfig();
+                        edc.value               = nested[j].value("value").asString();
+                        edc.score               = nested[j].value("score").asDouble();
+                        cap.epistemicDomains[j] = edc;
+                    }
+                }
+                var exd = ann.value("excludedDomains");
+                cap.excludedDomains        = exd != null ? exd.asStringArray() : new String[0];
+                config.richCapabilities[i] = cap;
+            }
+        }
+
+        if (config.capabilities != null && config.richCapabilities != null) {
+            var discNames = new HashSet<>(java.util.Arrays.asList(config.capabilities));
+            for (var rc : config.richCapabilities) {
+                if (discNames.contains(rc.name)) {
+                    throw new IllegalStateException(
+                            "Capability '" + rc.name + "' on " + classInfo.name()
+                            + " appears in both @Discoverable and @AgentCapabilityDef");
+                }
+            }
+        }
     }
 
+    private void extractTemplates(ClassInfo classInfo, AnnotatedAgentConfig config, CombinedIndexBuildItem index) {
+        var templateDefs = classInfo.annotationsWithRepeatable(AGENT_TEMPLATE_REF, index.getIndex());
+        if (templateDefs.isEmpty()) {return;}
+        config.templateRefs = new AnnotatedAgentConfig.TemplateRefConfig[templateDefs.size()];
+        for (int i = 0; i < templateDefs.size(); i++) {
+            var ann = templateDefs.get(i);
+            var ref = new AnnotatedAgentConfig.TemplateRefConfig();
+            ref.id = ann.value("id").asString();
+            var argsVal = ann.value("args");
+            if (argsVal != null) {
+                var nested = argsVal.asNestedArray();
+                ref.args = new AnnotatedAgentConfig.TemplateArgConfig[nested.length];
+                for (int j = 0; j < nested.length; j++) {
+                    var tac = new AnnotatedAgentConfig.TemplateArgConfig();
+                    tac.key     = nested[j].value("key").asString();
+                    tac.value   = nested[j].value("value").asString();
+                    ref.args[j] = tac;
+                }
+            }
+            config.templateRefs[i] = ref;
+        }
+    }
+
+
     private void validateGoalCapabilities(ClassInfo classInfo, AnnotatedAgentConfig config) {
-        if (config.goals == null || config.capabilities == null) return;
+        if (config.goals == null) {return;}
         var capNames = new HashSet<String>();
-        for (var cap : config.capabilities) capNames.add(cap);
+        if (config.capabilities != null) {
+            for (var cap : config.capabilities) {capNames.add(cap);}
+        }
+        if (config.richCapabilities != null) {
+            for (var cap : config.richCapabilities) {capNames.add(cap.name);}
+        }
+        if (capNames.isEmpty()) {return;}
         for (var goal : config.goals) {
-            if (goal.capabilities == null) continue;
+            if (goal.capabilities == null) {continue;}
             for (var capRef : goal.capabilities) {
                 if (!capNames.contains(capRef)) {
                     throw new IllegalStateException(
-                        "@AgentGoalDef '" + goal.name + "' on " + classInfo.name()
-                        + " references capability '" + capRef + "' not declared in @Discoverable");
+                            "@AgentGoalDef '" + goal.name + "' on " + classInfo.name()
+                            + " references capability '" + capRef + "' not declared in @Discoverable or @AgentCapabilityDef");
                 }
             }
         }

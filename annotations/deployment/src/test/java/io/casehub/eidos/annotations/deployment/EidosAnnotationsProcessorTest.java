@@ -20,7 +20,11 @@ class EidosAnnotationsProcessorTest {
                     .addClass(io.casehub.eidos.annotations.deployment.test.SimpleAnnotatedAgent.class)
                     .addClass(io.casehub.eidos.annotations.deployment.test.FullAnnotatedAgent.class)
                     .addClass(io.casehub.eidos.annotations.deployment.test.IdentityOnlyAgent.class)
-                    .addClass(io.casehub.eidos.annotations.deployment.test.WeightedDispositionAgent.class))
+                    .addClass(io.casehub.eidos.annotations.deployment.test.WeightedDispositionAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.RichCapabilityAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.CapabilityMergeAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.TemplatedAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.TestTemplateRegistrar.class))
             .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
             .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
             .overrideConfigKey("quarkus.datasource.db-kind", "h2")
@@ -138,6 +142,43 @@ class EidosAnnotationsProcessorTest {
         assertThat(d.axisVocabularies()).containsEntry(
                 DispositionAxis.CONFLICT_MODE,
                 "urn:casehub:vocab:thomas-kilmann");
+    }
+
+    @Test
+    void richCapability_fullMetadata() {
+        var d = registry.findById("rich-capability-agent", "test-tenant").orElseThrow();
+        assertThat(d.capabilities()).hasSize(2);
+        var analysis = d.capabilities().stream().filter(c -> c.name().equals("analysis")).findFirst().orElseThrow();
+        assertThat(analysis.description()).isEqualTo("Deep analysis capability");
+        assertThat(analysis.qualityHint()).isEqualTo(0.95);
+        assertThat(analysis.latencyHintP50Ms()).isEqualTo(3000L);
+        assertThat(analysis.costHint()).isEqualTo("medium");
+        assertThat(analysis.inputTypes()).containsExactly("application/pdf", "text/plain");
+        assertThat(analysis.outputTypes()).containsExactly("application/json");
+        assertThat(analysis.tags()).containsExactly("nlp", "extraction");
+        assertThat(analysis.epistemicDomains()).containsEntry("legal", 0.95);
+        assertThat(analysis.epistemicDomains()).containsEntry("financial", 0.6);
+        assertThat(analysis.excludedDomains()).containsExactly("criminal-law");
+    }
+
+    @Test
+    void capabilityMerge_unionOfDiscoverableAndRichCaps() {
+        var d = registry.findById("capability-merge-agent", "test-tenant").orElseThrow();
+        assertThat(d.capabilities()).hasSize(2);
+        assertThat(d.capabilities().stream().map(c -> c.name()).toList())
+                .containsExactlyInAnyOrder("simple-cap", "rich-cap");
+        var richCap = d.capabilities().stream().filter(c -> c.name().equals("rich-cap")).findFirst().orElseThrow();
+        assertThat(richCap.qualityHint()).isEqualTo(0.9);
+    }
+
+    @Test
+    void templates_repeatable() {
+        var d = registry.findById("templated-agent", "test-tenant").orElseThrow();
+        assertThat(d.templates()).hasSize(2);
+        assertThat(d.templates().get(0).templateId()).isEqualTo("safety-primer");
+        assertThat(d.templates().get(0).args()).containsEntry("domain", "legal");
+        assertThat(d.templates().get(1).templateId()).isEqualTo("jurisdiction-notice");
+        assertThat(d.templates().get(1).args()).containsEntry("region", "EU");
     }
 
 
