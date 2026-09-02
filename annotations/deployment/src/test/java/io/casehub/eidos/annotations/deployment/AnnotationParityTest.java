@@ -1,12 +1,20 @@
 package io.casehub.eidos.annotations.deployment;
 
-import io.casehub.eidos.annotations.*;
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.annotations.AgentConstraintDef;
+import io.casehub.eidos.annotations.AgentGoalDef;
+import io.casehub.eidos.annotations.Disposition;
+import io.casehub.eidos.annotations.Identity;
+import io.casehub.eidos.api.AgentConstraint;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
 import org.junit.jupiter.api.Test;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AnnotationParityTest {
 
@@ -30,13 +38,16 @@ class AnnotationParityTest {
 
     @Test
     void everyDispositionFieldHasBuilderSetter() {
+        var nonBuilderFields = java.util.Set.of("mbtiType", "enneagramType", "axisVocabularies");
         var annotationFields = Arrays.stream(Disposition.class.getDeclaredMethods())
-                .map(m -> m.getName()).collect(Collectors.toSet());
+                                     .map(m -> m.getName())
+                                     .filter(f -> !nonBuilderFields.contains(f))
+                                     .collect(Collectors.toSet());
         var builderSetters = Arrays.stream(AgentDisposition.Builder.class.getDeclaredMethods())
-                .map(m -> m.getName()).collect(Collectors.toSet());
+                                   .map(m -> m.getName()).collect(Collectors.toSet());
         for (var field : annotationFields) {
             assertThat(builderSetters).as("Builder setter for @Disposition.%s()", field)
-                    .contains(field);
+                                      .contains(field);
         }
     }
 

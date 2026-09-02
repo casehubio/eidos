@@ -24,7 +24,8 @@ class EidosAnnotationsProcessorTest {
                     .addClass(io.casehub.eidos.annotations.deployment.test.RichCapabilityAgent.class)
                     .addClass(io.casehub.eidos.annotations.deployment.test.CapabilityMergeAgent.class)
                     .addClass(io.casehub.eidos.annotations.deployment.test.TemplatedAgent.class)
-                    .addClass(io.casehub.eidos.annotations.deployment.test.TestTemplateRegistrar.class))
+                    .addClass(io.casehub.eidos.annotations.deployment.test.TestTemplateRegistrar.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.FullParityAgent.class))
             .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
             .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
             .overrideConfigKey("quarkus.datasource.db-kind", "h2")
@@ -179,6 +180,59 @@ class EidosAnnotationsProcessorTest {
         assertThat(d.templates().get(0).args()).containsEntry("domain", "legal");
         assertThat(d.templates().get(1).templateId()).isEqualTo("jurisdiction-notice");
         assertThat(d.templates().get(1).args()).containsEntry("region", "EU");
+    }
+
+    @Test
+    void fullParity_annotationMatchesBuilder() {
+        var annotated = registry.findById("parity-agent", "test-tenant").orElseThrow();
+
+        assertThat(annotated.agentId()).isEqualTo("parity-agent");
+        assertThat(annotated.name()).isEqualTo("Parity Agent");
+        assertThat(annotated.slot()).isEqualTo("analyst");
+        assertThat(annotated.tenancyId()).isEqualTo("test-tenant");
+        assertThat(annotated.domainVocabulary()).isEqualTo("urn:casehub:vocab:svo");
+        assertThat(annotated.dispositionVocabulary()).isEqualTo("urn:casehub:vocab:conscientiousness");
+        assertThat(annotated.provider()).isEqualTo("test-provider");
+        assertThat(annotated.modelFamily()).isEqualTo("test-model");
+        assertThat(annotated.modelVersion()).isEqualTo("v1");
+        assertThat(annotated.weightsFingerprint()).isEqualTo("sha256:parity");
+        assertThat(annotated.jurisdiction()).isEqualTo("EU");
+        assertThat(annotated.dataHandlingPolicy()).isEqualTo("gdpr");
+        assertThat(annotated.briefing()).isEqualTo("Full parity test agent");
+        assertThat(annotated.version()).isEqualTo("1.0");
+
+        assertThat(annotated.disposition()).isNotNull();
+        assertThat(annotated.disposition().primaryTerm(DispositionAxis.SOCIAL_ORIENTATION)).isEqualTo("collaborative");
+        assertThat(annotated.disposition().primaryTerm(DispositionAxis.RULE_FOLLOWING)).isEqualTo("strict");
+        assertThat(annotated.disposition().primaryTerm(DispositionAxis.RISK_APPETITE)).isEqualTo("cautious");
+        assertThat(annotated.disposition().primaryTerm(DispositionAxis.AUTONOMY)).isEqualTo("guided");
+        assertThat(annotated.disposition().primaryTerm(DispositionAxis.CONFLICT_MODE)).isEqualTo("accommodating");
+        assertThat(annotated.disposition().delegation()).isTrue();
+        assertThat(annotated.disposition().dispositionProfile()).hasSize(2);
+        assertThat(annotated.disposition().dispositionProfile().get(0).term()).isEqualTo("collaborative");
+        assertThat(annotated.disposition().dispositionProfile().get(0).weight()).isEqualTo(0.8);
+
+        assertThat(annotated.axisVocabularies()).containsEntry(DispositionAxis.CONFLICT_MODE, "urn:casehub:vocab:thomas-kilmann");
+
+        assertThat(annotated.capabilities()).hasSize(2);
+        assertThat(annotated.capabilities().stream().map(c -> c.name()).toList())
+                .containsExactlyInAnyOrder("cap-a", "cap-b");
+        var capA = annotated.capabilities().stream().filter(c -> c.name().equals("cap-a")).findFirst().orElseThrow();
+        assertThat(capA.description()).isEqualTo("Capability A");
+        assertThat(capA.qualityHint()).isEqualTo(0.9);
+        assertThat(capA.latencyHintP50Ms()).isEqualTo(2000L);
+        assertThat(capA.epistemicDomains()).containsEntry("domain-a", 0.95);
+        assertThat(capA.excludedDomains()).containsExactly("domain-x");
+
+        assertThat(annotated.goals()).hasSize(2);
+        assertThat(annotated.goals().get(0).name()).isEqualTo("goal-1");
+        assertThat(annotated.goals().get(0).capabilities()).containsExactly("cap-a");
+
+        assertThat(annotated.constraints()).hasSize(2);
+
+        assertThat(annotated.templates()).hasSize(1);
+        assertThat(annotated.templates().get(0).templateId()).isEqualTo("safety-primer");
+        assertThat(annotated.templates().get(0).args()).containsEntry("domain", "legal");
     }
 
 

@@ -147,6 +147,24 @@ class EidosAnnotationsProcessor {
                 LOG.warnf("Class %s has @Discoverable but no @Identity — capabilities will not be registered", className);
             }
         }
+        for (var dotName : java.util.List.of(AGENT_CAPABILITY_DEF, AGENT_CAPABILITIES)) {
+            for (var ann : index.getIndex().getAnnotations(dotName)) {
+                if (ann.target().kind() != AnnotationTarget.Kind.CLASS) {continue;}
+                var className = ann.target().asClass().name().toString();
+                if (!processedClasses.contains(className)) {
+                    LOG.warnf("Class %s has @AgentCapabilityDef but no @Identity — capabilities will not be registered", className);
+                }
+            }
+        }
+        for (var dotName : java.util.List.of(AGENT_TEMPLATE_REF, AGENT_TEMPLATES)) {
+            for (var ann : index.getIndex().getAnnotations(dotName)) {
+                if (ann.target().kind() != AnnotationTarget.Kind.CLASS) {continue;}
+                var className = ann.target().asClass().name().toString();
+                if (!processedClasses.contains(className)) {
+                    LOG.warnf("Class %s has @AgentTemplateRef but no @Identity — templates will not be registered", className);
+                }
+            }
+        }
     }
 
 
@@ -261,6 +279,11 @@ class EidosAnnotationsProcessor {
                 dwc.value = nested[i].value("value").asString();
                 var w = nested[i].value("weight");
                 dwc.weight = w != null ? w.asDouble() : 1.0;
+                if (Double.isNaN(dwc.weight) || dwc.weight < 0.0 || dwc.weight > 1.0) {
+                    throw new IllegalStateException(
+                        "@DispositionWeight weight for '" + dwc.value + "' on " + classInfo.name()
+                        + " must be 0.0-1.0, got " + dwc.weight);
+                }
                 config.dispositionProfile[i] = dwc;
             }
         }
@@ -273,6 +296,11 @@ class EidosAnnotationsProcessor {
                 dwc.value = nested[i].value("value").asString();
                 var w = nested[i].value("weight");
                 dwc.weight = w != null ? w.asDouble() : 1.0;
+                if (Double.isNaN(dwc.weight) || dwc.weight < 0.0 || dwc.weight > 1.0) {
+                    throw new IllegalStateException(
+                        "@DispositionWeight weight for '" + dwc.value + "' on " + classInfo.name()
+                        + " must be 0.0-1.0, got " + dwc.weight);
+                }
                 config.styleProfile[i] = dwc;
             }
         }
@@ -285,6 +313,13 @@ class EidosAnnotationsProcessor {
                 avc.axis = nested[i].value("axis").asEnum();
                 avc.uri = nested[i].value("uri").asString();
                 config.axisVocabularies[i] = avc;
+            }
+            var seenAxes = new HashSet<String>();
+            for (var avc : config.axisVocabularies) {
+                if (!seenAxes.add(avc.axis)) {
+                    throw new IllegalStateException(
+                        "Duplicate @AxisVocabulary axis " + avc.axis + " on " + classInfo.name());
+                }
             }
         }
         config.mbtiType = stringValue(ann, "mbtiType");
@@ -371,6 +406,8 @@ class EidosAnnotationsProcessor {
             }
         }
 
+        validateCapabilityMetadata(classInfo, config.richCapabilities);
+
         if (config.capabilities != null && config.richCapabilities != null) {
             var discNames = new HashSet<>(java.util.Arrays.asList(config.capabilities));
             for (var rc : config.richCapabilities) {
@@ -428,6 +465,40 @@ class EidosAnnotationsProcessor {
             }
         }
     }
+
+    private void validateCapabilityMetadata(ClassInfo classInfo, AnnotatedAgentConfig.CapabilityConfig[] caps) {
+        if (caps == null) {return;}
+        for (var cap : caps) {
+            if (cap.qualityHint != -1) {
+                if (Double.isNaN(cap.qualityHint) || cap.qualityHint < 0.0 || cap.qualityHint > 1.0) {
+                    throw new IllegalStateException(
+                            "@AgentCapabilityDef '" + cap.name + "' on " + classInfo.name()
+                            + ": qualityHint must be 0.0-1.0, got " + cap.qualityHint);
+                }
+            }
+            if (cap.epistemicDomains != null) {
+                var domainNames = new HashSet<String>();
+                for (var ed : cap.epistemicDomains) {
+                    if (Double.isNaN(ed.score) || ed.score < 0.0 || ed.score > 1.0) {
+                        throw new IllegalStateException(
+                                "@EpistemicDomain score for '" + ed.value + "' on " + classInfo.name()
+                                + " must be 0.0-1.0, got " + ed.score);
+                    }
+                    domainNames.add(ed.value);
+                }
+                if (cap.excludedDomains != null) {
+                    for (var exd : cap.excludedDomains) {
+                        if (domainNames.contains(exd)) {
+                            throw new IllegalStateException(
+                                    "Domain '" + exd + "' on " + classInfo.name()
+                                    + " appears in both epistemicDomains and excludedDomains");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     private static String stringValue(AnnotationInstance ann, String key) {
         var v = ann.value(key);

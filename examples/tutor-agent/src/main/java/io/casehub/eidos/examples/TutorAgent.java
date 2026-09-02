@@ -10,7 +10,9 @@ import io.casehub.eidos.api.*;
              riskAppetite = "moderate",
              autonomy = "collaborative",
              conflictMode = "compromising",
-             dispositionProfile = {"INTROVERTED_SENSING", "EXTRAVERTED_FEELING"})
+             dispositionProfile = {
+                 @DispositionWeight("INTROVERTED_SENSING"),
+                 @DispositionWeight("EXTRAVERTED_FEELING")})
 @Discoverable(capabilities = {"explanation", "assessment", "curriculum-planning"})
 @AgentGoals({
     @AgentGoalDef(name = "learning-outcomes",

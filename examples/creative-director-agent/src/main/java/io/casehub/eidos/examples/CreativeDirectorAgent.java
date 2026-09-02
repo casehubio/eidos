@@ -1,6 +1,7 @@
 package io.casehub.eidos.examples;
 
 import io.casehub.eidos.annotations.Disposition;
+import io.casehub.eidos.annotations.DispositionWeight;
 import io.casehub.eidos.annotations.Identity;
 import io.casehub.eidos.api.Discoverable;
 
@@ -11,7 +12,11 @@ import io.casehub.eidos.api.Discoverable;
           dispositionVocabulary = "urn:casehub:vocab:jungian-function",
           styleVocabulary = "urn:casehub:vocab:sarc7")
 @Disposition(delegation = true,
-             dispositionProfile = {"EXTRAVERTED_INTUITION", "INTROVERTED_FEELING"},
-             styleProfile = {"IRONY", "ABSURDIST_HUMOUR"})
+             dispositionProfile = {
+                 @DispositionWeight("EXTRAVERTED_INTUITION"),
+                 @DispositionWeight("INTROVERTED_FEELING")},
+             styleProfile = {
+                 @DispositionWeight("IRONY"),
+                 @DispositionWeight("ABSURDIST_HUMOUR")})
 @Discoverable(capabilities = {"concept-development", "brand-voice", "visual-direction"})
 public interface CreativeDirectorAgent {}
