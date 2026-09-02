@@ -7,6 +7,7 @@ import io.casehub.eidos.org.annotations.OrgMembers;
 import io.casehub.eidos.org.annotations.OrgRelationships;
 import io.casehub.eidos.org.annotations.OrgUnit;
 import io.casehub.eidos.org.annotations.Supervises;
+import io.casehub.eidos.org.annotations.Supervisions;
 import io.casehub.eidos.org.annotations.runtime.AnnotatedOrgConfig;
 import io.casehub.eidos.org.annotations.runtime.EidosOrgAnnotationsRecorder;
 import io.casehub.eidos.org.api.spi.OrgRegistrar;
@@ -35,7 +36,7 @@ class EidosOrgAnnotationsProcessor {
     private static final DotName ORG_UNIT = DotName.createSimple(OrgUnit.class);
     private static final DotName ORG_MEMBERS = DotName.createSimple(OrgMembers.class);
     private static final DotName SUPERVISES = DotName.createSimple(Supervises.class);
-    private static final DotName SUPERVISES_LIST = DotName.createSimple(Supervises.List.class);
+    private static final DotName SUPERVISIONS = DotName.createSimple(Supervisions.class);
     private static final DotName ORG_RELATIONSHIPS = DotName.createSimple(OrgRelationships.class);
 
     @BuildStep
@@ -131,12 +132,12 @@ class EidosOrgAnnotationsProcessor {
 
         // @Supervises (single)
         var singleSupervises = classInfo.annotation(SUPERVISES);
-        if (singleSupervises != null && classInfo.annotation(SUPERVISES_LIST) == null) {
+        if (singleSupervises != null && classInfo.annotation(SUPERVISIONS) == null) {
             rels.add(toSupervisionConfig(singleSupervises));
         }
 
-        // @Supervises.List (repeatable container)
-        var supervisesContainer = classInfo.annotation(SUPERVISES_LIST);
+        // @Supervisions (repeatable container)
+        var supervisesContainer = classInfo.annotation(SUPERVISIONS);
         if (supervisesContainer != null) {
             for (var s : supervisesContainer.value().asNestedArray()) {
                 rels.add(toSupervisionConfig(s));
@@ -182,7 +183,7 @@ class EidosOrgAnnotationsProcessor {
                 }
             }
         }
-        for (var dotName : java.util.List.of(SUPERVISES, SUPERVISES_LIST)) {
+        for (var dotName : java.util.List.of(SUPERVISES, SUPERVISIONS)) {
             for (var ann : index.getIndex().getAnnotations(dotName)) {
                 if (ann.target().kind() != AnnotationTarget.Kind.CLASS) continue;
                 var className = ann.target().asClass().name().toString();
