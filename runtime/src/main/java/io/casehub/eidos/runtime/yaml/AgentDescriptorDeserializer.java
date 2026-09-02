@@ -5,10 +5,23 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentCapability;
+import io.casehub.eidos.api.AgentConstraint;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentGoal;
+import io.casehub.eidos.api.ConstraintSeverity;
+import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.TemplateRef;
+import io.casehub.eidos.api.Visibility;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescriptor> {
@@ -109,21 +122,28 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
     }
 
     private AgentGoal deserializeGoal(JsonNode node) {
+        Map<String, String> attributes = null;
+        if (node.has("attributes") && node.get("attributes").isObject()) {
+            attributes = new LinkedHashMap<>();
+            var attrs = attributes;
+            node.get("attributes").fields().forEachRemaining(e ->
+                                                                     attrs.put(e.getKey(), e.getValue().asText()));
+        }
         return new AgentGoal(
-            node.get("name").asText(),
-            node.get("description").asText(),
-            GoalPriority.valueOf(node.get("priority").asText()),
-            Visibility.valueOf(node.get("visibility").asText()),
-            node.has("capabilities") ? stringList(node.get("capabilities")) : List.of(),
-            null);
+                node.get("name").asText(),
+                node.get("description").asText(),
+                node.has("priority") ? GoalPriority.valueOf(node.get("priority").asText()) : GoalPriority.PRIMARY,
+                node.has("visibility") ? Visibility.valueOf(node.get("visibility").asText()) : Visibility.PUBLIC,
+                node.has("capabilities") ? stringList(node.get("capabilities")) : List.of(),
+                attributes);
     }
 
     private AgentConstraint deserializeConstraint(JsonNode node) {
         return new AgentConstraint(
-            node.get("name").asText(),
-            node.get("description").asText(),
-            Visibility.valueOf(node.get("visibility").asText()),
-            ConstraintSeverity.valueOf(node.get("severity").asText()));
+                node.get("name").asText(),
+                node.get("description").asText(),
+                node.has("visibility") ? Visibility.valueOf(node.get("visibility").asText()) : Visibility.PUBLIC,
+                node.has("severity") ? ConstraintSeverity.valueOf(node.get("severity").asText()) : ConstraintSeverity.HARD);
     }
 
     private static String stringField(ObjectNode node, String field) {

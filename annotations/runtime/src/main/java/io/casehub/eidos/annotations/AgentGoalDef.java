@@ -10,8 +10,14 @@ import java.lang.annotation.Target;
 @Target({})
 public @interface AgentGoalDef {
     String name();
+
     String description();
+
     GoalPriority priority() default GoalPriority.PRIMARY;
+
     Visibility visibility() default Visibility.PUBLIC;
+
     String[] capabilities() default {};
+
+    GoalAttribute[] attributes() default {};
 }

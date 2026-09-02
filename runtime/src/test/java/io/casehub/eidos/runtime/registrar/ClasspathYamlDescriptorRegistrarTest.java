@@ -219,21 +219,22 @@ class ClasspathYamlDescriptorRegistrarTest {
     }
 
     @Test
-    void goal_missing_visibility_throws() {
+    void goal_missing_visibility_defaults_to_public() {
         var yaml = """
                    descriptors:
-                     - agentId: bad
+                     - agentId: defaults-test
                        name: N
                        slot: s
                        tenancyId: t
                        goals:
                          - name: g
                            description: d
-                           priority: PRIMARY
                    """;
-        assertThatThrownBy(() -> parse(yaml))
-                .isInstanceOf(IllegalStateException.class)
-                .hasRootCauseInstanceOf(NullPointerException.class);
+        var result = parse(yaml);
+        assertThat(result).hasSize(1);
+        var goal = result.get(0).goals().get(0);
+        assertThat(goal.visibility()).isEqualTo(io.casehub.eidos.api.Visibility.PUBLIC);
+        assertThat(goal.priority()).isEqualTo(io.casehub.eidos.api.GoalPriority.PRIMARY);
     }
 
     @Test

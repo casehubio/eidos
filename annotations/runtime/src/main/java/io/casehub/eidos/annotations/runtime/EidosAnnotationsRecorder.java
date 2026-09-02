@@ -98,9 +98,14 @@ public class EidosAnnotationsRecorder {
             if (config.goals != null) {
                 var goals = new ArrayList<AgentGoal>();
                 for (var g : config.goals) {
+                    Map<String, String> attrs = null;
+                    if (g.attributes != null && g.attributes.length > 0) {
+                        attrs = new HashMap<>();
+                        for (var a : g.attributes) {attrs.put(a.key, a.value);}
+                    }
                     goals.add(new AgentGoal(g.name, g.description,
                                             GoalPriority.valueOf(g.priority), Visibility.valueOf(g.visibility),
-                                            g.capabilities != null ? List.of(g.capabilities) : List.of(), null));
+                                            g.capabilities != null ? List.of(g.capabilities) : List.of(), attrs));
                 }
                 builder.goals(goals);
             }

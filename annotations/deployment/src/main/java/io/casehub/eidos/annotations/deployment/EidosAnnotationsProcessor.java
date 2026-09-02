@@ -328,17 +328,28 @@ class EidosAnnotationsProcessor {
 
     private void extractGoals(ClassInfo classInfo, AnnotatedAgentConfig config) {
         var ann = classInfo.annotation(AGENT_GOALS);
-        if (ann == null) return;
+        if (ann == null) {return;}
         var defs = ann.value().asNestedArray();
         config.goals = new AnnotatedAgentConfig.GoalConfig[defs.length];
         for (int i = 0; i < defs.length; i++) {
             var g = new AnnotatedAgentConfig.GoalConfig();
-            g.name = defs[i].value("name").asString();
+            g.name        = defs[i].value("name").asString();
             g.description = defs[i].value("description").asString();
-            g.priority = enumValue(defs[i], "priority", "PRIMARY");
-            g.visibility = enumValue(defs[i], "visibility", "PUBLIC");
+            g.priority    = enumValue(defs[i], "priority", "PRIMARY");
+            g.visibility  = enumValue(defs[i], "visibility", "PUBLIC");
             var caps = defs[i].value("capabilities");
             g.capabilities = caps != null ? caps.asStringArray() : new String[0];
+            var attrs = defs[i].value("attributes");
+            if (attrs != null) {
+                var nested = attrs.asNestedArray();
+                g.attributes = new AnnotatedAgentConfig.TemplateArgConfig[nested.length];
+                for (int j = 0; j < nested.length; j++) {
+                    var ac = new AnnotatedAgentConfig.TemplateArgConfig();
+                    ac.key          = nested[j].value("key").asString();
+                    ac.value        = nested[j].value("value").asString();
+                    g.attributes[j] = ac;
+                }
+            }
             config.goals[i] = g;
         }
     }

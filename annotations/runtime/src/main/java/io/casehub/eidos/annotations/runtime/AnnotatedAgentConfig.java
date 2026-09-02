@@ -39,11 +39,12 @@ public class AnnotatedAgentConfig {
     public AnnotatedAgentConfig() {}
 
     public static class GoalConfig {
-        public String   name;
-        public String   description;
-        public String   priority;
-        public String   visibility;
-        public String[] capabilities;
+        public String              name;
+        public String              description;
+        public String              priority;
+        public String              visibility;
+        public String[]            capabilities;
+        public TemplateArgConfig[] attributes;
 
         public GoalConfig() {}
     }
