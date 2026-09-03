@@ -11,4 +11,7 @@ public @interface OrgRelationshipDef {
     String extendedKind() default "";
     String kindVocabulary() default "";
     String scope() default "";
+    String scopeDomain() default "";
+    String scopeCondition() default "";
+    AttestationGrantDef[] attestation() default {};
 }

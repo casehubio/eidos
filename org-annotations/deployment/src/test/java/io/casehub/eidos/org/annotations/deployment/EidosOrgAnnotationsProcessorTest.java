@@ -1,5 +1,9 @@
 package io.casehub.eidos.org.annotations.deployment;
 
+import io.casehub.eidos.api.BehavioralSignal;
+import io.casehub.eidos.api.ConstraintSeverity;
+import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.org.api.OrgRegistry;
 import io.casehub.eidos.org.api.RelationshipKind;
 import io.quarkus.test.QuarkusUnitTest;
@@ -17,7 +21,8 @@ class EidosOrgAnnotationsProcessorTest {
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.SimpleOrgUnit.class)
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.ExplicitIdOrgUnit.class)
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.MinimalOrgUnit.class)
-                    .addClass(io.casehub.eidos.org.annotations.deployment.test.HierarchyChildUnit.class))
+                    .addClass(io.casehub.eidos.org.annotations.deployment.test.HierarchyChildUnit.class)
+                    .addClass(io.casehub.eidos.org.annotations.deployment.test.EnrichedOrgUnit.class))
             .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
             .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
             .overrideConfigKey("quarkus.datasource.db-kind", "h2")
@@ -107,5 +112,73 @@ class EidosOrgAnnotationsProcessorTest {
         var ancestors = registry.ancestorUnits("sub-team", "test-tenant");
         assertThat(ancestors).hasSize(1);
         assertThat(ancestors.getFirst().unitId()).isEqualTo("minimal-org-unit");
+    }
+
+    @Test
+    void enrichedUnitHasCapabilities() {
+        var unit = registry.findUnit("enriched-unit", "test-tenant").orElseThrow();
+        assertThat(unit.capabilities()).hasSize(1);
+        var cap = unit.capabilities().getFirst();
+        assertThat(cap.name()).isEqualTo("code-review");
+        assertThat(cap.description()).isEqualTo("Reviews code changes");
+        assertThat(cap.qualityHint()).isEqualTo(0.9);
+        assertThat(cap.latencyHintP50Ms()).isEqualTo(5000);
+        assertThat(cap.epistemicDomains()).containsEntry("java", 0.95);
+    }
+
+    @Test
+    void enrichedUnitHasGoals() {
+        var unit = registry.findUnit("enriched-unit", "test-tenant").orElseThrow();
+        assertThat(unit.goals()).hasSize(2);
+        var primary = unit.goals().stream()
+                .filter(g -> g.name().equals("quality-gate")).findFirst().orElseThrow();
+        assertThat(primary.description()).isEqualTo("Ensure code quality standards");
+        assertThat(primary.priority()).isEqualTo(GoalPriority.PRIMARY);
+        assertThat(primary.visibility()).isEqualTo(Visibility.PUBLIC);
+        var secondary = unit.goals().stream()
+                .filter(g -> g.name().equals("knowledge-share")).findFirst().orElseThrow();
+        assertThat(secondary.priority()).isEqualTo(GoalPriority.SECONDARY);
+    }
+
+    @Test
+    void enrichedUnitHasConstraints() {
+        var unit = registry.findUnit("enriched-unit", "test-tenant").orElseThrow();
+        assertThat(unit.constraints()).hasSize(2);
+        var hard = unit.constraints().stream()
+                .filter(c -> c.name().equals("no-force-push")).findFirst().orElseThrow();
+        assertThat(hard.severity()).isEqualTo(ConstraintSeverity.HARD);
+        assertThat(hard.visibility()).isEqualTo(Visibility.PUBLIC);
+        var soft = unit.constraints().stream()
+                .filter(c -> c.name().equals("review-sla")).findFirst().orElseThrow();
+        assertThat(soft.severity()).isEqualTo(ConstraintSeverity.SOFT);
+        assertThat(soft.visibility()).isEqualTo(Visibility.PRIVATE);
+    }
+
+    @Test
+    void enrichedUnitSupervisionHasStructuredScope() {
+        var subs = registry.subordinates("lead-1", "test-tenant");
+        assertThat(subs).hasSize(1);
+        var rel = subs.getFirst();
+        assertThat(rel.targetAgentId()).isEqualTo("reviewer-1");
+        assertThat(rel.scope()).isNotNull();
+        assertThat(rel.scope().capabilityName()).isEqualTo("code-review");
+        assertThat(rel.scope().domain()).isEqualTo("backend");
+        assertThat(rel.scope().custom()).isEqualTo("pr-open");
+    }
+
+    @Test
+    void enrichedUnitRelationshipHasAttestationAndStructuredScope() {
+        var rels = registry.relationshipsFrom("reviewer-1", "test-tenant").stream()
+                .filter(r -> r.kind() == RelationshipKind.ESCALATES_TO).toList();
+        assertThat(rels).hasSize(1);
+        var rel = rels.getFirst();
+        assertThat(rel.scope()).isNotNull();
+        assertThat(rel.scope().capabilityName()).isEqualTo("code-review");
+        assertThat(rel.scope().domain()).isEqualTo("security");
+        assertThat(rel.attestation()).isNotNull();
+        assertThat(rel.attestation().dimensions()).containsExactlyInAnyOrder("quality", "latency");
+        assertThat(rel.attestation().capabilityScope()).containsExactly("code-review");
+        assertThat(rel.attestation().signalTypes())
+                .containsExactlyInAnyOrder(BehavioralSignal.COMPLIANT, BehavioralSignal.VIOLATED);
     }
 }

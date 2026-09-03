@@ -1,5 +1,7 @@
 package io.casehub.eidos.org.annotations.runtime;
 
+import io.casehub.eidos.annotations.runtime.AnnotatedAgentConfig;
+
 public class AnnotatedOrgConfig {
     public String unitId;
     public String name;
@@ -9,6 +11,9 @@ public class AnnotatedOrgConfig {
 
     public MemberConfig[] members;
     public RelationshipConfig[] relationships;
+    public AnnotatedAgentConfig.CapabilityConfig[] capabilities;
+    public AnnotatedAgentConfig.GoalConfig[] goals;
+    public AnnotatedAgentConfig.ConstraintConfig[] constraints;
 
     public AnnotatedOrgConfig() {}
 
@@ -27,7 +32,18 @@ public class AnnotatedOrgConfig {
         public String extendedKind;
         public String kindVocabulary;
         public String scope;
+        public String scopeDomain;
+        public String scopeCondition;
+        public AttestationConfig attestation;
 
         public RelationshipConfig() {}
+    }
+
+    public static class AttestationConfig {
+        public String[] dimensions;
+        public String[] capabilityScope;
+        public String[] signalTypes;
+
+        public AttestationConfig() {}
     }
 }

@@ -24,11 +24,11 @@ class OrgAnnotationParityTest {
     );
 
     private static final Set<String> ORG_UNIT_INFRA_FIELDS = Set.of(
-            "tenancyId", "members", "capabilities", "goals", "constraints"
+            "tenancyId", "members"
     );
 
     private static final Set<String> RELATIONSHIP_INFRA_FIELDS = Set.of(
-            "tenancyId", "attestation"
+            "tenancyId"
     );
 
     @Test
@@ -89,6 +89,10 @@ class OrgAnnotationParityTest {
             "target", "targetAgentId"
     );
 
+    private static final Set<String> RELATIONSHIP_COMPOSITE_FIELDS = Set.of(
+            "scopeDomain", "scopeCondition"
+    );
+
     @Test
     void everyRelationshipDefFieldHasBuilderSetter() {
         var annotationFields = Arrays.stream(OrgRelationshipDef.class.getDeclaredMethods())
@@ -96,6 +100,7 @@ class OrgAnnotationParityTest {
         var builderSetters = Arrays.stream(AgentRelationship.Builder.class.getDeclaredMethods())
                 .map(m -> m.getName()).collect(Collectors.toSet());
         for (var field : annotationFields) {
+            if (RELATIONSHIP_COMPOSITE_FIELDS.contains(field)) continue;
             var builderName = RELATIONSHIP_RENAMES.getOrDefault(field, field);
             assertThat(builderSetters).as("Builder setter for @OrgRelationshipDef.%s() (→ %s)", field, builderName)
                     .contains(builderName);

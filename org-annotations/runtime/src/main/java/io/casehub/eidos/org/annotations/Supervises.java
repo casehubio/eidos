@@ -15,4 +15,6 @@ public @interface Supervises {
     String target();
 
     String scope() default "";
+    String scopeDomain() default "";
+    String scopeCondition() default "";
 }

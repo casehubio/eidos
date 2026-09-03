@@ -1,8 +1,13 @@
 package io.casehub.eidos.org.annotations.deployment;
 
+import io.casehub.eidos.annotations.AgentCapabilityDef;
+import io.casehub.eidos.annotations.AgentConstraints;
+import io.casehub.eidos.annotations.AgentGoals;
 import io.casehub.eidos.annotations.NameDerivation;
 import io.casehub.eidos.annotations.deployment.AnnotationProcessorUtils;
 import io.casehub.eidos.annotations.deployment.EidosAnnotationProcessedBuildItem;
+import io.casehub.eidos.annotations.runtime.AnnotatedAgentConfig;
+import io.casehub.eidos.org.annotations.AttestationGrantDef;
 import io.casehub.eidos.org.annotations.OrgMembers;
 import io.casehub.eidos.org.annotations.OrgRelationships;
 import io.casehub.eidos.org.annotations.OrgUnit;
@@ -91,6 +96,9 @@ class EidosOrgAnnotationsProcessor {
 
         extractMembers(classInfo, config);
         extractRelationships(classInfo, config);
+        extractCapabilities(orgUnit, config);
+        extractGoals(orgUnit, config);
+        extractConstraints(orgUnit, config);
 
         return config;
     }
@@ -155,6 +163,9 @@ class EidosOrgAnnotationsProcessor {
                 rc.extendedKind = stringValue(r, "extendedKind");
                 rc.kindVocabulary = stringValue(r, "kindVocabulary");
                 rc.scope = stringValue(r, "scope");
+                rc.scopeDomain = stringValue(r, "scopeDomain");
+                rc.scopeCondition = stringValue(r, "scopeCondition");
+                rc.attestation = extractAttestation(r);
                 rels.add(rc);
             }
         }
@@ -170,7 +181,114 @@ class EidosOrgAnnotationsProcessor {
         rc.target = ann.value("target").asString();
         rc.kind = "SUPERVISES";
         rc.scope = stringValue(ann, "scope");
+        rc.scopeDomain = stringValue(ann, "scopeDomain");
+        rc.scopeCondition = stringValue(ann, "scopeCondition");
         return rc;
+    }
+
+    private void extractCapabilities(AnnotationInstance orgUnit, AnnotatedOrgConfig config) {
+        var v = orgUnit.value("capabilities");
+        if (v == null) return;
+        var defs = v.asNestedArray();
+        if (defs.length == 0) return;
+        config.capabilities = new AnnotatedAgentConfig.CapabilityConfig[defs.length];
+        var names = new java.util.HashSet<String>();
+        for (int i = 0; i < defs.length; i++) {
+            var cap = new AnnotatedAgentConfig.CapabilityConfig();
+            cap.name = defs[i].value("name").asString();
+            if (!names.add(cap.name)) {
+                throw new IllegalStateException("Duplicate capability name '" + cap.name + "' in @OrgUnit");
+            }
+            cap.description = stringValue(defs[i], "description");
+            cap.capabilityVocabulary = stringValue(defs[i], "capabilityVocabulary");
+            var qh = defs[i].value("qualityHint");
+            cap.qualityHint = qh != null ? qh.asDouble() : -1;
+            var lh = defs[i].value("latencyHintP50Ms");
+            cap.latencyHintP50Ms = lh != null ? lh.asLong() : -1;
+            cap.costHint = stringValue(defs[i], "costHint");
+            var it = defs[i].value("inputTypes");
+            cap.inputTypes = it != null ? it.asStringArray() : new String[0];
+            var ot = defs[i].value("outputTypes");
+            cap.outputTypes = ot != null ? ot.asStringArray() : new String[0];
+            var tg = defs[i].value("tags");
+            cap.tags = tg != null ? tg.asStringArray() : new String[0];
+            var ed = defs[i].value("epistemicDomains");
+            if (ed != null) {
+                var nested = ed.asNestedArray();
+                cap.epistemicDomains = new AnnotatedAgentConfig.EpistemicDomainConfig[nested.length];
+                for (int j = 0; j < nested.length; j++) {
+                    var edc = new AnnotatedAgentConfig.EpistemicDomainConfig();
+                    edc.value = nested[j].value("value").asString();
+                    edc.score = nested[j].value("score").asDouble();
+                    cap.epistemicDomains[j] = edc;
+                }
+            }
+            var exd = defs[i].value("excludedDomains");
+            cap.excludedDomains = exd != null ? exd.asStringArray() : new String[0];
+            config.capabilities[i] = cap;
+        }
+    }
+
+    private void extractGoals(AnnotationInstance orgUnit, AnnotatedOrgConfig config) {
+        var v = orgUnit.value("goals");
+        if (v == null) return;
+        var defs = v.asNestedArray();
+        if (defs.length == 0) return;
+        config.goals = new AnnotatedAgentConfig.GoalConfig[defs.length];
+        for (int i = 0; i < defs.length; i++) {
+            var g = new AnnotatedAgentConfig.GoalConfig();
+            g.name = defs[i].value("name").asString();
+            g.description = defs[i].value("description").asString();
+            g.priority = enumValue(defs[i], "priority", "PRIMARY");
+            g.visibility = enumValue(defs[i], "visibility", "PUBLIC");
+            var caps = defs[i].value("capabilities");
+            g.capabilities = caps != null ? caps.asStringArray() : new String[0];
+            var attrs = defs[i].value("attributes");
+            if (attrs != null) {
+                var nested = attrs.asNestedArray();
+                g.attributes = new AnnotatedAgentConfig.TemplateArgConfig[nested.length];
+                for (int j = 0; j < nested.length; j++) {
+                    var ac = new AnnotatedAgentConfig.TemplateArgConfig();
+                    ac.key = nested[j].value("key").asString();
+                    ac.value = nested[j].value("value").asString();
+                    g.attributes[j] = ac;
+                }
+            }
+            config.goals[i] = g;
+        }
+    }
+
+    private void extractConstraints(AnnotationInstance orgUnit, AnnotatedOrgConfig config) {
+        var v = orgUnit.value("constraints");
+        if (v == null) return;
+        var defs = v.asNestedArray();
+        if (defs.length == 0) return;
+        config.constraints = new AnnotatedAgentConfig.ConstraintConfig[defs.length];
+        for (int i = 0; i < defs.length; i++) {
+            var c = new AnnotatedAgentConfig.ConstraintConfig();
+            c.name = defs[i].value("name").asString();
+            c.description = defs[i].value("description").asString();
+            c.severity = enumValue(defs[i], "severity", "HARD");
+            c.visibility = enumValue(defs[i], "visibility", "PUBLIC");
+            config.constraints[i] = c;
+        }
+    }
+
+    private AnnotatedOrgConfig.AttestationConfig extractAttestation(AnnotationInstance ann) {
+        var v = ann.value("attestation");
+        if (v == null) return null;
+        var defs = v.asNestedArray();
+        if (defs.length == 0) return null;
+        var att = defs[0];
+        var dims = att.value("dimensions");
+        if (dims == null || dims.asStringArray().length == 0) return null;
+        var ac = new AnnotatedOrgConfig.AttestationConfig();
+        ac.dimensions = dims.asStringArray();
+        var cs = att.value("capabilityScope");
+        ac.capabilityScope = cs != null ? cs.asStringArray() : new String[0];
+        var st = att.value("signalTypes");
+        ac.signalTypes = st != null ? st.asStringArray() : new String[0];
+        return ac;
     }
 
     private void warnOrphanAnnotations(CombinedIndexBuildItem index, java.util.Set<String> processedClasses) {
@@ -220,5 +338,9 @@ class EidosOrgAnnotationsProcessor {
 
     private static String stringValue(AnnotationInstance ann, String key) {
         return AnnotationProcessorUtils.stringValue(ann, key);
+    }
+
+    private static String enumValue(AnnotationInstance ann, String key, String defaultValue) {
+        return AnnotationProcessorUtils.enumValue(ann, key, defaultValue);
     }
 }

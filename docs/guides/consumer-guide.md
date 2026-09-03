@@ -228,7 +228,7 @@ Optional module providing agent organizational structure -- units, memberships, 
 - `OrgStructure.define(tenancyId)` -- compositional DSL for programmatic org definition.
 - `OrgGoalCompiler` -- maps org POJOs to desiredstate graph for reconciliation.
 
-**Annotations (casehub-eidos-org-annotations):** `@OrgUnit` on a class declares a unit (ID auto-derived from class name). `@OrgMembers` defines membership list. `@Supervises` (repeatable) declares supervision. `@OrgRelationships` for other relationship types. Build extension produces `OrgRegistrar` CDI beans.
+**Annotations (casehub-eidos-org-annotations):** `@OrgUnit` on a class declares a unit (ID auto-derived from class name); supports `capabilities` (`@AgentCapabilityDef[]`), `goals` (`@AgentGoalDef[]`), `constraints` (`@AgentConstraintDef[]`) reused from eidos-annotations. `@OrgMembers` defines membership list. `@Supervises` (repeatable) declares supervision with optional `scopeDomain`/`scopeCondition`. `@OrgRelationships`/`@OrgRelationshipDef` for other relationship types with structured scope and `@AttestationGrantDef` for attestation grants. Build extension produces `OrgRegistrar` CDI beans.
 
 ---
 
