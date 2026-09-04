@@ -25,7 +25,8 @@ class EidosAnnotationsProcessorTest {
                     .addClass(io.casehub.eidos.annotations.deployment.test.CapabilityMergeAgent.class)
                     .addClass(io.casehub.eidos.annotations.deployment.test.TemplatedAgent.class)
                     .addClass(io.casehub.eidos.annotations.deployment.test.TestTemplateRegistrar.class)
-                    .addClass(io.casehub.eidos.annotations.deployment.test.FullParityAgent.class))
+                    .addClass(io.casehub.eidos.annotations.deployment.test.FullParityAgent.class)
+                    .addClass(io.casehub.eidos.annotations.deployment.test.RepeatableGoalConstraintAgent.class))
             .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
             .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
             .overrideConfigKey("quarkus.datasource.db-kind", "h2")
@@ -235,5 +236,24 @@ class EidosAnnotationsProcessorTest {
         assertThat(annotated.templates().get(0).args()).containsEntry("domain", "legal");
     }
 
+    @Test
+    void repeatableGoals_directAnnotation() {
+        var d = registry.findById("repeatable-agent", "test-tenant").orElseThrow();
+        assertThat(d.goals()).hasSize(2);
+        var speed = d.goals().stream().filter(g -> g.name().equals("speed")).findFirst().orElseThrow();
+        assertThat(speed.description()).isEqualTo("Respond quickly");
+        assertThat(speed.priority()).isEqualTo(GoalPriority.PRIMARY);
+        var clarity = d.goals().stream().filter(g -> g.name().equals("clarity")).findFirst().orElseThrow();
+        assertThat(clarity.priority()).isEqualTo(GoalPriority.SECONDARY);
+    }
 
+    @Test
+    void repeatableConstraints_directAnnotation() {
+        var d = registry.findById("repeatable-agent", "test-tenant").orElseThrow();
+        assertThat(d.constraints()).hasSize(2);
+        var noPii = d.constraints().stream().filter(c -> c.name().equals("no-pii")).findFirst().orElseThrow();
+        assertThat(noPii.severity()).isEqualTo(ConstraintSeverity.HARD);
+        var log = d.constraints().stream().filter(c -> c.name().equals("log-actions")).findFirst().orElseThrow();
+        assertThat(log.severity()).isEqualTo(ConstraintSeverity.SOFT);
+    }
 }

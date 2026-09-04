@@ -2,7 +2,9 @@ package io.casehub.eidos.annotations.deployment;
 
 import io.casehub.eidos.annotations.AgentCapabilities;
 import io.casehub.eidos.annotations.AgentCapabilityDef;
+import io.casehub.eidos.annotations.AgentConstraintDef;
 import io.casehub.eidos.annotations.AgentConstraints;
+import io.casehub.eidos.annotations.AgentGoalDef;
 import io.casehub.eidos.annotations.AgentGoals;
 import io.casehub.eidos.annotations.AgentTemplateRef;
 import io.casehub.eidos.annotations.AgentTemplates;
@@ -38,7 +40,9 @@ class EidosAnnotationsProcessor {
     private static final String FEATURE = "eidos-annotations";
     private static final DotName IDENTITY = DotName.createSimple(Identity.class);
     private static final DotName DISPOSITION = DotName.createSimple(Disposition.class);
+    private static final DotName AGENT_GOAL_DEF = DotName.createSimple(AgentGoalDef.class);
     private static final DotName AGENT_GOALS = DotName.createSimple(AgentGoals.class);
+    private static final DotName AGENT_CONSTRAINT_DEF = DotName.createSimple(AgentConstraintDef.class);
     private static final DotName AGENT_CONSTRAINTS = DotName.createSimple(AgentConstraints.class);
     private static final DotName DISCOVERABLE = DotName.createSimple(Discoverable.class);
     private static final DotName AGENT_CAPABILITY_DEF = DotName.createSimple(AgentCapabilityDef.class);
@@ -165,6 +169,24 @@ class EidosAnnotationsProcessor {
                 }
             }
         }
+        for (var dotName : java.util.List.of(AGENT_GOAL_DEF, AGENT_GOALS)) {
+            for (var ann : index.getIndex().getAnnotations(dotName)) {
+                if (ann.target().kind() != AnnotationTarget.Kind.CLASS) {continue;}
+                var className = ann.target().asClass().name().toString();
+                if (!processedClasses.contains(className)) {
+                    LOG.warnf("Class %s has @AgentGoalDef but no @Identity — goals will not be registered", className);
+                }
+            }
+        }
+        for (var dotName : java.util.List.of(AGENT_CONSTRAINT_DEF, AGENT_CONSTRAINTS)) {
+            for (var ann : index.getIndex().getAnnotations(dotName)) {
+                if (ann.target().kind() != AnnotationTarget.Kind.CLASS) {continue;}
+                var className = ann.target().asClass().name().toString();
+                if (!processedClasses.contains(className)) {
+                    LOG.warnf("Class %s has @AgentConstraintDef but no @Identity — constraints will not be registered", className);
+                }
+            }
+        }
     }
 
 
@@ -228,8 +250,8 @@ class EidosAnnotationsProcessor {
         config.modelVersion = stringValue(identity, "modelVersion");
 
         extractDisposition(classInfo, config);
-        extractGoals(classInfo, config);
-        extractConstraints(classInfo, config);
+        extractGoals(classInfo, config, index);
+        extractConstraints(classInfo, config, index);
         extractCapabilities(classInfo, config, index);
         extractTemplates(classInfo, config, index);
 
@@ -326,20 +348,20 @@ class EidosAnnotationsProcessor {
         config.enneagramType = stringValue(ann, "enneagramType");
     }
 
-    private void extractGoals(ClassInfo classInfo, AnnotatedAgentConfig config) {
-        var ann = classInfo.annotation(AGENT_GOALS);
-        if (ann == null) {return;}
-        var defs = ann.value().asNestedArray();
-        config.goals = new AnnotatedAgentConfig.GoalConfig[defs.length];
-        for (int i = 0; i < defs.length; i++) {
+    private void extractGoals(ClassInfo classInfo, AnnotatedAgentConfig config, CombinedIndexBuildItem index) {
+        var goalDefs = classInfo.annotationsWithRepeatable(AGENT_GOAL_DEF, index.getIndex());
+        if (goalDefs.isEmpty()) {return;}
+        config.goals = new AnnotatedAgentConfig.GoalConfig[goalDefs.size()];
+        for (int i = 0; i < goalDefs.size(); i++) {
+            var ann = goalDefs.get(i);
             var g = new AnnotatedAgentConfig.GoalConfig();
-            g.name        = defs[i].value("name").asString();
-            g.description = defs[i].value("description").asString();
-            g.priority    = enumValue(defs[i], "priority", "PRIMARY");
-            g.visibility  = enumValue(defs[i], "visibility", "PUBLIC");
-            var caps = defs[i].value("capabilities");
+            g.name        = ann.value("name").asString();
+            g.description = ann.value("description").asString();
+            g.priority    = enumValue(ann, "priority", "PRIMARY");
+            g.visibility  = enumValue(ann, "visibility", "PUBLIC");
+            var caps = ann.value("capabilities");
             g.capabilities = caps != null ? caps.asStringArray() : new String[0];
-            var attrs = defs[i].value("attributes");
+            var attrs = ann.value("attributes");
             if (attrs != null) {
                 var nested = attrs.asNestedArray();
                 g.attributes = new AnnotatedAgentConfig.TemplateArgConfig[nested.length];
@@ -354,17 +376,17 @@ class EidosAnnotationsProcessor {
         }
     }
 
-    private void extractConstraints(ClassInfo classInfo, AnnotatedAgentConfig config) {
-        var ann = classInfo.annotation(AGENT_CONSTRAINTS);
-        if (ann == null) return;
-        var defs = ann.value().asNestedArray();
-        config.constraints = new AnnotatedAgentConfig.ConstraintConfig[defs.length];
-        for (int i = 0; i < defs.length; i++) {
+    private void extractConstraints(ClassInfo classInfo, AnnotatedAgentConfig config, CombinedIndexBuildItem index) {
+        var constraintDefs = classInfo.annotationsWithRepeatable(AGENT_CONSTRAINT_DEF, index.getIndex());
+        if (constraintDefs.isEmpty()) {return;}
+        config.constraints = new AnnotatedAgentConfig.ConstraintConfig[constraintDefs.size()];
+        for (int i = 0; i < constraintDefs.size(); i++) {
+            var ann = constraintDefs.get(i);
             var c = new AnnotatedAgentConfig.ConstraintConfig();
-            c.name = defs[i].value("name").asString();
-            c.description = defs[i].value("description").asString();
-            c.severity = enumValue(defs[i], "severity", "HARD");
-            c.visibility = enumValue(defs[i], "visibility", "PUBLIC");
+            c.name = ann.value("name").asString();
+            c.description = ann.value("description").asString();
+            c.severity = enumValue(ann, "severity", "HARD");
+            c.visibility = enumValue(ann, "visibility", "PUBLIC");
             config.constraints[i] = c;
         }
     }
