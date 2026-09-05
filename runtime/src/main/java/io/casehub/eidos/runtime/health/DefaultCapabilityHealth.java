@@ -4,6 +4,7 @@ import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus.ExclusionSource;
 import io.casehub.eidos.api.CapabilityResolver;
 import io.casehub.eidos.runtime.preferences.EidosPreferenceKeys;
+import io.casehub.platform.api.capacity.ActorCapacityView;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
 import io.quarkus.arc.DefaultBean;
@@ -21,23 +22,30 @@ import java.util.Map;
 public class DefaultCapabilityHealth implements CapabilityHealth {
 
     private final double weakThreshold;
+    private final double capacityThreshold;
     private final AgentStateStore stateStore;
     private final BehavioralSignalStore signalStore;
     private final Instance<PreferenceProvider> preferenceProviderInstance;
+    private final Instance<ActorCapacityView> capacityViewInstance;
     private final VocabularyRegistry vocabularyRegistry;
 
     @Inject
     public DefaultCapabilityHealth(
             @ConfigProperty(name = "casehub.eidos.epistemic.weak-threshold", defaultValue = "0.3")
             final double weakThreshold,
+            @ConfigProperty(name = "casehub.eidos.health.capacity-threshold", defaultValue = "0.8")
+            final double capacityThreshold,
             final AgentStateStore stateStore,
             final BehavioralSignalStore signalStore,
             final Instance<PreferenceProvider> preferenceProviderInstance,
+            final Instance<ActorCapacityView> capacityViewInstance,
             final VocabularyRegistry vocabularyRegistry) {
         this.weakThreshold = weakThreshold;
+        this.capacityThreshold = capacityThreshold;
         this.stateStore = stateStore;
         this.signalStore = signalStore;
         this.preferenceProviderInstance = preferenceProviderInstance;
+        this.capacityViewInstance = capacityViewInstance;
         this.vocabularyRegistry = vocabularyRegistry;
     }
 
@@ -50,7 +58,16 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             return new CapabilityStatus.Degraded(degraded.get(), "recorded at dispatch time");
         }
 
-        // Step 2: capability not declared → unavailable
+        // Step 2: capacity overload — live signal from ActorCapacityView
+        if (capacityViewInstance.isResolvable()) {
+            final var signal = capacityViewInstance.get()
+                .aggregatedPressure(descriptor.agentId());
+            if (signal != null && signal.pressure() >= capacityThreshold) {
+                return new CapabilityStatus.Overloaded(signal.pressure(), capacityThreshold);
+            }
+        }
+
+        // Step 3: capability not declared → unavailable
         if (descriptor.capabilities() == null || descriptor.capabilities().isEmpty()) {
             return new CapabilityStatus.Unavailable("Capability '" + capabilityTag + "' not declared");
         }
@@ -64,14 +81,14 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
 
         final var capability = resolved.capability();
 
-        // Step 3: declared exclusion (null guard required — excludedDomains is nullable)
+        // Step 4: declared exclusion (null guard required — excludedDomains is nullable)
         if (context.taskDomain() != null
                 && capability.excludedDomains() != null
                 && capability.excludedDomains().contains(context.taskDomain())) {
             return new CapabilityStatus.Excluded(context.taskDomain(), ExclusionSource.DECLARED, 0);
         }
 
-        // Step 4: learned exclusion — use declared capability name, not query tag
+        // Step 5: learned exclusion — use declared capability name, not query tag
         if (context.taskDomain() != null) {
             final int count = signalStore.count(
                 descriptor.agentId(), descriptor.tenancyId(), capability.name(),
@@ -81,7 +98,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             }
         }
 
-        // Step 5: epistemic weakness
+        // Step 6: epistemic weakness
         if (context.taskDomain() != null && capability.epistemicDomains() != null) {
             final Double confidence = capability.epistemicDomains().get(context.taskDomain());
             if (confidence != null && confidence < weakThreshold) {
@@ -89,7 +106,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
             }
         }
 
-        // Step 6: behavioral compliance
+        // Step 7: behavioral compliance
         final var violations = signalStore.learned(
             descriptor.agentId(), descriptor.tenancyId(), capability.name(),
             BehavioralSignal.VIOLATED);
@@ -104,7 +121,7 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
                     CapabilityStatus.BehavioralViolation.ViolationKind.PER_DIMENSION);
             }
 
-            // Step 6b: aggregate check — total violations across all dimensions
+            // Step 7b: aggregate check — total violations across all dimensions
             final int total = violations.values().stream().mapToInt(Integer::intValue).sum();
             if (total >= aggregateViolationThreshold(descriptor.tenancyId())) {
                 return new CapabilityStatus.BehavioralViolation(Map.copyOf(violations),

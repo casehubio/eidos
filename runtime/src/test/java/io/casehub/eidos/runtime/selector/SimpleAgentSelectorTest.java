@@ -166,6 +166,32 @@ class SimpleAgentSelectorTest {
         assertInstanceOf(AgentSelection.Selected.class, result);
     }
 
+    @Test
+    void overloadedAgentFilteredOut() {
+        var match = matchWith("agent-1", "cap-1", new MatchDegree.Exact());
+        when(healthMock.probe(any(), eq("cap-1"), any()))
+            .thenReturn(new CapabilityStatus.Overloaded(0.95, 0.8));
+        when(trustSourceMock.capabilityScore("agent-1", "cap-1"))
+            .thenReturn(OptionalDouble.of(0.9));
+        var result = selector.select(List.of(match), SelectionContext.of("t1", "cap-1"));
+        assertInstanceOf(AgentSelection.NoneQualified.class, result);
+    }
+
+    @Test
+    void mixOfHealthyAndOverloadedSelectsHealthy() {
+        var m1 = matchWith("agent-1", "cap-1", new MatchDegree.Exact());
+        var m2 = matchWith("agent-2", "cap-1", new MatchDegree.Exact());
+        when(healthMock.probe(eq(m1.descriptor()), eq("cap-1"), any()))
+            .thenReturn(new CapabilityStatus.Overloaded(0.9, 0.8));
+        when(healthMock.probe(eq(m2.descriptor()), eq("cap-1"), any()))
+            .thenReturn(new CapabilityStatus.Ready());
+        when(trustSourceMock.capabilityScore("agent-2", "cap-1"))
+            .thenReturn(OptionalDouble.of(0.7));
+        var result = selector.select(List.of(m1, m2), SelectionContext.of("t1", "cap-1"));
+        assertInstanceOf(AgentSelection.Selected.class, result);
+        assertEquals("agent-2", ((AgentSelection.Selected) result).agent().agentId());
+    }
+
     private AgentMatch matchWith(String agentId, String capName, MatchDegree degree) {
         var descriptor = AgentDescriptor.builder()
             .agentId(agentId).name(agentId).slot("worker").tenancyId("t1")

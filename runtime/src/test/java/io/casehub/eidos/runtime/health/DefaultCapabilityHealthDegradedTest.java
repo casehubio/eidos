@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
+import io.casehub.platform.api.capacity.ActorCapacityView;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import jakarta.enterprise.inject.Instance;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,8 @@ class DefaultCapabilityHealthDegradedTest {
     StubStateStore stateStore;
     @SuppressWarnings("unchecked")
     Instance<PreferenceProvider> preferenceProviderInstance;
+    @SuppressWarnings("unchecked")
+    Instance<ActorCapacityView> capacityViewInstance;
     VocabularyRegistry mockVocabRegistry;
     DefaultCapabilityHealth health;
 
@@ -61,8 +64,11 @@ class DefaultCapabilityHealthDegradedTest {
         stateStore = new StubStateStore();
         preferenceProviderInstance = org.mockito.Mockito.mock(Instance.class);
         org.mockito.Mockito.lenient().when(preferenceProviderInstance.isUnsatisfied()).thenReturn(true);
+        capacityViewInstance = org.mockito.Mockito.mock(Instance.class);
+        org.mockito.Mockito.lenient().when(capacityViewInstance.isResolvable()).thenReturn(false);
         mockVocabRegistry = org.mockito.Mockito.mock(VocabularyRegistry.class);
-        health = new DefaultCapabilityHealth(0.3, stateStore, new NoOpBehavioralSignalStore(), preferenceProviderInstance, mockVocabRegistry);
+        health = new DefaultCapabilityHealth(0.3, 0.8, stateStore, new NoOpBehavioralSignalStore(),
+                preferenceProviderInstance, capacityViewInstance, mockVocabRegistry);
     }
 
     static AgentDescriptor agent(final String agentId, final AgentCapability... capabilities) {

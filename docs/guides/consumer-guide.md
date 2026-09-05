@@ -125,12 +125,13 @@ SPI: `probe(AgentDescriptor, capabilityTag, ProbeContext)` returns sealed `Capab
 |---|---|
 | `Ready` | Capability is operable |
 | `Degraded(reason, detail)` | Agent is in temporary degradation (rate-limited, context-exhausted, overloaded, domain-mismatch) |
+| `Overloaded(pressure, threshold)` | Agent above capacity threshold -- live signal from `ActorCapacityView` (platform-api); excluded from selection |
 | `Unavailable(reason)` | Capability not declared |
 | `EpistemicallyWeak(domain, confidence)` | Confidence below threshold for the task domain |
 | `Excluded(domain, source, declineCount)` | Domain excluded -- source is `DECLARED` (from `excludedDomains`) or `LEARNED` (from accumulated DECLINE signals) |
 | `BehavioralViolation(violations, kind)` | Compliance violation -- `PER_DIMENSION` (single dimension spike) or `AGGREGATE` (cross-dimensional drift) |
 
-**Probe order:** Degraded -> Unavailable -> Excluded(DECLARED) -> Excluded(LEARNED) -> EpistemicallyWeak -> BehavioralViolation -> Ready.
+**Probe order:** Degraded -> Overloaded -> Unavailable -> Excluded(DECLARED) -> Excluded(LEARNED) -> EpistemicallyWeak -> BehavioralViolation -> Ready.
 
 **Engine integration:** `WorkOrchestrator` calls `probe()` at dispatch time. Workers without a descriptor skip the probe and are assumed capable.
 

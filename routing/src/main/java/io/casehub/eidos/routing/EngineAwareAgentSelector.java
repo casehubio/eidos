@@ -106,6 +106,7 @@ public class EngineAwareAgentSelector implements AgentSelector {
             case CapabilityStatus.Degraded d -> AgentHealth.DEGRADED;
             case CapabilityStatus.EpistemicallyWeak ew -> AgentHealth.EPISTEMICALLY_WEAK;
             case CapabilityStatus.BehavioralViolation bv -> AgentHealth.BEHAVIORAL_VIOLATION;
+            case CapabilityStatus.Overloaded o -> null;
             case CapabilityStatus.Unavailable u -> null;
             case CapabilityStatus.Excluded ex -> null;
         };

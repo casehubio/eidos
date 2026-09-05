@@ -13,6 +13,7 @@ public interface CapabilityHealth {
 
     sealed interface CapabilityStatus permits
             CapabilityStatus.Degraded,
+            CapabilityStatus.Overloaded,
             CapabilityStatus.Unavailable,
             CapabilityStatus.Excluded,
             CapabilityStatus.EpistemicallyWeak,
@@ -21,6 +22,7 @@ public interface CapabilityHealth {
 
         record Ready() implements CapabilityStatus {}
         record Degraded(DegradationReason reason, String detail) implements CapabilityStatus {}
+        record Overloaded(double pressure, double threshold) implements CapabilityStatus {}
         record Unavailable(String reason) implements CapabilityStatus {}
         record EpistemicallyWeak(String domain, double confidence) implements CapabilityStatus {}
         record Excluded(String domain, ExclusionSource source, int declineCount) implements CapabilityStatus {}

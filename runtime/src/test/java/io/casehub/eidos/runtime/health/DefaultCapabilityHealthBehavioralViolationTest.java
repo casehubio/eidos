@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
+import io.casehub.platform.api.capacity.ActorCapacityView;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import jakarta.enterprise.inject.Instance;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +26,11 @@ class DefaultCapabilityHealthBehavioralViolationTest {
         @SuppressWarnings("unchecked")
         Instance<PreferenceProvider> emptyProvider = mock(Instance.class);
         when(emptyProvider.isUnsatisfied()).thenReturn(true);
-        health = new DefaultCapabilityHealth(0.3, mock(AgentStateStore.class),
-                signalStore, emptyProvider, new StubVocabularyRegistry());
+        @SuppressWarnings("unchecked")
+        Instance<ActorCapacityView> noCapacity = mock(Instance.class);
+        when(noCapacity.isResolvable()).thenReturn(false);
+        health = new DefaultCapabilityHealth(0.3, 0.8, mock(AgentStateStore.class),
+                signalStore, emptyProvider, noCapacity, new StubVocabularyRegistry());
     }
 
     private AgentDescriptor agent(String id, String capabilityName) {

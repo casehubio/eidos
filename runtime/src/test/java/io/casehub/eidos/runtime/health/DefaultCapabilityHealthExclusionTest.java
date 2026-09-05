@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
+import io.casehub.platform.api.capacity.ActorCapacityView;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.Preferences;
 import io.casehub.platform.api.preferences.SettingsScope;
@@ -63,6 +64,10 @@ class DefaultCapabilityHealthExclusionTest {
     Instance<PreferenceProvider> preferenceProviderInstance;
 
     @Mock
+    @SuppressWarnings("unchecked")
+    Instance<ActorCapacityView> capacityViewInstance;
+
+    @Mock
     VocabularyRegistry mockVocabRegistry;
 
     StubStateStore stateStore;
@@ -74,7 +79,9 @@ class DefaultCapabilityHealthExclusionTest {
         stateStore = new StubStateStore();
         signalStore = new StubBehavioralSignalStore();
         lenient().when(preferenceProviderInstance.isUnsatisfied()).thenReturn(true);
-        health = new DefaultCapabilityHealth(0.3, stateStore, signalStore, preferenceProviderInstance, mockVocabRegistry);
+        lenient().when(capacityViewInstance.isResolvable()).thenReturn(false);
+        health = new DefaultCapabilityHealth(0.3, 0.8, stateStore, signalStore,
+                preferenceProviderInstance, capacityViewInstance, mockVocabRegistry);
     }
 
     static AgentDescriptor agent(String agentId, AgentCapability... capabilities) {
