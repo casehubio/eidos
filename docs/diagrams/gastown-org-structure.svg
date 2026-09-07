@@ -1,0 +1,412 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 980" font-family="'Inter', 'Segoe UI', system-ui, sans-serif">
+  <defs>
+    <marker id="arrow-sup" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#4a5568" stroke-width="1.5"/>
+    </marker>
+    <marker id="arrow-esc" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="#c53030" stroke-width="1.5"/>
+    </marker>
+    <marker id="arrow-back" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <path d="M0,0 L6,2.5 L0,5" fill="none" stroke="#2b6cb0" stroke-width="1.2"/>
+    </marker>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="1" dy="1" stdDeviation="2" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="unitGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7fafc"/>
+      <stop offset="100%" stop-color="#edf2f7"/>
+    </linearGradient>
+    <linearGradient id="headerOversight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#553c9a"/>
+      <stop offset="100%" stop-color="#6b46c1"/>
+    </linearGradient>
+    <linearGradient id="headerRig" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2c5282"/>
+      <stop offset="100%" stop-color="#3182ce"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="32" text-anchor="middle" font-size="18" font-weight="700" fill="#1a202c">Gastown — Organizational Structure</text>
+  <text x="600" y="52" text-anchor="middle" font-size="11" fill="#718096">tenancyId: gastown  |  vocabulary: urn:gastown:vocab:org  |  4-level supervision hierarchy with rigs</text>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- OVERSIGHT UNIT                                  -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <g transform="translate(300, 70)" filter="url(#shadow)">
+    <rect width="600" height="195" rx="10" fill="url(#unitGrad)" stroke="#cbd5e0" stroke-width="1.2"/>
+    <rect width="600" height="30" rx="10" fill="url(#headerOversight)"/>
+    <rect x="0" y="20" width="600" height="10" fill="url(#headerOversight)"/>
+    <text x="14" y="20" font-size="12" font-weight="600" fill="white">OVERSIGHT CHAIN</text>
+    <text x="586" y="20" text-anchor="end" font-size="9" fill="#d6bcfa">kind: supervision-hierarchy</text>
+
+    <!-- Boot agent card -->
+    <g transform="translate(20, 42)">
+      <rect width="260" height="140" rx="6" fill="white" stroke="#9f7aea" stroke-width="1.2"/>
+      <rect width="260" height="24" rx="6" fill="#faf5ff"/>
+      <rect x="0" y="18" width="260" height="6" fill="#faf5ff"/>
+      <circle cx="14" cy="12" r="5" fill="#9f7aea"/>
+      <text x="24" y="16" font-size="12" font-weight="700" fill="#553c9a">boot</text>
+      <text x="246" y="15" text-anchor="end" font-size="8" fill="#9f7aea" font-weight="600">ROOT WATCHDOG</text>
+
+      <text x="10" y="42" font-size="9" fill="#718096" font-weight="600">SLOT</text>
+      <text x="60" y="42" font-size="9" fill="#2d3748">root-watchdog</text>
+
+      <text x="10" y="58" font-size="9" fill="#718096" font-weight="600">ROLE</text>
+      <text x="60" y="58" font-size="9" fill="#2d3748">Apex supervisor — no further escalation target</text>
+
+      <text x="10" y="78" font-size="9" fill="#718096" font-weight="600">DISPOSITION</text>
+      <rect x="60" y="70" width="52" height="14" rx="3" fill="#fed7d7"/>
+      <text x="66" y="80" font-size="8" fill="#c53030">autonomy: high</text>
+      <rect x="116" y="70" width="62" height="14" rx="3" fill="#fefcbf"/>
+      <text x="122" y="80" font-size="8" fill="#975a16">rules: principled</text>
+
+      <text x="10" y="100" font-size="9" fill="#718096" font-weight="600">RECEIVES</text>
+      <text x="60" y="100" font-size="9" fill="#2d3748">Escalations from deacon (terminal sink)</text>
+
+      <text x="10" y="118" font-size="9" fill="#718096" font-weight="600">SUPERVISES</text>
+      <text x="60" y="118" font-size="9" fill="#2d3748">deacon (unscoped)</text>
+    </g>
+
+    <!-- Deacon agent card -->
+    <g transform="translate(320, 42)">
+      <rect width="260" height="140" rx="6" fill="white" stroke="#9f7aea" stroke-width="1.2"/>
+      <rect width="260" height="24" rx="6" fill="#faf5ff"/>
+      <rect x="0" y="18" width="260" height="6" fill="#faf5ff"/>
+      <circle cx="14" cy="12" r="5" fill="#805ad5"/>
+      <text x="24" y="16" font-size="12" font-weight="700" fill="#553c9a">deacon</text>
+      <text x="246" y="15" text-anchor="end" font-size="8" fill="#9f7aea" font-weight="600">CROSS-RIG WATCHDOG</text>
+
+      <text x="10" y="42" font-size="9" fill="#718096" font-weight="600">SLOT</text>
+      <text x="60" y="42" font-size="9" fill="#2d3748">cross-rig-watchdog</text>
+
+      <text x="10" y="58" font-size="9" fill="#718096" font-weight="600">SCOPE</text>
+      <text x="60" y="58" font-size="9" fill="#2d3748">rig-monitoring (all rigs)</text>
+
+      <text x="10" y="78" font-size="9" fill="#718096" font-weight="600">DISPOSITION</text>
+      <rect x="60" y="70" width="62" height="14" rx="3" fill="#fefcbf"/>
+      <text x="66" y="80" font-size="8" fill="#975a16">rules: principled</text>
+      <rect x="126" y="70" width="58" height="14" rx="3" fill="#c6f6d5"/>
+      <text x="132" y="80" font-size="8" fill="#276749">risk: cautious</text>
+
+      <text x="10" y="100" font-size="9" fill="#718096" font-weight="600">ATTESTATION</text>
+      <rect x="60" y="92" width="50" height="13" rx="3" fill="#e9d8fd"/>
+      <text x="65" y="101" font-size="7.5" fill="#553c9a">LATENCY</text>
+      <rect x="114" y="92" width="85" height="13" rx="3" fill="#e9d8fd"/>
+      <text x="119" y="101" font-size="7.5" fill="#553c9a">ATTESTATION_RATE</text>
+      <text x="60" y="115" font-size="8" fill="#718096">signals: COMPLIANT, VIOLATED</text>
+
+      <text x="10" y="132" font-size="9" fill="#718096" font-weight="600">SUPERVISES</text>
+      <text x="60" y="132" font-size="9" fill="#2d3748">witness-alpha, witness-beta</text>
+    </g>
+  </g>
+
+  <!-- Supervision line: boot → deacon -->
+  <line x1="550" y1="165" x2="620" y2="165" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow-sup)"/>
+  <text x="585" y="160" text-anchor="middle" font-size="7" fill="#4a5568" font-weight="600">SUPERVISES</text>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- RIG ALPHA                                       -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <g transform="translate(30, 320)" filter="url(#shadow)">
+    <rect width="560" height="350" rx="10" fill="url(#unitGrad)" stroke="#cbd5e0" stroke-width="1.2"/>
+    <rect width="560" height="30" rx="10" fill="url(#headerRig)"/>
+    <rect x="0" y="20" width="560" height="10" fill="url(#headerRig)"/>
+    <text x="14" y="20" font-size="12" font-weight="600" fill="white">RIG ALPHA</text>
+    <text x="546" y="20" text-anchor="end" font-size="9" fill="#bee3f8">kind: rig</text>
+
+    <!-- Unit capability badge -->
+    <rect x="14" y="38" width="130" height="16" rx="4" fill="#ebf8ff" stroke="#90cdf4" stroke-width="0.8"/>
+    <text x="20" y="50" font-size="8" fill="#2b6cb0" font-weight="600">CAP: full-stack-code-work</text>
+
+    <!-- Witness-alpha card -->
+    <g transform="translate(130, 62)">
+      <rect width="300" height="110" rx="6" fill="white" stroke="#63b3ed" stroke-width="1.2"/>
+      <rect width="300" height="24" rx="6" fill="#ebf8ff"/>
+      <rect x="0" y="18" width="300" height="6" fill="#ebf8ff"/>
+      <circle cx="14" cy="12" r="5" fill="#4299e1"/>
+      <text x="24" y="16" font-size="12" font-weight="700" fill="#2c5282">witness-alpha</text>
+      <text x="286" y="15" text-anchor="end" font-size="8" fill="#4299e1" font-weight="600">WITNESS</text>
+
+      <text x="10" y="42" font-size="9" fill="#718096" font-weight="600">SLOT</text>
+      <text x="60" y="42" font-size="9" fill="#2d3748">witness</text>
+
+      <text x="10" y="58" font-size="9" fill="#718096" font-weight="600">ROLE</text>
+      <text x="60" y="58" font-size="9" fill="#2d3748">Rig-level observer and attestor</text>
+
+      <text x="10" y="78" font-size="9" fill="#718096" font-weight="600">DISPOSITION</text>
+      <rect x="60" y="70" width="80" height="14" rx="3" fill="#c6f6d5"/>
+      <text x="66" y="80" font-size="8" fill="#276749">social: collaborative</text>
+      <rect x="144" y="70" width="62" height="14" rx="3" fill="#fefcbf"/>
+      <text x="150" y="80" font-size="8" fill="#975a16">rules: principled</text>
+
+      <text x="10" y="98" font-size="9" fill="#718096" font-weight="600">SUPERVISES</text>
+      <text x="60" y="98" font-size="9" fill="#2d3748">polecat-1, polecat-2</text>
+    </g>
+
+    <!-- Polecat-1 card -->
+    <g transform="translate(20, 188)">
+      <rect width="250" height="140" rx="6" fill="white" stroke="#63b3ed" stroke-width="1.2"/>
+      <rect width="250" height="24" rx="6" fill="#ebf8ff"/>
+      <rect x="0" y="18" width="250" height="6" fill="#ebf8ff"/>
+      <circle cx="14" cy="12" r="5" fill="#3182ce"/>
+      <text x="24" y="16" font-size="12" font-weight="700" fill="#2c5282">polecat-1</text>
+      <text x="236" y="15" text-anchor="end" font-size="8" fill="#4299e1" font-weight="600">WORKER</text>
+
+      <text x="10" y="42" font-size="9" fill="#718096" font-weight="600">SLOT</text>
+      <text x="60" y="42" font-size="9" fill="#2d3748">worker</text>
+
+      <text x="10" y="58" font-size="9" fill="#718096" font-weight="600">CAPS</text>
+      <text x="60" y="58" font-size="9" fill="#2d3748">full-stack-code-work</text>
+
+      <text x="10" y="78" font-size="9" fill="#718096" font-weight="600">DISPOSITION</text>
+      <rect x="60" y="70" width="72" height="14" rx="3" fill="#fed7d7"/>
+      <text x="66" y="80" font-size="8" fill="#c53030">autonomy: semi-auto</text>
+      <rect x="136" y="70" width="58" height="14" rx="3" fill="#fefcbf"/>
+      <text x="142" y="80" font-size="8" fill="#975a16">risk: measured</text>
+
+      <text x="10" y="98" font-size="9" fill="#718096" font-weight="600">BACKUP</text>
+      <text x="60" y="98" font-size="9" fill="#2d3748">polecat-2 (scope: code-analysis)</text>
+
+      <text x="10" y="118" font-size="9" fill="#718096" font-weight="600">ESCALATES</text>
+      <text x="60" y="118" font-size="9" fill="#c53030">→ witness-alpha → deacon → boot</text>
+    </g>
+
+    <!-- Polecat-2 card -->
+    <g transform="translate(290, 188)">
+      <rect width="250" height="140" rx="6" fill="white" stroke="#63b3ed" stroke-width="1.2"/>
+      <rect width="250" height="24" rx="6" fill="#ebf8ff"/>
+      <rect x="0" y="18" width="250" height="6" fill="#ebf8ff"/>
+      <circle cx="14" cy="12" r="5" fill="#3182ce"/>
+      <text x="24" y="16" font-size="12" font-weight="700" fill="#2c5282">polecat-2</text>
+      <text x="236" y="15" text-anchor="end" font-size="8" fill="#4299e1" font-weight="600">WORKER</text>
+
+      <text x="10" y="42" font-size="9" fill="#718096" font-weight="600">SLOT</text>
+      <text x="60" y="42" font-size="9" fill="#2d3748">worker</text>
+
+      <text x="10" y="58" font-size="9" fill="#718096" font-weight="600">CAPS</text>
+      <text x="60" y="58" font-size="9" fill="#2d3748">full-stack-code-work</text>
+
+      <text x="10" y="78" font-size="9" fill="#718096" font-weight="600">DISPOSITION</text>
+      <rect x="60" y="70" width="72" height="14" rx="3" fill="#fed7d7"/>
+      <text x="66" y="80" font-size="8" fill="#c53030">autonomy: semi-auto</text>
+      <rect x="136" y="70" width="58" height="14" rx="3" fill="#fefcbf"/>
+      <text x="142" y="80" font-size="8" fill="#975a16">risk: measured</text>
+
+      <text x="10" y="98" font-size="9" fill="#718096" font-weight="600">BACKED BY</text>
+      <text x="60" y="98" font-size="9" fill="#2d3748">polecat-1 (scope: code-analysis)</text>
+
+      <text x="10" y="118" font-size="9" fill="#718096" font-weight="600">ESCALATES</text>
+      <text x="60" y="118" font-size="9" fill="#c53030">→ witness-alpha → deacon → boot</text>
+    </g>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- RIG BETA                                        -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <g transform="translate(620, 320)" filter="url(#shadow)">
+    <rect width="550" height="350" rx="10" fill="url(#unitGrad)" stroke="#cbd5e0" stroke-width="1.2"/>
+    <rect width="550" height="30" rx="10" fill="url(#headerRig)"/>
+    <rect x="0" y="20" width="550" height="10" fill="url(#headerRig)"/>
+    <text x="14" y="20" font-size="12" font-weight="600" fill="white">RIG BETA</text>
+    <text x="536" y="20" text-anchor="end" font-size="9" fill="#bee3f8">kind: rig</text>
+
+    <!-- Unit capability badge -->
+    <rect x="14" y="38" width="130" height="16" rx="4" fill="#ebf8ff" stroke="#90cdf4" stroke-width="0.8"/>
+    <text x="20" y="50" font-size="8" fill="#2b6cb0" font-weight="600">CAP: full-stack-code-work</text>
+
+    <!-- Witness-beta card -->
+    <g transform="translate(125, 62)">
+      <rect width="300" height="110" rx="6" fill="white" stroke="#63b3ed" stroke-width="1.2"/>
+      <rect width="300" height="24" rx="6" fill="#ebf8ff"/>
+      <rect x="0" y="18" width="300" height="6" fill="#ebf8ff"/>
+      <circle cx="14" cy="12" r="5" fill="#4299e1"/>
+      <text x="24" y="16" font-size="12" font-weight="700" fill="#2c5282">witness-beta</text>
+      <text x="286" y="15" text-anchor="end" font-size="8" fill="#4299e1" font-weight="600">WITNESS</text>
+
+      <text x="10" y="42" font-size="9" fill="#718096" font-weight="600">SLOT</text>
+      <text x="60" y="42" font-size="9" fill="#2d3748">witness</text>
+
+      <text x="10" y="58" font-size="9" fill="#718096" font-weight="600">ROLE</text>
+      <text x="60" y="58" font-size="9" fill="#2d3748">Rig-level observer and attestor</text>
+
+      <text x="10" y="78" font-size="9" fill="#718096" font-weight="600">DISPOSITION</text>
+      <rect x="60" y="70" width="80" height="14" rx="3" fill="#c6f6d5"/>
+      <text x="66" y="80" font-size="8" fill="#276749">social: collaborative</text>
+      <rect x="144" y="70" width="62" height="14" rx="3" fill="#fefcbf"/>
+      <text x="150" y="80" font-size="8" fill="#975a16">rules: principled</text>
+
+      <text x="10" y="98" font-size="9" fill="#718096" font-weight="600">SUPERVISES</text>
+      <text x="60" y="98" font-size="9" fill="#2d3748">polecat-3</text>
+    </g>
+
+    <!-- Polecat-3 card -->
+    <g transform="translate(150, 188)">
+      <rect width="250" height="140" rx="6" fill="white" stroke="#63b3ed" stroke-width="1.2"/>
+      <rect width="250" height="24" rx="6" fill="#ebf8ff"/>
+      <rect x="0" y="18" width="250" height="6" fill="#ebf8ff"/>
+      <circle cx="14" cy="12" r="5" fill="#3182ce"/>
+      <text x="24" y="16" font-size="12" font-weight="700" fill="#2c5282">polecat-3</text>
+      <text x="236" y="15" text-anchor="end" font-size="8" fill="#4299e1" font-weight="600">WORKER</text>
+
+      <text x="10" y="42" font-size="9" fill="#718096" font-weight="600">SLOT</text>
+      <text x="60" y="42" font-size="9" fill="#2d3748">worker</text>
+
+      <text x="10" y="58" font-size="9" fill="#718096" font-weight="600">CAPS</text>
+      <text x="60" y="58" font-size="9" fill="#2d3748">full-stack-code-work</text>
+
+      <text x="10" y="78" font-size="9" fill="#718096" font-weight="600">DISPOSITION</text>
+      <rect x="60" y="70" width="72" height="14" rx="3" fill="#fed7d7"/>
+      <text x="66" y="80" font-size="8" fill="#c53030">autonomy: semi-auto</text>
+      <rect x="136" y="70" width="58" height="14" rx="3" fill="#fefcbf"/>
+      <text x="142" y="80" font-size="8" fill="#975a16">risk: measured</text>
+
+      <text x="10" y="98" font-size="9" fill="#718096" font-weight="600">ESCALATES</text>
+      <text x="60" y="98" font-size="9" fill="#c53030">→ witness-beta → deacon → boot</text>
+
+      <text x="10" y="118" font-size="9" fill="#718096" font-weight="600">BACKUP</text>
+      <text x="60" y="118" font-size="8.5" fill="#718096" font-style="italic">none (single worker in rig)</text>
+    </g>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- RELATIONSHIP LINES                              -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <!-- Supervision: deacon → witness-alpha (scoped) -->
+  <path d="M 520 265 C 520 290, 310 290, 310 320" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow-sup)"/>
+  <rect x="345" y="280" width="130" height="14" rx="3" fill="#e9d8fd" stroke="#d6bcfa" stroke-width="0.6"/>
+  <text x="410" y="290" text-anchor="middle" font-size="7.5" fill="#553c9a" font-weight="600">scope: rig-monitoring</text>
+
+  <!-- Supervision: deacon → witness-beta (scoped) -->
+  <path d="M 720 265 C 720 290, 895 290, 895 320" fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow-sup)"/>
+  <rect x="740" y="280" width="130" height="14" rx="3" fill="#e9d8fd" stroke="#d6bcfa" stroke-width="0.6"/>
+  <text x="805" y="290" text-anchor="middle" font-size="7.5" fill="#553c9a" font-weight="600">scope: rig-monitoring</text>
+
+  <!-- Supervision: witness-alpha → polecat-1 -->
+  <path d="M 230 492 C 230 510, 145 510, 145 508" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow-sup)"/>
+
+  <!-- Supervision: witness-alpha → polecat-2 -->
+  <path d="M 360 492 C 360 510, 435 510, 435 508" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow-sup)"/>
+
+  <!-- Supervision: witness-beta → polecat-3 -->
+  <path d="M 895 492 C 895 510, 895 510, 895 508" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow-sup)"/>
+
+  <!-- Backup: polecat-1 ↔ polecat-2 -->
+  <line x1="270" y1="555" x2="290" y2="555" stroke="#2b6cb0" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#arrow-back)"/>
+  <rect x="168" y="562" width="230" height="14" rx="3" fill="#ebf8ff" stroke="#90cdf4" stroke-width="0.6"/>
+  <text x="283" y="572" text-anchor="middle" font-size="7.5" fill="#2b6cb0" font-weight="600">BACKS_UP (scope: code-analysis) bidirectional</text>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- ESCALATION PATH (right side callout)            -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <g transform="translate(30, 700)">
+    <rect width="560" height="85" rx="8" fill="#fff5f5" stroke="#feb2b2" stroke-width="1"/>
+    <text x="14" y="18" font-size="10" font-weight="700" fill="#c53030">ESCALATION CHAIN</text>
+    <text x="14" y="36" font-size="9" fill="#742a2a">polecat-1</text>
+    <text x="75" y="36" font-size="9" fill="#c53030">→</text>
+    <text x="88" y="36" font-size="9" fill="#742a2a">witness-alpha</text>
+    <text x="173" y="36" font-size="9" fill="#c53030">→</text>
+    <text x="186" y="36" font-size="9" fill="#742a2a">deacon</text>
+    <text x="226" y="36" font-size="9" fill="#c53030">→</text>
+    <text x="239" y="36" font-size="9" fill="#742a2a" font-weight="600">boot</text>
+    <text x="270" y="36" font-size="8" fill="#a0aec0">(terminal)</text>
+
+    <text x="14" y="54" font-size="9" fill="#742a2a">polecat-2</text>
+    <text x="75" y="54" font-size="9" fill="#c53030">→</text>
+    <text x="88" y="54" font-size="9" fill="#742a2a">witness-alpha</text>
+    <text x="173" y="54" font-size="9" fill="#c53030">→</text>
+    <text x="186" y="54" font-size="9" fill="#742a2a">deacon</text>
+    <text x="226" y="54" font-size="9" fill="#c53030">→</text>
+    <text x="239" y="54" font-size="9" fill="#742a2a" font-weight="600">boot</text>
+
+    <text x="14" y="72" font-size="9" fill="#742a2a">polecat-3</text>
+    <text x="75" y="72" font-size="9" fill="#c53030">→</text>
+    <text x="88" y="72" font-size="9" fill="#742a2a">witness-beta</text>
+    <text x="166" y="72" font-size="9" fill="#c53030">→</text>
+    <text x="179" y="72" font-size="9" fill="#742a2a">deacon</text>
+    <text x="219" y="72" font-size="9" fill="#c53030">→</text>
+    <text x="232" y="72" font-size="9" fill="#742a2a" font-weight="600">boot</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- ATTESTATION DETAIL                              -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <g transform="translate(620, 700)">
+    <rect width="550" height="85" rx="8" fill="#faf5ff" stroke="#d6bcfa" stroke-width="1"/>
+    <text x="14" y="18" font-size="10" font-weight="700" fill="#553c9a">ATTESTATION GRANTS (deacon → witnesses)</text>
+    <text x="14" y="38" font-size="9" fill="#4a5568">Scoped to: <tspan font-weight="600">rig-monitoring</tspan></text>
+    <text x="14" y="55" font-size="9" fill="#718096" font-weight="600">Dimensions:</text>
+    <rect x="80" y="46" width="55" height="14" rx="3" fill="#e9d8fd"/>
+    <text x="86" y="56" font-size="8" fill="#553c9a">LATENCY</text>
+    <rect x="140" y="46" width="95" height="14" rx="3" fill="#e9d8fd"/>
+    <text x="146" y="56" font-size="8" fill="#553c9a">ATTESTATION_RATE</text>
+    <text x="14" y="73" font-size="9" fill="#718096" font-weight="600">Signals:</text>
+    <rect x="60" y="64" width="65" height="14" rx="3" fill="#c6f6d5"/>
+    <text x="66" y="74" font-size="8" fill="#276749">COMPLIANT</text>
+    <rect x="130" y="64" width="55" height="14" rx="3" fill="#fed7d7"/>
+    <text x="136" y="74" font-size="8" fill="#c53030">VIOLATED</text>
+    <text x="200" y="74" font-size="8" fill="#718096">→ BehavioralSignalStore</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- LEGEND                                          -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <g transform="translate(30, 810)">
+    <rect width="1140" height="155" rx="8" fill="#f7fafc" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="14" y="20" font-size="11" font-weight="700" fill="#2d3748">Legend</text>
+
+    <!-- Relationship types -->
+    <text x="14" y="42" font-size="9" font-weight="600" fill="#4a5568">Relationships</text>
+    <line x1="14" y1="52" x2="50" y2="52" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow-sup)"/>
+    <text x="58" y="56" font-size="8.5" fill="#4a5568">SUPERVISES</text>
+    <line x1="140" y1="52" x2="176" y2="52" stroke="#c53030" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrow-esc)"/>
+    <text x="184" y="56" font-size="8.5" fill="#c53030">ESCALATES_TO</text>
+    <line x1="280" y1="52" x2="316" y2="52" stroke="#2b6cb0" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-back)"/>
+    <text x="324" y="56" font-size="8.5" fill="#2b6cb0">BACKS_UP</text>
+
+    <!-- Unit types -->
+    <text x="14" y="78" font-size="9" font-weight="600" fill="#4a5568">Unit Kinds</text>
+    <rect x="14" y="84" width="12" height="12" rx="2" fill="url(#headerOversight)"/>
+    <text x="32" y="94" font-size="8.5" fill="#4a5568">supervision-hierarchy</text>
+    <rect x="140" y="84" width="12" height="12" rx="2" fill="url(#headerRig)"/>
+    <text x="158" y="94" font-size="8.5" fill="#4a5568">rig (self-contained work unit)</text>
+
+    <!-- Agent properties -->
+    <text x="14" y="116" font-size="9" font-weight="600" fill="#4a5568">Agent Properties</text>
+    <circle cx="20" cy="128" r="5" fill="#9f7aea"/>
+    <text x="32" y="132" font-size="8.5" fill="#4a5568">Oversight agent</text>
+    <circle cx="120" cy="128" r="5" fill="#4299e1"/>
+    <text x="132" y="132" font-size="8.5" fill="#4a5568">Rig agent</text>
+
+    <!-- Disposition badges -->
+    <text x="230" y="116" font-size="9" font-weight="600" fill="#4a5568">Disposition Axes</text>
+    <rect x="230" y="122" width="55" height="14" rx="3" fill="#fed7d7"/>
+    <text x="236" y="132" font-size="7.5" fill="#c53030">autonomy</text>
+    <rect x="290" y="122" width="40" height="14" rx="3" fill="#fefcbf"/>
+    <text x="296" y="132" font-size="7.5" fill="#975a16">rules</text>
+    <rect x="335" y="122" width="40" height="14" rx="3" fill="#c6f6d5"/>
+    <text x="341" y="132" font-size="7.5" fill="#276749">social</text>
+    <rect x="380" y="122" width="30" height="14" rx="3" fill="#c6f6d5"/>
+    <text x="386" y="132" font-size="7.5" fill="#276749">risk</text>
+
+    <!-- Scope/Attestation -->
+    <text x="460" y="42" font-size="9" font-weight="600" fill="#4a5568">Scope &amp; Attestation</text>
+    <rect x="460" y="48" width="90" height="14" rx="3" fill="#e9d8fd" stroke="#d6bcfa" stroke-width="0.6"/>
+    <text x="466" y="58" font-size="7.5" fill="#553c9a">scoped supervision</text>
+    <text x="560" y="58" font-size="8" fill="#718096">— relationship constrained to a capability domain</text>
+
+    <rect x="460" y="66" width="90" height="14" rx="3" fill="#e9d8fd"/>
+    <text x="466" y="76" font-size="7.5" fill="#553c9a">attestation grant</text>
+    <text x="560" y="76" font-size="8" fill="#718096">— supervisor can record COMPLIANT/VIOLATED signals</text>
+
+    <rect x="460" y="84" width="90" height="14" rx="3" fill="#ebf8ff" stroke="#90cdf4" stroke-width="0.6"/>
+    <text x="466" y="94" font-size="7.5" fill="#2b6cb0">unit capability</text>
+    <text x="560" y="94" font-size="8" fill="#718096">— capability declared at the organizational unit level</text>
+
+    <!-- Eidos model -->
+    <text x="460" y="116" font-size="9" font-weight="600" fill="#4a5568">Eidos Model Layers</text>
+    <text x="460" y="132" font-size="8" fill="#718096">AgentDescriptor (identity, disposition, capabilities) + OrganizationalUnit (hierarchy, relationships)</text>
+    <text x="460" y="146" font-size="8" fill="#718096">CapabilityHealth probes agents at dispatch; attestation feeds BehavioralSignalStore</text>
+  </g>
+</svg>
