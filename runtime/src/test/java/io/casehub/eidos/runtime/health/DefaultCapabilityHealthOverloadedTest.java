@@ -3,8 +3,8 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
+import io.casehub.platform.api.capacity.ActorCapacity;
 import io.casehub.platform.api.capacity.ActorCapacityView;
-import io.casehub.platform.api.capacity.CapacitySignal;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import jakarta.enterprise.inject.Instance;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,8 +66,8 @@ class DefaultCapabilityHealthOverloadedTest {
 
     @Test
     void overloaded_above_threshold_returns_overloaded() {
-        when(capacityView.aggregatedPressure("agent-1"))
-            .thenReturn(new CapacitySignal("agent-1", "test", 0.95, Instant.now()));
+        when(capacityView.getCapacity("agent-1"))
+            .thenReturn(new ActorCapacity("agent-1", 0.95, Map.of(), Instant.now()));
         var descriptor = agent("agent-1",
             AgentCapability.builder().name("code-review").build());
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null));
@@ -79,8 +79,8 @@ class DefaultCapabilityHealthOverloadedTest {
 
     @Test
     void overloaded_at_threshold_returns_overloaded() {
-        when(capacityView.aggregatedPressure("agent-1"))
-            .thenReturn(new CapacitySignal("agent-1", "test", 0.8, Instant.now()));
+        when(capacityView.getCapacity("agent-1"))
+            .thenReturn(new ActorCapacity("agent-1", 0.8, Map.of(), Instant.now()));
         var descriptor = agent("agent-1",
             AgentCapability.builder().name("code-review").build());
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null));
@@ -89,8 +89,8 @@ class DefaultCapabilityHealthOverloadedTest {
 
     @Test
     void below_threshold_returns_ready() {
-        when(capacityView.aggregatedPressure("agent-1"))
-            .thenReturn(new CapacitySignal("agent-1", "test", 0.5, Instant.now()));
+        when(capacityView.getCapacity("agent-1"))
+            .thenReturn(new ActorCapacity("agent-1", 0.5, Map.of(), Instant.now()));
         var descriptor = agent("agent-1",
             AgentCapability.builder().name("code-review").build());
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null));
@@ -99,7 +99,7 @@ class DefaultCapabilityHealthOverloadedTest {
 
     @Test
     void null_signal_falls_through_to_ready() {
-        when(capacityView.aggregatedPressure("agent-1")).thenReturn(null);
+        when(capacityView.getCapacity("agent-1")).thenReturn(null);
         var descriptor = agent("agent-1",
             AgentCapability.builder().name("code-review").build());
         var status = health.probe(descriptor, "code-review", ProbeContext.of(null));
@@ -125,8 +125,8 @@ class DefaultCapabilityHealthOverloadedTest {
         var customHealth = new DefaultCapabilityHealth(0.3, 0.6, new NoOpStateStore(),
                 new NoOpSignalStore(), prefProvider, capacityViewInstance,
                 mock(VocabularyRegistry.class));
-        when(capacityView.aggregatedPressure("agent-1"))
-            .thenReturn(new CapacitySignal("agent-1", "test", 0.7, Instant.now()));
+        when(capacityView.getCapacity("agent-1"))
+            .thenReturn(new ActorCapacity("agent-1", 0.7, Map.of(), Instant.now()));
         var descriptor = agent("agent-1",
             AgentCapability.builder().name("code-review").build());
         var status = customHealth.probe(descriptor, "code-review", ProbeContext.of(null));
@@ -139,8 +139,8 @@ class DefaultCapabilityHealthOverloadedTest {
         var stateStore = new DefaultCapabilityHealthDegradedTest.StubStateStore();
         stateStore.record("agent-1", "default", DegradationReason.RATE_LIMITED,
             Instant.now().plusSeconds(60));
-        when(capacityView.aggregatedPressure("agent-1"))
-            .thenReturn(new CapacitySignal("agent-1", "test", 0.95, Instant.now()));
+        when(capacityView.getCapacity("agent-1"))
+            .thenReturn(new ActorCapacity("agent-1", 0.95, Map.of(), Instant.now()));
         var healthWithState = new DefaultCapabilityHealth(0.3, 0.8, stateStore,
                 new NoOpSignalStore(), prefProvider, capacityViewInstance,
                 mock(VocabularyRegistry.class));
@@ -152,8 +152,8 @@ class DefaultCapabilityHealthOverloadedTest {
 
     @Test
     void overloaded_takes_precedence_over_unavailable() {
-        when(capacityView.aggregatedPressure("agent-1"))
-            .thenReturn(new CapacitySignal("agent-1", "test", 0.95, Instant.now()));
+        when(capacityView.getCapacity("agent-1"))
+            .thenReturn(new ActorCapacity("agent-1", 0.95, Map.of(), Instant.now()));
         var descriptor = agent("agent-1");
         var status = health.probe(descriptor, "missing-capability", ProbeContext.of(null));
         assertThat(status).isInstanceOf(CapabilityStatus.Overloaded.class);

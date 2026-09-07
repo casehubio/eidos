@@ -4,6 +4,7 @@ import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus.ExclusionSource;
 import io.casehub.eidos.api.CapabilityResolver;
 import io.casehub.eidos.runtime.preferences.EidosPreferenceKeys;
+import io.casehub.platform.api.capacity.ActorCapacity;
 import io.casehub.platform.api.capacity.ActorCapacityView;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
@@ -60,10 +61,10 @@ public class DefaultCapabilityHealth implements CapabilityHealth {
 
         // Step 2: capacity overload — live signal from ActorCapacityView
         if (capacityViewInstance.isResolvable()) {
-            final var signal = capacityViewInstance.get()
-                .aggregatedPressure(descriptor.agentId());
-            if (signal != null && signal.pressure() >= capacityThreshold) {
-                return new CapabilityStatus.Overloaded(signal.pressure(), capacityThreshold);
+            final var capacity = capacityViewInstance.get()
+                .getCapacity(descriptor.agentId());
+            if (capacity != null && capacity.aggregatePressure() >= capacityThreshold) {
+                return new CapabilityStatus.Overloaded(capacity.aggregatePressure(), capacityThreshold);
             }
         }
 

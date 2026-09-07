@@ -118,9 +118,14 @@ public final class DescriptorPreprocessor {
         for (int i = 0; i < rows.size(); i++) {
             var row = rows.get(i);
             String rowKey = String.valueOf(i);
-            var rowResolver = resolver
-                    .withEachContext(Map.of(as, rowKey))
-                    .withEachRowContext(Map.of(as, row));
+            var rowResolver = resolver.withScope("each", key -> {
+                if (key.equals(as)) return rowKey;
+                if (key.startsWith(as + ".")) {
+                    var v = row.get(key.substring(as.length() + 1));
+                    return v != null ? v.toString() : null;
+                }
+                return null;
+            });
 
             String when = descriptor.get("when") != null
                     ? descriptor.get("when").toString() : null;

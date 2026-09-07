@@ -55,7 +55,7 @@ class DescriptorForEachAdapterTest {
         template.put("slot", "reviewer");
 
         var resolver = new VariableResolver(Map.of(), Set.of())
-                .withEachContext(Map.of("team", "frontend"));
+                .withScope("each", Map.of("team", "frontend")::get);
 
         var result = adapter.stamp(template, "tpl.frontend", resolver);
         assertThat(result.get("agentId")).isEqualTo("frontend-reviewer");
@@ -87,7 +87,7 @@ class DescriptorForEachAdapterTest {
         template.put("capability", caps);
 
         var resolver = new VariableResolver(Map.of(), Set.of())
-                .withEachContext(Map.of("team", "backend"));
+                .withScope("each", Map.of("team", "backend")::get);
 
         var result = adapter.stamp(template, "a.backend", resolver);
         @SuppressWarnings("unchecked")
@@ -102,7 +102,7 @@ class DescriptorForEachAdapterTest {
         template.put("forEach", "group");
 
         var resolver = new VariableResolver(Map.of(), Set.of())
-                .withEachContext(Map.of("x", "val"));
+                .withScope("each", Map.of("x", "val")::get);
 
         adapter.stamp(template, "tpl.val", resolver);
 

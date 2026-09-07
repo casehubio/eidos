@@ -17,7 +17,7 @@ Any Quarkus app that depends on `casehub-eidos` can register agents with structu
 
 | artifactId | When to use | What you get |
 |---|---|---|
-| `casehub-eidos-api` | Always -- compile dependency | Domain types: `AgentDescriptor`, `AgentCapability`, `AgentDisposition`, `AgentGoal`, `AgentConstraint`, `AgentMatch`, `AgentQuery`, `AgentRegistry`, `AgentSelector`, `SelectionContext`, `CapabilityHealth`, `SystemPromptRenderer`, `VocabularyRegistry`, `TemplateRegistry`, `DispositionHealth`, `DispositionEvolution`, `AgentStateStore`, `BehavioralSignalStore`, `DispositionSignalStore`. SPIs in `api.spi`: `AgentDescriptorRegistrar`, `VocabularyRegistrar`, `TemplateRegistrar`. Utilities: `CapabilityResolver`, `BehavioralExpectations`, `AgentDescriptorComparator`. Sealed types: `MatchDegree`, `CapabilityStatus`, `AgentSelection`, `DispositionStatus`, `EvolutionResult`. Enums: `EscalationKind`. Pure Java, no CDI. |
+| `casehub-eidos-api` | Always -- compile dependency | Domain types: `AgentDescriptor`, `AgentCapability`, `AgentDisposition`, `AgentGoal`, `AgentConstraint`, `AgentMatch`, `AgentQuery`, `AgentRegistry`, `AgentSelector`, `SelectionContext`, `CapabilityHealth`, `SystemPromptRenderer`, `VocabularyRegistry`, `TemplateRegistry`, `DispositionHealth`, `DispositionEvolution`, `AgentStateStore`, `BehavioralSignalStore`, `DispositionSignalStore`. SPIs in `api.spi`: `AgentDescriptorRegistrar`, `VocabularyRegistrar`, `TemplateRegistrar`. Utilities: `CapabilityResolver`, `BehavioralExpectations`, `AgentDescriptorComparator`, `DisplayTermResolver`. Sealed types: `MatchDegree`, `CapabilityStatus`, `AgentSelection`, `DispositionStatus`, `EvolutionResult`. Enums: `EscalationKind`. Pure Java, no CDI. |
 | `casehub-eidos` | Always -- runtime dependency | Quarkus extension: CDI registry, health implementations, renderer, JPA persistence, Flyway migrations. `@DefaultBean` for all SPIs. |
 | `casehub-eidos-memory` | Tests and prototyping | `@Alternative @Priority(1)` in-memory implementations: `InMemoryAgentRegistry`, `InMemoryTemplateRegistry`, `InMemoryAgentStateStore`, `InMemoryBehavioralSignalStore` (per-signal TTL via `@ConfigProperty`), `InMemoryDispositionSignalStore` (ConcurrentHashMap + AtomicInteger, no TTL), `InMemoryRenderedPromptCache`. Activate by adding as dependency. |
 | `casehub-eidos-vocab` | Optional -- domain vocabularies | Well-known vocabularies: `SvoTerm`, `ConscientiousnessTerm`, `CasehubSlotTerm`, `BelbinTerm` (9 team roles), `DiscTerm` (4 DISC types, `axisExactMatch`), `ThomasKilmannTerm` (5 conflict modes), `CasehubCapabilityTerm` (hierarchical capability taxonomy), `JungianFunctionTerm` (8 cognitive functions with `axisExactMatch`, `shadow()`, `opposite()`, `compatibleAuxiliaries()`), `MbtiTypeTerm` (16 MBTI types with `specializes()` to `JungianFunctionTerm`, `defaultProfile()`), `JungianEvolutionType` (4 JPAF reflection types). All optional -- consumers define their own vocabularies. |
@@ -179,6 +179,20 @@ SPI for term registration, resolution, hierarchy, and cross-vocabulary equivalen
 **Cross-vocabulary equivalence:** `equivalentValues(fromUri, value, toUri)` for axis-unaware mapping. `equivalentValues(fromUri, value, toUri, DispositionAxis)` for axis-aware mapping. Via `VocabularyTerm.exactMatch()` and `VocabularyTerm.axisExactMatch()`.
 
 **Hierarchy:** XKOS-style hierarchy via `VocabularyTerm.specializes()` enables cross-vocabulary subsumption. `match()` returns `MatchDegree` (Exact, Plugin(depth), Specialization(depth), None). `subsumes()`, `ancestors()`, `descendants()`, `expandForMatchingByVocabulary()`.
+
+### DisplayTermResolver
+
+SPI for resolving vocabulary term values to display labels with cross-vocabulary terminology swap.
+
+**Direct resolution:** `resolveLabel(value, vocabUri)` -- looks up value in the vocabulary, returns `term.label()` or raw value if not found.
+
+**Cross-vocabulary swap:** `resolveLabel(value, sourceVocabUri, targetVocabUri)` -- resolves in source vocabulary, finds equivalent in target via `equivalentValues()`, returns target label. Falls back to source label if no cross-vocab match exists.
+
+**Axis-aware swap:** `resolveLabel(value, sourceVocabUri, targetVocabUri, axis)` -- uses `axisExactMatch()` for disposition terms (DISC, Thomas-Kilmann, Belbin) where axis-unaware `exactMatch()` returns empty.
+
+**Auto-discovery:** When `sourceVocabUri` is null, searches all registered vocabularies (best-effort, first match). Prefer explicit `sourceVocabUri` from the domain object (`descriptor.vocabUriForSlot()`, `unit.kindVocabulary()`).
+
+`DefaultDisplayTermResolver` `@DefaultBean` in eidos-runtime delegates to `VocabularyRegistry`. Temporary home -- moves to platform-api (casehubio/platform#283).
 
 ### TemplateRegistry / DescriptorTemplate
 
