@@ -1,22 +1,30 @@
 package io.casehub.eidos.runtime.display;
 
 import io.casehub.eidos.api.DispositionAxis;
-import io.casehub.eidos.api.DisplayTermResolver;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.util.Optional;
+
 @DefaultBean
 @ApplicationScoped
-public class DefaultDisplayTermResolver implements DisplayTermResolver {
+public class DefaultDisplayTermResolver
+        implements io.casehub.eidos.api.DisplayTermResolver,
+                   io.casehub.platform.api.display.DisplayTermResolver {
 
     private final VocabularyRegistry registry;
 
     @Inject
     public DefaultDisplayTermResolver(VocabularyRegistry registry) {
         this.registry = registry;
+    }
+
+    @Override
+    public String resolveLabel(String value, String vocabUri) {
+        return resolveLabel(value, vocabUri, null, null);
     }
 
     @Override
@@ -59,5 +67,31 @@ public class DefaultDisplayTermResolver implements DisplayTermResolver {
         }
 
         return sourceTerm.label();
+    }
+
+    @Override
+    public Optional<String> mapTerm(String value, String sourceVocabUri,
+                                     String targetVocabUri) {
+        return mapTerm(value, sourceVocabUri, targetVocabUri, null);
+    }
+
+    @Override
+    public Optional<String> mapTerm(String value, String sourceVocabUri,
+                                     String targetVocabUri, String mappingContext) {
+        if (value == null || sourceVocabUri == null || targetVocabUri == null) {
+            return Optional.empty();
+        }
+        DispositionAxis axis = parseAxis(mappingContext);
+        return axis != null
+            ? registry.equivalentValues(sourceVocabUri, value, targetVocabUri, axis)
+            : registry.equivalentValues(sourceVocabUri, value, targetVocabUri);
+    }
+
+    private static DispositionAxis parseAxis(String mappingContext) {
+        if (mappingContext == null) return null;
+        for (DispositionAxis axis : DispositionAxis.values()) {
+            if (axis.jsonKey().equals(mappingContext)) return axis;
+        }
+        return null;
     }
 }

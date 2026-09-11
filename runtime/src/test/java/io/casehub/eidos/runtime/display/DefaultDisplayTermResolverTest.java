@@ -164,4 +164,49 @@ class DefaultDisplayTermResolverTest {
         assertThat(resolver.resolveLabel(null, "urn:test:gastown-roles"))
             .isNull();
     }
+
+    // --- Platform SPI bridge tests ---
+
+    @Test
+    void mapTerm_cross_vocab_returns_target_value() {
+        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+            .mapTerm("observer", "urn:test:devtown-roles", "urn:test:gastown-roles"))
+            .contains("witness");
+    }
+
+    @Test
+    void mapTerm_no_match_returns_empty() {
+        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+            .mapTerm("planner", "urn:test:devtown-roles", "urn:test:gastown-roles"))
+            .isEmpty();
+    }
+
+    @Test
+    void mapTerm_null_value_returns_empty() {
+        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+            .mapTerm(null, "urn:test:devtown-roles", "urn:test:gastown-roles"))
+            .isEmpty();
+    }
+
+    @Test
+    void mapTerm_with_context_axis_aware() {
+        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+            .mapTerm("bold", "urn:test:axis-vocab-a", "urn:test:axis-vocab-b", "riskAppetite"))
+            .contains("adventurous");
+    }
+
+    @Test
+    void mapTerm_with_unknown_context_falls_back_to_axis_unaware() {
+        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+            .mapTerm("bold", "urn:test:axis-vocab-a", "urn:test:axis-vocab-b", "unknown"))
+            .isEmpty();
+    }
+
+    @Test
+    void platform_resolveLabel_matches_eidos() {
+        io.casehub.platform.api.display.DisplayTermResolver platformResolver =
+            (io.casehub.platform.api.display.DisplayTermResolver) resolver;
+        assertThat(platformResolver.resolveLabel("witness", "urn:test:gastown-roles"))
+            .isEqualTo("Witness");
+    }
 }
