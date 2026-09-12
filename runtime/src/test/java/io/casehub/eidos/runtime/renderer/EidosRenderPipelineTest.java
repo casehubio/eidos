@@ -15,7 +15,7 @@ import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyTerm;
-import io.casehub.eidos.core.renderer.EidosRenderPipeline;
+import io.casehub.eidos.runtime.renderer.EidosRenderPipeline;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

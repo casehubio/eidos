@@ -1,9 +1,8 @@
-package io.casehub.eidos.runtime.health;
+package io.casehub.eidos.core.health;
 
 import io.casehub.eidos.api.AgentStateStore;
 import io.casehub.eidos.api.DegradationReason;
-import io.quarkus.arc.DefaultBean;
-import jakarta.enterprise.context.ApplicationScoped;
+
 import java.time.Instant;
 import java.util.Optional;
 

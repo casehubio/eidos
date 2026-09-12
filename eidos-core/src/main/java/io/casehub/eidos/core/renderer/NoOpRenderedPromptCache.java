@@ -1,14 +1,12 @@
-package io.casehub.eidos.runtime.renderer;
+package io.casehub.eidos.core.renderer;
 
 import io.casehub.eidos.api.RenderedPromptCache;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
-import io.quarkus.arc.DefaultBean;
-import jakarta.enterprise.context.ApplicationScoped;
+
 
 import java.util.Optional;
 
-@DefaultBean
-@ApplicationScoped
+
 public class NoOpRenderedPromptCache implements RenderedPromptCache {
 
     @Override

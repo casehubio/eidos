@@ -1,14 +1,11 @@
-package io.casehub.eidos.runtime.health;
+package io.casehub.eidos.core.health;
 
 import io.casehub.eidos.api.BehavioralSignal;
 import io.casehub.eidos.api.BehavioralSignalStore;
-import io.quarkus.arc.DefaultBean;
-import jakarta.enterprise.context.ApplicationScoped;
+
 
 import java.util.Map;
 
-@DefaultBean
-@ApplicationScoped
 public class NoOpBehavioralSignalStore implements BehavioralSignalStore {
 
     @Override

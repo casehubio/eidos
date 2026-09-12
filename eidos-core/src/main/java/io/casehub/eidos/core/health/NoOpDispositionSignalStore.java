@@ -1,13 +1,11 @@
-package io.casehub.eidos.runtime.health;
+package io.casehub.eidos.core.health;
 
 import io.casehub.eidos.api.DispositionSignalStore;
-import io.quarkus.arc.DefaultBean;
-import jakarta.enterprise.context.ApplicationScoped;
+
 
 import java.util.Map;
 
-@DefaultBean
-@ApplicationScoped
+
 public class NoOpDispositionSignalStore implements DispositionSignalStore {
 
     @Override

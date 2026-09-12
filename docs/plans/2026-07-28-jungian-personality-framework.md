@@ -513,7 +513,7 @@ Closes #110, Closes #109"
 
 **Files:**
 - Create: `api/src/main/java/io/casehub/eidos/api/DispositionSignalStore.java`
-- Create: `runtime/src/main/java/io/casehub/eidos/runtime/health/NoOpDispositionSignalStore.java`
+- Create: `../../eidos-core/src/main/java/io/casehub/eidos/core/health/NoOpDispositionSignalStore.java`
 - Create: `persistence-memory/src/main/java/io/casehub/eidos/memory/InMemoryDispositionSignalStore.java`
 - Create: `runtime/src/main/java/io/casehub/eidos/runtime/health/JpaDispositionSignalStore.java`
 - Test: `persistence-memory/src/test/java/io/casehub/eidos/memory/InMemoryDispositionSignalStoreTest.java`
@@ -623,7 +623,7 @@ Closes #115"
 - Create: `api/src/main/java/io/casehub/eidos/api/DispositionEvolution.java`
 - Create: `api/src/main/java/io/casehub/eidos/api/EvolutionType.java`
 - Create: `vocab/src/main/java/io/casehub/eidos/vocab/JungianEvolutionType.java`
-- Create: `runtime/src/main/java/io/casehub/eidos/runtime/health/NoOpDispositionHealth.java`
+- Create: `../../eidos-core/src/main/java/io/casehub/eidos/core/health/NoOpDispositionHealth.java`
 - Test: `api/src/test/java/io/casehub/eidos/api/DispositionHealthTest.java` (sealed interface tests)
 
 **Interfaces:**

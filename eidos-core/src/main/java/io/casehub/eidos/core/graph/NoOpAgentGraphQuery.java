@@ -1,12 +1,10 @@
-package io.casehub.eidos.runtime.graph;
+package io.casehub.eidos.core.graph;
 
 import io.casehub.eidos.api.*;
-import io.quarkus.arc.DefaultBean;
-import jakarta.enterprise.context.ApplicationScoped;
+
 import java.util.List;
 
-@DefaultBean
-@ApplicationScoped
+
 public class NoOpAgentGraphQuery implements AgentGraphQuery {
 
     @Override

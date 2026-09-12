@@ -892,7 +892,7 @@ Not closed here: L5 (rendering pipeline calls health check), L7 (knowledge graph
 - `api/src/main/java/io/casehub/eidos/api/CapabilityResolver.java` — static utility; shared subsumption resolution for probe and recording paths; `resolve()` returns best-matching `AgentCapability` from a list; `match()` returns `MatchDegree` for a single capability
 - `runtime/src/main/java/io/casehub/eidos/runtime/health/DefaultCapabilityHealth.java` — `@ApplicationScoped`; fail-fast probe order; `@IfBuildProperty(name="casehub.eidos.reactive.enabled", stringValue="false", enableIfMissing=true)`
 - `runtime/src/main/java/io/casehub/eidos/runtime/health/DefaultReactiveCapabilityHealth.java` — reactive variant; delegates to blocking impl via `Uni.createFrom().item(supplier).runSubscriptionOn(workerPool)`
-- `runtime/src/main/java/io/casehub/eidos/runtime/health/NoOpAgentStateStore.java` — `@DefaultBean @ApplicationScoped`; all methods no-op; preserves Phase 2 behaviour when no state store is configured
+- `eidos-core/src/main/java/io/casehub/eidos/core/health/NoOpAgentStateStore.java` — `@DefaultBean @ApplicationScoped`; all methods no-op; preserves Phase 2 behaviour when no state store is configured
 - `persistence-memory/src/main/java/io/casehub/eidos/memory/InMemoryAgentStateStore.java` — `@Alternative @Priority(1)`; `ConcurrentHashMap<String, ExpiringState>`; TTL enforced in `query()` by comparing `Instant.now()` with stored `expiresAt`
 - `api/src/main/java/io/casehub/eidos/api/DegradationReason.java` — `RATE_LIMITED`, `CONTEXT_EXHAUSTED`, `OVERLOADED`, `DOMAIN_MISMATCH`; top-level enum (not nested in `CapabilityHealth` — shared by both `AgentStateStore` and `CapabilityHealth`)
 

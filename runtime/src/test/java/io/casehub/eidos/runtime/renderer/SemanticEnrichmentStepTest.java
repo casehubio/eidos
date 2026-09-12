@@ -7,7 +7,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import io.casehub.eidos.core.renderer.EidosRenderPipeline;
+import io.casehub.eidos.runtime.renderer.EidosRenderPipeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
