@@ -3,6 +3,8 @@ package io.casehub.eidos.runtime.yaml;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.casehub.eidos.core.yaml.DispositionDeserializer;
+import io.casehub.eidos.core.yaml.EidosDescriptorModule;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.DispositionAxis;
 import org.junit.jupiter.api.Test;

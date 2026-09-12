@@ -1,6 +1,10 @@
 package io.casehub.eidos.runtime.renderer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.casehub.eidos.core.renderer.A2AEnrichment;
+import io.casehub.eidos.core.renderer.EidosRenderPipeline;
+import io.casehub.eidos.core.renderer.SemanticEnrichment;
+import io.casehub.eidos.core.renderer.StageOneResult;
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
@@ -15,7 +19,6 @@ import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyTerm;
-import io.casehub.eidos.runtime.renderer.EidosRenderPipeline;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

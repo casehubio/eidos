@@ -1,5 +1,6 @@
 package io.casehub.eidos.runtime.yaml;
 
+import io.casehub.eidos.core.yaml.DescriptorPreprocessor;
 import io.casehub.yaml.core.resolver.VariableSource;
 import org.junit.jupiter.api.Test;
 

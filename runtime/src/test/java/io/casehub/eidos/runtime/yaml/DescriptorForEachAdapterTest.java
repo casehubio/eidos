@@ -1,5 +1,6 @@
 package io.casehub.eidos.runtime.yaml;
 
+import io.casehub.eidos.core.yaml.DescriptorForEachAdapter;
 import io.casehub.yaml.core.resolver.VariableResolver;
 import org.junit.jupiter.api.Test;
 

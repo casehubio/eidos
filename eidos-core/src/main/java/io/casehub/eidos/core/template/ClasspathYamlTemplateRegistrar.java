@@ -41,7 +41,7 @@ public class ClasspathYamlTemplateRegistrar implements TemplateRegistrar {
         return List.copyOf(all);
     }
 
-    List<DescriptorTemplate> loadFrom(final InputStream yaml) {
+    public List<DescriptorTemplate> loadFrom(final InputStream yaml) {
         if (yaml == null) return List.of();
         final TemplateFile file;
         try {

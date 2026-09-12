@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.validator;
 
 import io.casehub.eidos.api.*;
+import io.casehub.eidos.core.validator.BriefingCoherenceValidator;
 import io.casehub.eidos.vocab.*;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;

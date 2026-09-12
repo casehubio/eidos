@@ -12,7 +12,7 @@ import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.GoalContext;
 import io.casehub.eidos.api.Resource;
-import io.casehub.eidos.runtime.renderer.EidosRenderPipeline;
+import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

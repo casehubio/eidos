@@ -47,7 +47,7 @@ public class EidosRenderPipeline {
     // PROMPT_TEMPLATE must be declared before TEMPLATE_HASH — static initializers run
     // in declaration order. Reversing them causes fingerprint(null) at class load:
     // NullPointerException wrapped in ExceptionInInitializerError, not a quiet wrong value.
-    static final String PROMPT_TEMPLATE = """
+    public static final String PROMPT_TEMPLATE = """
             You are writing disposition and goal narratives for an AI agent's system prompt.
 
             Given the agent context in JSON, produce a JSON object with prose for two fields.
@@ -78,7 +78,7 @@ public class EidosRenderPipeline {
             - Plain prose. No markdown, no bullet points, no headers.
             - Be concise. Every sentence must carry information the agent needs to act on.
             - Return ONLY the JSON object. No explanation, no preamble, no code fences.""";
-    static final String A2A_PROMPT_TEMPLATE = """
+    public static final String A2A_PROMPT_TEMPLATE = """
             You are writing per-capability descriptions for an AI agent's A2A (agent-to-agent) card.
 
             Given the agent's capabilities in JSON, produce a JSON object with one prose description
@@ -92,17 +92,17 @@ public class EidosRenderPipeline {
             - If no capabilities are declared, return {"capabilityNarratives": []}.""";
     // Schema descriptions extracted as constants so TEMPLATE_HASH can include them.
     // Changing any description changes the LLM output contract — cache must invalidate.
-    static final List<String> RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
+    public static final List<String> RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
             "How the agent operates — role-specific, covering all declared disposition axes. " +
             "Use vocabulary framework language when present. 2-4 sentences. Empty string if no disposition.",
             "Current task and objectives in flowing prose. Empty string if no goal."
     );
-    static final List<String> A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
+    public static final List<String> A2A_RESPONSE_FORMAT_SCHEMA_DESCRIPTIONS = List.of(
             "One entry per declared capability. Empty array [] if none.",
             "Capability name — must match exactly as given.",
             "1-2 sentences, second person, what this agent can do with this capability."
     );
-    static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
+    public static final ResponseFormat RESPONSE_FORMAT = ResponseFormat.builder()
             .type(ResponseFormatType.JSON)
             .jsonSchema(JsonSchema.builder()
                     .name("SemanticEnrichment")
@@ -115,7 +115,7 @@ public class EidosRenderPipeline {
                             .build())
                     .build())
             .build();
-    static final ResponseFormat A2A_RESPONSE_FORMAT = ResponseFormat.builder()
+    public static final ResponseFormat A2A_RESPONSE_FORMAT = ResponseFormat.builder()
             .type(ResponseFormatType.JSON)
             .jsonSchema(JsonSchema.builder()
                     .name("A2AEnrichment")
@@ -167,7 +167,7 @@ public class EidosRenderPipeline {
         };
     }
 
-    static String substitute(String content, Map<String, String> args) {
+    public static String substitute(String content, Map<String, String> args) {
         if (args == null || args.isEmpty()) {return content;}
         return TEMPLATE_PLACEHOLDER.matcher(content).replaceAll(match -> {
             var param = match.group(1);
@@ -270,7 +270,7 @@ public class EidosRenderPipeline {
         return bd.stripTrailingZeros().toPlainString();
     }
 
-    ObjectNode buildDescriptorPayload(final AgentDescriptor descriptor, final RenderFormat format) {
+    public ObjectNode buildDescriptorPayload(final AgentDescriptor descriptor, final RenderFormat format) {
         final ObjectNode node = mapper.createObjectNode();
         node.put("agentId", descriptor.agentId());
         node.put("name", descriptor.name());
@@ -418,7 +418,7 @@ public class EidosRenderPipeline {
         return node;
     }
 
-    ObjectNode buildContextPayload(final AgentPromptContext context) {
+    public ObjectNode buildContextPayload(final AgentPromptContext context) {
         final ObjectNode node = mapper.createObjectNode();
         context.goal().ifPresent(goal -> {
             final ObjectNode goalNode = node.putObject("goal");
@@ -479,7 +479,7 @@ public class EidosRenderPipeline {
         return new StageOneResult(descriptorNode, contextNode, descriptorHash, contextHash, key);
     }
 
-    String cacheKey(final String descriptorHash, final String contextHash,
+    public String cacheKey(final String descriptorHash, final String contextHash,
                     final RenderFormat format) {
         return descriptorHash + ":" + contextHash + ":" + format.name() + ":" + TEMPLATE_HASH;
     }
@@ -499,7 +499,7 @@ public class EidosRenderPipeline {
         return new RenderedPrompt(content, context.format(), s1.descriptorHash(), s1.contextHash(), enriched);
     }
 
-    String resolveTemplates(AgentDescriptor descriptor) {
+    public String resolveTemplates(AgentDescriptor descriptor) {
         if (descriptor.templates() == null || descriptor.templates().isEmpty()) {return null;}
         var sb = new StringBuilder();
         for (var ref : descriptor.templates()) {

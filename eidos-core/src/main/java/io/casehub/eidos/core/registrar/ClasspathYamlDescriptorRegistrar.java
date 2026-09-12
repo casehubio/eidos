@@ -44,7 +44,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
         return List.copyOf(all);
     }
 
-    List<AgentDescriptor> loadFrom(final InputStream yaml) {
+    public List<AgentDescriptor> loadFrom(final InputStream yaml) {
         return loadFrom(yaml, null);
     }
 

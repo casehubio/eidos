@@ -2,6 +2,7 @@ package io.casehub.eidos.runtime.yaml;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.casehub.eidos.api.*;
+import io.casehub.eidos.core.yaml.EidosDescriptorModule;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

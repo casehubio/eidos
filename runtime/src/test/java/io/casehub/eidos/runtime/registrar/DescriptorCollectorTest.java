@@ -3,6 +3,8 @@ package io.casehub.eidos.runtime.registrar;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.DescriptorTemplate;
 import io.casehub.eidos.api.TemplateRef;
+import io.casehub.eidos.core.registrar.DescriptorCollector;
+import io.casehub.eidos.core.validator.BriefingCoherenceValidator;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import org.junit.jupiter.api.Test;

@@ -2,6 +2,7 @@ package io.casehub.eidos.runtime.registrar;
 
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.core.registrar.ClasspathYamlDescriptorRegistrar;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

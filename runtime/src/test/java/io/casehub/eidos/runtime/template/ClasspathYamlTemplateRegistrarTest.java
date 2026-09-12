@@ -1,5 +1,6 @@
 package io.casehub.eidos.runtime.template;
 
+import io.casehub.eidos.core.template.ClasspathYamlTemplateRegistrar;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
