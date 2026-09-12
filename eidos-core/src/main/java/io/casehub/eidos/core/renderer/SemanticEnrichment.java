@@ -1,9 +1,9 @@
-package io.casehub.eidos.runtime.renderer;
+package io.casehub.eidos.core.renderer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Optional;
 
-record SemanticEnrichment(
+public record SemanticEnrichment(
         Optional<String> dispositionNarrative,
         Optional<String> goalNarrative
 ) {

@@ -1,11 +1,10 @@
-package io.casehub.eidos.runtime.template;
+package io.casehub.eidos.core.template;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.DescriptorTemplate;
 import io.casehub.eidos.api.spi.TemplateRegistrar;
-import jakarta.enterprise.context.ApplicationScoped;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-@ApplicationScoped
 public class ClasspathYamlTemplateRegistrar implements TemplateRegistrar {
 
     private static final String RESOURCE_PATH = "META-INF/eidos/templates.yaml";

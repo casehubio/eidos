@@ -1,13 +1,10 @@
-package io.casehub.eidos.runtime.validator;
+package io.casehub.eidos.core.validator;
 
 import io.casehub.eidos.api.*;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-@ApplicationScoped
 public class BriefingCoherenceValidator {
 
     private static final Set<String> EXTRAVERTED_KEYWORDS = Set.of(
@@ -19,7 +16,6 @@ public class BriefingCoherenceValidator {
 
     private final VocabularyRegistry vocabRegistry;
 
-    @Inject
     public BriefingCoherenceValidator(VocabularyRegistry vocabRegistry) {
         this.vocabRegistry = vocabRegistry;
     }

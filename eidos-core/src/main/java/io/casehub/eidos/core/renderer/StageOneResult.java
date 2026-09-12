@@ -1,8 +1,8 @@
-package io.casehub.eidos.runtime.renderer;
+package io.casehub.eidos.core.renderer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-record StageOneResult(
+public record StageOneResult(
         ObjectNode descriptorNode,
         ObjectNode contextNode,
         String descriptorHash,

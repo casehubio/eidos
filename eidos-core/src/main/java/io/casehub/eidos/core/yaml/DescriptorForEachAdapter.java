@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.yaml;
+package io.casehub.eidos.core.yaml;
 
 import io.casehub.yaml.core.foreach.ForEachAdapter;
 import io.casehub.yaml.core.foreach.ForEachDirective;

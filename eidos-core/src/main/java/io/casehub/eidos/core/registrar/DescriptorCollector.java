@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.registrar;
+package io.casehub.eidos.core.registrar;
 
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
@@ -8,7 +8,7 @@ import io.casehub.eidos.api.DispositionValue;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
-import io.casehub.eidos.runtime.validator.BriefingCoherenceValidator;
+import io.casehub.eidos.core.validator.BriefingCoherenceValidator;
 import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public final class DescriptorCollector {
 
     private DescriptorCollector() {}
 
-    static List<AgentDescriptor> collectAndValidate(Iterable<AgentDescriptorRegistrar> registrars,
+    public static List<AgentDescriptor> collectAndValidate(Iterable<AgentDescriptorRegistrar> registrars,
                                                     TemplateRegistry templateRegistry,
                                                     VocabularyRegistry vocabRegistry,
                                                     BriefingCoherenceValidator coherenceValidator) {

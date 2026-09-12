@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.renderer;
+package io.casehub.eidos.core.renderer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -8,24 +8,23 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
-import io.casehub.eidos.runtime.renderer.EidosRenderPipeline;
 import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-class A2ASemanticEnrichmentStep {
+public class A2ASemanticEnrichmentStep {
 
     private static final Logger log = Logger.getLogger(A2ASemanticEnrichmentStep.class);
 
     private final ObjectMapper mapper;
 
-    A2ASemanticEnrichmentStep(final ObjectMapper mapper) {
+    public A2ASemanticEnrichmentStep(final ObjectMapper mapper) {
         this.mapper = mapper;
     }
 
-    Optional<A2AEnrichment> enrich(final ChatModel llm, final ObjectNode descriptorNode) {
+    public Optional<A2AEnrichment> enrich(final ChatModel llm, final ObjectNode descriptorNode) {
         try {
             final ChatRequest request = ChatRequest.builder()
                     .messages(

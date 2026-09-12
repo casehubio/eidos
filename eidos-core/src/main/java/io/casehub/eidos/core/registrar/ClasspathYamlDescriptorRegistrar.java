@@ -1,14 +1,13 @@
-package io.casehub.eidos.runtime.registrar;
+package io.casehub.eidos.core.registrar;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
-import io.casehub.eidos.runtime.yaml.DescriptorPreprocessor;
-import io.casehub.eidos.runtime.yaml.EidosDescriptorModule;
+import io.casehub.eidos.core.yaml.DescriptorPreprocessor;
+import io.casehub.eidos.core.yaml.EidosDescriptorModule;
 import io.casehub.yaml.core.resolver.VariableSource;
-import jakarta.enterprise.context.ApplicationScoped;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +18,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@ApplicationScoped
 public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistrar {
 
     private static final String RESOURCE_PATH = "META-INF/eidos/descriptors.yaml";

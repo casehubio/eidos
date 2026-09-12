@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.renderer;
+package io.casehub.eidos.core.renderer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -25,8 +25,6 @@ import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -43,8 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@ApplicationScoped
-class EidosRenderPipeline {
+public class EidosRenderPipeline {
 
 
     // PROMPT_TEMPLATE must be declared before TEMPLATE_HASH — static initializers run
@@ -151,8 +148,7 @@ class EidosRenderPipeline {
 
     // ── Stage 1: payload building ─────────────────────────────────────────────
 
-    @Inject
-    EidosRenderPipeline(final VocabularyRegistry vocab,
+    public EidosRenderPipeline(final VocabularyRegistry vocab,
                         final TemplateRegistry templateRegistry,
                         final ObjectMapper mapper) {
         this.vocab            = vocab;
@@ -164,7 +160,7 @@ class EidosRenderPipeline {
         if (src != null && src.has(key)) dest.set(key, src.get(key).deepCopy());
     }
 
-    static boolean usesEnrichment(final RenderFormat format) {
+    public static boolean usesEnrichment(final RenderFormat format) {
         return switch (format) {
             case MARKDOWN, PROSE -> true;
             case A2A_CARD        -> false;
@@ -232,7 +228,7 @@ class EidosRenderPipeline {
      * Not a full SHA-256 hash — use only for cache keys and display fingerprints,
      * not for security-sensitive purposes.
      */
-    static String fingerprint(final String input) {
+    public static String fingerprint(final String input) {
         try {
             final MessageDigest digest = MessageDigest.getInstance("SHA-256");
             final byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
@@ -459,7 +455,7 @@ class EidosRenderPipeline {
      * Those sections render structurally always — sending them to the LLM is noise.
      * They are included in descriptorNode/contextNode for cache-key correctness only.
      */
-    ObjectNode buildEnrichmentPayload(final ObjectNode descriptorNode,
+    public ObjectNode buildEnrichmentPayload(final ObjectNode descriptorNode,
                                        final ObjectNode contextNode) {
         final ObjectNode payload = mapper.createObjectNode();
         copyIfPresent(payload, descriptorNode, "name");
@@ -474,7 +470,7 @@ class EidosRenderPipeline {
         return payload;
     }
 
-    StageOneResult buildStage1(final AgentDescriptor descriptor, final AgentPromptContext context) {
+    public StageOneResult buildStage1(final AgentDescriptor descriptor, final AgentPromptContext context) {
         final ObjectNode descriptorNode = buildDescriptorPayload(descriptor, context.format());
         final ObjectNode contextNode    = buildContextPayload(context);
         final String descriptorHash     = fingerprint(descriptorNode.toString());
@@ -488,7 +484,7 @@ class EidosRenderPipeline {
         return descriptorHash + ":" + contextHash + ":" + format.name() + ":" + TEMPLATE_HASH;
     }
 
-    RenderedPrompt assemble(final StageOneResult s1,
+    public RenderedPrompt assemble(final StageOneResult s1,
                              final Optional<SemanticEnrichment> enrichment,
                              final Optional<A2AEnrichment> a2aEnrichment,
                              final AgentDescriptor descriptor,

@@ -1,23 +1,15 @@
-package io.casehub.eidos.runtime.display;
+package io.casehub.eidos.core.display;
 
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
-import io.quarkus.arc.DefaultBean;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 import java.util.Optional;
 
-@DefaultBean
-@ApplicationScoped
-public class DefaultDisplayTermResolver
-        implements io.casehub.eidos.api.DisplayTermResolver,
-                   io.casehub.platform.api.display.DisplayTermResolver {
+public class DefaultDisplayTermResolver implements DisplayTermResolver {
 
     private final VocabularyRegistry registry;
 
-    @Inject
     public DefaultDisplayTermResolver(VocabularyRegistry registry) {
         this.registry = registry;
     }

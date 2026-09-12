@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.yaml;
+package io.casehub.eidos.core.yaml;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
