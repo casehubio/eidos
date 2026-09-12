@@ -7,6 +7,7 @@ import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.CoherenceLevel;
 import io.casehub.eidos.api.RenderedPromptCache;
 import io.casehub.eidos.api.SystemPromptRenderer;
+import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.runtime.validator.BriefingCoherenceValidator;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
@@ -18,9 +19,9 @@ import java.util.Optional;
 @ApplicationScoped
 public class EidosSystemPromptRenderer implements SystemPromptRenderer {
 
-    private final ChatModel                    llm;
-    private final EidosRenderPipeline          pipeline;
-    private final SemanticEnrichmentStep       enrichmentStep;
+    private final ChatModel              llm;
+    private final EidosRenderPipeline    pipeline;
+    private final SemanticEnrichmentStep enrichmentStep;
     private final A2ASemanticEnrichmentStep    a2aEnrichmentStep;
     private final RenderedPromptCache          cache;
     private final BriefingCoherenceValidator   coherenceValidator;

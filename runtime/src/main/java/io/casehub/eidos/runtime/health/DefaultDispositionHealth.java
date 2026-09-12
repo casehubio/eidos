@@ -8,7 +8,7 @@ import io.casehub.eidos.api.DispositionValue;
 import io.casehub.eidos.api.EvolutionType;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
-import io.casehub.eidos.runtime.preferences.DispositionPreferenceKeys;
+import io.casehub.eidos.core.preferences.DispositionPreferenceKeys;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
 import jakarta.enterprise.context.ApplicationScoped;

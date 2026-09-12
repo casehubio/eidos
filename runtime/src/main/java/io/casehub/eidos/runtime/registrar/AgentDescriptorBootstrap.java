@@ -4,6 +4,7 @@ import io.casehub.eidos.api.AgentRegistry;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
+import io.casehub.eidos.core.registrar.DescriptorCollector;
 import io.casehub.eidos.runtime.validator.BriefingCoherenceValidator;
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.runtime.StartupEvent;

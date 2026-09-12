@@ -5,6 +5,7 @@ import io.casehub.eidos.api.DescriptorTemplate;
 import io.casehub.eidos.api.TemplateRef;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
+import io.casehub.eidos.core.registrar.DescriptorCollector;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

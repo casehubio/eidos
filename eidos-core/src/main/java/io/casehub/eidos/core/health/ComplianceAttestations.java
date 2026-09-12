@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.health;
+package io.casehub.eidos.core.health;
 
 import io.casehub.eidos.api.ComplianceDimension;
 import io.casehub.ledger.api.model.AttestationVerdict;

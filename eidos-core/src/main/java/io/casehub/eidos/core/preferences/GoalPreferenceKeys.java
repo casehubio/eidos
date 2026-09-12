@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.preferences;
+package io.casehub.eidos.core.preferences;
 
 import io.casehub.platform.api.preferences.PreferenceKey;
 import io.casehub.platform.api.preferences.SingleValuePreference;

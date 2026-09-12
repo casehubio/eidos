@@ -12,6 +12,7 @@ import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.GoalContext;
 import io.casehub.eidos.api.Resource;
+import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,7 @@ class EidosSystemPromptRendererTest {
         testCache = new TestRenderedPromptCache();
         final var vocab = new CdiVocabularyRegistry();
         rendererWithLlm  = new EidosSystemPromptRenderer(mockLlm,
-                new EidosRenderPipeline(vocab, emptyTemplateRegistry(), MAPPER), testCache, MAPPER);
+                                                         new EidosRenderPipeline(vocab, emptyTemplateRegistry(), MAPPER), testCache, MAPPER);
         rendererStructural = new EidosSystemPromptRenderer((ChatModel) null,
                 new EidosRenderPipeline(vocab, emptyTemplateRegistry(), MAPPER), new TestRenderedPromptCache(), MAPPER);
     }

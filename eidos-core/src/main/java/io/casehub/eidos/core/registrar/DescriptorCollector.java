@@ -1,4 +1,4 @@
-package io.casehub.eidos.runtime.registrar;
+package io.casehub.eidos.core.registrar;
 
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;

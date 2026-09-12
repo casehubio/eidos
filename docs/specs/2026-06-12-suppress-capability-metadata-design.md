@@ -214,7 +214,7 @@ the format.
 
 | File | Change |
 |------|--------|
-| `runtime/src/main/java/io/casehub/eidos/runtime/renderer/EidosRenderPipeline.java` | Layers 1, 2, 3, 4 |
+| `../../eidos-core/src/main/java/io/casehub/eidos/core/renderer/EidosRenderPipeline.java` | Layers 1, 2, 3, 4 |
 | `runtime/src/test/java/io/casehub/eidos/runtime/renderer/EidosRenderPipelineTest.java` | Update callers + new tests |
 
 No other files change. `EidosSystemPromptRenderer` is unchanged — it passes `context.format()`

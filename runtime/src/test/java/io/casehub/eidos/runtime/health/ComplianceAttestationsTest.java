@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.health;
 
 import io.casehub.eidos.api.ComplianceDimension;
+import io.casehub.eidos.core.health.ComplianceAttestations;
 import io.casehub.ledger.api.model.AttestationVerdict;
 import io.casehub.platform.api.identity.ActorType;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ class ComplianceAttestationsTest {
         var entryId = UUID.randomUUID();
         var subjectId = UUID.randomUUID();
         var att = ComplianceAttestations.violation(entryId, subjectId,
-                "code-review", "latency", "28500ms exceeded 5000ms p50", 0.0);
+                                                   "code-review", "latency", "28500ms exceeded 5000ms p50", 0.0);
 
         assertThat(att.attestorId).isEqualTo(ComplianceDimension.ATTESTOR_ID);
         assertThat(att.attestorType).isEqualTo(ActorType.SYSTEM);

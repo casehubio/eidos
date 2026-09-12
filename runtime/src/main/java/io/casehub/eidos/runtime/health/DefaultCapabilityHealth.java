@@ -3,8 +3,7 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus.ExclusionSource;
 import io.casehub.eidos.api.CapabilityResolver;
-import io.casehub.eidos.runtime.preferences.EidosPreferenceKeys;
-import io.casehub.platform.api.capacity.ActorCapacity;
+import io.casehub.eidos.core.preferences.EidosPreferenceKeys;
 import io.casehub.platform.api.capacity.ActorCapacityView;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
@@ -15,7 +14,6 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @DefaultBean

@@ -8,6 +8,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
+import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import org.jboss.logging.Logger;
 
 import java.util.ArrayList;

@@ -688,7 +688,7 @@ Refs #116"
 
 **Files:**
 - Create: `runtime/src/main/java/io/casehub/eidos/runtime/health/DefaultDispositionHealth.java`
-- Create: `runtime/src/main/java/io/casehub/eidos/runtime/preferences/DispositionPreferenceKeys.java`
+- Create: `../../eidos-core/src/main/java/io/casehub/eidos/core/preferences/DispositionPreferenceKeys.java`
 - Test: `runtime/src/test/java/io/casehub/eidos/runtime/health/DefaultDispositionHealthTest.java`
 
 **Interfaces:**
@@ -749,7 +749,7 @@ Closes #116"
 ### Task 8: Auto-derivation — profile → weighted axes (#111)
 
 **Files:**
-- Modify: `runtime/src/main/java/io/casehub/eidos/runtime/registrar/DescriptorCollector.java`
+- Modify: `../../eidos-core/src/main/java/io/casehub/eidos/core/registrar/DescriptorCollector.java`
 - Test: `runtime/src/test/java/io/casehub/eidos/runtime/registrar/DispositionProfileDerivationTest.java`
 
 **Interfaces:**
@@ -811,7 +811,7 @@ Refs #111"
 ### Task 9: Weighted axes + cognitive profile rendering (#111)
 
 **Files:**
-- Modify: `runtime/src/main/java/io/casehub/eidos/runtime/renderer/EidosRenderPipeline.java`
+- Modify: `../../eidos-core/src/main/java/io/casehub/eidos/core/renderer/EidosRenderPipeline.java`
 - Test: `runtime/src/test/java/io/casehub/eidos/runtime/renderer/EidosRenderPipelineTest.java`
 - Test: `runtime/src/test/java/io/casehub/eidos/runtime/renderer/EidosSystemPromptRendererTest.java`
 

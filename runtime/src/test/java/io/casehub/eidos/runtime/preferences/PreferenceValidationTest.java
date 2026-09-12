@@ -1,5 +1,8 @@
 package io.casehub.eidos.runtime.preferences;
 
+import io.casehub.eidos.core.preferences.AggregateViolationThresholdPreference;
+import io.casehub.eidos.core.preferences.ComplianceViolationThresholdPreference;
+import io.casehub.eidos.core.preferences.ExcludeThresholdPreference;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

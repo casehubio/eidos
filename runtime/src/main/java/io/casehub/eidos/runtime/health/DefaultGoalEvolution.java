@@ -6,7 +6,7 @@ import io.casehub.eidos.api.GoalEvolution;
 import io.casehub.eidos.api.GoalEvolutionResult;
 import io.casehub.eidos.api.GoalOutcomeCounts;
 import io.casehub.eidos.api.GoalPriority;
-import io.casehub.eidos.runtime.preferences.GoalPreferenceKeys;
+import io.casehub.eidos.core.preferences.GoalPreferenceKeys;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,8 +15,6 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
