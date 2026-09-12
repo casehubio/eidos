@@ -1,7 +1,6 @@
 package io.casehub.eidos.runtime.registrar;
 
 import io.casehub.eidos.api.*;
-import io.casehub.eidos.core.registrar.DescriptorCollector;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;

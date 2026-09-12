@@ -8,7 +8,7 @@ import io.casehub.eidos.api.SystemPromptRenderer;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.eval.FunctionActivationJudge.FunctionScenario;
-import io.casehub.eidos.core.registrar.DescriptorCollector;
+import io.casehub.eidos.runtime.registrar.DescriptorCollector;
 import io.casehub.eidos.vocab.BelbinTerm;
 import io.casehub.eidos.vocab.DiscTerm;
 import io.casehub.eidos.vocab.MbtiTypeTerm;

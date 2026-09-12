@@ -7,8 +7,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.time.Instant;
 import java.util.Optional;
 
-@DefaultBean
-@ApplicationScoped
 public class NoOpAgentStateStore implements AgentStateStore {
 
     @Override

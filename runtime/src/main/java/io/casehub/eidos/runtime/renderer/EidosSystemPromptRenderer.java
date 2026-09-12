@@ -7,7 +7,7 @@ import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.CoherenceLevel;
 import io.casehub.eidos.api.RenderedPromptCache;
 import io.casehub.eidos.api.SystemPromptRenderer;
-import io.casehub.eidos.core.renderer.EidosRenderPipeline;
+import io.casehub.eidos.runtime.renderer.EidosRenderPipeline;
 import io.casehub.eidos.runtime.validator.BriefingCoherenceValidator;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
