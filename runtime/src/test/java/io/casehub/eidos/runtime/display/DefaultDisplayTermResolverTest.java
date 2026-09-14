@@ -1,6 +1,10 @@
 package io.casehub.eidos.runtime.display;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.DisplayTermResolver;
+import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.VocabularyMetadata;
+import io.casehub.eidos.api.VocabularyRegistry;
+import io.casehub.eidos.api.VocabularyTerm;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +22,9 @@ class DefaultDisplayTermResolverTest {
 
     @Inject
     DisplayTermResolver resolver;
+
+    @Inject
+    io.casehub.platform.api.display.DisplayTermResolver platformResolver;
 
     @VocabularyMetadata(uri = "urn:test:devtown-roles", name = "Devtown Roles", version = "1.0")
     enum DevtownRole implements VocabularyTerm {
@@ -169,44 +176,41 @@ class DefaultDisplayTermResolverTest {
 
     @Test
     void mapTerm_cross_vocab_returns_target_value() {
-        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+        assertThat(platformResolver
             .mapTerm("observer", "urn:test:devtown-roles", "urn:test:gastown-roles"))
             .contains("witness");
     }
 
     @Test
     void mapTerm_no_match_returns_empty() {
-        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+        assertThat(platformResolver
             .mapTerm("planner", "urn:test:devtown-roles", "urn:test:gastown-roles"))
             .isEmpty();
     }
 
     @Test
     void mapTerm_null_value_returns_empty() {
-        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+        assertThat(platformResolver
             .mapTerm(null, "urn:test:devtown-roles", "urn:test:gastown-roles"))
             .isEmpty();
     }
 
     @Test
     void mapTerm_with_context_axis_aware() {
-        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+        assertThat(platformResolver
             .mapTerm("bold", "urn:test:axis-vocab-a", "urn:test:axis-vocab-b", "riskAppetite"))
             .contains("adventurous");
     }
 
     @Test
     void mapTerm_with_unknown_context_falls_back_to_axis_unaware() {
-        assertThat(((io.casehub.platform.api.display.DisplayTermResolver) resolver)
+        assertThat(platformResolver
             .mapTerm("bold", "urn:test:axis-vocab-a", "urn:test:axis-vocab-b", "unknown"))
             .isEmpty();
     }
 
     @Test
     void platform_resolveLabel_matches_eidos() {
-        io.casehub.platform.api.display.DisplayTermResolver platformResolver =
-            (io.casehub.platform.api.display.DisplayTermResolver) resolver;
         assertThat(platformResolver.resolveLabel("witness", "urn:test:gastown-roles"))
-            .isEqualTo("Witness");
-    }
+                .isEqualTo("Witness");}
 }

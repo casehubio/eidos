@@ -6,7 +6,9 @@ import io.casehub.eidos.api.VocabularyTerm;
 
 import java.util.Optional;
 
-public class DefaultDisplayTermResolver implements io.casehub.eidos.api.DisplayTermResolver {
+public class DefaultDisplayTermResolver
+        implements io.casehub.eidos.api.DisplayTermResolver,
+                   io.casehub.platform.api.display.DisplayTermResolver {
 
     private final VocabularyRegistry registry;
 
@@ -22,10 +24,10 @@ public class DefaultDisplayTermResolver implements io.casehub.eidos.api.DisplayT
     @Override
     public String resolveLabel(String value, String sourceVocabUri,
                                String targetVocabUri, DispositionAxis axis) {
-        if (value == null) return null;
+        if (value == null) {return null;}
 
-        String resolvedSourceUri = sourceVocabUri;
-        VocabularyTerm sourceTerm = null;
+        String         resolvedSourceUri = sourceVocabUri;
+        VocabularyTerm sourceTerm        = null;
 
         if (sourceVocabUri != null) {
             sourceTerm = registry.resolve(sourceVocabUri, value).orElse(null);
@@ -33,22 +35,22 @@ public class DefaultDisplayTermResolver implements io.casehub.eidos.api.DisplayT
             for (String uri : registry.registeredUris()) {
                 var term = registry.resolve(uri, value);
                 if (term.isPresent()) {
-                    sourceTerm = term.get();
+                    sourceTerm        = term.get();
                     resolvedSourceUri = uri;
                     break;
                 }
             }
         }
 
-        if (sourceTerm == null) return value;
+        if (sourceTerm == null) {return value;}
 
         if (targetVocabUri == null || targetVocabUri.equals(resolvedSourceUri)) {
             return sourceTerm.label();
         }
 
         var targetValue = axis != null
-            ? registry.equivalentValues(resolvedSourceUri, value, targetVocabUri, axis)
-            : registry.equivalentValues(resolvedSourceUri, value, targetVocabUri);
+                          ? registry.equivalentValues(resolvedSourceUri, value, targetVocabUri, axis)
+                          : registry.equivalentValues(resolvedSourceUri, value, targetVocabUri);
 
         if (targetValue.isPresent()) {
             var targetTerm = registry.resolve(targetVocabUri, targetValue.get());
@@ -61,26 +63,28 @@ public class DefaultDisplayTermResolver implements io.casehub.eidos.api.DisplayT
         return sourceTerm.label();
     }
 
+    @Override
     public Optional<String> mapTerm(String value, String sourceVocabUri,
-                                     String targetVocabUri) {
+                                    String targetVocabUri) {
         return mapTerm(value, sourceVocabUri, targetVocabUri, null);
     }
 
+    @Override
     public Optional<String> mapTerm(String value, String sourceVocabUri,
-                                     String targetVocabUri, String mappingContext) {
+                                    String targetVocabUri, String mappingContext) {
         if (value == null || sourceVocabUri == null || targetVocabUri == null) {
             return Optional.empty();
         }
         DispositionAxis axis = parseAxis(mappingContext);
         return axis != null
-            ? registry.equivalentValues(sourceVocabUri, value, targetVocabUri, axis)
-            : registry.equivalentValues(sourceVocabUri, value, targetVocabUri);
+               ? registry.equivalentValues(sourceVocabUri, value, targetVocabUri, axis)
+               : registry.equivalentValues(sourceVocabUri, value, targetVocabUri);
     }
 
     private static DispositionAxis parseAxis(String mappingContext) {
-        if (mappingContext == null) return null;
+        if (mappingContext == null) {return null;}
         for (DispositionAxis axis : DispositionAxis.values()) {
-            if (axis.jsonKey().equals(mappingContext)) return axis;
+            if (axis.jsonKey().equals(mappingContext)) {return axis;}
         }
         return null;
     }

@@ -10,7 +10,6 @@ import io.casehub.eidos.api.DispositionEvolution;
 import io.casehub.eidos.api.DispositionHealth;
 import io.casehub.eidos.api.DispositionProfileStore;
 import io.casehub.eidos.api.DispositionSignalStore;
-import io.casehub.eidos.api.DisplayTermResolver;
 import io.casehub.eidos.api.GoalEvolution;
 import io.casehub.eidos.api.GoalSignalStore;
 import io.casehub.eidos.api.RenderedPromptCache;
@@ -111,8 +110,9 @@ public class EidosCoreProducer {
         return new NoOpRenderedPromptCache();
     }
 
-    @Produces @DefaultBean
-    DisplayTermResolver displayTermResolver(VocabularyRegistry registry) {
+    @Produces
+    @DefaultBean
+    DefaultDisplayTermResolver displayTermResolver(VocabularyRegistry registry) {
         return new DefaultDisplayTermResolver(registry);
     }
 
