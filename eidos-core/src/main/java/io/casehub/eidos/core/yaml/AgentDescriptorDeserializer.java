@@ -118,6 +118,8 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
             b.epistemicDomains(map);
         }
         if (node.has("excludedDomains")) b.excludedDomains(new LinkedHashSet<>(stringList(node.get("excludedDomains"))));
+        if (node.has("modelTier")) b.modelTier(node.get("modelTier").asText());
+        if (node.has("modelCapabilities")) b.modelCapabilities(new LinkedHashSet<>(stringList(node.get("modelCapabilities"))));
         return b.build();
     }
 

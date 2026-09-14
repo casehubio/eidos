@@ -6,7 +6,7 @@ import io.casehub.eidos.api.VocabularyTerm;
 
 import java.util.Optional;
 
-public class DefaultDisplayTermResolver implements DisplayTermResolver {
+public class DefaultDisplayTermResolver implements io.casehub.eidos.api.DisplayTermResolver {
 
     private final VocabularyRegistry registry;
 
@@ -61,13 +61,11 @@ public class DefaultDisplayTermResolver implements DisplayTermResolver {
         return sourceTerm.label();
     }
 
-    @Override
     public Optional<String> mapTerm(String value, String sourceVocabUri,
                                      String targetVocabUri) {
         return mapTerm(value, sourceVocabUri, targetVocabUri, null);
     }
 
-    @Override
     public Optional<String> mapTerm(String value, String sourceVocabUri,
                                      String targetVocabUri, String mappingContext) {
         if (value == null || sourceVocabUri == null || targetVocabUri == null) {

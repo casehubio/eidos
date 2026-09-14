@@ -1,7 +1,10 @@
 package io.casehub.eidos.runtime.yaml;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentValidationException;
+import io.casehub.eidos.api.ConstraintSeverity;
+import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.core.yaml.EidosDescriptorModule;
 import org.junit.jupiter.api.Test;
 
@@ -202,5 +205,53 @@ class AgentDescriptorDeserializerTest {
         var d = mapper.readValue(yaml, AgentDescriptor.class);
         assertThat(d.templates().get(0).templateId()).isEqualTo("closing-reminder");
         assertThat(d.templates().get(0).args()).isEmpty();
+    }
+
+    @Test
+    void capabilityModelTierAndModelCapabilitiesDeserialize() throws Exception {
+        var yaml = """
+                   agentId: model-test
+                   name: Model Test
+                   slot: tester
+                   tenancyId: default
+                   capabilities:
+                     - name: code-review
+                       modelTier: flagship
+                       modelCapabilities:
+                         - text
+                         - tool-use
+                       qualityHint: 0.95
+                     - name: lint
+                       modelTier: fast
+                       modelCapabilities: [text]
+                   """;
+
+        var descriptor = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(descriptor.capabilities()).hasSize(2);
+
+        var review = descriptor.capabilities().get(0);
+        assertThat(review.modelTier()).isEqualTo("flagship");
+        assertThat(review.modelCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+
+        var lint = descriptor.capabilities().get(1);
+        assertThat(lint.modelTier()).isEqualTo("fast");
+        assertThat(lint.modelCapabilities()).containsExactly("text");
+    }
+
+    @Test
+    void capabilityWithoutModelTierDeserializesAsNull() throws Exception {
+        var yaml = """
+                   agentId: no-model
+                   name: No Model
+                   slot: tester
+                   tenancyId: default
+                   capabilities:
+                     - name: review
+                   """;
+
+        var descriptor = mapper.readValue(yaml, AgentDescriptor.class);
+        var cap        = descriptor.capabilities().getFirst();
+        assertThat(cap.modelTier()).isNull();
+        assertThat(cap.modelCapabilities()).isNull();
     }
 }

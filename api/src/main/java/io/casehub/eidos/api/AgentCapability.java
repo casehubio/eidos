@@ -16,6 +16,8 @@ public record AgentCapability(
         Double qualityHint,
         Long latencyHintP50Ms,
         String costHint,
+        String modelTier,
+        Set<String> modelCapabilities,
         List<String> inputTypes,
         List<String> outputTypes,
         List<String> tags,
@@ -31,6 +33,13 @@ public record AgentCapability(
             AgentDescriptorValidator.MAX_VOCABULARY_URI);
         AgentDescriptorValidator.validateOptional("costHint", costHint,
             AgentDescriptorValidator.MAX_CAPABILITY_STRING);
+        AgentDescriptorValidator.validateOptional("modelTier", modelTier,
+            AgentDescriptorValidator.MAX_CAPABILITY_STRING);
+        if (modelCapabilities != null) {
+            AgentDescriptorValidator.validateItems("modelCapabilities",
+                modelCapabilities, AgentDescriptorValidator.MAX_CAPABILITY_STRING);
+            modelCapabilities = Set.copyOf(modelCapabilities);
+        }
         AgentDescriptorValidator.validateItems("inputTypes", inputTypes,
             AgentDescriptorValidator.MAX_CAPABILITY_STRING);
         AgentDescriptorValidator.validateItems("outputTypes", outputTypes,
@@ -64,6 +73,8 @@ public record AgentCapability(
         private Double qualityHint;
         private Long latencyHintP50Ms;
         private String costHint;
+        private String modelTier;
+        private Set<String> modelCapabilities;
         private List<String> inputTypes;
         private List<String> outputTypes;
         private List<String> tags;
@@ -76,6 +87,8 @@ public record AgentCapability(
         public Builder qualityHint(Double v)              { this.qualityHint = v; return this; }
         public Builder latencyHintP50Ms(Long v)           { this.latencyHintP50Ms = v; return this; }
         public Builder costHint(String v)                 { this.costHint = v; return this; }
+        public Builder modelTier(String v)               { this.modelTier = v; return this; }
+        public Builder modelCapabilities(Set<String> v)  { this.modelCapabilities = v; return this; }
         public Builder inputTypes(List<String> v)         { this.inputTypes = v; return this; }
         public Builder outputTypes(List<String> v)        { this.outputTypes = v; return this; }
         public Builder tags(List<String> v)               { this.tags = v; return this; }
@@ -84,6 +97,7 @@ public record AgentCapability(
 
         public AgentCapability build() {
             return new AgentCapability(name, description, capabilityVocabulary, qualityHint, latencyHintP50Ms, costHint,
+                modelTier, modelCapabilities,
                 inputTypes, outputTypes, tags, epistemicDomains, excludedDomains);
         }
     }

@@ -316,6 +316,11 @@ public class EidosRenderPipeline {
                         final ObjectNode domains = capNode.putObject("epistemicDomains");
                         cap.epistemicDomains().forEach(domains::put);
                     }
+                    if (cap.modelTier() != null) capNode.put("modelTier", cap.modelTier());
+                    if (cap.modelCapabilities() != null && !cap.modelCapabilities().isEmpty()) {
+                        final ArrayNode mcArr = capNode.putArray("modelCapabilities");
+                        cap.modelCapabilities().forEach(mcArr::add);
+                    }
                 }
                 if (cap.inputTypes() != null && !cap.inputTypes().isEmpty()) {
                     final ArrayNode arr = capNode.putArray("inputTypes");
@@ -1009,6 +1014,11 @@ public class EidosRenderPipeline {
                 if (cap.excludedDomains() != null && !cap.excludedDomains().isEmpty()) {
                     final ArrayNode arr = capNode.putArray("excludedDomains");
                     cap.excludedDomains().forEach(arr::add);
+                }
+                if (cap.modelTier() != null) { capNode.put("modelTier", cap.modelTier()); }
+                if (cap.modelCapabilities() != null && !cap.modelCapabilities().isEmpty()) {
+                    final ArrayNode mcArr = capNode.putArray("modelCapabilities");
+                    cap.modelCapabilities().forEach(mcArr::add);
                 }
                 final String enrichedDesc = descriptionByName.get(cap.name());
                 if (enrichedDesc != null && !enrichedDesc.isBlank()) {

@@ -152,6 +152,10 @@ public class EidosAnnotationsRecorder {
                 if (cap.excludedDomains != null && cap.excludedDomains.length > 0) {
                     cb.excludedDomains(Set.of(cap.excludedDomains));
                 }
+                if (notEmpty(cap.modelTier)) {cb.modelTier(cap.modelTier);}
+                if (cap.modelCapabilities != null && cap.modelCapabilities.length > 0) {
+                    cb.modelCapabilities(Set.of(cap.modelCapabilities));
+                }
                 caps.add(cb.build());
             }
         }

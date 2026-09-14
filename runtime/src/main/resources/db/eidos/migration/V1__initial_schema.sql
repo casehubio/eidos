@@ -35,6 +35,8 @@ CREATE TABLE agent_capability (
     quality_hint        DOUBLE PRECISION,
     latency_hint_p50_ms BIGINT,
     cost_hint           VARCHAR(255),
+    model_tier          VARCHAR(100),
+    model_capabilities  TEXT,
     input_types         TEXT,
     output_types        TEXT,
     tags                TEXT,

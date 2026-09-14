@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.assertThat;
 
 class AgentCapabilityTest {
 
@@ -214,6 +214,8 @@ class AgentCapabilityTest {
             .outputTypes(List.of("review-comment"))
             .tags(List.of("java"))
             .epistemicDomains(Map.of("java", 0.95))
+            .modelTier("flagship")
+            .modelCapabilities(java.util.Set.of("text", "vision"))
             .excludedDomains(java.util.Set.of("rust"))
             .build();
         assertThat(cap.name()).isEqualTo("code-review");
@@ -221,6 +223,8 @@ class AgentCapabilityTest {
         assertThat(cap.qualityHint()).isEqualTo(0.9);
         assertThat(cap.latencyHintP50Ms()).isEqualTo(100L);
         assertThat(cap.costHint()).isEqualTo("low");
+        assertThat(cap.modelTier()).isEqualTo("flagship");
+        assertThat(cap.modelCapabilities()).containsExactlyInAnyOrder("text", "vision");
         assertThat(cap.inputTypes()).containsExactly("pull-request");
         assertThat(cap.outputTypes()).containsExactly("review-comment");
         assertThat(cap.tags()).containsExactly("java");
@@ -229,6 +233,66 @@ class AgentCapabilityTest {
     }
 
     // ── capabilityVocabulary (optional) ────────────────────────────────────────
+
+
+// ── modelTier (optional) ────────────────────────────────────────────────────
+
+    @Test
+    void model_tier_and_capabilities_stored_via_builder() {
+        var cap = AgentCapability.builder()
+                                 .name("code-review")
+                                 .modelTier("flagship")
+                                 .modelCapabilities(java.util.Set.of("text", "tool-use"))
+                                 .build();
+        assertThat(cap.modelTier()).isEqualTo("flagship");
+        assertThat(cap.modelCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+    }
+
+    @Test
+    void model_tier_null_when_not_set() {
+        var cap = AgentCapability.builder().name("lint").build();
+        assertThat(cap.modelTier()).isNull();
+        assertThat(cap.modelCapabilities()).isNull();
+    }
+
+    @Test
+    void model_capabilities_defensively_copied() {
+        var mutable = new java.util.HashSet<>(java.util.Set.of("text"));
+        var cap = AgentCapability.builder()
+                                 .name("test")
+                                 .modelCapabilities(mutable)
+                                 .build();
+        mutable.add("vision");
+        assertThat(cap.modelCapabilities()).doesNotContain("vision");
+    }
+
+    @Test
+    void model_tier_exceeds_max_throws() {
+        assertThatThrownBy(() ->
+                                   AgentCapability.builder().name("test").modelTier("x".repeat(201)).build())
+                .isInstanceOf(AgentValidationException.class)
+                .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                                         .isEqualTo("modelTier"));
+    }
+
+    @Test
+    void model_capabilities_blank_string_rejected() {
+        assertThatThrownBy(() ->
+                                   AgentCapability.builder()
+                                                  .name("test")
+                                                  .modelCapabilities(java.util.Set.of("text", "  "))
+                                                  .build())
+                .isInstanceOf(AgentValidationException.class);
+    }
+
+    @Test
+    void model_tier_blank_throws() {
+        assertThatThrownBy(() ->
+                                   AgentCapability.builder().name("test").modelTier("  ").build())
+                .isInstanceOf(AgentValidationException.class)
+                .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
+                                         .isEqualTo("modelTier"));
+    }
 
     @Test
     void capability_vocabulary_carried_through_builder() {

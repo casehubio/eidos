@@ -435,6 +435,9 @@ class EidosAnnotationsProcessor {
                 }
                 var exd = ann.value("excludedDomains");
                 cap.excludedDomains        = exd != null ? exd.asStringArray() : new String[0];
+                cap.modelTier              = stringValue(ann, "modelTier");
+                var mc = ann.value("modelCapabilities");
+                cap.modelCapabilities      = mc != null ? mc.asStringArray() : new String[0];
                 config.richCapabilities[i] = cap;
             }
         }

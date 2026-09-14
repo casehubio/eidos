@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -688,5 +689,78 @@ class JpaAgentRegistryTest {
 
         var results = registry.find(AgentQuery.byGoal("nonexistent", "test-tenant"));
         assertThat(results).isEmpty();
+    }
+
+    @Test
+    @TestTransaction
+    void modelTierAndCapabilitiesRoundTrip() {
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("model-tier-test").name("Model Tier Test").slot("tester")
+                                        .tenancyId("test-tenant").modelFamily("claude")
+                                        .capabilities(List.of(
+                                                AgentCapability.builder()
+                                                               .name("code-review")
+                                                               .modelTier("flagship")
+                                                               .modelCapabilities(Set.of("text", "tool-use"))
+                                                               .qualityHint(0.95)
+                                                               .build()))
+                                        .build();
+
+        registry.register(descriptor);
+        var found = registry.findById("model-tier-test", "test-tenant");
+
+        assertThat(found).isPresent();
+        var cap = found.get().capabilities().getFirst();
+        assertThat(cap.modelTier()).isEqualTo("flagship");
+        assertThat(cap.modelCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+    }
+
+    @Test
+    @TestTransaction
+    void invalidModelTierRejectedAtRegistration() {
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("bad-tier").name("Bad Tier").slot("tester")
+                                        .tenancyId("test-tenant").modelFamily("claude")
+                                        .capabilities(List.of(
+                                                AgentCapability.builder()
+                                                               .name("review")
+                                                               .modelTier("nonexistent-tier")
+                                                               .build()))
+                                        .build();
+
+        assertThatThrownBy(() -> registry.register(descriptor))
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("nonexistent-tier");
+    }
+
+    @Test
+    @TestTransaction
+    void validModelTierAcceptedAtRegistration() {
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("good-tier").name("Good Tier").slot("tester")
+                                        .tenancyId("test-tenant").modelFamily("claude")
+                                        .capabilities(List.of(
+                                                AgentCapability.builder()
+                                                               .name("review")
+                                                               .modelTier("flagship")
+                                                               .build()))
+                                        .build();
+
+        assertThatNoException().isThrownBy(() -> registry.register(descriptor));
+    }
+
+    @Test
+    @TestTransaction
+    void nullModelTierSkipsValidation() {
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("no-tier").name("No Tier").slot("tester")
+                                        .tenancyId("test-tenant").modelFamily("claude")
+                                        .capabilities(List.of(
+                                                AgentCapability.builder()
+                                                               .name("review")
+                                                               .build()))
+                                        .build();
+
+        assertThatNoException().isThrownBy(() -> registry.register(descriptor));
     }
 }

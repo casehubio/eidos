@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public final class AgentDescriptorComparator {
 
     static final int COMPARED_FIELD_COUNT = 20;
-    static final int COMPARED_CAPABILITY_FIELD_COUNT = 10;
+    static final int COMPARED_CAPABILITY_FIELD_COUNT = 12;
     static final int COMPARED_DISPOSITION_FIELD_COUNT = 8;
     static final int COMPARED_GOAL_FIELD_COUNT = 5;
     static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
@@ -123,6 +123,8 @@ public final class AgentDescriptorComparator {
         compareField(drifts, prefix + "tags", desired.tags(), actual.tags());
         compareField(drifts, prefix + "epistemicDomains", desired.epistemicDomains(), actual.epistemicDomains());
         compareField(drifts, prefix + "excludedDomains", desired.excludedDomains(), actual.excludedDomains());
+        compareField(drifts, prefix + "modelTier", desired.modelTier(), actual.modelTier());
+        compareField(drifts, prefix + "modelCapabilities", desired.modelCapabilities(), actual.modelCapabilities());
     }
 
     private static void compareGoals(List<FieldDrift> drifts,

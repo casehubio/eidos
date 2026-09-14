@@ -24,8 +24,19 @@ public class CapabilityVocabularyValidator {
                         "'" + cap.name() + "' is not a valid term in vocabulary '" + cap.capabilityVocabulary() + "'");
                 }
             }
+            if (cap.modelTier() != null) {
+                String modelTierUri = MODEL_TIER_VOCABULARY_URI;
+                if (vocabularyRegistry.isRegistered(modelTierUri)) {
+                    if (vocabularyRegistry.resolve(modelTierUri, cap.modelTier()).isEmpty()) {
+                        throw new AgentValidationException("modelTier",
+                            "'" + cap.modelTier() + "' is not a valid term in vocabulary '" + modelTierUri + "'");
+                    }
+                }
+            }
         }
     }
+
+    static final String MODEL_TIER_VOCABULARY_URI = "urn:casehub:vocab:model-tier";
 
     private CapabilityVocabularyValidator() {} // prevent instantiation
 }

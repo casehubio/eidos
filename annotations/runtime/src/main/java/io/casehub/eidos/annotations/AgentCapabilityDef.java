@@ -21,4 +21,6 @@ public @interface AgentCapabilityDef {
     String[] tags() default {};
     EpistemicDomain[] epistemicDomains() default {};
     String[] excludedDomains() default {};
+    String modelTier() default "";
+    String[] modelCapabilities() default {};
 }
