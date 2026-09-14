@@ -10,18 +10,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ModelTierTermTest {
 
     @Test
-    void flagshipSpecializesStandard() {
-        assertThat(ModelTierTerm.FLAGSHIP.specializes()).containsExactly(ModelTierTerm.STANDARD);
+    void flagshipIsRoot() {
+        assertThat(ModelTierTerm.FLAGSHIP.specializes()).isEmpty();
     }
 
     @Test
-    void standardSpecializesFast() {
-        assertThat(ModelTierTerm.STANDARD.specializes()).containsExactly(ModelTierTerm.FAST);
+    void standardSpecializesFlagship() {
+        assertThat(ModelTierTerm.STANDARD.specializes()).containsExactly(ModelTierTerm.FLAGSHIP);
     }
 
     @Test
-    void fastDoesNotSpecialize() {
-        assertThat(ModelTierTerm.FAST.specializes()).isEmpty();
+    void fastSpecializesStandard() {
+        assertThat(ModelTierTerm.FAST.specializes()).containsExactly(ModelTierTerm.STANDARD);
     }
 
     @Test
@@ -45,14 +45,14 @@ class ModelTierTermTest {
 
     @Test
     void linearChainDepth() {
-        VocabularyTerm current = ModelTierTerm.FLAGSHIP;
+        VocabularyTerm current = ModelTierTerm.FAST;
         int depth = 0;
         while (!current.specializes().isEmpty()) {
             current = current.specializes().getFirst();
             depth++;
         }
         assertThat(depth).isEqualTo(2);
-        assertThat(current).isEqualTo(ModelTierTerm.FAST);
+        assertThat(current).isEqualTo(ModelTierTerm.FLAGSHIP);
     }
 
     @Test

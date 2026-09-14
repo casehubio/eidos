@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.casehub</groupId>
+    <artifactId>casehub-eidos-examples</artifactId>
+    <version>0.2-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>casehub-eidos-example-model-selection-live</artifactId>
+  <name>CaseHub Eidos - Examples - Model Selection Live</name>
+  <description>Live LLM demo: eidos model tier vocabulary → AgentProvider → Claude invocation</description>
+
+  <dependencies>
+    <!-- Eidos — agent identity, vocabulary, rendering -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-memory</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-vocab</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Platform — CurrentPrincipal, preferences, credential store -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Platform agent stack — routing + Claude backend -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform-agent-router</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform-agent-claude</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Ledger in-memory — trust score store -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-ledger-memory</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Datasource for eidos JPA -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Skip by default — run with -Dcasehub.live=true -->
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>live</id>
+      <activation>
+        <property>
+          <name>casehub.live</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <skipTests>false</skipTests>
+              <systemPropertyVariables>
+                <casehub.live>true</casehub.live>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

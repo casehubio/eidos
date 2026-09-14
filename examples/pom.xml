@@ -23,5 +23,6 @@
     <module>child-companion-bot</module>
     <module>tutor-agent</module>
     <module>org-scenarios</module>
+    <module>model-selection-live</module>
   </modules>
 </project>

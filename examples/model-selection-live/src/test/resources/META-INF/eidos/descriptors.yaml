@@ -1,0 +1,28 @@
+descriptors:
+  - agentId: flagship-analyst
+    name: Flagship Analyst
+    slot: analyst
+    tenancyId: live-demo
+    provider: anthropic
+    modelFamily: claude
+    capabilities:
+      - name: deep-analysis
+        description: Deep reasoning and analysis requiring flagship-tier model
+        modelTier: flagship
+        modelCapabilities: [text, tool-use]
+        qualityHint: 0.98
+        latencyHintP50Ms: 15000
+        costHint: premium
+      - name: quick-summary
+        description: Fast summarisation suitable for standard-tier model
+        modelTier: standard
+        modelCapabilities: [text]
+        qualityHint: 0.85
+        latencyHintP50Ms: 3000
+        costHint: low
+    briefing: >-
+      You are a flagship analyst agent. You have two capabilities with
+      different model tier requirements: deep-analysis needs a flagship
+      model for complex reasoning, while quick-summary works fine with
+      a standard model. When asked, describe your capabilities and the
+      model tiers they require.

@@ -11,19 +11,19 @@ import java.util.List;
 public enum ModelTierTerm implements VocabularyTerm {
 
     FLAGSHIP("flagship", "Flagship",
-             "Highest-capability models with advanced reasoning, code generation, and complex instruction following") {
+             "Highest-capability models with advanced reasoning, code generation, and complex instruction following"),
+    STANDARD("standard", "Standard",
+             "Balanced models suitable for most production tasks — good quality at moderate cost") {
+        @Override public List<VocabularyTerm> specializes() {
+            return List.of(FLAGSHIP);
+        }
+    },
+    FAST("fast", "Fast",
+         "Low-latency models optimized for speed and throughput over reasoning depth") {
         @Override public List<VocabularyTerm> specializes() {
             return List.of(STANDARD);
         }
     },
-    STANDARD("standard", "Standard",
-             "Balanced models suitable for most production tasks — good quality at moderate cost") {
-        @Override public List<VocabularyTerm> specializes() {
-            return List.of(FAST);
-        }
-    },
-    FAST("fast", "Fast",
-         "Low-latency models optimized for speed and throughput over reasoning depth"),
     EMBEDDING("embedding", "Embedding",
               "Embedding models for vector representations — different modality, not a compute tier");
 
