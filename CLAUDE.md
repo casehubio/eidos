@@ -1,12 +1,12 @@
 # eidos Workspace
 **Name:** eidos
 
-**Project repo:** /Users/mdproctor/claude/casehub/eidos
+**Project repo:** /Users/mdproctor/claude/casehub/slots/192/eidos
 **Workspace type:** public
 
 ## Session Start
 
-Run `add-dir /Users/mdproctor/claude/public/casehub/eidos` before any other work.
+Run `add-dir /Users/mdproctor/claude/casehub/slots/192/wsp-casehub-eidos` before any other work.
 
 ## Artifact Locations
 
@@ -36,8 +36,8 @@ Run `add-dir /Users/mdproctor/claude/public/casehub/eidos` before any other work
 ## Git Discipline
 
 Two git repositories are active in every session:
-- **Workspace** (`/Users/mdproctor/claude/public/casehub/eidos`) — staging area for specs and ADRs; permanent home for blog, handover, plans, snapshots
-- **Project repo** (`/Users/mdproctor/claude/casehub/eidos`) — source code + promoted specs (`docs/specs/`) + promoted ADRs (`docs/adr/`)
+- **Workspace** (`/Users/mdproctor/claude/casehub/slots/192/wsp-casehub-eidos`) — staging area for specs and ADRs; permanent home for blog, handover, plans, snapshots
+- **Project repo** (`/Users/mdproctor/claude/casehub/slots/192/eidos`) — source code + promoted specs (`docs/specs/`) + promoted ADRs (`docs/adr/`)
 
 Before any git operation, run `git rev-parse --show-toplevel` to confirm which repo is currently active. Do not assume — the session may have opened in either.
 
