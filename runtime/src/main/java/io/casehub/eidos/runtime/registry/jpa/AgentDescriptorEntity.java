@@ -63,6 +63,8 @@ public class AgentDescriptorEntity {
     @Column(columnDefinition = "TEXT")
     String templates;
 
+    @Column(name = "extension_data", columnDefinition = "TEXT")
+    String extensionData;
 
     @Column(columnDefinition = "TEXT")
     String disposition;

@@ -26,7 +26,8 @@ public record AgentDescriptor(
         String briefing,
         List<TemplateRef> templates,
         List<AgentGoal> goals,
-        List<AgentConstraint> constraints
+        List<AgentConstraint> constraints,
+        Map<String, Object> extensionData
 ) {
     public AgentDescriptor {
         capabilities = capabilities != null ? List.copyOf(capabilities) : List.of();
@@ -107,6 +108,14 @@ public record AgentDescriptor(
                 }
             }
         }
+        if (extensionData != null) {
+            extensionData = ExtensionDataCopier.deepCopy(extensionData);
+            long estimatedSize = ExtensionDataCopier.estimateSize(extensionData);
+            if (estimatedSize > AgentDescriptorValidator.MAX_EXTENSION_DATA_SIZE) {
+                throw new AgentValidationException("extensionData",
+                    "estimated size " + estimatedSize + " exceeds maximum " + AgentDescriptorValidator.MAX_EXTENSION_DATA_SIZE);
+            }
+        }
     }
 
     public Optional<String> vocabUriForSlot() {
@@ -158,7 +167,8 @@ public record AgentDescriptor(
                 .dataHandlingPolicy(this.dataHandlingPolicy)
                 .tenancyId(this.tenancyId).briefing(this.briefing)
                 .templates(this.templates).goals(this.goals)
-                .constraints(this.constraints);
+                .constraints(this.constraints)
+                .extensionData(this.extensionData);
     }
 
     public static final class Builder {
@@ -174,6 +184,7 @@ public record AgentDescriptor(
         private List<TemplateRef> templates;
         private List<AgentGoal>       goals;
         private List<AgentConstraint> constraints;
+        private Map<String, Object>  extensionData;
 
         public Builder agentId(String v)                                {
                                                                             this.agentId = v;
@@ -285,6 +296,11 @@ public record AgentDescriptor(
                                                                             return this;
                                                                         }
 
+        public Builder extensionData(Map<String, Object> v)            {
+                                                                            this.extensionData = v;
+                                                                            return this;
+                                                                        }
+
         public AgentDescriptor build() {
             return new AgentDescriptor(
                     agentId, name, version, provider,
@@ -294,7 +310,8 @@ public record AgentDescriptor(
                     axisVocabularies, slot, capabilities, disposition,
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
                     templates,
-                    goals, constraints);
+                    goals, constraints,
+                    extensionData);
         }
     }
 }

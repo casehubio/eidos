@@ -98,6 +98,10 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
             builder.templates(templates);
         }
 
+        if (root.has("extensionData") && root.get("extensionData").isObject()) {
+            builder.extensionData(readMapTree(root.get("extensionData")));
+        }
+
         return builder.build();
     }
 
@@ -160,5 +164,27 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
         var list = new ArrayList<String>();
         for (JsonNode item : arrayNode) list.add(item.asText());
         return list;
+    }
+
+    private static Map<String, Object> readMapTree(JsonNode node) {
+        var map = new LinkedHashMap<String, Object>();
+        node.fields().forEachRemaining(e -> map.put(e.getKey(), readValueTree(e.getValue())));
+        return map;
+    }
+
+    private static Object readValueTree(JsonNode node) {
+        if (node.isNull()) return null;
+        if (node.isTextual()) return node.asText();
+        if (node.isBoolean()) return node.asBoolean();
+        if (node.isInt()) return node.asInt();
+        if (node.isLong()) return node.asLong();
+        if (node.isDouble() || node.isFloat()) return node.asDouble();
+        if (node.isObject()) return readMapTree(node);
+        if (node.isArray()) {
+            var list = new ArrayList<>();
+            for (JsonNode item : node) list.add(readValueTree(item));
+            return list;
+        }
+        return node.asText();
     }
 }

@@ -498,4 +498,32 @@ class AgentDescriptorComparatorTest {
         assertThat(result.drifts()).anyMatch(d -> d.field().equals("constraints[c].severity"));
     }
 
+    // --- extensionData drift ---
+
+    @Test
+    void extensionData_drift_detected() {
+        var desired = withField(b -> b.extensionData(Map.of("k", "v1")));
+        var actual = withField(b -> b.extensionData(Map.of("k", "v2")));
+        var result = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.matches()).isFalse();
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("extensionData"));
+    }
+
+    @Test
+    void extensionData_null_vs_present_drift() {
+        var desired = base();
+        var actual = withField(b -> b.extensionData(Map.of("k", "v")));
+        var result = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.matches()).isFalse();
+        assertThat(result.drifts()).anyMatch(d -> d.field().equals("extensionData"));
+    }
+
+    @Test
+    void extensionData_equal_no_drift() {
+        var desired = withField(b -> b.extensionData(Map.of("k", "v")));
+        var actual = withField(b -> b.extensionData(Map.of("k", "v")));
+        var result = AgentDescriptorComparator.compare(desired, actual);
+        assertThat(result.drifts()).noneMatch(d -> d.field().equals("extensionData"));
+    }
+
 }

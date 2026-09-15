@@ -2,6 +2,7 @@ package io.casehub.eidos.api;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -405,5 +406,56 @@ class AgentDescriptorTest {
         var nullBriefing = original.toBuilder().briefing(null).build();
         assertThat(nullBriefing.briefing()).isNull();
         assertThat(nullBriefing.agentId()).isEqualTo("test-agent");
+    }
+
+    // ── extensionData ─────────────────────────────────────────────────────────
+
+    @Test
+    void extensionData_nullByDefault() {
+        var d = minimal("a", "t");
+        assertThat(d.extensionData()).isNull();
+    }
+
+    @Test
+    void extensionData_deepCopiedAtConstruction() {
+        var inner = new LinkedHashMap<String, Object>();
+        inner.put("key", "value");
+        var ext = new LinkedHashMap<String, Object>();
+        ext.put("nested", inner);
+
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .extensionData(ext)
+            .build();
+
+        inner.put("mutated", "yes");
+        assertThat(((Map<?, ?>) d.extensionData().get("nested")).get("mutated")).isNull();
+    }
+
+    @Test
+    void extensionData_oversized_throws() {
+        var ext = new LinkedHashMap<String, Object>();
+        ext.put("huge", "x".repeat(70000));
+
+        assertThatThrownBy(() ->
+            AgentDescriptor.builder()
+                .agentId("a").name("n").slot("s").tenancyId("t")
+                .extensionData(ext)
+                .build())
+            .isInstanceOf(AgentValidationException.class)
+            .hasMessageContaining("extensionData");
+    }
+
+    @Test
+    void extensionData_preservedInToBuilder() {
+        var ext = new LinkedHashMap<String, Object>();
+        ext.put("key", "value");
+        var d = AgentDescriptor.builder()
+            .agentId("a").name("n").slot("s").tenancyId("t")
+            .extensionData(ext)
+            .build();
+
+        var rebuilt = d.toBuilder().build();
+        assertThat(rebuilt.extensionData()).isEqualTo(d.extensionData());
     }
 }

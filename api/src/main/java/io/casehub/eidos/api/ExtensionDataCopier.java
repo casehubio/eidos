@@ -22,7 +22,6 @@ public final class ExtensionDataCopier {
         return estimateMapSize(source);
     }
 
-    @SuppressWarnings("unchecked")
     private static Object copyValue(Object value) {
         if (value == null) return null;
         if (value instanceof String || value instanceof Number || value instanceof Boolean) {

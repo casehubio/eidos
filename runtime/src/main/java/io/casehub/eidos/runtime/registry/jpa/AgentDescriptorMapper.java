@@ -39,7 +39,8 @@ class AgentDescriptorMapper {
                 e.briefing,
                 readJson(e.templates, new TypeReference<List<TemplateRef>>() {}),
                 e.goals.stream().map(this::toGoal).toList(),
-                e.constraints.stream().map(this::toConstraint).toList()
+                e.constraints.stream().map(this::toConstraint).toList(),
+                readJson(e.extensionData, new TypeReference<Map<String, Object>>() {})
         );
     }
 
@@ -63,6 +64,7 @@ class AgentDescriptorMapper {
         e.dataHandlingPolicy    = d.dataHandlingPolicy();
         e.briefing              = d.briefing();
         e.templates             = writeJson(d.templates());
+        e.extensionData         = writeJson(d.extensionData());
         e.disposition           = writeJson(d.disposition());
         d.capabilities().stream()
          .map(c -> toCapabilityEntity(c, e))

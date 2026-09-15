@@ -254,4 +254,41 @@ class AgentDescriptorDeserializerTest {
         assertThat(cap.modelTier()).isNull();
         assertThat(cap.modelCapabilities()).isNull();
     }
+
+    @Test
+    void extensionData_deserializesNestedStructure() throws Exception {
+        var yaml = """
+                   agentId: ext-test
+                   name: Extension Test
+                   slot: tester
+                   tenancyId: default
+                   extensionData:
+                     io.casehub.manor.social:
+                       drives:
+                         - belonging
+                         - approval
+                       norms:
+                         formality: 0.3
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.extensionData()).isNotNull();
+        var social = (java.util.Map<?, ?>) d.extensionData().get("io.casehub.manor.social");
+        assertThat(social).isNotNull();
+        var drives = (java.util.List<?>) social.get("drives");
+        assertThat(drives).isEqualTo(java.util.List.of("belonging", "approval"));
+        var norms = (java.util.Map<?, ?>) social.get("norms");
+        assertThat(norms.get("formality")).isEqualTo(0.3);
+    }
+
+    @Test
+    void extensionData_absent_isNull() throws Exception {
+        var yaml = """
+                   agentId: no-ext
+                   name: No Ext
+                   slot: tester
+                   tenancyId: default
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.extensionData()).isNull();
+    }
 }

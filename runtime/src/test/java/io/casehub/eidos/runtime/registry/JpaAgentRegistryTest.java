@@ -763,4 +763,39 @@ class JpaAgentRegistryTest {
 
         assertThatNoException().isThrownBy(() -> registry.register(descriptor));
     }
+
+    @Test
+    @TestTransaction
+    void extensionData_roundTrip() {
+        var ext = new java.util.LinkedHashMap<String, Object>();
+        ext.put("io.casehub.test.config", Map.of("level", 5, "name", "test"));
+        ext.put("io.casehub.test.flags", List.of("alpha", "beta"));
+
+        var d = AgentDescriptor.builder()
+            .agentId("ext-roundtrip").name("Ext Test").slot("tester")
+            .tenancyId("test-tenant")
+            .extensionData(ext)
+            .build();
+        registry.register(d);
+
+        var found = registry.findById("ext-roundtrip", "test-tenant");
+        assertThat(found).isPresent();
+        assertThat(found.get().extensionData()).isNotNull();
+        assertThat(found.get().extensionData()).containsKey("io.casehub.test.config");
+        assertThat(found.get().extensionData()).containsKey("io.casehub.test.flags");
+    }
+
+    @Test
+    @TestTransaction
+    void extensionData_null_roundTrip() {
+        var d = AgentDescriptor.builder()
+            .agentId("ext-null").name("Ext Null").slot("tester")
+            .tenancyId("test-tenant")
+            .build();
+        registry.register(d);
+
+        var found = registry.findById("ext-null", "test-tenant");
+        assertThat(found).isPresent();
+        assertThat(found.get().extensionData()).isNull();
+    }
 }
