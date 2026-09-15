@@ -119,6 +119,14 @@ public class EidosAnnotationsRecorder {
                 builder.constraints(constraints);
             }
 
+            if (config.extensionEntries != null && config.extensionEntries.length > 0) {
+                var extMap = new LinkedHashMap<String, Object>();
+                for (var entry : config.extensionEntries) {
+                    extMap.put(entry.key, entry.value);
+                }
+                builder.extensionData(extMap);
+            }
+
             buildCapabilities(config, builder);
             buildTemplates(config, builder);
 

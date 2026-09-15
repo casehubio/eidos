@@ -35,6 +35,7 @@ public class AnnotatedAgentConfig {
     public String[]            capabilities;
     public CapabilityConfig[]  richCapabilities;
     public TemplateRefConfig[] templateRefs;
+    public ExtensionEntryConfig[] extensionEntries;
 
     public AnnotatedAgentConfig() {}
 
@@ -109,5 +110,12 @@ public class AnnotatedAgentConfig {
         public String value;
 
         public TemplateArgConfig() {}
+    }
+
+    public static class ExtensionEntryConfig {
+        public String key;
+        public String value;
+
+        public ExtensionEntryConfig() {}
     }
 }

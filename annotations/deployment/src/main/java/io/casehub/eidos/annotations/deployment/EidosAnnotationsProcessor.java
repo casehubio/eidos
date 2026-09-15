@@ -49,6 +49,7 @@ class EidosAnnotationsProcessor {
     private static final DotName AGENT_CAPABILITIES = DotName.createSimple(AgentCapabilities.class);
     private static final DotName AGENT_TEMPLATE_REF = DotName.createSimple(AgentTemplateRef.class);
     private static final DotName AGENT_TEMPLATES = DotName.createSimple(AgentTemplates.class);
+    private static final DotName EXTENSION_DATA = DotName.createSimple("io.casehub.eidos.annotations.ExtensionData");
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -254,6 +255,7 @@ class EidosAnnotationsProcessor {
         extractConstraints(classInfo, config, index);
         extractCapabilities(classInfo, config, index);
         extractTemplates(classInfo, config, index);
+        extractExtensionData(classInfo, config);
 
         validateGoalCapabilities(classInfo, config);
 
@@ -535,6 +537,19 @@ class EidosAnnotationsProcessor {
         }
     }
 
+
+    private void extractExtensionData(ClassInfo classInfo, AnnotatedAgentConfig config) {
+        var ann = classInfo.annotation(EXTENSION_DATA);
+        if (ann == null) return;
+        var entries = ann.value().asNestedArray();
+        config.extensionEntries = new AnnotatedAgentConfig.ExtensionEntryConfig[entries.length];
+        for (int i = 0; i < entries.length; i++) {
+            var ec = new AnnotatedAgentConfig.ExtensionEntryConfig();
+            ec.key = entries[i].value("key").asString();
+            ec.value = entries[i].value("value").asString();
+            config.extensionEntries[i] = ec;
+        }
+    }
 
     private static String stringValue(AnnotationInstance ann, String key) {
         return AnnotationProcessorUtils.stringValue(ann, key);
