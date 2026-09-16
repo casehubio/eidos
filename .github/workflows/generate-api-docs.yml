@@ -8,5 +8,4 @@ on:
 jobs:
   generate:
     uses: casehubio/parent/.github/workflows/generate-api-docs.yml@main
-    secrets: inherit
 
