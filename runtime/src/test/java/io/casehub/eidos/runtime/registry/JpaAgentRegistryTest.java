@@ -693,26 +693,53 @@ class JpaAgentRegistryTest {
 
     @Test
     @TestTransaction
-    void modelTierAndCapabilitiesRoundTrip() {
+    void modelQueryRoundTrip() {
+        var query = io.casehub.platform.api.model.ModelQuery.builder()
+                .tier(io.casehub.platform.api.model.ModelTier.FLAGSHIP)
+                .requiredCapabilities(Set.of("text", "tool-use"))
+                .build();
         var descriptor = AgentDescriptor.builder()
-                                        .agentId("model-tier-test").name("Model Tier Test").slot("tester")
+                                        .agentId("model-query-test").name("Model Query Test").slot("tester")
                                         .tenancyId("test-tenant").modelFamily("claude")
                                         .capabilities(List.of(
                                                 AgentCapability.builder()
                                                                .name("code-review")
-                                                               .modelTier("flagship")
-                                                               .modelCapabilities(Set.of("text", "tool-use"))
+                                                               .model(query)
                                                                .qualityHint(0.95)
                                                                .build()))
                                         .build();
 
         registry.register(descriptor);
-        var found = registry.findById("model-tier-test", "test-tenant");
+        var found = registry.findById("model-query-test", "test-tenant");
 
         assertThat(found).isPresent();
         var cap = found.get().capabilities().getFirst();
-        assertThat(cap.modelTier()).isEqualTo("flagship");
-        assertThat(cap.modelCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+        assertThat(cap.model()).isNotNull();
+        assertThat(cap.model().tier()).isEqualTo(io.casehub.platform.api.model.ModelTier.FLAGSHIP);
+        assertThat(cap.model().requiredCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+        assertThat(cap.modelRef()).isNull();
+    }
+
+    @Test
+    @TestTransaction
+    void modelRefRoundTrip() {
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("model-ref-test").name("Model Ref Test").slot("tester")
+                                        .tenancyId("test-tenant").modelFamily("claude")
+                                        .capabilities(List.of(
+                                                AgentCapability.builder()
+                                                               .name("review")
+                                                               .modelRef("reasoning-heavy")
+                                                               .build()))
+                                        .build();
+
+        registry.register(descriptor);
+        var found = registry.findById("model-ref-test", "test-tenant");
+
+        assertThat(found).isPresent();
+        var cap = found.get().capabilities().getFirst();
+        assertThat(cap.modelRef()).isEqualTo("reasoning-heavy");
+        assertThat(cap.model()).isNull();
     }
 
     @Test
@@ -724,13 +751,12 @@ class JpaAgentRegistryTest {
                                         .capabilities(List.of(
                                                 AgentCapability.builder()
                                                                .name("review")
-                                                               .modelTier("nonexistent-tier")
+                                                               .model(io.casehub.platform.api.model.ModelQuery.builder()
+                                                                   .tier(io.casehub.platform.api.model.ModelTier.valueOf("FLAGSHIP")).build())
                                                                .build()))
                                         .build();
 
-        assertThatThrownBy(() -> registry.register(descriptor))
-                .isInstanceOf(AgentValidationException.class)
-                .hasMessageContaining("nonexistent-tier");
+        assertThatNoException().isThrownBy(() -> registry.register(descriptor));
     }
 
     @Test
@@ -742,7 +768,8 @@ class JpaAgentRegistryTest {
                                         .capabilities(List.of(
                                                 AgentCapability.builder()
                                                                .name("review")
-                                                               .modelTier("flagship")
+                                                               .model(io.casehub.platform.api.model.ModelQuery.builder()
+                                                                   .tier(io.casehub.platform.api.model.ModelTier.FLAGSHIP).build())
                                                                .build()))
                                         .build();
 

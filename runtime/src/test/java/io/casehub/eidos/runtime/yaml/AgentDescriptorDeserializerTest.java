@@ -208,7 +208,7 @@ class AgentDescriptorDeserializerTest {
     }
 
     @Test
-    void capabilityModelTierAndModelCapabilitiesDeserialize() throws Exception {
+    void capabilityModelInlineConstraintsDeserialize() throws Exception {
         var yaml = """
                    agentId: model-test
                    name: Model Test
@@ -216,30 +216,54 @@ class AgentDescriptorDeserializerTest {
                    tenancyId: default
                    capabilities:
                      - name: code-review
-                       modelTier: flagship
-                       modelCapabilities:
-                         - text
-                         - tool-use
+                       model:
+                         tier: FLAGSHIP
+                         capabilities:
+                           - text
+                           - tool-use
+                         max-cost: HIGH
                        qualityHint: 0.95
                      - name: lint
-                       modelTier: fast
-                       modelCapabilities: [text]
+                       model:
+                         tier: FAST
+                         capabilities: [text]
                    """;
 
         var descriptor = mapper.readValue(yaml, AgentDescriptor.class);
         assertThat(descriptor.capabilities()).hasSize(2);
 
         var review = descriptor.capabilities().get(0);
-        assertThat(review.modelTier()).isEqualTo("flagship");
-        assertThat(review.modelCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+        assertThat(review.model()).isNotNull();
+        assertThat(review.model().tier()).isEqualTo(io.casehub.platform.api.model.ModelTier.FLAGSHIP);
+        assertThat(review.model().requiredCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+        assertThat(review.model().maxCostTier()).isEqualTo(io.casehub.platform.api.model.CostTier.HIGH);
+        assertThat(review.modelRef()).isNull();
 
         var lint = descriptor.capabilities().get(1);
-        assertThat(lint.modelTier()).isEqualTo("fast");
-        assertThat(lint.modelCapabilities()).containsExactly("text");
+        assertThat(lint.model().tier()).isEqualTo(io.casehub.platform.api.model.ModelTier.FAST);
+        assertThat(lint.model().requiredCapabilities()).containsExactly("text");
     }
 
     @Test
-    void capabilityWithoutModelTierDeserializesAsNull() throws Exception {
+    void capabilityModelStringShorthandDeserialize() throws Exception {
+        var yaml = """
+                   agentId: model-test
+                   name: Model Test
+                   slot: tester
+                   tenancyId: default
+                   capabilities:
+                     - name: review
+                       model: reasoning-heavy
+                   """;
+
+        var descriptor = mapper.readValue(yaml, AgentDescriptor.class);
+        var cap = descriptor.capabilities().getFirst();
+        assertThat(cap.modelRef()).isEqualTo("reasoning-heavy");
+        assertThat(cap.model()).isNull();
+    }
+
+    @Test
+    void capabilityWithoutModelDeserializesAsNull() throws Exception {
         var yaml = """
                    agentId: no-model
                    name: No Model
@@ -250,9 +274,9 @@ class AgentDescriptorDeserializerTest {
                    """;
 
         var descriptor = mapper.readValue(yaml, AgentDescriptor.class);
-        var cap        = descriptor.capabilities().getFirst();
-        assertThat(cap.modelTier()).isNull();
-        assertThat(cap.modelCapabilities()).isNull();
+        var cap = descriptor.capabilities().getFirst();
+        assertThat(cap.modelRef()).isNull();
+        assertThat(cap.model()).isNull();
     }
 
     @Test

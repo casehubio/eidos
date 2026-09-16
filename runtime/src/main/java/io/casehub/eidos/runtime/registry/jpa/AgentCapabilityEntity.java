@@ -49,11 +49,11 @@ public class AgentCapabilityEntity {
     @Column(name = "cost_hint")
     String costHint;
 
-    @Column(name = "model_tier")
-    String modelTier;
+    @Column(name = "model_ref", length = 200)
+    String modelRef;
 
-    @Column(name = "model_capabilities", columnDefinition = "TEXT")
-    String modelCapabilities;
+    @Column(name = "model", columnDefinition = "TEXT")
+    String model;
 
     @Column(name = "input_types", columnDefinition = "TEXT")
     String inputTypes;

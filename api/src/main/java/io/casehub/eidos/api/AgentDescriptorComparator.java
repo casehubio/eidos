@@ -124,8 +124,8 @@ public final class AgentDescriptorComparator {
         compareField(drifts, prefix + "tags", desired.tags(), actual.tags());
         compareField(drifts, prefix + "epistemicDomains", desired.epistemicDomains(), actual.epistemicDomains());
         compareField(drifts, prefix + "excludedDomains", desired.excludedDomains(), actual.excludedDomains());
-        compareField(drifts, prefix + "modelTier", desired.modelTier(), actual.modelTier());
-        compareField(drifts, prefix + "modelCapabilities", desired.modelCapabilities(), actual.modelCapabilities());
+        compareField(drifts, prefix + "modelRef", desired.modelRef(), actual.modelRef());
+        compareField(drifts, prefix + "model", desired.model(), actual.model());
     }
 
     private static void compareGoals(List<FieldDrift> drifts,

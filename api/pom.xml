@@ -15,6 +15,12 @@
   <description>Agent descriptor types and SPI interfaces — pure Java, no Quarkus, safe for any module to depend on</description>
 
   <dependencies>
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- Testing — pure JUnit 5, no Quarkus runtime -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>

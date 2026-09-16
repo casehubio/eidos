@@ -160,9 +160,15 @@ public class EidosAnnotationsRecorder {
                 if (cap.excludedDomains != null && cap.excludedDomains.length > 0) {
                     cb.excludedDomains(Set.of(cap.excludedDomains));
                 }
-                if (notEmpty(cap.modelTier)) {cb.modelTier(cap.modelTier);}
-                if (cap.modelCapabilities != null && cap.modelCapabilities.length > 0) {
-                    cb.modelCapabilities(Set.of(cap.modelCapabilities));
+                if (notEmpty(cap.modelRef)) {
+                    cb.modelRef(cap.modelRef);
+                } else if (notEmpty(cap.modelTier)) {
+                    var qb = io.casehub.platform.api.model.ModelQuery.builder();
+                    qb.tier(io.casehub.platform.api.model.ModelTier.valueOf(cap.modelTier.toUpperCase()));
+                    if (cap.modelCapabilities != null && cap.modelCapabilities.length > 0) {
+                        qb.requiredCapabilities(Set.of(cap.modelCapabilities));
+                    }
+                    cb.model(qb.build());
                 }
                 caps.add(cb.build());
             }

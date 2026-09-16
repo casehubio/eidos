@@ -8,15 +8,17 @@ descriptors:
     capabilities:
       - name: deep-analysis
         description: Deep reasoning and analysis requiring flagship-tier model
-        modelTier: flagship
-        modelCapabilities: [text, tool-use]
+        model:
+          tier: FLAGSHIP
+          capabilities: [text, tool-use]
         qualityHint: 0.98
         latencyHintP50Ms: 15000
         costHint: premium
       - name: quick-summary
         description: Fast summarisation suitable for standard-tier model
-        modelTier: standard
-        modelCapabilities: [text]
+        model:
+          tier: STANDARD
+          capabilities: [text]
         qualityHint: 0.85
         latencyHintP50Ms: 3000
         costHint: low

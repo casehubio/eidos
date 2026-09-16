@@ -24,12 +24,23 @@ public class CapabilityVocabularyValidator {
                         "'" + cap.name() + "' is not a valid term in vocabulary '" + cap.capabilityVocabulary() + "'");
                 }
             }
-            if (cap.modelTier() != null) {
+            if (cap.model() != null && cap.model().tier() != null) {
                 String modelTierUri = MODEL_TIER_VOCABULARY_URI;
                 if (vocabularyRegistry.isRegistered(modelTierUri)) {
-                    if (vocabularyRegistry.resolve(modelTierUri, cap.modelTier()).isEmpty()) {
-                        throw new AgentValidationException("modelTier",
-                            "'" + cap.modelTier() + "' is not a valid term in vocabulary '" + modelTierUri + "'");
+                    String tierValue = cap.model().tier().name().toLowerCase();
+                    if (vocabularyRegistry.resolve(modelTierUri, tierValue).isEmpty()) {
+                        throw new AgentValidationException("model.tier",
+                            "'" + tierValue + "' is not a valid term in vocabulary '" + modelTierUri + "'");
+                    }
+                }
+            }
+            if (cap.modelRef() != null && io.casehub.platform.api.model.ModelRef.isTierRef(cap.modelRef())) {
+                String modelTierUri = MODEL_TIER_VOCABULARY_URI;
+                if (vocabularyRegistry.isRegistered(modelTierUri)) {
+                    String tierValue = io.casehub.platform.api.model.ModelRef.parseTier(cap.modelRef()).name().toLowerCase();
+                    if (vocabularyRegistry.resolve(modelTierUri, tierValue).isEmpty()) {
+                        throw new AgentValidationException("modelRef",
+                            "'" + tierValue + "' is not a valid term in vocabulary '" + modelTierUri + "'");
                     }
                 }
             }

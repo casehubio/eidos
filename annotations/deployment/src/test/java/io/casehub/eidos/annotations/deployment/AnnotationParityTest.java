@@ -29,7 +29,10 @@ class AnnotationParityTest {
 
     private static final Map<String, String> CAPABILITY_RENAMES = Map.of(
             "epistemicDomains", "epistemicDomains",
-            "excludedDomains", "excludedDomains"
+            "excludedDomains", "excludedDomains",
+            "model", "modelRef",
+            "modelTier", "model",
+            "modelCapabilities", "model"
                                                                         );
 
     private static final Map<String, String> TEMPLATE_REF_RENAMES = Map.of(

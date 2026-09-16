@@ -122,8 +122,24 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
             b.epistemicDomains(map);
         }
         if (node.has("excludedDomains")) b.excludedDomains(new LinkedHashSet<>(stringList(node.get("excludedDomains"))));
-        if (node.has("modelTier")) b.modelTier(node.get("modelTier").asText());
-        if (node.has("modelCapabilities")) b.modelCapabilities(new LinkedHashSet<>(stringList(node.get("modelCapabilities"))));
+        if (node.has("model")) {
+            var modelNode = node.get("model");
+            if (modelNode.isTextual()) {
+                b.modelRef(modelNode.asText());
+            } else if (modelNode.isObject()) {
+                var qb = io.casehub.platform.api.model.ModelQuery.builder();
+                if (modelNode.has("vendor")) qb.vendor(modelNode.get("vendor").asText());
+                if (modelNode.has("family")) qb.family(modelNode.get("family").asText());
+                if (modelNode.has("tier")) qb.tier(io.casehub.platform.api.model.ModelTier.valueOf(modelNode.get("tier").asText()));
+                if (modelNode.has("capabilities")) qb.requiredCapabilities(new LinkedHashSet<>(stringList(modelNode.get("capabilities"))));
+                if (modelNode.has("locality")) qb.locality(io.casehub.platform.api.model.ModelLocality.valueOf(modelNode.get("locality").asText()));
+                if (modelNode.has("max-cost")) qb.maxCostTier(io.casehub.platform.api.model.CostTier.valueOf(modelNode.get("max-cost").asText()));
+                if (modelNode.has("min-context")) qb.minContextWindow(modelNode.get("min-context").asInt());
+                if (modelNode.has("min-output")) qb.minMaxOutput(modelNode.get("min-output").asInt());
+                if (modelNode.has("prefer-vendor")) qb.preferVendor(modelNode.get("prefer-vendor").asText());
+                b.model(qb.build());
+            }
+        }
         return b.build();
     }
 

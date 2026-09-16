@@ -56,8 +56,7 @@ class ModelSelectionLiveTest {
         System.out.println();
         System.out.println("Agent:             " + desc.name());
         System.out.println("Capability:        " + cap.name());
-        System.out.println("Model tier:        " + cap.modelTier());
-        System.out.println("Model capabilities:" + cap.modelCapabilities());
+        System.out.println("Model:             " + (cap.modelRef() != null ? cap.modelRef() : cap.model()));
         System.out.println("Quality hint:      " + cap.qualityHint());
         System.out.println();
 

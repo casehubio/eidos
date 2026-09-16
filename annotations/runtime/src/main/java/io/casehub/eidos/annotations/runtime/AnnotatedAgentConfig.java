@@ -85,6 +85,7 @@ public class AnnotatedAgentConfig {
         public String[]                tags;
         public EpistemicDomainConfig[] epistemicDomains;
         public String[]                excludedDomains;
+        public String                  modelRef;
         public String                  modelTier;
         public String[]                modelCapabilities;
 

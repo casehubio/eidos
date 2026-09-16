@@ -66,13 +66,13 @@ class ModelSelectionScenarioTest {
 
         var deepAnalysis = caps.stream()
             .filter(c -> c.name().equals("deep-analysis")).findFirst().orElseThrow();
-        assertThat(deepAnalysis.modelTier()).isEqualTo("flagship");
-        assertThat(deepAnalysis.modelCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+        assertThat(deepAnalysis.model().tier()).isEqualTo(ModelTier.FLAGSHIP);
+        assertThat(deepAnalysis.model().requiredCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
 
         var docSummary = caps.stream()
             .filter(c -> c.name().equals("document-summary")).findFirst().orElseThrow();
-        assertThat(docSummary.modelTier()).isEqualTo("standard");
-        assertThat(docSummary.modelCapabilities()).containsExactly("text");
+        assertThat(docSummary.model().tier()).isEqualTo(ModelTier.STANDARD);
+        assertThat(docSummary.model().requiredCapabilities()).containsExactly("text");
     }
 
     @Test
@@ -81,8 +81,8 @@ class ModelSelectionScenarioTest {
         var visualReview = desc.capabilities().stream()
             .filter(c -> c.name().equals("visual-code-review")).findFirst().orElseThrow();
 
-        assertThat(visualReview.modelTier()).isEqualTo("flagship");
-        assertThat(visualReview.modelCapabilities()).contains("vision");
+        assertThat(visualReview.model().tier()).isEqualTo(ModelTier.FLAGSHIP);
+        assertThat(visualReview.model().requiredCapabilities()).contains("vision");
     }
 
     @Test
@@ -90,7 +90,7 @@ class ModelSelectionScenarioTest {
         var desc = registry.findById("embedding-indexer", TENANCY).orElseThrow();
         var cap = desc.capabilities().getFirst();
 
-        assertThat(cap.modelTier()).isEqualTo("embedding");
+        assertThat(cap.model().tier()).isEqualTo(ModelTier.EMBEDDING);
     }
 
     // ── Vocabulary subsumption: FLAGSHIP satisfies STANDARD ──────────
@@ -129,7 +129,7 @@ class ModelSelectionScenarioTest {
         var cap = desc.capabilities().stream()
             .filter(c -> c.name().equals("visual-code-review")).findFirst().orElseThrow();
 
-        var resolved = resolveModel(cap.modelTier(), cap.modelCapabilities(), CostTier.PREMIUM);
+        var resolved = resolveModel(cap.model(), CostTier.PREMIUM);
         assertThat(resolved).isNotNull();
         assertThat(resolved.id()).isEqualTo("claude-opus-5");
     }
@@ -140,7 +140,7 @@ class ModelSelectionScenarioTest {
         var cap = desc.capabilities().stream()
             .filter(c -> c.name().equals("document-summary")).findFirst().orElseThrow();
 
-        var resolved = resolveModel(cap.modelTier(), cap.modelCapabilities(), CostTier.PREMIUM);
+        var resolved = resolveModel(cap.model(), CostTier.PREMIUM);
         assertThat(resolved).isNotNull();
         assertThat(resolved.id()).isEqualTo("claude-sonnet-5");
     }
@@ -150,7 +150,7 @@ class ModelSelectionScenarioTest {
         var desc = registry.findById("fast-linter", TENANCY).orElseThrow();
         var cap = desc.capabilities().getFirst();
 
-        var resolved = resolveModel(cap.modelTier(), cap.modelCapabilities(), CostTier.PREMIUM);
+        var resolved = resolveModel(cap.model(), CostTier.PREMIUM);
         assertThat(resolved).isNotNull();
         assertThat(resolved.id()).isEqualTo("claude-haiku-45");
     }
@@ -160,7 +160,7 @@ class ModelSelectionScenarioTest {
         var desc = registry.findById("embedding-indexer", TENANCY).orElseThrow();
         var cap = desc.capabilities().getFirst();
 
-        var resolved = resolveModel(cap.modelTier(), cap.modelCapabilities(), CostTier.PREMIUM);
+        var resolved = resolveModel(cap.model(), CostTier.PREMIUM);
         assertThat(resolved).isNotNull();
         assertThat(resolved.id()).isEqualTo("voyage-3-large");
     }
@@ -173,7 +173,7 @@ class ModelSelectionScenarioTest {
         var cap = desc.capabilities().stream()
             .filter(c -> c.name().equals("deep-analysis")).findFirst().orElseThrow();
 
-        var resolved = resolveModel(cap.modelTier(), cap.modelCapabilities(), CostTier.MEDIUM);
+        var resolved = resolveModel(cap.model(), CostTier.MEDIUM);
 
         assertThat(resolved).isNotNull();
         assertThat(resolved.id()).isEqualTo("claude-sonnet-5");
@@ -186,7 +186,7 @@ class ModelSelectionScenarioTest {
         var cap = desc.capabilities().stream()
             .filter(c -> c.name().equals("deep-analysis")).findFirst().orElseThrow();
 
-        var resolved = resolveModel(cap.modelTier(), cap.modelCapabilities(), CostTier.LOW);
+        var resolved = resolveModel(cap.model(), CostTier.LOW);
 
         assertThat(resolved).isNotNull();
         assertThat(resolved.id()).isEqualTo("claude-haiku-45");
@@ -198,7 +198,7 @@ class ModelSelectionScenarioTest {
         var cap = desc.capabilities().stream()
             .filter(c -> c.name().equals("visual-code-review")).findFirst().orElseThrow();
 
-        var resolved = resolveModel(cap.modelTier(), cap.modelCapabilities(), CostTier.LOW);
+        var resolved = resolveModel(cap.model(), CostTier.LOW);
 
         assertThat(resolved).isNull();
     }
@@ -211,9 +211,9 @@ class ModelSelectionScenarioTest {
         var rendered = renderer.render(desc,
             AgentPromptContext.forFormat(RenderFormat.A2A_CARD));
 
-        assertThat(rendered.content()).contains("\"modelTier\"");
-        assertThat(rendered.content()).contains("\"flagship\"");
-        assertThat(rendered.content()).contains("\"modelCapabilities\"");
+        assertThat(rendered.content()).contains("\"model\"");
+        assertThat(rendered.content()).contains("\"tier\"");
+        assertThat(rendered.content()).contains("\"FLAGSHIP\"");
         assertThat(rendered.content()).contains("\"tool-use\"");
     }
 
@@ -223,16 +223,17 @@ class ModelSelectionScenarioTest {
         var rendered = renderer.render(desc,
             AgentPromptContext.forFormat(RenderFormat.MARKDOWN));
 
-        assertThat(rendered.content()).doesNotContain("modelTier");
-        assertThat(rendered.content()).doesNotContain("modelCapabilities");
+        assertThat(rendered.content()).doesNotContain("\"model\"");
+        assertThat(rendered.content()).doesNotContain("\"tier\"");
     }
 
     // ── Resolution helper (simulates platform RoutingAgentProvider) ──
 
-    private ModelDescriptor resolveModel(String requiredTier,
-                                          Set<String> requiredCapabilities,
+    private ModelDescriptor resolveModel(io.casehub.platform.api.model.ModelQuery query,
                                           CostTier maxCost) {
-        ModelTier tier = ModelTier.valueOf(requiredTier.toUpperCase());
+        ModelTier tier = query.tier();
+        Set<String> requiredCapabilities = query.requiredCapabilities();
+        String requiredTier = tier.name().toLowerCase();
 
         var exactMatches = MODEL_CATALOG.stream()
             .filter(m -> m.tier() == tier)

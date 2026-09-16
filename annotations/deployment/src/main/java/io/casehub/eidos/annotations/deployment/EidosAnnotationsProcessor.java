@@ -437,9 +437,15 @@ class EidosAnnotationsProcessor {
                 }
                 var exd = ann.value("excludedDomains");
                 cap.excludedDomains        = exd != null ? exd.asStringArray() : new String[0];
+                cap.modelRef               = stringValue(ann, "model");
                 cap.modelTier              = stringValue(ann, "modelTier");
                 var mc = ann.value("modelCapabilities");
                 cap.modelCapabilities      = mc != null ? mc.asStringArray() : new String[0];
+                if (cap.modelRef != null && !cap.modelRef.isBlank() && ((cap.modelTier != null && !cap.modelTier.isBlank()) || cap.modelCapabilities.length > 0)) {
+                    throw new IllegalArgumentException("@AgentCapabilityDef: 'model' and "
+                        + "'modelTier'/'modelCapabilities' are mutually exclusive on capability '"
+                        + cap.name + "'");
+                }
                 config.richCapabilities[i] = cap;
             }
         }

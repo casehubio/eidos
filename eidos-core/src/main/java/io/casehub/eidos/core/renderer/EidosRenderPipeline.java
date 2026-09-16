@@ -316,10 +316,23 @@ public class EidosRenderPipeline {
                         final ObjectNode domains = capNode.putObject("epistemicDomains");
                         cap.epistemicDomains().forEach(domains::put);
                     }
-                    if (cap.modelTier() != null) capNode.put("modelTier", cap.modelTier());
-                    if (cap.modelCapabilities() != null && !cap.modelCapabilities().isEmpty()) {
-                        final ArrayNode mcArr = capNode.putArray("modelCapabilities");
-                        cap.modelCapabilities().forEach(mcArr::add);
+                    if (cap.modelRef() != null) {
+                        capNode.put("model", cap.modelRef());
+                    } else if (cap.model() != null) {
+                        var modelNode = capNode.putObject("model");
+                        var q = cap.model();
+                        if (q.tier() != null) modelNode.put("tier", q.tier().name());
+                        if (!q.requiredCapabilities().isEmpty()) {
+                            var capsArr = modelNode.putArray("capabilities");
+                            q.requiredCapabilities().forEach(capsArr::add);
+                        }
+                        if (q.locality() != null) modelNode.put("locality", q.locality().name());
+                        if (q.maxCostTier() != null) modelNode.put("max-cost", q.maxCostTier().name());
+                        if (q.minContextWindow() != null) modelNode.put("min-context", q.minContextWindow());
+                        if (q.minMaxOutput() != null) modelNode.put("min-output", q.minMaxOutput());
+                        if (q.vendor() != null) modelNode.put("vendor", q.vendor());
+                        if (q.family() != null) modelNode.put("family", q.family());
+                        if (q.preferVendor() != null) modelNode.put("prefer-vendor", q.preferVendor());
                     }
                 }
                 if (cap.inputTypes() != null && !cap.inputTypes().isEmpty()) {
@@ -1015,10 +1028,23 @@ public class EidosRenderPipeline {
                     final ArrayNode arr = capNode.putArray("excludedDomains");
                     cap.excludedDomains().forEach(arr::add);
                 }
-                if (cap.modelTier() != null) { capNode.put("modelTier", cap.modelTier()); }
-                if (cap.modelCapabilities() != null && !cap.modelCapabilities().isEmpty()) {
-                    final ArrayNode mcArr = capNode.putArray("modelCapabilities");
-                    cap.modelCapabilities().forEach(mcArr::add);
+                if (cap.modelRef() != null) {
+                    capNode.put("model", cap.modelRef());
+                } else if (cap.model() != null) {
+                    var modelNode = capNode.putObject("model");
+                    var q = cap.model();
+                    if (q.tier() != null) modelNode.put("tier", q.tier().name());
+                    if (!q.requiredCapabilities().isEmpty()) {
+                        var capsArr = modelNode.putArray("capabilities");
+                        q.requiredCapabilities().forEach(capsArr::add);
+                    }
+                    if (q.locality() != null) modelNode.put("locality", q.locality().name());
+                    if (q.maxCostTier() != null) modelNode.put("max-cost", q.maxCostTier().name());
+                    if (q.minContextWindow() != null) modelNode.put("min-context", q.minContextWindow());
+                    if (q.minMaxOutput() != null) modelNode.put("min-output", q.minMaxOutput());
+                    if (q.vendor() != null) modelNode.put("vendor", q.vendor());
+                    if (q.family() != null) modelNode.put("family", q.family());
+                    if (q.preferVendor() != null) modelNode.put("prefer-vendor", q.preferVendor());
                 }
                 final String enrichedDesc = descriptionByName.get(cap.name());
                 if (enrichedDesc != null && !enrichedDesc.isBlank()) {

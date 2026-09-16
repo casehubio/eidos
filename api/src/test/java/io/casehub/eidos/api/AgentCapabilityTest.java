@@ -214,8 +214,7 @@ class AgentCapabilityTest {
             .outputTypes(List.of("review-comment"))
             .tags(List.of("java"))
             .epistemicDomains(Map.of("java", 0.95))
-            .modelTier("flagship")
-            .modelCapabilities(java.util.Set.of("text", "vision"))
+            .model(io.casehub.platform.api.model.ModelQuery.builder().tier(io.casehub.platform.api.model.ModelTier.FLAGSHIP).requiredCapabilities(java.util.Set.of("text", "vision")).build())
             .excludedDomains(java.util.Set.of("rust"))
             .build();
         assertThat(cap.name()).isEqualTo("code-review");
@@ -223,8 +222,9 @@ class AgentCapabilityTest {
         assertThat(cap.qualityHint()).isEqualTo(0.9);
         assertThat(cap.latencyHintP50Ms()).isEqualTo(100L);
         assertThat(cap.costHint()).isEqualTo("low");
-        assertThat(cap.modelTier()).isEqualTo("flagship");
-        assertThat(cap.modelCapabilities()).containsExactlyInAnyOrder("text", "vision");
+        assertThat(cap.model()).isNotNull();
+        assertThat(cap.model().tier()).isEqualTo(io.casehub.platform.api.model.ModelTier.FLAGSHIP);
+        assertThat(cap.model().requiredCapabilities()).containsExactlyInAnyOrder("text", "vision");
         assertThat(cap.inputTypes()).containsExactly("pull-request");
         assertThat(cap.outputTypes()).containsExactly("review-comment");
         assertThat(cap.tags()).containsExactly("java");
@@ -235,63 +235,70 @@ class AgentCapabilityTest {
     // ── capabilityVocabulary (optional) ────────────────────────────────────────
 
 
-// ── modelTier (optional) ────────────────────────────────────────────────────
+// ── modelRef / model (mutually exclusive) ──────────────────────────────────
 
     @Test
-    void model_tier_and_capabilities_stored_via_builder() {
+    void modelRef_stored_via_builder() {
         var cap = AgentCapability.builder()
                                  .name("code-review")
-                                 .modelTier("flagship")
-                                 .modelCapabilities(java.util.Set.of("text", "tool-use"))
+                                 .modelRef("reasoning-heavy")
                                  .build();
-        assertThat(cap.modelTier()).isEqualTo("flagship");
-        assertThat(cap.modelCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
+        assertThat(cap.modelRef()).isEqualTo("reasoning-heavy");
+        assertThat(cap.model()).isNull();
     }
 
     @Test
-    void model_tier_null_when_not_set() {
-        var cap = AgentCapability.builder().name("lint").build();
-        assertThat(cap.modelTier()).isNull();
-        assertThat(cap.modelCapabilities()).isNull();
-    }
-
-    @Test
-    void model_capabilities_defensively_copied() {
-        var mutable = new java.util.HashSet<>(java.util.Set.of("text"));
+    void model_query_stored_via_builder() {
+        var query = io.casehub.platform.api.model.ModelQuery.builder()
+                .tier(io.casehub.platform.api.model.ModelTier.FLAGSHIP)
+                .requiredCapabilities(java.util.Set.of("text", "tool-use"))
+                .build();
         var cap = AgentCapability.builder()
-                                 .name("test")
-                                 .modelCapabilities(mutable)
+                                 .name("code-review")
+                                 .model(query)
                                  .build();
-        mutable.add("vision");
-        assertThat(cap.modelCapabilities()).doesNotContain("vision");
+        assertThat(cap.modelRef()).isNull();
+        assertThat(cap.model()).isEqualTo(query);
+        assertThat(cap.model().tier()).isEqualTo(io.casehub.platform.api.model.ModelTier.FLAGSHIP);
+        assertThat(cap.model().requiredCapabilities()).containsExactlyInAnyOrder("text", "tool-use");
     }
 
     @Test
-    void model_tier_exceeds_max_throws() {
+    void model_null_when_not_set() {
+        var cap = AgentCapability.builder().name("lint").build();
+        assertThat(cap.modelRef()).isNull();
+        assertThat(cap.model()).isNull();
+    }
+
+    @Test
+    void modelRef_and_model_mutually_exclusive() {
         assertThatThrownBy(() ->
-                                   AgentCapability.builder().name("test").modelTier("x".repeat(201)).build())
+                AgentCapability.builder()
+                        .name("test")
+                        .modelRef("reasoning-heavy")
+                        .model(io.casehub.platform.api.model.ModelQuery.builder()
+                                .tier(io.casehub.platform.api.model.ModelTier.FLAGSHIP).build())
+                        .build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("mutually exclusive");
+    }
+
+    @Test
+    void modelRef_exceeds_max_throws() {
+        assertThatThrownBy(() ->
+                AgentCapability.builder().name("test").modelRef("x".repeat(201)).build())
                 .isInstanceOf(AgentValidationException.class)
                 .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
-                                         .isEqualTo("modelTier"));
+                        .isEqualTo("modelRef"));
     }
 
     @Test
-    void model_capabilities_blank_string_rejected() {
+    void modelRef_blank_throws() {
         assertThatThrownBy(() ->
-                                   AgentCapability.builder()
-                                                  .name("test")
-                                                  .modelCapabilities(java.util.Set.of("text", "  "))
-                                                  .build())
-                .isInstanceOf(AgentValidationException.class);
-    }
-
-    @Test
-    void model_tier_blank_throws() {
-        assertThatThrownBy(() ->
-                                   AgentCapability.builder().name("test").modelTier("  ").build())
+                AgentCapability.builder().name("test").modelRef("  ").build())
                 .isInstanceOf(AgentValidationException.class)
                 .satisfies(ex -> assertThat(((AgentValidationException) ex).fieldName())
-                                         .isEqualTo("modelTier"));
+                        .isEqualTo("modelRef"));
     }
 
     @Test

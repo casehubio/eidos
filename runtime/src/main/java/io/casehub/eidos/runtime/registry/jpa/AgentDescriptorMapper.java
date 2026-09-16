@@ -86,8 +86,8 @@ class AgentDescriptorMapper {
                 c.qualityHint,
                 c.latencyHintP50Ms,
                 c.costHint,
-                c.modelTier,
-                readJson(c.modelCapabilities, new TypeReference<Set<String>>() {}),
+                c.modelRef,
+                readJson(c.model, new TypeReference<io.casehub.platform.api.model.ModelQuery>() {}),
                 readJson(c.inputTypes, new TypeReference<List<String>>() {}),
                 readJson(c.outputTypes, new TypeReference<List<String>>() {}),
                 readJson(c.tags, new TypeReference<List<String>>() {}),
@@ -107,8 +107,8 @@ class AgentDescriptorMapper {
         e.qualityHint          = c.qualityHint();
         e.latencyHintP50Ms     = c.latencyHintP50Ms();
         e.costHint             = c.costHint();
-        e.modelTier            = c.modelTier();
-        e.modelCapabilities    = writeJson(c.modelCapabilities());
+        e.modelRef             = c.modelRef();
+        e.model                = writeJson(c.model());
         e.inputTypes           = writeJson(c.inputTypes());
         e.outputTypes          = writeJson(c.outputTypes());
         e.tags                 = writeJson(c.tags());
