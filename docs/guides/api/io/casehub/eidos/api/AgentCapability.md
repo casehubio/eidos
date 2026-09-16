@@ -24,6 +24,10 @@ is the evidence-backed replacement that accumulates over time.
 
 ### `latencyHintP50Ms` (`java.lang.Long`)
 
+### `model` (`ModelQuery`)
+
+### `modelRef` (`java.lang.String`)
+
 ### `name` (`java.lang.String`)
 
 ### `outputTypes` (`java.util.List<java.lang.String>`)
@@ -48,6 +52,10 @@ is the evidence-backed replacement that accumulates over time.
 
 ### `latencyHintP50Ms` (`java.lang.Long`)
 
+### `model` (`ModelQuery`)
+
+### `modelRef` (`java.lang.String`)
+
 ### `name` (`java.lang.String`)
 
 ### `outputTypes` (`java.util.List<java.lang.String>`)
@@ -58,7 +66,7 @@ is the evidence-backed replacement that accumulates over time.
 
 ## Constructors
 
-### `public AgentCapability(java.lang.String name, java.lang.String description, java.lang.String capabilityVocabulary, java.lang.Double qualityHint, java.lang.Long latencyHintP50Ms, java.lang.String costHint, java.util.List<java.lang.String> inputTypes, java.util.List<java.lang.String> outputTypes, java.util.List<java.lang.String> tags, java.util.Map<java.lang.String,java.lang.Double> epistemicDomains, java.util.Set<java.lang.String> excludedDomains)`
+### `public AgentCapability(java.lang.String name, java.lang.String description, java.lang.String capabilityVocabulary, java.lang.Double qualityHint, java.lang.Long latencyHintP50Ms, java.lang.String costHint, java.lang.String modelRef, ModelQuery model, java.util.List<java.lang.String> inputTypes, java.util.List<java.lang.String> outputTypes, java.util.List<java.lang.String> tags, java.util.Map<java.lang.String,java.lang.Double> epistemicDomains, java.util.Set<java.lang.String> excludedDomains)`
 
 #### Parameters
 
@@ -68,6 +76,8 @@ is the evidence-backed replacement that accumulates over time.
 - `qualityHint` (`java.lang.Double`)
 - `latencyHintP50Ms` (`java.lang.Long`)
 - `costHint` (`java.lang.String`)
+- `modelRef` (`java.lang.String`)
+- `model` (`ModelQuery`)
 - `inputTypes` (`java.util.List<java.lang.String>`)
 - `outputTypes` (`java.util.List<java.lang.String>`)
 - `tags` (`java.util.List<java.lang.String>`)
@@ -99,6 +109,10 @@ is the evidence-backed replacement that accumulates over time.
 ### `public java.util.List<java.lang.String> inputTypes()`
 
 ### `public java.lang.Long latencyHintP50Ms()`
+
+### `public ModelQuery model()`
+
+### `public java.lang.String modelRef()`
 
 ### `public java.lang.String name()`
 

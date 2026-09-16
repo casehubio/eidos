@@ -46,3 +46,19 @@ by this value. Semantics: 0.0 = instant reset (retain nothing),
 - `agentId` (`java.lang.String`)
 - `tenancyId` (`java.lang.String`)
 - `functionTerm` (`java.lang.String`)
+
+### `public default void recordActivation(java.lang.String agentId, java.lang.String tenancyId, java.lang.String functionTerm, io.casehub.eidos.api.SignalValence valence)`
+
+#### Parameters
+
+- `agentId` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)
+- `functionTerm` (`java.lang.String`)
+- `valence` (`io.casehub.eidos.api.SignalValence`)
+
+### `public default java.util.Map<java.lang.String,io.casehub.eidos.api.ValenceCounts> valenceCounts(java.lang.String agentId, java.lang.String tenancyId)`
+
+#### Parameters
+
+- `agentId` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)

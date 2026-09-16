@@ -6,6 +6,8 @@
 
 ## Fields
 
+### `attributes` (`java.util.Map<java.lang.String,java.lang.String>`)
+
 ### `capabilities` (`java.util.List<java.lang.String>`)
 
 ### `description` (`java.lang.String`)
@@ -17,6 +19,8 @@
 ### `visibility` (`io.casehub.eidos.api.Visibility`)
 
 ## Record Components
+
+### `attributes` (`java.util.Map<java.lang.String,java.lang.String>`)
 
 ### `capabilities` (`java.util.List<java.lang.String>`)
 
@@ -30,7 +34,7 @@
 
 ## Constructors
 
-### `public AgentGoal(java.lang.String name, java.lang.String description, io.casehub.eidos.api.GoalPriority priority, io.casehub.eidos.api.Visibility visibility, java.util.List<java.lang.String> capabilities)`
+### `public AgentGoal(java.lang.String name, java.lang.String description, io.casehub.eidos.api.GoalPriority priority, io.casehub.eidos.api.Visibility visibility, java.util.List<java.lang.String> capabilities, java.util.Map<java.lang.String,java.lang.String> attributes)`
 
 #### Parameters
 
@@ -39,8 +43,11 @@
 - `priority` (`io.casehub.eidos.api.GoalPriority`)
 - `visibility` (`io.casehub.eidos.api.Visibility`)
 - `capabilities` (`java.util.List<java.lang.String>`)
+- `attributes` (`java.util.Map<java.lang.String,java.lang.String>`)
 
 ## Methods
+
+### `public java.util.Map<java.lang.String,java.lang.String> attributes()`
 
 ### `public java.util.List<java.lang.String> capabilities()`
 
@@ -57,6 +64,8 @@
 ### `public java.lang.String name()`
 
 ### `public io.casehub.eidos.api.GoalPriority priority()`
+
+### `public io.casehub.eidos.api.AgentGoal.Builder toBuilder()`
 
 ### `public final java.lang.String toString()`
 

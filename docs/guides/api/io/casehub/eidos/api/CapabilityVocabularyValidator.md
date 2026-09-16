@@ -6,6 +6,10 @@
 
 Utility for validating capability vocabularies in agent descriptors.
 
+## Fields
+
+### `MODEL_TIER_VOCABULARY_URI` (`java.lang.String`)
+
 ## Constructors
 
 ### `private CapabilityVocabularyValidator()`

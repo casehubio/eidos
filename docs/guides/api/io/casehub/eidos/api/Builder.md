@@ -1,4 +1,4 @@
-# io.casehub.eidos.api.AgentDisposition.Builder
+# io.casehub.eidos.api.AgentGoal.Builder
 
 **Package:** `io.casehub.eidos.api`
 
@@ -6,132 +6,67 @@
 
 ## Fields
 
-### `autonomy` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+### `attributes` (`java.util.Map<java.lang.String,java.lang.String>`)
 
-### `conflictMode` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+### `capabilities` (`java.util.List<java.lang.String>`)
 
-### `delegation` (`boolean`)
+### `description` (`java.lang.String`)
 
-### `dispositionProfile` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+### `name` (`java.lang.String`)
 
-### `riskAppetite` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+### `priority` (`io.casehub.eidos.api.GoalPriority`)
 
-### `ruleFollowing` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
-
-### `socialOrient` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+### `visibility` (`io.casehub.eidos.api.Visibility`)
 
 ## Constructors
 
-### `public Builder()`
+### `Builder(java.lang.String name, java.lang.String description, io.casehub.eidos.api.GoalPriority priority, io.casehub.eidos.api.Visibility visibility, java.util.List<java.lang.String> capabilities, java.util.Map<java.lang.String,java.lang.String> attributes)`
+
+#### Parameters
+
+- `name` (`java.lang.String`)
+- `description` (`java.lang.String`)
+- `priority` (`io.casehub.eidos.api.GoalPriority`)
+- `visibility` (`io.casehub.eidos.api.Visibility`)
+- `capabilities` (`java.util.List<java.lang.String>`)
+- `attributes` (`java.util.Map<java.lang.String,java.lang.String>`)
 
 ## Methods
 
-### `public io.casehub.eidos.api.AgentDisposition.Builder autonomy(io.casehub.eidos.api.DispositionValue[] values)`
+### `public io.casehub.eidos.api.AgentGoal.Builder attributes(java.util.Map<java.lang.String,java.lang.String> v)`
 
 #### Parameters
 
-- `values` (`io.casehub.eidos.api.DispositionValue[]`)
+- `v` (`java.util.Map<java.lang.String,java.lang.String>`)
 
-### `public io.casehub.eidos.api.AgentDisposition.Builder autonomy(java.lang.String v)`
+### `public io.casehub.eidos.api.AgentGoal build()`
 
-#### Parameters
-
-- `v` (`java.lang.String`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder autonomy(java.util.List<io.casehub.eidos.api.DispositionValue> v)`
+### `public io.casehub.eidos.api.AgentGoal.Builder capabilities(java.util.List<java.lang.String> v)`
 
 #### Parameters
 
-- `v` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `v` (`java.util.List<java.lang.String>`)
 
-### `public io.casehub.eidos.api.AgentDisposition build()`
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder conflictMode(io.casehub.eidos.api.DispositionValue[] values)`
-
-#### Parameters
-
-- `values` (`io.casehub.eidos.api.DispositionValue[]`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder conflictMode(java.lang.String v)`
+### `public io.casehub.eidos.api.AgentGoal.Builder description(java.lang.String v)`
 
 #### Parameters
 
 - `v` (`java.lang.String`)
 
-### `public io.casehub.eidos.api.AgentDisposition.Builder conflictMode(java.util.List<io.casehub.eidos.api.DispositionValue> v)`
-
-#### Parameters
-
-- `v` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder delegation(boolean v)`
-
-#### Parameters
-
-- `v` (`boolean`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder dispositionProfile(io.casehub.eidos.api.DispositionValue[] values)`
-
-#### Parameters
-
-- `values` (`io.casehub.eidos.api.DispositionValue[]`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder dispositionProfile(java.util.List<io.casehub.eidos.api.DispositionValue> v)`
-
-#### Parameters
-
-- `v` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder riskAppetite(io.casehub.eidos.api.DispositionValue[] values)`
-
-#### Parameters
-
-- `values` (`io.casehub.eidos.api.DispositionValue[]`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder riskAppetite(java.lang.String v)`
+### `public io.casehub.eidos.api.AgentGoal.Builder name(java.lang.String v)`
 
 #### Parameters
 
 - `v` (`java.lang.String`)
 
-### `public io.casehub.eidos.api.AgentDisposition.Builder riskAppetite(java.util.List<io.casehub.eidos.api.DispositionValue> v)`
+### `public io.casehub.eidos.api.AgentGoal.Builder priority(io.casehub.eidos.api.GoalPriority v)`
 
 #### Parameters
 
-- `v` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `v` (`io.casehub.eidos.api.GoalPriority`)
 
-### `public io.casehub.eidos.api.AgentDisposition.Builder ruleFollowing(io.casehub.eidos.api.DispositionValue[] values)`
-
-#### Parameters
-
-- `values` (`io.casehub.eidos.api.DispositionValue[]`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder ruleFollowing(java.lang.String v)`
+### `public io.casehub.eidos.api.AgentGoal.Builder visibility(io.casehub.eidos.api.Visibility v)`
 
 #### Parameters
 
-- `v` (`java.lang.String`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder ruleFollowing(java.util.List<io.casehub.eidos.api.DispositionValue> v)`
-
-#### Parameters
-
-- `v` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder socialOrient(io.casehub.eidos.api.DispositionValue[] values)`
-
-#### Parameters
-
-- `values` (`io.casehub.eidos.api.DispositionValue[]`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder socialOrient(java.lang.String v)`
-
-#### Parameters
-
-- `v` (`java.lang.String`)
-
-### `public io.casehub.eidos.api.AgentDisposition.Builder socialOrient(java.util.List<io.casehub.eidos.api.DispositionValue> v)`
-
-#### Parameters
-
-- `v` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `v` (`io.casehub.eidos.api.Visibility`)
