@@ -5,7 +5,7 @@
 **Profile ref:** `../parent/docs/arc42stories-casehub-profile.md` · fallback: `https://raw.githubusercontent.com/casehubio/parent/main/docs/arc42stories-casehub-profile.md`
 **Build position:** After casehub-ledger (runtime depends on ledger); casehub-eidos-api depends on nothing. Publishes before casehub-engine and claudony.
 **Consumed by:** casehub-engine (optional eidos-api dep), claudony, application-tier apps that need agent identity
-**Depends on:** `casehub-eidos-api` → none. `casehub-eidos` runtime → casehub-ledger.
+**Depends on:** `casehub-eidos-api` → `casehub-platform-api` (pure Java, for `ModelQuery`). `casehub-eidos` runtime → casehub-ledger.
 
 ---
 
@@ -18,10 +18,10 @@
 Core capabilities:
 
 - **AgentDescriptor** — four-layer structured description: identity (id, name, model, provider), slot (open-string role classification), capabilities (capability name, quality, latency, epistemic domain confidence), disposition (four open-string axes + delegation flag); optional `briefing` freeform text field for per-agent narrative context
-- **AgentRegistry / ReactiveAgentRegistry** — SPI for agent registration and discovery by slot, capability, and tenancyId
+- **AgentRegistry** — SPI for agent registration and discovery by slot, capability, and tenancyId
 - **VocabularyRegistry / CdiVocabularyRegistry** — pluggable vocabulary system; CDI `Instance<VocabularyRegistrar>` discovery with cross-vocabulary equivalence traversal and XKOS-style subsumption hierarchy (`specializes()` → global DAG across vocabulary boundaries; `subsumes()`, `match()` → `MatchDegree`, `ancestors()`, `descendants()`, `expandForMatchingByVocabulary()`)
-- **CapabilityHealth / ReactiveCapabilityHealth** — two-layer probe: declared (descriptor) vs. operable now (runtime degradation + behavioral compliance); `AgentStateStore` SPI records degradation with TTL; `BehavioralSignalStore` SPI accumulates learned signals (DECLINE, SUCCESS, COMPLIANT, VIOLATED) with per-signal TTL; probe steps: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → BehavioralViolation → Ready; aggregate violation safety valve detects cross-dimensional drift
-- **SystemPromptRenderer / ReactiveSystemPromptRenderer** — three-stage render pipeline (canonical JSON payload → optional LLM semantic enrichment → format-specific assembly) into `RenderedPrompt`; `RenderedPromptCache` / `ReactiveRenderedPromptCache` SPI for cache coherence; capability rendering is format-discriminated: PROSE/MARKDOWN surface names + `inputTypes`/`outputTypes` only; numeric routing signals (`qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains`) appear in A2A_CARD only — protocol PP-20260611-228599; `RenderedPrompt.enriched` flag set when Stage 2 enrichment ran
+- **CapabilityHealth** — two-layer probe: declared (descriptor) vs. operable now (runtime degradation + behavioral compliance); `AgentStateStore` SPI records degradation with TTL; `BehavioralSignalStore` SPI accumulates learned signals (DECLINE, SUCCESS, COMPLIANT, VIOLATED) with per-signal TTL; probe steps: Degraded → Unavailable → Excluded(DECLARED) → Excluded(LEARNED) → EpistemicallyWeak → BehavioralViolation → Ready; aggregate violation safety valve detects cross-dimensional drift
+- **SystemPromptRenderer** — three-stage render pipeline (canonical JSON payload → optional LLM semantic enrichment → format-specific assembly) into `RenderedPrompt`; `RenderedPromptCache` SPI for cache coherence; capability rendering is format-discriminated: PROSE/MARKDOWN surface names + `inputTypes`/`outputTypes` only; routing signals (`qualityHint`, `latencyHintP50Ms`, `costHint`, `epistemicDomains`, `model`) appear in A2A_CARD only — protocol PP-20260611-228599; `RenderedPrompt.enriched` flag set when Stage 2 enrichment ran
 - **Eval framework** (`casehub-eidos-eval`) — LLM-as-judge quality harness; `PromptJudge` (4 dimensions), `ProximityJudge` (prose fidelity), three-stage personality preservation attribution (VocabularyExpressivenessJudge → TraitExpressionJudge → PairContrastJudge)
 - **Knowledge graph** (`casehub-eidos-graph`) — `AgentGraphStore` SPI records tasks and outcomes; `AgentGraphQuery` ranks agents by Wilson lower-bound confidence; `AttestationRef` chains outcomes to casehub-ledger hashes; `TaskSemanticEnricher` SPI (pull interface for domain-specific axis correlation)
 
@@ -52,7 +52,7 @@ Module structure:
 
 | Goal | Scenario |
 |---|---|
-| Zero-dep API | `casehub-eidos-api` has no casehubio dependencies — any consumer references agent identity types without pulling the eidos stack |
+| Minimal-dep API | `casehub-eidos-api` depends only on `casehub-platform-api` (pure Java) — consumers reference agent identity types without pulling the eidos runtime stack |
 | No invalid record can be constructed | All string fields validated at compact constructor time; null and adversarial strings rejected before the record exists anywhere in the system |
 | LLM-optional operation | Structural rendering and all registry/health operations function without any LLM configured |
 | Tenancy always enforced | Every registry and graph query requires `tenancyId`; unconditional filtering enforced at the SPI level |
@@ -115,7 +115,7 @@ See `../parent/docs/PLATFORM.md` Capability Ownership table and `../parent/docs/
 |---|---|
 | SPI-first design | All capabilities defined as pure-Java interfaces in `casehub-eidos-api`; implementations in separate modules |
 | `@DefaultBean` CDI priority ladder | Tier 0: `@DefaultBean` no-op or blocking default. Tier 1: `@Alternative @Priority(1)` in-memory (casehub-eidos-memory). Tier 2: JPA (runtime). Consumers displace with their own `@Alternative @Priority(2+)` |
-| Reactive build gating | Reactive implementations behind `@IfBuildProperty(name="casehub.eidos.reactive.enabled", stringValue="true")` — absent unless opted in |
+| Build gating | JPA implementations behind `@IfBuildProperty` — blocking mode is the default; reactive tier retired (parent#384) |
 | Jandex library pattern | `casehub-eidos-graph` is a library module — no `quarkus:build` goal, activates by classpath presence |
 | Compact constructor validation | All string fields in domain records validated at construction time; no invalid record can exist anywhere in the system |
 | Three-stage rendering | Payload builder (canonical Jackson ObjectNode) → optional LLM semantic enrichment → format-specific deterministic assembly |
@@ -125,11 +125,11 @@ See `../parent/docs/PLATFORM.md` Capability Ownership table and `../parent/docs/
 
 | Layer | What it represents | Chapters |
 |---|---|---|
-| L1 Zero-Dep API | All domain types and SPIs; zero casehubio deps; pure Java records and interfaces | C1–C6 |
+| L1 Minimal-Dep API | All domain types and SPIs; depends only on `casehub-platform-api` (pure Java); records and interfaces | C1–C6 |
 | L2 CDI Discovery | `CdiVocabularyRegistry` — `Instance<VocabularyRegistrar>` discovery; XKOS-style subsumption hierarchy (global DAG, cross-vocabulary specialization); in-memory registry alternatives | C1 |
-| L3 JPA Registry | `JpaAgentRegistry`, Flyway schema (`agent_descriptor`, `agent_capability`); reactive build-gated variant | C1, C3 |
+| L3 JPA Registry | `JpaAgentRegistry`, Flyway schema (`agent_descriptor`, `agent_capability`) | C1, C3 |
 | L4 Capability Health | `DefaultCapabilityHealth`; `AgentStateStore` degradation tracking; `BehavioralSignalStore` compliance signals; fail-fast 6-step probe (Degraded → Unavailable → Excluded → EpistemicallyWeak → BehavioralViolation → Ready); aggregate violation safety valve | C2, C3 |
-| L5 Rendering Pipeline | Three-stage pipeline; `EidosRenderPipeline` shared stage 1+3; blocking + reactive renderers; `ReactiveRenderedPromptCache` canonical SPI | C3, C4 |
+| L5 Rendering Pipeline | Three-stage pipeline; `EidosRenderPipeline` (eidos-core) shared stage 1+3; `EidosSystemPromptRenderer` (runtime) wraps pipeline; `RenderedPromptCache` SPI | C3 |
 | L6 Eval Framework | `PromptJudge` (4 dimensions); `ProximityJudge`; personality preservation (3-stage attribution); real-world profile library | C4, C5 |
 | L7 Knowledge Graph | `AgentGraphStore` / `AgentGraphQuery` SPIs; JPA graph (`casehub-eidos-graph`); Wilson ranking; `TaskSemanticEnricher` pull interface | C6 |
 
@@ -137,7 +137,7 @@ See `../parent/docs/PLATFORM.md` Capability Ownership table and `../parent/docs/
 
 - C1 before C2: `DefaultCapabilityHealth` takes `AgentDescriptor` directly — C1 must define the type
 - C2 before C3: `AgentStateStore` (C3) adds `Degraded` to the probe status enum already established in C2
-- C3 before C4: C4's `ReactiveRenderedPromptCache` extends C3's cache SPI; C4's injection-surface validation applies to types introduced across C1–C3
+- C3: `RenderedPromptCache` SPI introduced; injection-surface validation applies to types from C1–C3
 - C4 before C5: C5's personality judges consume C4's `EidosRenderPipeline` for structural rendering; `ProfiledEvalCase` requires the sealed `EvalCase` interface from C4
 - C5 before C6 (soft): C6's knowledge graph closes the loop that C5 personality preservation opened — empirical vs. declared disposition comparison. Not a hard runtime dependency.
 - C2 and C3 share L4: `CapabilityHealth` probe interface arrives in C2; `AgentStateStore` + `Degraded` status arrives in C3
@@ -150,7 +150,7 @@ See `../parent/docs/PLATFORM.md` Capability Ownership table and `../parent/docs/
 C4Container
   title casehub-eidos — Module Architecture
 
-  Container_Boundary(api_b, "L1 Zero-Dep API — casehub-eidos-api") {
+  Container_Boundary(api_b, "L1 Minimal-Dep API — casehub-eidos-api") {
     Container(api, "casehub-eidos-api", "Pure Java", "AgentDescriptor, AgentRegistry, CapabilityHealth, SystemPromptRenderer, AgentGraphStore, AgentGraphQuery SPIs + all domain types")
   }
 
@@ -160,7 +160,7 @@ C4Container
     Container(cap_h, "DefaultCapabilityHealth", "CDI @ApplicationScoped", "Fail-fast probe: degraded → unavailable → epistemically weak → ready")
     Container(renderer, "EidosSystemPromptRenderer", "LangChain4j-core", "Three-stage pipeline; @DefaultBean")
     Container(pipeline, "EidosRenderPipeline", "CDI package-private", "Shared Stage 1 payload + Stage 3 format assembly; constants")
-    Container(cache_bridge, "BlockingToReactiveRenderedPromptCacheAdapter", "Mutiny", "@DefaultBean; wraps RenderedPromptCache → ReactiveRenderedPromptCache")
+    ' cache_bridge removed — reactive tier retired in parent#384
   }
 
   Container_Boundary(memory_b, "In-Memory Alternatives — casehub-eidos-memory") {
@@ -169,7 +169,7 @@ C4Container
 
   Container_Boundary(graph_b, "L7 Knowledge Graph — casehub-eidos-graph") {
     Container(jpa_graph, "JpaAgentGraphStore / JpaAgentGraphQuery", "Panache JPA", "Task/outcome recording; Wilson-ranked routing queries; classpath-activated Jandex library")
-    Container(graph_bridge, "BlockingToReactiveGraphBridge", "Mutiny @DefaultBean", "Wraps AgentGraphQuery → ReactiveAgentGraphQuery")
+    ' graph_bridge removed — reactive tier retired in parent#384
   }
 
   Container_Boundary(vocab_b, "Optional — casehub-eidos-vocab") {
@@ -192,7 +192,7 @@ C4Container
 
 | Module | Artifact | Role | Deps |
 |---|---|---|---|
-| `api/` | `casehub-eidos-api` | Pure Java SPIs and domain types | none |
+| `api/` | `casehub-eidos-api` | Pure Java SPIs and domain types | `casehub-platform-api` |
 | `runtime/` | `casehub-eidos` | All default implementations | `casehub-eidos-api`, langchain4j-core, casehub-ledger-api |
 | `persistence-memory/` | `casehub-eidos-memory` | `@Alternative @Priority(1)` in-memory impls | `casehub-eidos-api` |
 | `deployment/` | `casehub-eidos-deployment` | Quarkus `@BuildStep` processor (`EidosProcessor`) | Quarkus build SPI |
@@ -271,7 +271,7 @@ sequenceDiagram
   participant Caller
   participant R as EidosSystemPromptRenderer
   participant Pipeline as EidosRenderPipeline
-  participant Cache as ReactiveRenderedPromptCache
+  participant Cache as RenderedPromptCache
 
   Caller->>R: render(descriptor, context{format=MARKDOWN})
   R->>Cache: get(cacheKey)
@@ -365,7 +365,7 @@ Published to GitHub Packages as `io.casehub:casehub-eidos:0.2-SNAPSHOT`.
 
 **Symptom:** Application fails at startup with a CDI wiring error; no compile-time diagnostic.
 **Cause:** Adding any explicit constructor (e.g. a package-private test constructor) removes the compiler-generated no-arg. CDI (Weld) requires a no-arg constructor to instantiate `@ApplicationScoped` beans before `@Inject` field injection runs.
-**Fix:** Always declare both: `public BeanClass() {}` (CDI path) and the explicit constructor (test/injection path). See `BlockingToReactiveGraphBridge` as the canonical example.
+**Fix:** Always declare both: `public BeanClass() {}` (CDI path) and the explicit constructor (test/injection path). See `SimpleAgentSelector` as a canonical example.
 
 ---
 
@@ -416,7 +416,7 @@ flowchart LR
 
 | Layer | C1 | C2 | C3 | C4 | C5 | C6 |
 |---|---|---|---|---|---|---|
-| L1 Zero-Dep API | High | Med | High | High | Med | Med |
+| L1 Minimal-Dep API | High | Med | High | High | Med | Med |
 | L2 CDI Discovery | High | — | Low | — | — | — |
 | L3 JPA Registry | High | Low | Low | — | — | Low |
 | L4 Capability Health | — | High | Med | Low | — | — |
@@ -428,7 +428,7 @@ flowchart LR
 
 - C1 before C2: `DefaultCapabilityHealth` takes `AgentDescriptor` directly — type must exist
 - C2 before C3: `AgentStateStore` (C3) adds `Degraded` to the `CapabilityStatus` sealed interface established in C2
-- C3 before C4: `ReactiveRenderedPromptCache` (C4) extends the cache SPI introduced in C3; C4 injection-surface validation applies to all types from C1–C3
+- C3: `RenderedPromptCache` SPI; injection-surface validation applies to all types from C1–C3
 - C4 before C5: C5 judges consume `EidosRenderPipeline` (C4); `ProfiledEvalCase` requires sealed `EvalCase` from C4
 - C5 and C6 independent at runtime: C6 knowledge graph does not depend on C5 eval types — soft ordering only (C5 motivates C6 personality validation use case)
 
@@ -452,7 +452,7 @@ An agent with a structured four-layer identity (who, what role, what capability,
 **Layer Impact**
 | Layer | Delta |
 |---|---|
-| L1 Zero-Dep API | High |
+| L1 Minimal-Dep API | High |
 | L2 CDI Discovery | High |
 | L3 JPA Registry | High |
 
@@ -468,7 +468,7 @@ casehub-engine can probe whether an agent's declared capability is actually oper
 
 **Accountability gaps closed**
 - No runtime capability check → `DefaultCapabilityHealth` with epistemic domain matching
-- No reactive health probe → `DefaultReactiveCapabilityHealth` (`@IfBuildProperty reactive.enabled=true`)
+- Health probe: `DefaultCapabilityHealth` (`@ApplicationScoped`)
 - No worked examples → `examples/agent-scenarios/` — 5 `@QuarkusTest` scenarios
 
 **Layer Impact**
@@ -485,13 +485,12 @@ casehub-engine can probe whether an agent's declared capability is actually oper
 **Delivered:** 2026-05-24 to 2026-05-30 | **Issues:** eidos#5, #6, #7, #13, #17, #19 | **Blog:** `blog/2026-05-25-mdp01-rendering-with-and-without-brain.md`, `blog/2026-05-29-mdp01-two-architectural-errors.md`, `blog/2026-05-29-mdp02-reactive-parity-a2a-enrichment.md`, `blog/2026-05-29-mdp03-hold-no-threads.md`, `blog/2026-05-30-mdp01-deadlock-in-the-adapter.md`
 
 **What this delivers**
-An `AgentDescriptor + AgentPromptContext` pair renders into a format-specific system prompt (MARKDOWN, PROSE, or A2A_CARD) through a three-stage pipeline — deterministic without an LLM, enhanced when one is configured. Rendered results are cached; cache coherence is maintained via a canonical `ReactiveRenderedPromptCache` SPI. Runtime degradation state (`AgentStateStore`) enables `CapabilityHealth` to return `Degraded` for known-rate-limited agents.
+An `AgentDescriptor + AgentPromptContext` pair renders into a format-specific system prompt (MARKDOWN, PROSE, or A2A_CARD) through a three-stage pipeline — deterministic without an LLM, enhanced when one is configured. Rendered results are cached via `RenderedPromptCache` SPI. Runtime degradation state (`AgentStateStore`) enables `CapabilityHealth` to return `Degraded` for known-rate-limited agents.
 
 **Accountability gaps closed**
 - No system prompt generation → `EidosSystemPromptRenderer` three-stage pipeline with structural fallback
 - No degradation tracking → `AgentStateStore` SPI + `NoOpAgentStateStore` (@DefaultBean) + `InMemoryAgentStateStore` (@Alternative)
-- No cache coherence across blocking/reactive → `ReactiveRenderedPromptCache` canonical SPI + `BlockingToReactiveRenderedPromptCacheAdapter` @DefaultBean
-- No non-blocking LLM render → `DefaultReactiveSystemPromptRenderer` with `StreamingChatModel` + `CompletableFuture.orTimeout()`
+- Cache coherence via `RenderedPromptCache` SPI; `NoOpRenderedPromptCache` @DefaultBean when no cache implementation is present
 
 **Layer Impact**
 | Layer | Delta |
@@ -564,7 +563,7 @@ casehub-engine can record tasks dispatched to agents (`AgentTask`) and their out
 | Layer | Delta |
 |---|---|
 | L7 Knowledge Graph | High |
-| L1 Zero-Dep API | Medium |
+| L1 Minimal-Dep API | Medium |
 | L3 JPA Registry | Low |
 
 ---
@@ -573,7 +572,7 @@ casehub-engine can record tasks dispatched to agents (`AgentTask`) and their out
 
 ---
 
-#### Layer — L1 Zero-Dep API
+#### Layer — L1 Minimal-Dep API
 
 **Participates in chapters:** C1, C2, C3, C4, C5, C6
 **Architectural patterns:** Hexagonal (port), Immutable Value Object, Compact Constructor Invariants
@@ -640,7 +639,7 @@ Not closed here: L4 (`DefaultCapabilityHealth` implementation, `AgentStateStore`
 - `api/src/main/java/io/casehub/eidos/api/DispositionAxis.java` — enum: SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY, CONFLICT_MODE; `jsonKey()` → camelCase JSON key; `description()` → axis description for LLM judge prompts
 - `api/src/main/java/io/casehub/eidos/api/VocabularyMetadata.java` — annotation: `uri` (required), `name`, `version`; read by `VocabularyRegistry.register(Class<T>)`
 - `api/src/main/java/io/casehub/eidos/api/spi/VocabularyRegistrar.java` — `@FunctionalInterface` CDI SPI; `@ApplicationScoped` beans auto-register vocab enums; replaces removed `Vocabulary` record
-- `api/src/main/java/io/casehub/eidos/api/ReactiveAgentRegistry.java`, `ReactiveCapabilityHealth.java`, `ReactiveAgentGraphQuery.java` — `Uni<T>` mirrors; nested non-Mutiny types reference blocking SPI to avoid Mutiny dep on shared types
+- Reactive tier retired (parent#384) — `ReactiveAgentRegistry`, `ReactiveCapabilityHealth`, `ReactiveAgentGraphQuery` removed; blocking SPIs are the sole interface
 
 ##### Key wiring
 
@@ -662,7 +661,7 @@ Not closed here: L4 (`DefaultCapabilityHealth` implementation, `AgentStateStore`
 
 ##### Pattern introduced
 
-Inject-ready zero-dep API — all domain types and SPIs in one module with zero casehubio dependencies; compact constructor invariants enforce validity at the point of construction, not at service boundaries.
+Inject-ready minimal-dep API — all domain types and SPIs in one module with a single casehubio dependency (`casehub-platform-api`, pure Java); compact constructor invariants enforce validity at the point of construction, not at service boundaries.
 
 ##### Pattern anchor
 
@@ -682,12 +681,12 @@ Inject-ready zero-dep API — all domain types and SPIs in one module with zero 
 
 ##### Pattern to replicate
 
-1. Create a `casehub-[name]-api` Maven module with `<packaging>jar</packaging>` and zero casehubio dependencies.
+1. Create a `casehub-[name]-api` Maven module with `<packaging>jar</packaging>` and minimal casehubio dependencies (platform-api only if model types are needed, otherwise zero).
 2. Define domain records as immutable Java records. Add a compact constructor that calls a static `Validator.validate(...)` method.
 3. In the validator, reject null required fields with `Objects.requireNonNull(field, "fieldName")`. For string fields entering external systems (LLM prompts, A2A cards), apply character-set filtering: control characters, BiDi overrides, zero-width joiners.
 4. Define SPIs as interfaces in the same module. All `find*` methods take a `tenancyId` parameter — never provide single-parameter overloads.
-5. Define reactive SPI mirrors (`Uni<T>`) in the same module if the platform supports reactive — use nested non-reactive types to avoid Mutiny dependency on shared type definitions.
-6. Publish the module with no runtime dependencies. Consumers depend only on this module for domain types and SPI contracts.
+5. Reactive tier retired (parent#384) — blocking SPIs are the sole interface. No Mutiny dependencies.
+6. Publish the module with minimal dependencies (platform-api at most). Consumers depend only on this module for domain types and SPI contracts.
 
 ---
 
@@ -798,7 +797,7 @@ What this layer adds:
 
 - **Normalised schema** — `agent_descriptor` (BIGSERIAL surrogate PK, `UNIQUE(agent_id, tenancy_id)`) + `agent_capability` (FK, indexed `name`); queryable `findByCapability` without full table scan
 - **Unconditional tenancy filter** — every JPQL query includes `WHERE tenancy_id = :tenancyId`; no conditional branch that could be missed in a future implementation
-- **Reactive build-gated variant** — `JpaReactiveAgentRegistry @IfBuildProperty(name="casehub.eidos.reactive.enabled", stringValue="true")`; not active unless opted in
+- Reactive registry retired (parent#384) — only `JpaAgentRegistry` remains
 
 Not closed here: L4 (runtime degradation tracking), L7 (knowledge graph — V3 migration).
 
@@ -813,7 +812,7 @@ Not closed here: L4 (runtime degradation tracking), L7 (knowledge graph — V3 m
 ##### Key files
 
 - `runtime/src/main/java/io/casehub/eidos/runtime/registry/jpa/JpaAgentRegistry.java` — `@ApplicationScoped`; Panache-based; unconditional `tenancy_id` filter on all queries
-- `runtime/src/main/java/io/casehub/eidos/runtime/registry/jpa/AgentDescriptorEntity.java` — JPA entity; `public` class required for Hibernate Reactive bytecode enhancement; fields are package-private (Hibernate accesses fields directly, not via getters)
+- `runtime/src/main/java/io/casehub/eidos/runtime/registry/jpa/AgentDescriptorEntity.java` — JPA entity; fields are package-private (Hibernate accesses fields directly, not via getters)
 - `runtime/src/main/java/io/casehub/eidos/runtime/registry/jpa/AgentCapabilityEntity.java` — FK to `agent_descriptor`; `name` column indexed
 - `runtime/src/main/java/io/casehub/eidos/runtime/registry/jpa/AgentDescriptorMapper.java` — maps between `AgentDescriptorEntity` and `AgentDescriptor` record
 - `runtime/src/main/resources/db/eidos/migration/V1__initial_schema.sql` — `agent_descriptor` (BIGSERIAL PK, `UNIQUE(agent_id, tenancy_id)`), `agent_capability` (FK, index)
@@ -822,7 +821,7 @@ Not closed here: L4 (runtime degradation tracking), L7 (knowledge graph — V3 m
 
 ##### Key wiring
 
-**`@IfBuildProperty(name="casehub.eidos.reactive.enabled", stringValue="true")`** on `JpaReactiveAgentRegistry` — the reactive variant is absent from the deployment unless the property is set at build time. `enableIfMissing=true` on the blocking gating annotation ensures blocking is the default when the property is absent.
+**`@IfBuildProperty`** gating — JPA implementations use `@IfBuildProperty` to activate in blocking mode (the default). Reactive tier retired in parent#384.
 
 **`AgentDescriptorEntity` must be `public`** for Hibernate Reactive bytecode enhancement. Field-level access means getters are not needed — the combination looks like an oversight without this comment (Javadoc present on the class).
 
@@ -1236,7 +1235,7 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 
 | Goal | Scenario | Verification |
 |---|---|---|
-| Zero-dep API | `casehub-eidos-api` compiles with no casehubio or framework dependencies | `mvn dependency:tree -pl api` shows no casehubio/Quarkus in compile scope |
+| Minimal-dep API | `casehub-eidos-api` compiles with only `casehub-platform-api` (pure Java) — no framework dependencies | `mvn dependency:tree -pl api` shows only `casehub-platform-api` in compile scope, no Quarkus |
 | No invalid record can be constructed | `AgentDescriptor(null, ...)` throws `AgentValidationException` at construction site | `AgentDescriptorTest`, `AgentCapabilityTest`, compact constructor unit tests |
 | LLM-optional structural rendering | System prompt rendered correctly with no `ChatModel` CDI bean configured | `ClaudeMarkdownRendererTest` structural-fallback test cases |
 | Tenancy isolation | Agent registered in tenant-A is not returned for tenant-B queries | `TenancyIsolationTest` in `examples/agent-scenarios` |
