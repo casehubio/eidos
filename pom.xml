@@ -24,7 +24,6 @@
     <module>examples</module>
     <module>eval</module>
     <module>graph</module>
-    <module>routing</module>
     <module>org-api</module>
     <module>org-memory</module>
     <module>org-annotations</module>
@@ -69,7 +68,6 @@
     <casehub-platform-api.version>0.2-SNAPSHOT</casehub-platform-api.version>
     <casehub-ledger-api.version>0.2-SNAPSHOT</casehub-ledger-api.version>
     <casehub-ledger.version>0.2-SNAPSHOT</casehub-ledger.version>
-    <casehub-engine-api.version>0.2-SNAPSHOT</casehub-engine-api.version>
     <casehub-platform-yaml-core.version>0.2-SNAPSHOT</casehub-platform-yaml-core.version>
   </properties>
 
@@ -101,11 +99,6 @@
         <groupId>io.casehub</groupId>
         <artifactId>casehub-ledger</artifactId>
         <version>${casehub-ledger.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.casehub</groupId>
-        <artifactId>casehub-engine-api</artifactId>
-        <version>${casehub-engine-api.version}</version>
       </dependency>
       <dependency>
         <groupId>io.casehub</groupId>
