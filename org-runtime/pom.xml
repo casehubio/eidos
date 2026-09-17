@@ -21,11 +21,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.casehub</groupId>
-      <artifactId>casehub-desiredstate-api</artifactId>
-      <version>${casehub-desiredstate-api.version}</version>
-    </dependency>
-    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
     </dependency>
