@@ -7,7 +7,6 @@ import io.casehub.eidos.core.preferences.EidosPreferenceKeys;
 import io.casehub.platform.api.capacity.ActorCapacityView;
 import io.casehub.platform.api.preferences.PreferenceProvider;
 import io.casehub.platform.api.preferences.SettingsScope;
-import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -16,7 +15,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@DefaultBean
 @ApplicationScoped
 public class DefaultCapabilityHealth implements CapabilityHealth {
 
