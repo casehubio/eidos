@@ -14,6 +14,8 @@
 
 ### `MAX_ARCHETYPE_ADJECTIVES` (`int`)
 
+### `MAX_AVATAR` (`int`)
+
 ### `MAX_BRIEFING` (`int`)
 
 ### `MAX_CAPABILITIES` (`int`)
