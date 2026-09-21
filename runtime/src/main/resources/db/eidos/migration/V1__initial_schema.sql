@@ -16,6 +16,7 @@ CREATE TABLE agent_descriptor (
     slot                   VARCHAR(255),
     archetype              VARCHAR(100),
     archetype_adjectives   TEXT,
+    avatar                 VARCHAR(500),
     jurisdiction           TEXT,
     data_handling_policy   TEXT,
     briefing               TEXT,

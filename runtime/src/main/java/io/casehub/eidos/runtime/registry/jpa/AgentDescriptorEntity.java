@@ -58,6 +58,9 @@ public class AgentDescriptorEntity {
     @Column(name = "archetype_adjectives", columnDefinition = "TEXT")
     String archetypeAdjectives;
 
+    @Column(name = "avatar", length = 500)
+    String avatar;
+
     String jurisdiction;
 
     @Column(name = "data_handling_policy", columnDefinition = "TEXT")

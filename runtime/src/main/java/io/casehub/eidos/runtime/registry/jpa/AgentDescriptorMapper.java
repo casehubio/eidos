@@ -35,6 +35,7 @@ class AgentDescriptorMapper {
                 e.slot,
                 e.archetype,
                 readJson(e.archetypeAdjectives, new TypeReference<List<String>>() {}),
+                e.avatar,
                 e.capabilities.stream().map(this::toCapability).toList(),
                 readJson(e.disposition, AgentDisposition.class),
                 e.jurisdiction, e.dataHandlingPolicy, e.tenancyId,
@@ -64,6 +65,7 @@ class AgentDescriptorMapper {
         e.slot                  = d.slot();
         e.archetype             = d.archetype();
         e.archetypeAdjectives   = writeJson(d.archetypeAdjectives().isEmpty() ? null : d.archetypeAdjectives());
+        e.avatar                = d.avatar();
         e.jurisdiction          = d.jurisdiction();
         e.dataHandlingPolicy    = d.dataHandlingPolicy();
         e.briefing              = d.briefing();

@@ -357,4 +357,42 @@ class AgentDescriptorDeserializerTest {
         assertThat(d.archetype()).isNull();
         assertThat(d.archetypeAdjectives()).isEmpty();
     }
+
+    @Test
+    void avatarCollectionCode_deserializes() throws Exception {
+        var yaml = """
+                   agentId: av-test
+                   name: Avatar Test
+                   slot: analyst
+                   tenancyId: t1
+                   avatar: mythic:P1B
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.avatar()).isEqualTo("mythic:P1B");
+    }
+
+    @Test
+    void avatarExternalUrl_deserializes() throws Exception {
+        var yaml = """
+                   agentId: av-url
+                   name: URL
+                   slot: analyst
+                   tenancyId: t1
+                   avatar: https://example.com/img.png
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.avatar()).isEqualTo("https://example.com/img.png");
+    }
+
+    @Test
+    void noAvatar_fieldIsNull() throws Exception {
+        var yaml = """
+                   agentId: no-av
+                   name: No Av
+                   slot: analyst
+                   tenancyId: t1
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.avatar()).isNull();
+    }
 }

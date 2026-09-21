@@ -57,6 +57,7 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
         }
 
         ifString(root, "archetype", builder::archetype);
+        ifString(root, "avatar", builder::avatar);
         if (root.has("archetypeAdjectives") && root.get("archetypeAdjectives").isArray()) {
             builder.archetypeAdjectives(stringList(root.get("archetypeAdjectives")));
         }

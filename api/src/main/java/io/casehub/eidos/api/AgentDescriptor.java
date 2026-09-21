@@ -20,6 +20,7 @@ public record AgentDescriptor(
         String slot,
         String archetype,
         List<String> archetypeAdjectives,
+        String avatar,
         List<AgentCapability> capabilities,
         AgentDisposition disposition,
         String jurisdiction,
@@ -68,6 +69,7 @@ public record AgentDescriptor(
         }
         AgentDescriptorValidator.validate(agentId, name, slot, tenancyId);
         AgentDescriptorValidator.validateOptional("archetype", archetype, AgentDescriptorValidator.MAX_ARCHETYPE);
+        AgentDescriptorValidator.validateOptional("avatar", avatar, AgentDescriptorValidator.MAX_AVATAR);
         AgentDescriptorValidator.validateItems("archetypeAdjectives", archetypeAdjectives, AgentDescriptorValidator.MAX_ARCHETYPE_ADJECTIVE);
         AgentDescriptorValidator.validateOptional("version", version, AgentDescriptorValidator.MAX_VERSION);
         AgentDescriptorValidator.validateOptional("provider", provider, AgentDescriptorValidator.MAX_PROVIDER);
@@ -177,6 +179,7 @@ public record AgentDescriptor(
                 .axisVocabularies(this.axisVocabularies)
                 .slot(this.slot)
                 .archetype(this.archetype).archetypeAdjectives(this.archetypeAdjectives)
+                .avatar(this.avatar)
                 .capabilities(this.capabilities)
                 .disposition(this.disposition).jurisdiction(this.jurisdiction)
                 .dataHandlingPolicy(this.dataHandlingPolicy)
@@ -195,6 +198,7 @@ public record AgentDescriptor(
         private String                       slot;
         private String                       archetype;
         private List<String>                 archetypeAdjectives;
+        private String                       avatar;
         private List<AgentCapability>        capabilities = List.of();
         private AgentDisposition             disposition;
         private String                       jurisdiction, dataHandlingPolicy, tenancyId, briefing;
@@ -278,6 +282,11 @@ public record AgentDescriptor(
             return this;
         }
 
+        public Builder avatar(String v) {
+            this.avatar = v;
+            return this;
+        }
+
 
         public Builder capabilities(List<AgentCapability> v)            {
                                                                             this.capabilities = v;
@@ -336,7 +345,7 @@ public record AgentDescriptor(
                     domainVocabulary, slotVocabulary, dispositionVocabulary,
                     styleVocabulary,
                     axisVocabularies, slot, archetype, archetypeAdjectives,
-                    capabilities, disposition,
+                    avatar, capabilities, disposition,
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
                     templates,
                     goals, constraints,
