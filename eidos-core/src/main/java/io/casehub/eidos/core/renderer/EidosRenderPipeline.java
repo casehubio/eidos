@@ -297,6 +297,8 @@ public class EidosRenderPipeline {
             });
         });
 
+        addIfPresent(node, "archetype", descriptor.archetype());
+
         // Capabilities — format-discriminated for the LLM payload and cache key.
         // Numeric routing signals (A2A_CARD only): qualityHint, latencyHintP50Ms, costHint,
         // epistemicDomains. These are engine dispatch signals, not behavioural instructions.
@@ -582,6 +584,20 @@ public class EidosRenderPipeline {
                                   .append(c.description()).append("\n"));
     }
 
+
+    private void assembleMarkdownArchetype(final StringBuilder sb, final AgentDescriptor descriptor) {
+        if (descriptor.archetype() == null) {return;}
+        sb.append("\n## Personality\n\n");
+        String label = resolveTermLabel(Optional.of("urn:casehub:vocab:archetype"), descriptor.archetype());
+        sb.append("**").append(label).append("**");
+        if (!descriptor.archetypeAdjectives().isEmpty()) {
+            sb.append(" — ").append(String.join(", ", descriptor.archetypeAdjectives()));
+        }
+        sb.append("\n\n");
+        vocab.resolve("urn:casehub:vocab:archetype", descriptor.archetype())
+             .ifPresent(term -> sb.append(term.description()).append("\n"));
+    }
+
     private void assembleMarkdownDisposition(final StringBuilder sb, final AgentDescriptor descriptor) {
         if (descriptor.disposition() != null) {
             final AgentDisposition d = descriptor.disposition();
@@ -719,6 +735,9 @@ public class EidosRenderPipeline {
         assembleMarkdownObjectives(sb, descriptor);
         assembleMarkdownConstraints(sb, descriptor);
 
+        // Archetype — personality label and description
+        assembleMarkdownArchetype(sb, descriptor);
+
         // Cognitive profile — Jungian JPAF rendering before disposition axes
         assembleMarkdownCognitiveProfile(sb, descriptor);
 
@@ -828,6 +847,9 @@ public class EidosRenderPipeline {
             sb.append("\n");
         }
 
+        // Archetype — personality label and description
+        assembleMarkdownArchetype(sb, descriptor);
+
         // Cognitive profile — Jungian JPAF rendering before disposition axes
         assembleMarkdownCognitiveProfile(sb, descriptor);
 
@@ -900,6 +922,20 @@ public class EidosRenderPipeline {
             vocab.vocabularyMetadata(uri)
                  .ifPresent(meta -> addIfNonBlank(slotNode, "vocabularyName", meta.name()));
         });
+
+        // archetype — optional personality identity
+        if (descriptor.archetype() != null) {
+            final ObjectNode archNode = card.putObject("archetype");
+            archNode.put("value", descriptor.archetype());
+            vocab.resolve("urn:casehub:vocab:archetype", descriptor.archetype()).ifPresent(term -> {
+                addIfNonBlank(archNode, "label", term.label());
+                addIfNonBlank(archNode, "description", term.description());
+            });
+            if (!descriptor.archetypeAdjectives().isEmpty()) {
+                final ArrayNode adjArray = archNode.putArray("adjectives");
+                descriptor.archetypeAdjectives().forEach(adjArray::add);
+            }
+        }
 
         // disposition — per-axis objects with values array (axes in DispositionAxis declaration order),
         // canDelegate last. Omitted entirely when descriptor.disposition() is null.

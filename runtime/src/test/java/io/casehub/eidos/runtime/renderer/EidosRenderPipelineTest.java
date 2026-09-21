@@ -1,10 +1,6 @@
 package io.casehub.eidos.runtime.renderer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.casehub.eidos.core.renderer.A2AEnrichment;
-import io.casehub.eidos.core.renderer.EidosRenderPipeline;
-import io.casehub.eidos.core.renderer.SemanticEnrichment;
-import io.casehub.eidos.core.renderer.StageOneResult;
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
@@ -19,6 +15,10 @@ import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyTerm;
+import io.casehub.eidos.core.renderer.A2AEnrichment;
+import io.casehub.eidos.core.renderer.EidosRenderPipeline;
+import io.casehub.eidos.core.renderer.SemanticEnrichment;
+import io.casehub.eidos.core.renderer.StageOneResult;
 import io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1476,5 +1476,87 @@ class EidosRenderPipelineTest {
                                   .tenancyId("t").build();
         var payload = pipeline.buildDescriptorPayload(desc, MARKDOWN);
         assertThat(payload.get("disposition").has("dispositionProfile")).isTrue();
+    }
+
+// --- Archetype rendering ---
+
+    @Test
+    void markdownRendersArchetypeSection() {
+        vocab.register(io.casehub.eidos.vocab.ArchetypeTerm.class);
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("arch").name("Arch Agent").slot("analyst").tenancyId("t1")
+                                        .archetype("detective")
+                                        .archetypeAdjectives(List.of("meticulous", "persistent"))
+                                        .build();
+        var s1       = pipeline.buildStage1(descriptor, AgentPromptContext.forFormat(MARKDOWN));
+        var rendered = pipeline.assemble(s1, Optional.empty(), Optional.empty(), descriptor, AgentPromptContext.forFormat(MARKDOWN));
+        var text     = rendered.content();
+        assertThat(text).contains("## Personality");
+        assertThat(text).contains("**Detective**");
+        assertThat(text).contains("meticulous, persistent");
+        assertThat(text).contains("Uncovers truth");
+    }
+
+    @Test
+    void proseRendersArchetypeSection() {
+        vocab.register(io.casehub.eidos.vocab.ArchetypeTerm.class);
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("arch").name("Arch Agent").slot("analyst").tenancyId("t1")
+                                        .archetype("mentor")
+                                        .build();
+        var s1       = pipeline.buildStage1(descriptor, AgentPromptContext.forFormat(PROSE));
+        var rendered = pipeline.assemble(s1, Optional.empty(), Optional.empty(), descriptor, AgentPromptContext.forFormat(PROSE));
+        var text     = rendered.content();
+        assertThat(text).contains("## Personality");
+        assertThat(text).contains("**Mentor**");
+        assertThat(text).contains("Shares accumulated wisdom");
+    }
+
+    @Test
+    void noArchetypeOmitsPersonalitySection() {
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("no-arch").name("No Arch").slot("analyst").tenancyId("t1")
+                                        .build();
+        var s1       = pipeline.buildStage1(descriptor, AgentPromptContext.forFormat(MARKDOWN));
+        var rendered = pipeline.assemble(s1, Optional.empty(), Optional.empty(), descriptor, AgentPromptContext.forFormat(MARKDOWN));
+        assertThat(rendered.content()).doesNotContain("## Personality");
+    }
+
+    @Test
+    void archetypeWithoutVocabRegisteredRendersRawValue() {
+        var descriptor = AgentDescriptor.builder()
+                                        .agentId("raw").name("Raw").slot("analyst").tenancyId("t1")
+                                        .archetype("detective")
+                                        .build();
+        var s1       = pipeline.buildStage1(descriptor, AgentPromptContext.forFormat(MARKDOWN));
+        var rendered = pipeline.assemble(s1, Optional.empty(), Optional.empty(), descriptor, AgentPromptContext.forFormat(MARKDOWN));
+        var text     = rendered.content();
+        assertThat(text).contains("## Personality");
+        assertThat(text).contains("detective");
+    }
+
+    @Test
+    void a2aCardIncludesArchetypeObject() {
+        vocab.register(io.casehub.eidos.vocab.ArchetypeTerm.class);
+        var desc = AgentDescriptor.builder()
+                                  .agentId("arch").name("Arch").slot("analyst").tenancyId("t1")
+                                  .archetype("detective")
+                                  .archetypeAdjectives(List.of("meticulous"))
+                                  .build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("archetype")).isTrue();
+        assertThat(card.get("archetype").get("value").asText()).isEqualTo("detective");
+        assertThat(card.get("archetype").get("label").asText()).isEqualTo("Detective");
+        assertThat(card.get("archetype").get("description").asText()).contains("Uncovers truth");
+        assertThat(card.get("archetype").get("adjectives").get(0).asText()).isEqualTo("meticulous");
+    }
+
+    @Test
+    void a2aCardOmitsArchetypeWhenNull() {
+        var desc = AgentDescriptor.builder()
+                                  .agentId("no-arch").name("No Arch").slot("analyst").tenancyId("t1")
+                                  .build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("archetype")).isFalse();
     }
 }
