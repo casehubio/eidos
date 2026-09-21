@@ -43,6 +43,7 @@ Structured agent identity record with these fields:
 - **Slot:** open `String` -- domain-defined (e.g. `"planner"`, `"reviewer"`). Platform never constrains.
 - **Archetype:** optional `String` -- personality identity from the Hartwell & Chen archetype vocabulary (e.g. `"detective"`, `"mentor"`, `"engineer"`). Open string following the slot pattern. Auto-derived from personality framework values at registration time when not set explicitly.
 - **Archetype Adjectives:** `List<String>` -- optional personality refinement adjectives (e.g. `["meticulous", "persistent"]`). Must be empty when archetype is null. Max 10 adjectives, 50 chars each.
+- **Avatar:** optional `String` -- compact visual identity code (e.g. `"mythic:P1B"`) or external image URL (`"https://..."`). Auto-derived from archetype at registration time when not set explicitly. Collection codes are rendered client-side from SVG part libraries; external URLs are rendered as `<img>`. Max 500 chars. See blocks-ui#167.
 - **Capabilities:** `List<AgentCapability>` -- what the agent can do. Names must be unique within a descriptor.
 - **Disposition:** `AgentDisposition` -- behavioural profile with weighted multi-valued axes.
 - **Goals:** `List<AgentGoal>` -- standing, identity-level goals (BDI-inspired). Unique names enforced.
