@@ -3,6 +3,7 @@ package io.casehub.eidos.runtime.registrar;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.DispositionValue;
 import io.casehub.eidos.vocab.ArchetypeResolver;
+import io.casehub.eidos.vocab.AvatarCodec;
 
 import java.util.Comparator;
 import java.util.Map;
@@ -12,7 +13,7 @@ public final class ArchetypeDeriver {
     private ArchetypeDeriver() {}
 
     public static AgentDescriptor deriveArchetype(AgentDescriptor descriptor) {
-        if (descriptor.archetype() != null) return descriptor;
+        if (descriptor.archetype() != null) return deriveAvatar(descriptor);
         if (descriptor.disposition() == null) return descriptor;
         var profile = descriptor.disposition().dispositionProfile();
         if (profile == null || profile.isEmpty()) return descriptor;
@@ -32,11 +33,18 @@ public final class ArchetypeDeriver {
         var result = ArchetypeResolver.resolve(Map.of(vocabUri, primaryTerm));
 
         if (result instanceof ArchetypeResolver.Converged c) {
-            return descriptor.toBuilder().archetype(c.archetype().value()).build();
+            descriptor = descriptor.toBuilder().archetype(c.archetype().value()).build();
+        } else if (result instanceof ArchetypeResolver.Narrowed n && !n.candidates().isEmpty()) {
+            descriptor = descriptor.toBuilder().archetype(n.candidates().getFirst().value()).build();
         }
-        if (result instanceof ArchetypeResolver.Narrowed n && !n.candidates().isEmpty()) {
-            return descriptor.toBuilder().archetype(n.candidates().getFirst().value()).build();
-        }
-        return descriptor;
+
+        return deriveAvatar(descriptor);
+    }
+
+    private static AgentDescriptor deriveAvatar(AgentDescriptor descriptor) {
+        if (descriptor.archetype() == null || descriptor.avatar() != null) return descriptor;
+        String code = AvatarCodec.defaultCode(AvatarCodec.DEFAULT_COLLECTION, descriptor.archetype());
+        if (code == null) return descriptor;
+        return descriptor.toBuilder().avatar(code).build();
     }
 }

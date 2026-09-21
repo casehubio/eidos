@@ -93,4 +93,39 @@ class ArchetypeDeriverTest {
         }
         return null;
     }
+
+// --- Avatar derivation ---
+
+    @Test
+    void avatarDerivedWhenArchetypeSetAndAvatarNull() {
+        var d      = base().archetype("detective").build();
+        var result = ArchetypeDeriver.deriveArchetype(d);
+        assertThat(result.avatar()).isNotNull();
+        assertThat(result.avatar()).startsWith("mythic:P");
+    }
+
+    @Test
+    void avatarNotOverriddenWhenExplicitlySet() {
+        var d = base()
+                        .archetype("detective")
+                        .avatar("https://example.com/custom.png")
+                        .build();
+        var result = ArchetypeDeriver.deriveArchetype(d);
+        assertThat(result.avatar()).isEqualTo("https://example.com/custom.png");
+    }
+
+    @Test
+    void avatarNullWhenNoArchetype() {
+        var d      = base().build();
+        var result = ArchetypeDeriver.deriveArchetype(d);
+        assertThat(result.avatar()).isNull();
+    }
+
+    @Test
+    void avatarCodeMatchesCanonicalIndex() {
+        var    d            = base().archetype("detective").build();
+        var    result       = ArchetypeDeriver.deriveArchetype(d);
+        String expectedCode = io.casehub.eidos.vocab.AvatarCodec.defaultCode("mythic", "detective");
+        assertThat(result.avatar()).isEqualTo(expectedCode);
+    }
 }
