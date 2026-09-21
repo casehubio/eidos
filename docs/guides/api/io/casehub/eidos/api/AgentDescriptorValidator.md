@@ -8,6 +8,12 @@
 
 ### `MAX_AGENT_ID` (`int`)
 
+### `MAX_ARCHETYPE` (`int`)
+
+### `MAX_ARCHETYPE_ADJECTIVE` (`int`)
+
+### `MAX_ARCHETYPE_ADJECTIVES` (`int`)
+
 ### `MAX_BRIEFING` (`int`)
 
 ### `MAX_CAPABILITIES` (`int`)
