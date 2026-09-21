@@ -298,6 +298,7 @@ public class EidosRenderPipeline {
         });
 
         addIfPresent(node, "archetype", descriptor.archetype());
+        addIfPresent(node, "avatar", descriptor.avatar());
 
         // Capabilities — format-discriminated for the LLM payload and cache key.
         // Numeric routing signals (A2A_CARD only): qualityHint, latencyHintP50Ms, costHint,
@@ -936,6 +937,9 @@ public class EidosRenderPipeline {
                 descriptor.archetypeAdjectives().forEach(adjArray::add);
             }
         }
+
+        // avatar — optional visual identity code
+        addIfPresent(card, "avatar", descriptor.avatar());
 
         // disposition — per-axis objects with values array (axes in DispositionAxis declaration order),
         // canDelegate last. Omitted entirely when descriptor.disposition() is null.

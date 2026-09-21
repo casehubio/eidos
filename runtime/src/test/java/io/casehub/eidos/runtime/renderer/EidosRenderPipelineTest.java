@@ -1559,4 +1559,27 @@ class EidosRenderPipelineTest {
         var card = renderA2aCard(desc);
         assertThat(card.has("archetype")).isFalse();
     }
+
+    @Test
+    void a2aCardIncludesAvatarWhenSet() {
+        var desc = AgentDescriptor.builder().agentId("av").name("Av").slot("s").tenancyId("t1").avatar("mythic:P1B").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("avatar")).isTrue();
+        assertThat(card.get("avatar").asText()).isEqualTo("mythic:P1B");
+    }
+
+    @Test
+    void a2aCardOmitsAvatarWhenNull() {
+        var desc = AgentDescriptor.builder().agentId("no-av").name("No Av").slot("s").tenancyId("t1").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("avatar")).isFalse();
+    }
+
+    @Test
+    void descriptorPayloadIncludesAvatar() {
+        var desc = AgentDescriptor.builder().agentId("av").name("Av").slot("s").tenancyId("t1").avatar("https://example.com/img.png").build();
+        var node = pipeline.buildDescriptorPayload(desc, MARKDOWN);
+        assertThat(node.has("avatar")).isTrue();
+        assertThat(node.get("avatar").asText()).isEqualTo("https://example.com/img.png");
+    }
 }
