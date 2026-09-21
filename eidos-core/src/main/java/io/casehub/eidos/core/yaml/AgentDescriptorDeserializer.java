@@ -56,6 +56,11 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
             builder.axisVocabularies(axisMap);
         }
 
+        ifString(root, "archetype", builder::archetype);
+        if (root.has("archetypeAdjectives") && root.get("archetypeAdjectives").isArray()) {
+            builder.archetypeAdjectives(stringList(root.get("archetypeAdjectives")));
+        }
+
         if (root.has("disposition")) {
             builder.disposition(ctxt.readTreeAsValue(root.get("disposition"), AgentDisposition.class));
         }

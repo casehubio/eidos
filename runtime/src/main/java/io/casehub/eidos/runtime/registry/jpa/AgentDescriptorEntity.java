@@ -53,6 +53,11 @@ public class AgentDescriptorEntity {
     String axisVocabularies;
 
     String slot;
+    String archetype;
+
+    @Column(name = "archetype_adjectives", columnDefinition = "TEXT")
+    String archetypeAdjectives;
+
     String jurisdiction;
 
     @Column(name = "data_handling_policy", columnDefinition = "TEXT")

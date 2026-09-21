@@ -315,4 +315,46 @@ class AgentDescriptorDeserializerTest {
         var d = mapper.readValue(yaml, AgentDescriptor.class);
         assertThat(d.extensionData()).isNull();
     }
+
+    @Test
+    void archetypeAndAdjectives_deserialize() throws Exception {
+        var yaml = """
+                   agentId: arch-test
+                   name: Archetype Test
+                   slot: analyst
+                   tenancyId: t1
+                   archetype: detective
+                   archetypeAdjectives: [meticulous, persistent]
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.archetype()).isEqualTo("detective");
+        assertThat(d.archetypeAdjectives()).containsExactly("meticulous", "persistent");
+    }
+
+    @Test
+    void archetypeWithoutAdjectives_adjectivesDefaultToEmpty() throws Exception {
+        var yaml = """
+                   agentId: arch-no-adj
+                   name: No Adj
+                   slot: analyst
+                   tenancyId: t1
+                   archetype: mentor
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.archetype()).isEqualTo("mentor");
+        assertThat(d.archetypeAdjectives()).isEmpty();
+    }
+
+    @Test
+    void noArchetype_fieldsAreNull() throws Exception {
+        var yaml = """
+                   agentId: no-arch
+                   name: No Arch
+                   slot: analyst
+                   tenancyId: t1
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.archetype()).isNull();
+        assertThat(d.archetypeAdjectives()).isEmpty();
+    }
 }

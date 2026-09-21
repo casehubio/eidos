@@ -36,6 +36,7 @@ public class AgentDescriptorBootstrap {
                             VocabularyRegistry vocabRegistry,
                             BriefingCoherenceValidator coherenceValidator) {
         DescriptorCollector.collectAndValidate(registrars, templateRegistry, vocabRegistry, coherenceValidator)
+                           .stream().map(ArchetypeDeriver::deriveArchetype)
                            .forEach(registry::register);
     }
 

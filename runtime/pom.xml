@@ -81,6 +81,13 @@
       <artifactId>jackson-dataformat-yaml</artifactId>
     </dependency>
 
+    <!-- Vocab — well-known vocabularies (archetype derivation at registration time) -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-vocab</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- yaml-core — variable resolution, forEach expansion, conditional inclusion, CSV -->
     <dependency>
       <groupId>io.casehub</groupId>
@@ -106,12 +113,6 @@
     </dependency>
 
     <!-- Testing -->
-    <dependency>
-      <groupId>io.casehub</groupId>
-      <artifactId>casehub-eidos-vocab</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit</artifactId>

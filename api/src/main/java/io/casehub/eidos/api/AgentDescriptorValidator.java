@@ -34,6 +34,9 @@ class AgentDescriptorValidator {
     static final int MAX_GOALS                  = 10;
     static final int MAX_CONSTRAINTS            = 10;
     static final int MAX_CAPABILITIES           = 20;
+    static final int MAX_ARCHETYPE              = 100;
+    static final int MAX_ARCHETYPE_ADJECTIVE    = 50;
+    static final int MAX_ARCHETYPE_ADJECTIVES   = 10;
     static final int MAX_EXTENSION_DATA_SIZE    = 65_536;
 
 

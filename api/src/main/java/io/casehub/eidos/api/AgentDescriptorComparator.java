@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public final class AgentDescriptorComparator {
 
-    static final int COMPARED_FIELD_COUNT = 21;
+    static final int COMPARED_FIELD_COUNT = 23;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 12;
     static final int COMPARED_DISPOSITION_FIELD_COUNT = 8;
     static final int COMPARED_GOAL_FIELD_COUNT = 5;
@@ -36,6 +36,8 @@ public final class AgentDescriptorComparator {
     private static void compareSimpleFields(List<FieldDrift> drifts, AgentDescriptor desired, AgentDescriptor actual) {
         compareField(drifts, "name", desired.name(), actual.name());
         compareField(drifts, "slot", desired.slot(), actual.slot());
+        compareField(drifts, "archetype", desired.archetype(), actual.archetype());
+        compareField(drifts, "archetypeAdjectives", desired.archetypeAdjectives(), actual.archetypeAdjectives());
         compareField(drifts, "version", desired.version(), actual.version());
         compareField(drifts, "provider", desired.provider(), actual.provider());
         compareField(drifts, "modelFamily", desired.modelFamily(), actual.modelFamily());

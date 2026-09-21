@@ -18,6 +18,8 @@ public record AgentDescriptor(
         String styleVocabulary,
         Map<DispositionAxis, String> axisVocabularies,
         String slot,
+        String archetype,
+        List<String> archetypeAdjectives,
         List<AgentCapability> capabilities,
         AgentDisposition disposition,
         String jurisdiction,
@@ -55,7 +57,18 @@ public record AgentDescriptor(
                                                      AgentDescriptorValidator.MAX_VOCABULARY_URI));
             axisVocabularies = Map.copyOf(axisVocabularies);
         }
+        archetypeAdjectives = archetypeAdjectives != null ? List.copyOf(archetypeAdjectives) : List.of();
+        if (archetype == null && !archetypeAdjectives.isEmpty()) {
+            throw new AgentValidationException("archetypeAdjectives",
+                "cannot specify adjectives without an archetype");
+        }
+        if (archetypeAdjectives.size() > AgentDescriptorValidator.MAX_ARCHETYPE_ADJECTIVES) {
+            throw new AgentValidationException("archetypeAdjectives",
+                "exceeds maximum count " + AgentDescriptorValidator.MAX_ARCHETYPE_ADJECTIVES + " (was " + archetypeAdjectives.size() + ")");
+        }
         AgentDescriptorValidator.validate(agentId, name, slot, tenancyId);
+        AgentDescriptorValidator.validateOptional("archetype", archetype, AgentDescriptorValidator.MAX_ARCHETYPE);
+        AgentDescriptorValidator.validateItems("archetypeAdjectives", archetypeAdjectives, AgentDescriptorValidator.MAX_ARCHETYPE_ADJECTIVE);
         AgentDescriptorValidator.validateOptional("version", version, AgentDescriptorValidator.MAX_VERSION);
         AgentDescriptorValidator.validateOptional("provider", provider, AgentDescriptorValidator.MAX_PROVIDER);
         AgentDescriptorValidator.validateOptional("modelFamily", modelFamily, AgentDescriptorValidator.MAX_MODEL_IDENTIFIER);
@@ -162,7 +175,9 @@ public record AgentDescriptor(
                 .dispositionVocabulary(this.dispositionVocabulary)
                 .styleVocabulary(this.styleVocabulary)
                 .axisVocabularies(this.axisVocabularies)
-                .slot(this.slot).capabilities(this.capabilities)
+                .slot(this.slot)
+                .archetype(this.archetype).archetypeAdjectives(this.archetypeAdjectives)
+                .capabilities(this.capabilities)
                 .disposition(this.disposition).jurisdiction(this.jurisdiction)
                 .dataHandlingPolicy(this.dataHandlingPolicy)
                 .tenancyId(this.tenancyId).briefing(this.briefing)
@@ -178,6 +193,8 @@ public record AgentDescriptor(
                 styleVocabulary;
         private Map<DispositionAxis, String> axisVocabularies;
         private String                       slot;
+        private String                       archetype;
+        private List<String>                 archetypeAdjectives;
         private List<AgentCapability>        capabilities = List.of();
         private AgentDisposition             disposition;
         private String                       jurisdiction, dataHandlingPolicy, tenancyId, briefing;
@@ -251,6 +268,17 @@ public record AgentDescriptor(
                                                                             return this;
                                                                         }
 
+        public Builder archetype(String v) {
+            this.archetype = v;
+            return this;
+        }
+
+        public Builder archetypeAdjectives(List<String> v) {
+            this.archetypeAdjectives = v;
+            return this;
+        }
+
+
         public Builder capabilities(List<AgentCapability> v)            {
                                                                             this.capabilities = v;
                                                                             return this;
@@ -307,7 +335,8 @@ public record AgentDescriptor(
                     modelFamily, modelVersion, weightsFingerprint,
                     domainVocabulary, slotVocabulary, dispositionVocabulary,
                     styleVocabulary,
-                    axisVocabularies, slot, capabilities, disposition,
+                    axisVocabularies, slot, archetype, archetypeAdjectives,
+                    capabilities, disposition,
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
                     templates,
                     goals, constraints,

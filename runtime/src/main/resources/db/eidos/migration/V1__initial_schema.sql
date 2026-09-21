@@ -14,6 +14,8 @@ CREATE TABLE agent_descriptor (
     style_vocabulary       TEXT,
     axis_vocabularies      TEXT,
     slot                   VARCHAR(255),
+    archetype              VARCHAR(100),
+    archetype_adjectives   TEXT,
     jurisdiction           TEXT,
     data_handling_policy   TEXT,
     briefing               TEXT,
