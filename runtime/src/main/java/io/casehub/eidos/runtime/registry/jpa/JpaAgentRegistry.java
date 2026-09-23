@@ -1,19 +1,27 @@
 package io.casehub.eidos.runtime.registry.jpa;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentMatch;
+import io.casehub.eidos.api.AgentQuery;
+import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.CapabilityResolver;
+import io.casehub.eidos.api.CapabilityVocabularyValidator;
+import io.casehub.eidos.api.ResolvedCapability;
+import io.casehub.eidos.api.VocabularyRegistry;
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
+import org.jboss.logging.Logger;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.jboss.logging.Logger;
 
 @IfBuildProperty(name = "casehub.eidos.reactive.enabled", stringValue = "false", enableIfMissing = true)
 @ApplicationScoped
@@ -62,22 +70,22 @@ public class JpaAgentRegistry implements AgentRegistry {
     @Transactional(TxType.SUPPORTS)
     public List<AgentMatch> find(AgentQuery query) {
         String fetchJoin = (query.capabilityName() != null || query.taskDomain() != null)
-            ? "JOIN FETCH a.capabilities c"
-            : "LEFT JOIN FETCH a.capabilities c";
+                           ? "JOIN FETCH a.capabilities c"
+                           : "LEFT JOIN FETCH a.capabilities c";
 
         var jpql = new StringBuilder(
-            "SELECT DISTINCT a FROM AgentDescriptorEntity a " + fetchJoin
-            + " WHERE a.tenancyId = :tenancyId");
-        if (query.slot() != null) jpql.append(" AND a.slot = :slot");
+                "SELECT DISTINCT a FROM AgentDescriptorEntity a " + fetchJoin
+                + " WHERE a.tenancyId = :tenancyId");
+        if (query.slot() != null) {jpql.append(" AND a.slot = :slot");}
 
-        // Capability matching with vocabulary expansion
+// Capability matching with vocabulary expansion
         Map<String, Set<String>> capabilityExpansion = null;
         if (query.capabilityName() != null) {
             capabilityExpansion = vocabularyRegistry.expandForMatchingByVocabulary(query.capabilityName());
             int totalExpanded = capabilityExpansion.values().stream().mapToInt(Set::size).sum();
             if (totalExpanded > MAX_EXPANSION_SIZE) {
                 LOG.warnf("Vocabulary expansion for '%s' produced %d terms across %d vocabularies;"
-                    + " query may be slow", query.capabilityName(), totalExpanded, capabilityExpansion.size());
+                          + " query may be slow", query.capabilityName(), totalExpanded, capabilityExpansion.size());
             }
             if (capabilityExpansion.isEmpty()) {
                 // No vocabulary grounding - exact match only
@@ -95,12 +103,14 @@ public class JpaAgentRegistry implements AgentRegistry {
             }
         }
 
-        if (query.taskDomain() != null) jpql.append(" AND :taskDomain NOT MEMBER OF c.excludedDomains");
-        if (query.goalName() != null) jpql.append(" AND EXISTS (SELECT 1 FROM AgentGoalEntity g WHERE g.descriptor = a AND g.name = :goalName)");
+        if (query.taskDomain() != null) {jpql.append(" AND :taskDomain NOT MEMBER OF c.excludedDomains");}
+        if (query.goalName() != null) {
+            jpql.append(" AND EXISTS (SELECT 1 FROM AgentGoalEntity g WHERE g.descriptor = a AND g.name = :goalName)");
+        }
 
         var q = em.createQuery(jpql.toString(), AgentDescriptorEntity.class)
                   .setParameter("tenancyId", query.tenancyId());
-        if (query.slot() != null) q.setParameter("slot", query.slot());
+        if (query.slot() != null) {q.setParameter("slot", query.slot());}
 
         if (query.capabilityName() != null) {
             q.setParameter("capabilityName", query.capabilityName());
@@ -114,25 +124,37 @@ public class JpaAgentRegistry implements AgentRegistry {
             }
         }
 
-        if (query.taskDomain() != null) q.setParameter("taskDomain", query.taskDomain());
-        if (query.goalName() != null) q.setParameter("goalName", query.goalName());
+        if (query.taskDomain() != null) {q.setParameter("taskDomain", query.taskDomain());}
+        if (query.goalName() != null) {q.setParameter("goalName", query.goalName());}
 
         var descriptors = q.getResultList().stream().map(mapper::toRecord).toList();
 
         if (query.capabilityName() == null) {
             return descriptors.stream()
-                .map(d -> new AgentMatch(d, null))
-                .toList();
+                              .map(d -> new AgentMatch(d, null))
+                              .toList();
+        }
+
+        if (query.maxDepth() != null) {
+            return descriptors.stream()
+                              .flatMap(d -> CapabilityResolver.resolveWithinDepth(
+                                                                      d.capabilities(), query.capabilityName(),
+                                                                      query.maxDepth(), vocabularyRegistry)
+                                                              .stream()
+                                                              .map(rc -> new AgentMatch(d, rc)))
+                              .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
+                                                           Comparator.nullsLast(Comparator.comparing(ResolvedCapability::degree))))
+                              .toList();
         }
 
         return descriptors.stream()
-            .map(d -> {
-                var resolved = CapabilityResolver.resolve(
-                    d.capabilities(), query.capabilityName(), vocabularyRegistry);
-                return new AgentMatch(d, resolved);
-            })
-            .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
-                Comparator.nullsLast(Comparator.comparing(ResolvedCapability::degree))))
-            .toList();
+                          .map(d -> {
+                              var resolved = CapabilityResolver.resolve(
+                                      d.capabilities(), query.capabilityName(), vocabularyRegistry);
+                              return new AgentMatch(d, resolved);
+                          })
+                          .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
+                                                       Comparator.nullsLast(Comparator.comparing(ResolvedCapability::degree))))
+                          .toList();
     }
 }

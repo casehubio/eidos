@@ -17,7 +17,7 @@ Any Quarkus app that depends on `casehub-eidos` can register agents with structu
 
 | artifactId | When to use | What you get |
 |---|---|---|
-| `casehub-eidos-api` | Always -- compile dependency | Domain types: `AgentDescriptor`, `AgentCapability`, `AgentDisposition`, `AgentGoal`, `AgentConstraint`, `AgentMatch`, `AgentQuery`, `AgentRegistry`, `AgentSelector`, `SelectionContext`, `CapabilityHealth`, `SystemPromptRenderer`, `VocabularyRegistry`, `TemplateRegistry`, `DispositionHealth`, `DispositionEvolution`, `AgentStateStore`, `BehavioralSignalStore`, `DispositionSignalStore`. SPIs in `api.spi`: `AgentDescriptorRegistrar`, `VocabularyRegistrar`, `TemplateRegistrar`. Utilities: `CapabilityResolver`, `BehavioralExpectations`, `AgentDescriptorComparator`, `DisplayTermResolver`. Sealed types: `MatchDegree`, `CapabilityStatus`, `AgentSelection`, `DispositionStatus`, `EvolutionResult`. Enums: `EscalationKind`. Pure Java + `casehub-platform-api` (for `ModelQuery`), no CDI. |
+| `casehub-eidos-api` | Always -- compile dependency | Domain types: `AgentDescriptor`, `AgentCapability`, `AgentDisposition`, `AgentGoal`, `AgentConstraint`, `AgentMatch`, `AgentQuery`, `AgentRegistry`, `AgentSelector`, `SelectionContext`, `CapabilityHealth`, `SystemPromptRenderer`, `VocabularyRegistry`, `TemplateRegistry`, `DispositionHealth`, `DispositionEvolution`, `AgentStateStore`, `BehavioralSignalStore`, `DispositionSignalStore`. SPIs in `api.spi`: `AgentDescriptorRegistrar`, `VocabularyRegistrar`, `TemplateRegistrar`. Utilities: `CapabilityResolver`, `BehavioralExpectations`, `AgentDescriptorComparator`, `DisplayTermResolver`. Sealed types: `MatchDegree`, `CapabilityStatus`, `AgentSelection`, `DispositionStatus`, `EvolutionResult`. Enums: `EscalationKind`, `CollaborationRelation`. Records: `Collaborator`. SPIs: `RuntimeCollaborationQuery`. Pure Java + `casehub-platform-api` (for `ModelQuery`), no CDI. |
 | `casehub-eidos` | Always -- runtime dependency | Quarkus extension: CDI registry, health implementations, renderer, JPA persistence, Flyway migrations. `@DefaultBean` for all SPIs. |
 | `casehub-eidos-memory` | Tests and prototyping | `@Alternative @Priority(1)` in-memory implementations: `InMemoryAgentRegistry`, `InMemoryTemplateRegistry`, `InMemoryAgentStateStore`, `InMemoryBehavioralSignalStore` (per-signal TTL via `@ConfigProperty`), `InMemoryDispositionSignalStore` (ConcurrentHashMap + AtomicInteger, no TTL), `InMemoryRenderedPromptCache`. Activate by adding as dependency. |
 | `casehub-eidos-vocab` | Optional -- domain vocabularies | Well-known vocabularies: `SvoTerm`, `ConscientiousnessTerm`, `CasehubSlotTerm`, `BelbinTerm` (9 team roles), `DiscTerm` (4 DISC types, `axisExactMatch`), `ThomasKilmannTerm` (5 conflict modes), `CasehubCapabilityTerm` (hierarchical capability taxonomy), `JungianFunctionTerm` (8 cognitive functions with `axisExactMatch`, `shadow()`, `opposite()`, `compatibleAuxiliaries()`), `MbtiTypeTerm` (16 MBTI types with `specializes()` to `JungianFunctionTerm`, `defaultProfile()`), `JungianEvolutionType` (4 JPAF reflection types), `ModelTierTerm` (4 LLM model tiers with linear subsumption FLAGSHIP→STANDARD→FAST, EMBEDDING standalone), `ArchetypeTerm` (48 sub-archetypes in 12 families from Hartwell & Chen, with `family()`, `validAdjectives()`, `invalidAdjectives()`), `ArchetypeFamily` (12 families grouped by 4 motivation quadrants), `ArchetypeCompatibility` (framework-to-archetype mapping), `ArchetypeResolver` (set-intersection archetype derivation). All optional -- consumers define their own vocabularies. |
@@ -115,9 +115,13 @@ Query builder with factory methods:
 | `bySlotAndCapability(slot, capabilityName, tenancyId)` | Both slot and capability |
 | `byCapabilityAndDomain(capabilityName, taskDomain, tenancyId)` | Capability + domain pre-filter (agents whose `excludedDomains` contain the taskDomain are filtered out) |
 | `byGoal(goalName, tenancyId)` | Goal name (exact match, no subsumption) |
+| `byProximity(capabilityName, maxDepth, tenancyId)` | Capability space neighbors within `maxDepth` hierarchy levels (exact matches excluded) |
+| `byProximityAndDomain(capabilityName, maxDepth, taskDomain, tenancyId)` | Proximity + domain pre-filter |
 | `all(tenancyId)` | All descriptors in tenancy |
 
 `tenancyId` is always required -- all queries are tenancy-scoped.
+
+**Proximity queries:** `byProximity` finds agents whose vocabulary-grounded capabilities are within `maxDepth` levels in the hierarchy. Exact matches are excluded (proximity means "nearby", not "identical"). Only vocabulary-grounded capabilities participate -- ungrounded capabilities have no proximity concept. Results carry `ResolvedCapability` with `MatchDegree` (Plugin or Specialization with depth). Results ordered by match quality.
 
 ### CapabilityHealth
 
@@ -229,11 +233,25 @@ Utility for drift detection between desired and actual descriptors. `compare(Age
 Optional module providing agent task and outcome tracking:
 
 - `AgentGraphStore` -- write interface: `recordTask(AgentTask)`, `recordOutcome(AgentTaskId, AgentOutcome)`, `linkAttestation(AgentTaskId, AttestationRef)`
-- `AgentGraphQuery` -- read interface: `agentHistory(agentId, tenancyId)`, `historyByCapability(agentId, capabilityTag, tenancyId)`, `topAgentsByOutcome(capabilityTag, taskDomain, tenancyId, limit)` (Wilson lower bound ranking), `attestationsFor(agentId, tenancyId)`
+- `AgentGraphQuery` -- read interface: `agentHistory(agentId, tenancyId)`, `historyByCapability(agentId, capabilityTag, tenancyId)`, `topAgentsByOutcome(capabilityTag, taskDomain, tenancyId, limit)` (Wilson lower bound ranking), `attestationsFor(agentId, tenancyId)`, `coActiveAgents(externalRef, tenancyId)` (agents with in-progress tasks sharing the same externalRef)
 - `AgentGraphBackfill` -- ledger ingestion: `backfillAgent(agentId, tenancyId)`, `backfillAll(tenancyId)`, `backfillDelta(tenancyId, since)`
 - `TaskSemanticEnricher` -- application-tier enrichment: `dispositionAxes(capabilityTag, taskDomain)`, `semanticallyEquivalent(domainA, domainB)`, `significance(capabilityTag, taskDomain)`
 
 Activates by classpath presence. JPA-backed with Flyway V3 migration. Runtime provides `NoOp*` `@DefaultBean` implementations for all four SPIs when the graph module is absent.
+
+---
+
+## Runtime Collaboration (RuntimeCollaborationQuery)
+
+SPI for querying runtime collaboration topology -- which agents are currently cooperating and how.
+
+- `collaborators(agentId, tenancyId)` -- returns `List<Collaborator>`, each carrying the agent ID, collaboration relations, and affinity score
+
+**Collaborator** record: `agentId`, `tenancyId`, `Set<CollaborationRelation>`, `double affinity` (0.0--1.0).
+
+**CollaborationRelation** enum: `COACTIVE` (working on the same case simultaneously), `SHARED_INTEREST` (attending to the same context keys), `SHARED_SIGNAL` (depositing/reading the same signals), `COMPLEMENTARY` (filling different roles in the same team).
+
+Runtime provides a `NoOp` `@DefaultBean` that returns empty lists. Engine provides the real implementation via stigmergy-based team detection.
 
 ---
 

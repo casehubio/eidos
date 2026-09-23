@@ -825,4 +825,67 @@ class JpaAgentRegistryTest {
         assertThat(found).isPresent();
         assertThat(found.get().extensionData()).isNull();
     }
+
+// --- Proximity query tests ---
+
+    static AgentDescriptor groundedDescriptor(String agentId, String tenancyId, String... capNames) {
+        var capabilities = Arrays.stream(capNames)
+                                 .map(n -> AgentCapability.builder().name(n)
+                                                          .capabilityVocabulary("urn:test:capabilities")
+                                                          .qualityHint(0.9).epistemicDomains(Map.of()).build())
+                                 .toList();
+        return AgentDescriptor.builder()
+                              .agentId(agentId).name("Agent").version("1.0")
+                              .provider("anthropic").modelFamily("claude").modelVersion("claude-3-7")
+                              .slot("reviewer").capabilities(capabilities)
+                              .disposition(AgentDisposition.builder()
+                                                           .socialOrient("collaborative").ruleFollowing("principled")
+                                                           .riskAppetite("measured").autonomy("semi-autonomous").build())
+                              .tenancyId(tenancyId).build();
+    }
+
+    @Test
+    @TestTransaction
+    void find_by_proximity_returns_neighbors_within_depth() {
+        registry.register(groundedDescriptor("prox-exact", "default", "code-review"));
+        registry.register(groundedDescriptor("prox-neighbor", "default", "security-review"));
+        registry.register(groundedDescriptor("prox-distant", "default", "testing"));
+
+        var result = registry.find(AgentQuery.byProximity("code-review", 2, "default"));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).descriptor().agentId()).isEqualTo("prox-neighbor");
+        assertThat(result.get(0).resolvedCapability()).isNotNull();
+    }
+
+    @Test
+    @TestTransaction
+    void find_by_proximity_excludes_exact_matches() {
+        registry.register(groundedDescriptor("prox-exact-only", "default", "code-review"));
+
+        var result = registry.find(AgentQuery.byProximity("code-review", 5, "default"));
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @TestTransaction
+    void find_by_proximity_excludes_beyond_maxDepth() {
+        registry.register(groundedDescriptor("prox-depth1", "default", "code-review"));
+        registry.register(groundedDescriptor("prox-depth2", "default", "security-review"));
+
+        var result = registry.find(AgentQuery.byProximity("review", 1, "default"));
+        assertThat(result).extracting(m -> m.descriptor().agentId())
+                          .contains("prox-depth1")
+                          .doesNotContain("prox-depth2");
+    }
+
+    @Test
+    @TestTransaction
+    void find_by_proximity_respects_tenancy() {
+        registry.register(groundedDescriptor("prox-ta", "tenant-a", "security-review"));
+        registry.register(groundedDescriptor("prox-tb", "tenant-b", "security-review"));
+
+        var result = registry.find(AgentQuery.byProximity("code-review", 2, "tenant-a"));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).descriptor().agentId()).isEqualTo("prox-ta");
+    }
 }

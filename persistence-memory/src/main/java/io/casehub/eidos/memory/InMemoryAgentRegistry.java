@@ -1,11 +1,20 @@
 package io.casehub.eidos.memory;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentMatch;
+import io.casehub.eidos.api.AgentQuery;
+import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.CapabilityResolver;
+import io.casehub.eidos.api.CapabilityVocabularyValidator;
+import io.casehub.eidos.api.MatchDegree;
+import io.casehub.eidos.api.ResolvedCapability;
+import io.casehub.eidos.api.VocabularyRegistry;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -46,30 +55,51 @@ public class InMemoryAgentRegistry implements AgentRegistry {
     @Override
     public List<AgentMatch> find(AgentQuery query) {
         var stream = store.values().stream()
-            .filter(d -> d.tenancyId().equals(query.tenancyId()))
-            .filter(d -> query.slot() == null || Objects.equals(d.slot(), query.slot()))
-            .filter(d -> query.taskDomain() == null
-                || d.capabilities().stream().noneMatch(c ->
-                    c.excludedDomains() != null && c.excludedDomains().contains(query.taskDomain())))
-            .filter(d -> query.goalName() == null
-                || d.goals().stream().anyMatch(g -> g.name().equals(query.goalName())));
+                          .filter(d -> d.tenancyId().equals(query.tenancyId()))
+                          .filter(d -> query.slot() == null || Objects.equals(d.slot(), query.slot()))
+                          .filter(d -> query.taskDomain() == null
+                                       || d.capabilities().stream().noneMatch(c ->
+                                                                                      c.excludedDomains() != null && c.excludedDomains().contains(query.taskDomain())))
+                          .filter(d -> query.goalName() == null
+                                       || d.goals().stream().anyMatch(g -> g.name().equals(query.goalName())));
 
         if (query.capabilityName() == null) {
             return stream
-                .map(d -> new AgentMatch(d, null))
-                .collect(Collectors.toList());
+                           .map(d -> new AgentMatch(d, null))
+                           .collect(Collectors.toList());
+        }
+
+        if (query.maxDepth() != null) {
+            return findByProximity(stream, query);
         }
 
         return stream
-            .map(d -> {
-                var resolved = resolveCapability(d, query.capabilityName());
-                return resolved != null ? new AgentMatch(d, resolved) : null;
-            })
-            .filter(Objects::nonNull)
-            .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
-                Comparator.comparing(ResolvedCapability::degree)))
-            .collect(Collectors.toList());
+                       .map(d -> {
+                           var resolved = resolveCapability(d, query.capabilityName());
+                           return resolved != null ? new AgentMatch(d, resolved) : null;
+                       })
+                       .filter(Objects::nonNull)
+                       .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
+                                                    Comparator.comparing(ResolvedCapability::degree)))
+                       .collect(Collectors.toList());
     }
+
+    private List<AgentMatch> findByProximity(
+            java.util.stream.Stream<AgentDescriptor> stream, AgentQuery query) {
+        if (!vocabularyRegistry.isResolvable()) {
+            return List.of();
+        }
+        return stream
+                       .flatMap(d -> CapabilityResolver.resolveWithinDepth(
+                                                               d.capabilities(), query.capabilityName(),
+                                                               query.maxDepth(), vocabularyRegistry.get())
+                                                       .stream()
+                                                       .map(rc -> new AgentMatch(d, rc)))
+                       .sorted(Comparator.comparing(AgentMatch::resolvedCapability,
+                                                    Comparator.comparing(ResolvedCapability::degree)))
+                       .collect(Collectors.toList());
+    }
+
 
     private ResolvedCapability resolveCapability(AgentDescriptor descriptor, String capabilityName) {
         if (!vocabularyRegistry.isResolvable()) {

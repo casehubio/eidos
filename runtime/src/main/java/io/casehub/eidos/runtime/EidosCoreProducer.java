@@ -13,6 +13,7 @@ import io.casehub.eidos.api.DispositionSignalStore;
 import io.casehub.eidos.api.GoalEvolution;
 import io.casehub.eidos.api.GoalSignalStore;
 import io.casehub.eidos.api.RenderedPromptCache;
+import io.casehub.eidos.api.RuntimeCollaborationQuery;
 import io.casehub.eidos.api.TaskSemanticEnricher;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyRegistry;
@@ -22,6 +23,7 @@ import io.casehub.eidos.core.display.DefaultDisplayTermResolver;
 import io.casehub.eidos.core.graph.NoOpAgentGraphBackfill;
 import io.casehub.eidos.core.graph.NoOpAgentGraphQuery;
 import io.casehub.eidos.core.graph.NoOpAgentGraphStore;
+import io.casehub.eidos.core.graph.NoOpRuntimeCollaborationQuery;
 import io.casehub.eidos.core.graph.NoOpTaskSemanticEnricher;
 import io.casehub.eidos.core.health.NoOpAgentStateStore;
 import io.casehub.eidos.core.health.NoOpBehavioralSignalStore;
@@ -115,6 +117,13 @@ public class EidosCoreProducer {
     DefaultDisplayTermResolver displayTermResolver(VocabularyRegistry registry) {
         return new DefaultDisplayTermResolver(registry);
     }
+
+    @Produces
+    @DefaultBean
+    RuntimeCollaborationQuery runtimeCollaborationQuery() {
+        return new NoOpRuntimeCollaborationQuery();
+    }
+
 
     // ── Active @ApplicationScoped beans ──────────────────────────────────
 

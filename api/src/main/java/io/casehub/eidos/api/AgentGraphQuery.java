@@ -17,4 +17,7 @@ public interface AgentGraphQuery {
                                     String tenancyId, int limit);
 
     List<AttestationRef> attestationsFor(String agentId, String tenancyId);
+
+    List<String> coActiveAgents(String externalRef, String tenancyId);
+
 }

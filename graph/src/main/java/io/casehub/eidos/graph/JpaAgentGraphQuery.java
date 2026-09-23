@@ -1,15 +1,29 @@
 package io.casehub.eidos.graph;
 
-import io.casehub.eidos.api.*;
-import io.casehub.eidos.graph.entity.*;
+import io.casehub.eidos.api.AgentGraphQuery;
+import io.casehub.eidos.api.AgentOutcome;
+import io.casehub.eidos.api.AgentTaskHistory;
+import io.casehub.eidos.api.AttestationRef;
+import io.casehub.eidos.api.GraphDataSufficiency;
+import io.casehub.eidos.api.TaskResult;
+import io.casehub.eidos.api.TaskSemanticEnricher;
+import io.casehub.eidos.graph.entity.AgentOutcomeEntity;
+import io.casehub.eidos.graph.entity.AgentTaskEntity;
+import io.casehub.eidos.graph.entity.AttestationRefEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
+
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.*;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @ApplicationScoped
 public class JpaAgentGraphQuery implements AgentGraphQuery {
@@ -160,4 +174,17 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
             .map(AttestationRefEntity::toRecord)
             .toList();
     }
+
+    @Override
+    @Transactional(TxType.SUPPORTS)
+    public List<String> coActiveAgents(final String externalRef, final String tenancyId) {
+        return em.createQuery(
+                         "SELECT DISTINCT t.agentId FROM AgentTaskEntity t " +
+                         "WHERE t.externalRef = :ref AND t.tenancyId = :tn AND t.endedAt IS NULL",
+                         String.class)
+                 .setParameter("ref", externalRef)
+                 .setParameter("tn", tenancyId)
+                 .getResultList();
+    }
+
 }

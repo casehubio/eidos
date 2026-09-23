@@ -139,6 +139,96 @@ class CapabilityResolverTest {
         assertThat(result.capability().name()).isEqualTo("code-review");
         assertThat(result.degree()).isEqualTo(new MatchDegree.Plugin(1));
     }
+// --- resolveWithinDepth() tests ---
+
+    @Test
+    void resolveWithinDepth_excludes_exact_matches() {
+        var cap = grounded("code-review");
+        var result = CapabilityResolver.resolveWithinDepth(
+                List.of(cap), "code-review", 2, registry);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void resolveWithinDepth_includes_plugin_within_depth() {
+        // code-review is Plugin(1) for security-review query
+        var cap = grounded("code-review");
+        var result = CapabilityResolver.resolveWithinDepth(
+                List.of(cap), "security-review", 1, registry);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).capability().name()).isEqualTo("code-review");
+        assertThat(result.get(0).degree()).isEqualTo(new MatchDegree.Plugin(1));
+    }
+
+    @Test
+    void resolveWithinDepth_includes_specialization_within_depth() {
+        // security-review is Specialization(1) for code-review query
+        var cap = grounded("security-review");
+        var result = CapabilityResolver.resolveWithinDepth(
+                List.of(cap), "code-review", 1, registry);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).capability().name()).isEqualTo("security-review");
+        assertThat(result.get(0).degree()).isEqualTo(new MatchDegree.Specialization(1));
+    }
+
+    @Test
+    void resolveWithinDepth_excludes_beyond_maxDepth() {
+        // security-review is Specialization(2) for review query
+        var cap = grounded("security-review");
+        var result = CapabilityResolver.resolveWithinDepth(
+                List.of(cap), "review", 1, registry);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void resolveWithinDepth_includes_at_maxDepth() {
+        // security-review is Specialization(2) for review query
+        var cap = grounded("security-review");
+        var result = CapabilityResolver.resolveWithinDepth(
+                List.of(cap), "review", 2, registry);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).degree()).isEqualTo(new MatchDegree.Specialization(2));
+    }
+
+    @Test
+    void resolveWithinDepth_returns_sorted_by_match_degree() {
+        // For query "review": code-review=Spec(1), security-review=Spec(2), design-review=Spec(1)
+        var caps   = List.of(grounded("security-review"), grounded("code-review"), grounded("design-review"));
+        var result = CapabilityResolver.resolveWithinDepth(caps, "review", 3, registry);
+        assertThat(result).hasSize(3);
+        // Spec(1) before Spec(2)
+        assertThat(((MatchDegree.Specialization) result.get(0).degree()).depth()).isEqualTo(1);
+        assertThat(((MatchDegree.Specialization) result.get(2).degree()).depth()).isEqualTo(2);
+    }
+
+    @Test
+    void resolveWithinDepth_excludes_ungrounded_capabilities() {
+        var cap = ungrounded("code-review");
+        var result = CapabilityResolver.resolveWithinDepth(
+                List.of(cap), "review", 5, registry);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void resolveWithinDepth_returns_empty_for_null_list() {
+        assertThat(CapabilityResolver.resolveWithinDepth(null, "x", 2, registry)).isEmpty();
+    }
+
+    @Test
+    void resolveWithinDepth_returns_empty_for_empty_list() {
+        assertThat(CapabilityResolver.resolveWithinDepth(List.of(), "x", 2, registry)).isEmpty();
+    }
+
+    @Test
+    void resolveWithinDepth_multiple_capabilities_per_agent() {
+        // An agent with both code-review and testing capabilities
+        // Query "review" with maxDepth=2: code-review=Spec(1), testing=None
+        var caps   = List.of(grounded("code-review"), grounded("testing"));
+        var result = CapabilityResolver.resolveWithinDepth(caps, "review", 2, registry);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).capability().name()).isEqualTo("code-review");
+    }
+
 
     /**
      * Minimal stub VocabularyRegistry for testing.

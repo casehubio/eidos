@@ -127,20 +127,31 @@ public class TestVocabularyRegistry implements VocabularyRegistry {
             return new MatchDegree.Exact();
         }
 
-        var declaredTerm = resolve(vocabUri, declaredValue);
+        var declaredTerm  = resolve(vocabUri, declaredValue);
         var requestedTerm = resolve(vocabUri, requestedValue);
 
         if (declaredTerm.isEmpty() || requestedTerm.isEmpty()) {
             return new MatchDegree.None();
         }
 
-        // Check if requestedTerm specializes declaredTerm (by walking up the specialization chain)
+// Plugin: declared is ancestor of requested (requested specializes declared)
         var current = requestedTerm.get();
-        int depth = 0;
+        int depth   = 0;
         while (!current.specializes().isEmpty()) {
             depth++;
-            current = current.specializes().get(0); // Simple linear hierarchy for tests
+            current = current.specializes().get(0);
             if (current.value().equals(declaredValue)) {
+                return new MatchDegree.Plugin(depth);
+            }
+        }
+
+// Specialization: declared is descendant of requested (declared specializes requested)
+        current = declaredTerm.get();
+        depth   = 0;
+        while (!current.specializes().isEmpty()) {
+            depth++;
+            current = current.specializes().get(0);
+            if (current.value().equals(requestedValue)) {
                 return new MatchDegree.Specialization(depth);
             }
         }

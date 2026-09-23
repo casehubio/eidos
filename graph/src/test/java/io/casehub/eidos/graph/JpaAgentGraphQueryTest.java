@@ -1,14 +1,24 @@
 package io.casehub.eidos.graph;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.AgentGraphQuery;
+import io.casehub.eidos.api.AgentGraphStore;
+import io.casehub.eidos.api.AgentOutcome;
+import io.casehub.eidos.api.AgentTask;
+import io.casehub.eidos.api.AgentTaskHistory;
+import io.casehub.eidos.api.AgentTaskId;
+import io.casehub.eidos.api.AttestationRef;
+import io.casehub.eidos.api.SufficiencyLevel;
+import io.casehub.eidos.api.TaskResult;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
+
 import java.time.Instant;
 import java.util.List;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @QuarkusTest
 @TestTransaction
@@ -127,5 +137,40 @@ class JpaAgentGraphQueryTest {
         // Query for t1 only
         List<String> ranked = query.topAgentsByOutcome("code-review", "java", "t1", 10);
         assertThat(ranked).containsExactly("agent-a");
+    }
+
+// --- coActiveAgents tests ---
+
+    @Test
+    void coActiveAgents_returns_agents_with_in_progress_tasks() {
+        store.recordTask(new AgentTask("t1", "agent-x", "t1", "cap", "java", "case-42", Instant.now(), null));
+        store.recordTask(new AgentTask("t2", "agent-y", "t1", "cap", "java", "case-42", Instant.now(), null));
+
+        var result = query.coActiveAgents("case-42", "t1");
+        assertThat(result).containsExactlyInAnyOrder("agent-x", "agent-y");
+    }
+
+    @Test
+    void coActiveAgents_excludes_completed_tasks() {
+        store.recordTask(new AgentTask("t3", "agent-done", "t1", "cap", "java", "case-42", Instant.now(), Instant.now()));
+        store.recordTask(new AgentTask("t4", "agent-active", "t1", "cap", "java", "case-42", Instant.now(), null));
+
+        var result = query.coActiveAgents("case-42", "t1");
+        assertThat(result).containsExactly("agent-active");
+    }
+
+    @Test
+    void coActiveAgents_isolates_by_tenancy() {
+        store.recordTask(new AgentTask("t5", "agent-a", "tenant-a", "cap", "java", "case-99", Instant.now(), null));
+        store.recordTask(new AgentTask("t6", "agent-b", "tenant-b", "cap", "java", "case-99", Instant.now(), null));
+
+        var result = query.coActiveAgents("case-99", "tenant-a");
+        assertThat(result).containsExactly("agent-a");
+    }
+
+    @Test
+    void coActiveAgents_returns_empty_for_unknown_ref() {
+        var result = query.coActiveAgents("nonexistent", "t1");
+        assertThat(result).isEmpty();
     }
 }

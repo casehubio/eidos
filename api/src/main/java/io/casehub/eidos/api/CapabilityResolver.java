@@ -1,5 +1,6 @@
 package io.casehub.eidos.api;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -86,4 +87,35 @@ public final class CapabilityResolver {
 
         return best;
     }
+
+    public static List<ResolvedCapability> resolveWithinDepth(
+            final List<AgentCapability> capabilities,
+            final String capabilityTag,
+            final int maxDepth,
+            final VocabularyRegistry registry) {
+        if (capabilities == null || capabilities.isEmpty()) {
+            return List.of();
+        }
+
+        return capabilities.stream()
+                           .map(cap -> {
+                               MatchDegree degree = match(cap, capabilityTag, registry);
+                               return new ResolvedCapability(cap, degree);
+                           })
+                           .filter(rc -> !(rc.degree() instanceof MatchDegree.Exact))
+                           .filter(rc -> !(rc.degree() instanceof MatchDegree.None))
+                           .filter(rc -> depthOf(rc.degree()) <= maxDepth)
+                           .sorted(Comparator.comparing(ResolvedCapability::degree))
+                           .toList();
+    }
+
+    private static int depthOf(MatchDegree degree) {
+        return switch (degree) {
+            case MatchDegree.Exact e -> 0;
+            case MatchDegree.Plugin p -> p.depth();
+            case MatchDegree.Specialization s -> s.depth();
+            case MatchDegree.None n -> Integer.MAX_VALUE;
+        };
+    }
+
 }

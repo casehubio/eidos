@@ -172,44 +172,43 @@ class InMemoryAgentRegistryTest {
     // --- Subsumption tests ---
 
     @Test
-    void find_by_capability_matches_via_subsumption() {
-        // Register an agent with a general "review" capability grounded in TestCapabilityVocab
+    void find_by_capability_matches_via_subsumption() {// Register an agent with a general "review" capability grounded in TestCapabilityVocab
         var generalCap = AgentCapability.builder()
-            .name("review")
-            .capabilityVocabulary("urn:test:capabilities")
-            .qualityHint(0.9)
-            .epistemicDomains(Map.of())
-            .build();
+                                        .name("review")
+                                        .capabilityVocabulary("urn:test:capabilities")
+                                        .qualityHint(0.9)
+                                        .epistemicDomains(Map.of())
+                                        .build();
         var desc = AgentDescriptor.builder()
-            .agentId("m-sub-1")
-            .name("Agent")
-            .version("1.0")
-            .provider("anthropic")
-            .modelFamily("claude")
-            .modelVersion("claude-3-7")
-            .slot("reviewer")
-            .capabilities(List.of(generalCap))
-            .disposition(AgentDisposition.builder()
-                .socialOrient("collaborative")
-                .ruleFollowing("principled")
-                .riskAppetite("measured")
-                .autonomy("semi-autonomous")
-                .build())
-            .tenancyId("default")
-            .build();
+                                  .agentId("m-sub-1")
+                                  .name("Agent")
+                                  .version("1.0")
+                                  .provider("anthropic")
+                                  .modelFamily("claude")
+                                  .modelVersion("claude-3-7")
+                                  .slot("reviewer")
+                                  .capabilities(List.of(generalCap))
+                                  .disposition(AgentDisposition.builder()
+                                                               .socialOrient("collaborative")
+                                                               .ruleFollowing("principled")
+                                                               .riskAppetite("measured")
+                                                               .autonomy("semi-autonomous")
+                                                               .build())
+                                  .tenancyId("default")
+                                  .build();
         registry.register(desc);
 
-        // Query for "security-review" — which is a specialization of "review"
+// Query for "security-review" — which is a specialization of "review"
         var result = registry.find(AgentQuery.byCapability("security-review", "default"));
 
-        // The agent should be found via subsumption
+// The agent should be found via subsumption — declared "review" is more general (Plugin)
         assertThat(result).extracting(m -> m.descriptor().agentId()).contains("m-sub-1");
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().resolvedCapability()).isNotNull();
         assertThat(result.getFirst().resolvedCapability().degree())
-            .isInstanceOf(MatchDegree.Specialization.class);
-        assertThat(((MatchDegree.Specialization) result.getFirst().resolvedCapability().degree()).depth())
-            .isEqualTo(2);
+                .isInstanceOf(MatchDegree.Plugin.class);
+        assertThat(((MatchDegree.Plugin) result.getFirst().resolvedCapability().degree()).depth())
+                .isEqualTo(2);
     }
 
     @Test
@@ -317,5 +316,94 @@ class InMemoryAgentRegistryTest {
 
         var results = registry.find(AgentQuery.byGoal("nonexistent", "t"));
         assertThat(results).isEmpty();
+    }
+
+// --- Proximity query tests ---
+
+    static AgentDescriptor groundedDescriptor(String agentId, String tenancyId, String... capNames) {
+        var capabilities = Arrays.stream(capNames)
+                                 .map(n -> AgentCapability.builder().name(n)
+                                                          .capabilityVocabulary("urn:test:capabilities")
+                                                          .qualityHint(0.9).epistemicDomains(Map.of()).build())
+                                 .toList();
+        return AgentDescriptor.builder()
+                              .agentId(agentId).name("Agent").version("1.0")
+                              .provider("anthropic").modelFamily("claude").modelVersion("claude-3-7")
+                              .slot("reviewer").capabilities(capabilities)
+                              .disposition(AgentDisposition.builder()
+                                                           .socialOrient("collaborative").ruleFollowing("principled")
+                                                           .riskAppetite("measured").autonomy("semi-autonomous").build())
+                              .tenancyId(tenancyId).build();
+    }
+
+    @Test
+    void find_by_proximity_returns_neighbors_within_depth() {
+        registry.register(groundedDescriptor("exact-agent", "default", "code-review"));
+        registry.register(groundedDescriptor("neighbor-agent", "default", "security-review"));
+        registry.register(groundedDescriptor("distant-agent", "default", "testing"));
+
+        var result = registry.find(AgentQuery.byProximity("code-review", 2, "default"));
+        // exact-agent has Exact match → excluded
+        // neighbor-agent has security-review which is Specialization(1) for code-review → included
+        // distant-agent has testing which is None for code-review → excluded
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).descriptor().agentId()).isEqualTo("neighbor-agent");
+        assertThat(result.get(0).resolvedCapability()).isNotNull();
+        assertThat(result.get(0).resolvedCapability().degree())
+                .isInstanceOf(MatchDegree.Specialization.class);
+    }
+
+    @Test
+    void find_by_proximity_excludes_agents_beyond_maxDepth() {
+        // review → code-review (depth 1) → security-review (depth 2)
+        // Query "review" with maxDepth=1 should find code-review (Spec(1)) but NOT security-review (Spec(2))
+        registry.register(groundedDescriptor("depth1-agent", "default", "code-review"));
+        registry.register(groundedDescriptor("depth2-agent", "default", "security-review"));
+
+        var result = registry.find(AgentQuery.byProximity("review", 1, "default"));
+        assertThat(result).extracting(m -> m.descriptor().agentId())
+                          .contains("depth1-agent")
+                          .doesNotContain("depth2-agent");
+    }
+
+    @Test
+    void find_by_proximity_includes_at_maxDepth() {
+        registry.register(groundedDescriptor("depth2-agent", "default", "security-review"));
+
+        var result = registry.find(AgentQuery.byProximity("review", 2, "default"));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).descriptor().agentId()).isEqualTo("depth2-agent");
+    }
+
+    @Test
+    void find_by_proximity_ungrounded_returns_empty() {
+        registry.register(descriptor("ungrounded", "reviewer", "default", "code-review"));
+
+        var result = registry.find(AgentQuery.byProximity("code-review", 5, "default"));
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void find_by_proximity_respects_tenancy_isolation() {
+        registry.register(groundedDescriptor("agent-a", "tenant-a", "security-review"));
+        registry.register(groundedDescriptor("agent-b", "tenant-b", "security-review"));
+
+        var result = registry.find(AgentQuery.byProximity("code-review", 2, "tenant-a"));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).descriptor().agentId()).isEqualTo("agent-a");
+    }
+
+    @Test
+    void find_by_proximity_results_ordered_by_match_degree() {
+        // For "review": code-review=Spec(1), security-review=Spec(2), design-review=Spec(1)
+        registry.register(groundedDescriptor("depth2", "default", "security-review"));
+        registry.register(groundedDescriptor("depth1a", "default", "code-review"));
+        registry.register(groundedDescriptor("depth1b", "default", "design-review"));
+
+        var result = registry.find(AgentQuery.byProximity("review", 3, "default"));
+        assertThat(result).hasSizeGreaterThanOrEqualTo(3);
+        // First two should be Spec(1), last should be Spec(2)
+        assertThat(((MatchDegree.Specialization) result.get(0).resolvedCapability().degree()).depth()).isEqualTo(1);
+        assertThat(((MatchDegree.Specialization) result.getLast().resolvedCapability().degree()).depth()).isEqualTo(2);
     }
 }
