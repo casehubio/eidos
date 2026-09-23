@@ -10,6 +10,8 @@
 
 ### `goalName` (`java.lang.String`)
 
+### `maxDepth` (`java.lang.Integer`)
+
 ### `slot` (`java.lang.String`)
 
 ### `taskDomain` (`java.lang.String`)
@@ -22,6 +24,8 @@
 
 ### `goalName` (`java.lang.String`)
 
+### `maxDepth` (`java.lang.Integer`)
+
 ### `slot` (`java.lang.String`)
 
 ### `taskDomain` (`java.lang.String`)
@@ -30,7 +34,7 @@
 
 ## Constructors
 
-### `public AgentQuery(java.lang.String slot, java.lang.String capabilityName, java.lang.String tenancyId, java.lang.String taskDomain, java.lang.String goalName)`
+### `public AgentQuery(java.lang.String slot, java.lang.String capabilityName, java.lang.String tenancyId, java.lang.String taskDomain, java.lang.String goalName, java.lang.Integer maxDepth)`
 
 #### Parameters
 
@@ -39,6 +43,7 @@
 - `tenancyId` (`java.lang.String`)
 - `taskDomain` (`java.lang.String`)
 - `goalName` (`java.lang.String`)
+- `maxDepth` (`java.lang.Integer`)
 
 ## Methods
 
@@ -70,6 +75,23 @@
 - `goalName` (`java.lang.String`)
 - `tenancyId` (`java.lang.String`)
 
+### `public static io.casehub.eidos.api.AgentQuery byProximity(java.lang.String capabilityName, int maxDepth, java.lang.String tenancyId)`
+
+#### Parameters
+
+- `capabilityName` (`java.lang.String`)
+- `maxDepth` (`int`)
+- `tenancyId` (`java.lang.String`)
+
+### `public static io.casehub.eidos.api.AgentQuery byProximityAndDomain(java.lang.String capabilityName, int maxDepth, java.lang.String taskDomain, java.lang.String tenancyId)`
+
+#### Parameters
+
+- `capabilityName` (`java.lang.String`)
+- `maxDepth` (`int`)
+- `taskDomain` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)
+
 ### `public static io.casehub.eidos.api.AgentQuery bySlot(java.lang.String slot, java.lang.String tenancyId)`
 
 #### Parameters
@@ -96,6 +118,8 @@
 ### `public java.lang.String goalName()`
 
 ### `public final int hashCode()`
+
+### `public java.lang.Integer maxDepth()`
 
 ### `public java.lang.String slot()`
 

@@ -22,6 +22,13 @@ Returns all tasks including in-progress (endedAt=null).
 - `agentId` (`java.lang.String`)
 - `tenancyId` (`java.lang.String`)
 
+### `public abstract java.util.List<java.lang.String> coActiveAgents(java.lang.String externalRef, java.lang.String tenancyId)`
+
+#### Parameters
+
+- `externalRef` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)
+
 ### `public abstract io.casehub.eidos.api.AgentTaskHistory historyByCapability(java.lang.String agentId, java.lang.String capabilityTag, java.lang.String tenancyId)`
 
 #### Parameters

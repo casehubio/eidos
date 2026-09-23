@@ -18,6 +18,12 @@ and `BehavioralSignalStore` learned exclusion lookups.
 
 ## Methods
 
+### `private static int depthOf(io.casehub.eidos.api.MatchDegree degree)`
+
+#### Parameters
+
+- `degree` (`io.casehub.eidos.api.MatchDegree`)
+
 ### `public static io.casehub.eidos.api.MatchDegree match(io.casehub.eidos.api.AgentCapability capability, java.lang.String capabilityTag, io.casehub.eidos.api.VocabularyRegistry registry)`
 
 Computes the match degree between a declared capability and a requested capability tag.
@@ -55,3 +61,12 @@ then the lowest-ranked (best) non-None degree. First in list wins at equal rank.
 #### Returns
 
 the best matching capability with its degree, or `null` if no match found
+
+### `public static java.util.List<io.casehub.eidos.api.ResolvedCapability> resolveWithinDepth(java.util.List<io.casehub.eidos.api.AgentCapability> capabilities, java.lang.String capabilityTag, int maxDepth, io.casehub.eidos.api.VocabularyRegistry registry)`
+
+#### Parameters
+
+- `capabilities` (`java.util.List<io.casehub.eidos.api.AgentCapability>`)
+- `capabilityTag` (`java.lang.String`)
+- `maxDepth` (`int`)
+- `registry` (`io.casehub.eidos.api.VocabularyRegistry`)
