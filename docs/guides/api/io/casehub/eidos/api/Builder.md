@@ -12,6 +12,10 @@
 
 ### `description` (`java.lang.String`)
 
+### `horizon` (`io.casehub.eidos.api.GoalHorizon`)
+
+### `lifecycleState` (`io.casehub.eidos.api.GoalLifecycleState`)
+
 ### `name` (`java.lang.String`)
 
 ### `priority` (`io.casehub.eidos.api.GoalPriority`)
@@ -20,7 +24,7 @@
 
 ## Constructors
 
-### `Builder(java.lang.String name, java.lang.String description, io.casehub.eidos.api.GoalPriority priority, io.casehub.eidos.api.Visibility visibility, java.util.List<java.lang.String> capabilities, java.util.Map<java.lang.String,java.lang.String> attributes)`
+### `Builder(java.lang.String name, java.lang.String description, io.casehub.eidos.api.GoalPriority priority, io.casehub.eidos.api.Visibility visibility, java.util.List<java.lang.String> capabilities, java.util.Map<java.lang.String,java.lang.String> attributes, io.casehub.eidos.api.GoalLifecycleState lifecycleState, io.casehub.eidos.api.GoalHorizon horizon)`
 
 #### Parameters
 
@@ -30,6 +34,8 @@
 - `visibility` (`io.casehub.eidos.api.Visibility`)
 - `capabilities` (`java.util.List<java.lang.String>`)
 - `attributes` (`java.util.Map<java.lang.String,java.lang.String>`)
+- `lifecycleState` (`io.casehub.eidos.api.GoalLifecycleState`)
+- `horizon` (`io.casehub.eidos.api.GoalHorizon`)
 
 ## Methods
 
@@ -52,6 +58,18 @@
 #### Parameters
 
 - `v` (`java.lang.String`)
+
+### `public io.casehub.eidos.api.AgentGoal.Builder horizon(io.casehub.eidos.api.GoalHorizon v)`
+
+#### Parameters
+
+- `v` (`io.casehub.eidos.api.GoalHorizon`)
+
+### `public io.casehub.eidos.api.AgentGoal.Builder lifecycleState(io.casehub.eidos.api.GoalLifecycleState v)`
+
+#### Parameters
+
+- `v` (`io.casehub.eidos.api.GoalLifecycleState`)
 
 ### `public io.casehub.eidos.api.AgentGoal.Builder name(java.lang.String v)`
 
