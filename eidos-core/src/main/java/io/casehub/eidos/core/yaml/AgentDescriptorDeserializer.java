@@ -180,6 +180,7 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
     }
 
     private AgentVoiceProfile deserializeVoice(JsonNode node) {
+        String description = node.has("description") ? node.get("description").asText() : null;
         String register = node.has("register") ? node.get("register").asText() : null;
         String accent = node.has("accent") ? node.get("accent").asText() : null;
         List<String> catchphrases = node.has("catchphrases") ? stringList(node.get("catchphrases")) : null;
@@ -197,7 +198,7 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
                 personas.put(entry.getKey(), deserializeVoice(entry.getValue()));
             }
         }
-        return new AgentVoiceProfile(register, accent, catchphrases, speechPatterns,
+        return new AgentVoiceProfile(description, register, accent, catchphrases, speechPatterns,
                 vocabularyUses, vocabularyAvoids, quirks, personas);
     }
 

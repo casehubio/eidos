@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public record AgentVoiceProfile(
+        String description,
         String register,
         String accent,
         List<String> catchphrases,
@@ -28,6 +29,7 @@ public record AgentVoiceProfile(
         }
         var persona = personas.get(personaName);
         return new AgentVoiceProfile(
+                persona.description() != null ? persona.description() : this.description,
                 persona.register() != null ? persona.register() : this.register,
                 persona.accent() != null ? persona.accent() : this.accent,
                 persona.catchphrases() != null ? persona.catchphrases() : this.catchphrases,
