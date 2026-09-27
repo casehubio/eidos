@@ -27,6 +27,7 @@ public record AgentDescriptor(
         String dataHandlingPolicy,
         String tenancyId,
         String briefing,
+        AgentVoiceProfile voice,
         List<TemplateRef> templates,
         List<AgentGoal> goals,
         List<AgentConstraint> constraints,
@@ -184,6 +185,7 @@ public record AgentDescriptor(
                 .disposition(this.disposition).jurisdiction(this.jurisdiction)
                 .dataHandlingPolicy(this.dataHandlingPolicy)
                 .tenancyId(this.tenancyId).briefing(this.briefing)
+                .voice(this.voice)
                 .templates(this.templates).goals(this.goals)
                 .constraints(this.constraints)
                 .extensionData(this.extensionData);
@@ -202,6 +204,7 @@ public record AgentDescriptor(
         private List<AgentCapability>        capabilities = List.of();
         private AgentDisposition             disposition;
         private String                       jurisdiction, dataHandlingPolicy, tenancyId, briefing;
+        private AgentVoiceProfile            voice;
         private List<TemplateRef> templates;
         private List<AgentGoal>       goals;
         private List<AgentConstraint> constraints;
@@ -318,6 +321,11 @@ public record AgentDescriptor(
                                                                             return this;
                                                                         }
 
+        public Builder voice(AgentVoiceProfile v)                      {
+                                                                            this.voice = v;
+                                                                            return this;
+                                                                        }
+
         public Builder templates(List<TemplateRef> v)                   {
                                                                             this.templates = v;
                                                                             return this;
@@ -347,7 +355,7 @@ public record AgentDescriptor(
                     axisVocabularies, slot, archetype, archetypeAdjectives,
                     avatar, capabilities, disposition,
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
-                    templates,
+                    voice, templates,
                     goals, constraints,
                     extensionData);
         }

@@ -9,6 +9,7 @@ import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AgentVoiceProfile;
 import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
@@ -48,6 +49,10 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
         ifString(root, "jurisdiction", builder::jurisdiction);
         ifString(root, "dataHandlingPolicy", builder::dataHandlingPolicy);
         ifString(root, "briefing", builder::briefing);
+
+        if (root.has("voice") && root.get("voice").isObject()) {
+            builder.voice(deserializeVoice(root.get("voice")));
+        }
 
         if (root.has("axisVocabularies")) {
             var axisMap = new LinkedHashMap<DispositionAxis, String>();
@@ -172,6 +177,28 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
                 node.get("description").asText(),
                 node.has("visibility") ? Visibility.valueOf(node.get("visibility").asText()) : Visibility.PUBLIC,
                 node.has("severity") ? ConstraintSeverity.valueOf(node.get("severity").asText()) : ConstraintSeverity.HARD);
+    }
+
+    private AgentVoiceProfile deserializeVoice(JsonNode node) {
+        String register = node.has("register") ? node.get("register").asText() : null;
+        String accent = node.has("accent") ? node.get("accent").asText() : null;
+        List<String> catchphrases = node.has("catchphrases") ? stringList(node.get("catchphrases")) : null;
+        List<String> speechPatterns = node.has("speech-patterns") ? stringList(node.get("speech-patterns")) : null;
+        List<String> vocabularyUses = node.has("vocabulary-uses") ? stringList(node.get("vocabulary-uses")) : null;
+        List<String> vocabularyAvoids = node.has("vocabulary-avoids") ? stringList(node.get("vocabulary-avoids")) : null;
+        List<String> quirks = node.has("quirks") ? stringList(node.get("quirks")) : null;
+        Map<String, AgentVoiceProfile> personas = null;
+        if (node.has("personas") && node.get("personas").isObject()) {
+            personas = new LinkedHashMap<>();
+            var personasNode = node.get("personas");
+            var it = personasNode.fields();
+            while (it.hasNext()) {
+                var entry = it.next();
+                personas.put(entry.getKey(), deserializeVoice(entry.getValue()));
+            }
+        }
+        return new AgentVoiceProfile(register, accent, catchphrases, speechPatterns,
+                vocabularyUses, vocabularyAvoids, quirks, personas);
     }
 
     private static String stringField(ObjectNode node, String field) {
