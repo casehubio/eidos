@@ -39,7 +39,7 @@ public final class DescriptorForEachAdapter implements ForEachAdapter<Map<String
     }
 
     @Override
-    public String getWhen(Map<String, Object> element) {
+    public String getCondition(Map<String, Object> element) {
         Object when = element.get("when");
         return when != null ? when.toString() : null;
     }
