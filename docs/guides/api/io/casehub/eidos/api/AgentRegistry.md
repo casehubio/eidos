@@ -35,3 +35,12 @@ Finds agents matching the query criteria.
 #### Parameters
 
 - `descriptor` (`io.casehub.eidos.api.AgentDescriptor`)
+
+### `public default void updateGoalLifecycleState(java.lang.String agentId, java.lang.String tenancyId, java.lang.String goalName, io.casehub.eidos.api.GoalLifecycleState newState)`
+
+#### Parameters
+
+- `agentId` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)
+- `goalName` (`java.lang.String`)
+- `newState` (`io.casehub.eidos.api.GoalLifecycleState`)
