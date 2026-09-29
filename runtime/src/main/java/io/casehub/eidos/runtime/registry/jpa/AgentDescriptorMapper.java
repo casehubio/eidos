@@ -40,6 +40,7 @@ class AgentDescriptorMapper {
                 readJson(e.disposition, AgentDisposition.class),
                 e.jurisdiction, e.dataHandlingPolicy, e.tenancyId,
                 e.briefing,
+                null,
                 readJson(e.templates, new TypeReference<List<TemplateRef>>() {}),
                 e.goals.stream().map(this::toGoal).toList(),
                 e.constraints.stream().map(this::toConstraint).toList(),

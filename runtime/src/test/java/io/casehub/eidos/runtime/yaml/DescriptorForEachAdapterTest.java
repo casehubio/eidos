@@ -37,15 +37,15 @@ class DescriptorForEachAdapterTest {
     }
 
     @Test
-    void getWhen_returns_when_value() {
+    void getCondition_returns_when_value() {
         var map = Map.<String, Object>of("agentId", "a", "when", "${var.enabled}");
-        assertThat(adapter.getWhen(map)).isEqualTo("${var.enabled}");
+        assertThat(adapter.getCondition(map)).isEqualTo("${var.enabled}");
     }
 
     @Test
-    void getWhen_returns_null_when_absent() {
+    void getCondition_returns_null_when_absent() {
         var map = Map.<String, Object>of("agentId", "a");
-        assertThat(adapter.getWhen(map)).isNull();
+        assertThat(adapter.getCondition(map)).isNull();
     }
 
     @Test
