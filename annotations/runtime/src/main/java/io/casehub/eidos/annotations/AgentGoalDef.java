@@ -1,5 +1,7 @@
 package io.casehub.eidos.annotations;
 
+import io.casehub.eidos.api.GoalHorizon;
+import io.casehub.eidos.api.GoalLifecycleState;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.Visibility;
 
@@ -24,4 +26,8 @@ public @interface AgentGoalDef {
     String[] capabilities() default {};
 
     GoalAttribute[] attributes() default {};
+
+    GoalLifecycleState lifecycleState() default GoalLifecycleState.ACTIVE;
+
+    GoalHorizon horizon() default GoalHorizon.MEDIUM_TERM;
 }
