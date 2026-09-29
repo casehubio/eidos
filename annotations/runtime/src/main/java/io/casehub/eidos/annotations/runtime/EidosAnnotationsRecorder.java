@@ -105,7 +105,9 @@ public class EidosAnnotationsRecorder {
                     }
                     goals.add(new AgentGoal(g.name, g.description,
                                             GoalPriority.valueOf(g.priority), Visibility.valueOf(g.visibility),
-                                            g.capabilities != null ? List.of(g.capabilities) : List.of(), attrs));
+                                            g.capabilities != null ? List.of(g.capabilities) : List.of(), attrs,
+                                            g.lifecycleState != null ? GoalLifecycleState.valueOf(g.lifecycleState) : null,
+                                            g.horizon != null ? GoalHorizon.valueOf(g.horizon) : null));
                 }
                 builder.goals(goals);
             }

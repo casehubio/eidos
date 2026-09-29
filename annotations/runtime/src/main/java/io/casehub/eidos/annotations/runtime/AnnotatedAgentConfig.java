@@ -46,6 +46,8 @@ public class AnnotatedAgentConfig {
         public String              visibility;
         public String[]            capabilities;
         public TemplateArgConfig[] attributes;
+        public String              lifecycleState;
+        public String              horizon;
 
         public GoalConfig() {}
     }

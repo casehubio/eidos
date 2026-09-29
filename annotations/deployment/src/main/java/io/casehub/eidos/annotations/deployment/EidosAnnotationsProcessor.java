@@ -374,6 +374,8 @@ class EidosAnnotationsProcessor {
                     g.attributes[j] = ac;
                 }
             }
+            g.lifecycleState = enumValue(ann, "lifecycleState", "ACTIVE");
+            g.horizon        = enumValue(ann, "horizon", "MEDIUM_TERM");
             config.goals[i] = g;
         }
     }
