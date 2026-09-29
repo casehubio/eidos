@@ -20,4 +20,16 @@ public interface AgentRegistry {
      * {@code resolvedCapability} is null and ordering is unspecified.
      */
     List<AgentMatch> find(AgentQuery query);
+
+    default void updateGoalLifecycleState(String agentId, String tenancyId,
+                                           String goalName, GoalLifecycleState newState) {
+        findById(agentId, tenancyId).ifPresent(descriptor -> {
+            var updatedGoals = descriptor.goals().stream()
+                    .map(g -> g.name().equals(goalName)
+                            ? g.toBuilder().lifecycleState(newState).build()
+                            : g)
+                    .toList();
+            register(descriptor.toBuilder().goals(updatedGoals).build());
+        });
+    }
 }
