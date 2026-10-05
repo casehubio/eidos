@@ -54,6 +54,12 @@
 
 ### `MAX_PROVIDER` (`int`)
 
+### `MAX_PROVIDER_CONFIGS` (`int`)
+
+### `MAX_PROVIDER_CONFIG_KEY` (`int`)
+
+### `MAX_PROVIDER_CONFIG_VALUE` (`int`)
+
 ### `MAX_SLOT` (`int`)
 
 ### `MAX_TEMPLATE_CONTENT` (`int`)
