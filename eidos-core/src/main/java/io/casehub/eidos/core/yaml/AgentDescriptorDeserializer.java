@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.casehub.eidos.api.AgentCapability;
 import io.casehub.eidos.api.AgentConstraint;
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.ProviderConfig;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.AgentVoiceProfile;
 import io.casehub.eidos.api.AgentGoal;
@@ -109,6 +110,14 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
             builder.templates(templates);
         }
 
+        if (root.has("providerConfigs") && root.get("providerConfigs").isArray()) {
+            var configs = new ArrayList<ProviderConfig>();
+            for (JsonNode cfgNode : root.get("providerConfigs")) {
+                configs.add(deserializeProviderConfig(cfgNode));
+            }
+            builder.providerConfigs(configs);
+        }
+
         if (root.has("extensionData") && root.get("extensionData").isObject()) {
             builder.extensionData(readMapTree(root.get("extensionData")));
         }
@@ -200,6 +209,16 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
         }
         return new AgentVoiceProfile(description, register, accent, catchphrases, speechPatterns,
                 vocabularyUses, vocabularyAvoids, quirks, personas);
+    }
+
+    private ProviderConfig deserializeProviderConfig(JsonNode node) {
+        String providerName = node.get("providerName").asText();
+        Map<String, String> config = new LinkedHashMap<>();
+        if (node.has("config") && node.get("config").isObject()) {
+            node.get("config").fields().forEachRemaining(e ->
+                config.put(e.getKey(), e.getValue().asText()));
+        }
+        return new ProviderConfig(providerName, config);
     }
 
     private static String stringField(ObjectNode node, String field) {

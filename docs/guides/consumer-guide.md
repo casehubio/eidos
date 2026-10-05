@@ -50,6 +50,7 @@ Structured agent identity record with these fields:
 - **Constraints:** `List<AgentConstraint>` -- operational limits with severity (HARD/SOFT). Unique names enforced.
 - **Briefing:** free-text field for holistic personality prose (supports newlines).
 - **Templates:** `List<TemplateRef>` -- references to reusable prose templates with variable substitution.
+- **Provider Configs:** `List<ProviderConfig>` -- optional provider-specific configuration. Each `ProviderConfig` has a `providerName` (String, required) and `config` (Map<String, String>, optional). Provider names must be unique within a descriptor (max 10). Use to bind agents to runtime infrastructure: e.g. Claudony pool bindings (`providerName: claudony`, `config: {pool: my-pool}`). Rendered in A2A_CARD only, suppressed in MARKDOWN/PROSE.
 - **Extension Data:** `Map<String, Object>` -- optional, application-owned configuration bag. Supports nested maps, lists, and primitives. Never rendered in prompts. Use reverse-domain key convention (e.g. `io.casehub.manor.socialConfig`). Max estimated size: 64KB. Declare via YAML (full nested structures) or `@ExtensionData` annotation (flat key-value pairs).
 - **Tenancy:** `tenancyId` is always required. All operations are tenancy-scoped.
 

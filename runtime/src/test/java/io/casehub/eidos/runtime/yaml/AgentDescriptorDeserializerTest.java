@@ -395,4 +395,61 @@ class AgentDescriptorDeserializerTest {
         var d = mapper.readValue(yaml, AgentDescriptor.class);
         assertThat(d.avatar()).isNull();
     }
+
+
+    @Test
+    void providerConfigs_deserialize() throws Exception {
+        var yaml = """
+                   agentId: pool-test
+                   name: Pool Test
+                   slot: reviewer
+                   tenancyId: default
+                   providerConfigs:
+                     - providerName: claudony
+                       config:
+                         command: "claude --model opus"
+                         pool: code-reviewer-pool
+                     - providerName: ollama
+                       config:
+                         endpoint: http://localhost:11434
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.providerConfigs()).hasSize(2);
+        assertThat(d.providerConfigs().get(0).providerName()).isEqualTo("claudony");
+        assertThat(d.providerConfigs().get(0).config())
+                .containsEntry("command", "claude --model opus")
+                .containsEntry("pool", "code-reviewer-pool");
+        assertThat(d.providerConfigs().get(1).providerName()).isEqualTo("ollama");
+        assertThat(d.providerConfigs().get(1).config())
+                .containsEntry("endpoint", "http://localhost:11434");
+    }
+
+    @Test
+    void providerConfigs_absent_defaultsToEmptyList() throws Exception {
+        var yaml = """
+                   agentId: no-pc
+                   name: No PC
+                   slot: s
+                   tenancyId: t
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.providerConfigs()).isEmpty();
+    }
+
+    @Test
+    void providerConfigs_emptyConfigMap() throws Exception {
+        var yaml = """
+                   agentId: empty-cfg
+                   name: Empty Cfg
+                   slot: s
+                   tenancyId: t
+                   providerConfigs:
+                     - providerName: bare-provider
+                   """;
+        var d = mapper.readValue(yaml, AgentDescriptor.class);
+        assertThat(d.providerConfigs()).hasSize(1);
+        assertThat(d.providerConfigs().get(0).providerName()).isEqualTo("bare-provider");
+        assertThat(d.providerConfigs().get(0).config()).isEmpty();
+    }
+
 }

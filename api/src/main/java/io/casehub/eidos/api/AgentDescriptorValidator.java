@@ -39,6 +39,9 @@ class AgentDescriptorValidator {
     static final int MAX_ARCHETYPE_ADJECTIVES   = 10;
     static final int MAX_AVATAR                 = 500;
     static final int MAX_EXTENSION_DATA_SIZE    = 65_536;
+    static final int MAX_PROVIDER_CONFIGS       = 10;
+    static final int MAX_PROVIDER_CONFIG_KEY    = 100;
+    static final int MAX_PROVIDER_CONFIG_VALUE  = 500;
 
 
     static void validate(final String agentId, final String name,

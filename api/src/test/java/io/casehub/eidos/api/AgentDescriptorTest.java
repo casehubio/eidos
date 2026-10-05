@@ -458,4 +458,47 @@ class AgentDescriptorTest {
         var rebuilt = d.toBuilder().build();
         assertThat(rebuilt.extensionData()).isEqualTo(d.extensionData());
     }
+
+
+    @Test
+    void providerConfigs_defaultsToEmptyList() {
+        var d = minimal("pc-test", "default");
+        assertThat(d.providerConfigs()).isEmpty();
+    }
+
+    @Test
+    void providerConfigs_setViaBuilder() {
+        var d = AgentDescriptor.builder()
+                               .agentId("pc-builder").name("PC").slot("s").tenancyId("t")
+                               .providerConfigs(List.of(
+                                       new ProviderConfig("claudony", Map.of("pool", "my-pool")),
+                                       new ProviderConfig("ollama", Map.of("endpoint", "localhost:11434"))))
+                               .build();
+        assertThat(d.providerConfigs()).hasSize(2);
+        assertThat(d.providerConfigs().get(0).providerName()).isEqualTo("claudony");
+        assertThat(d.providerConfigs().get(0).config()).containsEntry("pool", "my-pool");
+    }
+
+    @Test
+    void providerConfigs_duplicateProviderNameThrows() {
+        assertThatThrownBy(() -> AgentDescriptor.builder()
+                                                .agentId("dup-pc").name("Dup").slot("s").tenancyId("t")
+                                                .providerConfigs(List.of(
+                                                        new ProviderConfig("claudony", Map.of("pool", "a")),
+                                                        new ProviderConfig("claudony", Map.of("pool", "b"))))
+                                                .build())
+                .isInstanceOf(AgentValidationException.class)
+                .hasMessageContaining("duplicate provider name: claudony");
+    }
+
+    @Test
+    void providerConfigs_survivesToBuilder() {
+        var original = AgentDescriptor.builder()
+                                      .agentId("tb-test").name("TB").slot("s").tenancyId("t")
+                                      .providerConfigs(List.of(new ProviderConfig("claudony", Map.of("pool", "p"))))
+                                      .build();
+        var copy = original.toBuilder().build();
+        assertThat(copy.providerConfigs()).isEqualTo(original.providerConfigs());
+    }
+
 }

@@ -44,6 +44,7 @@ class AgentDescriptorMapper {
                 readJson(e.templates, new TypeReference<List<TemplateRef>>() {}),
                 e.goals.stream().map(this::toGoal).toList(),
                 e.constraints.stream().map(this::toConstraint).toList(),
+                null,
                 readJson(e.extensionData, new TypeReference<Map<String, Object>>() {})
         );
     }

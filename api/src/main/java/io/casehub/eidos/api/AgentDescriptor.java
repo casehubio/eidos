@@ -31,6 +31,7 @@ public record AgentDescriptor(
         List<TemplateRef> templates,
         List<AgentGoal> goals,
         List<AgentConstraint> constraints,
+        List<ProviderConfig> providerConfigs,
         Map<String, Object> extensionData
 ) {
     public AgentDescriptor {
@@ -124,6 +125,21 @@ public record AgentDescriptor(
                 }
             }
         }
+        providerConfigs = providerConfigs != null ? List.copyOf(providerConfigs) : List.of();
+        if (providerConfigs.size() > AgentDescriptorValidator.MAX_PROVIDER_CONFIGS) {
+            throw new AgentValidationException("providerConfigs",
+                "exceeds maximum count " + AgentDescriptorValidator.MAX_PROVIDER_CONFIGS + " (was " + providerConfigs.size() + ")");
+        }
+        if (providerConfigs.size() > 1) {
+            long distinctNames = providerConfigs.stream().map(ProviderConfig::providerName).distinct().count();
+            if (distinctNames < providerConfigs.size()) {
+                String dup = providerConfigs.stream().map(ProviderConfig::providerName)
+                    .collect(java.util.stream.Collectors.groupingBy(n -> n, java.util.stream.Collectors.counting()))
+                    .entrySet().stream().filter(e -> e.getValue() > 1).map(java.util.Map.Entry::getKey)
+                    .findFirst().orElse("?");
+                throw new AgentValidationException("providerConfigs", "duplicate provider name: " + dup);
+            }
+        }
         if (extensionData != null) {
             extensionData = ExtensionDataCopier.deepCopy(extensionData);
             long estimatedSize = ExtensionDataCopier.estimateSize(extensionData);
@@ -188,6 +204,7 @@ public record AgentDescriptor(
                 .voice(this.voice)
                 .templates(this.templates).goals(this.goals)
                 .constraints(this.constraints)
+                .providerConfigs(this.providerConfigs)
                 .extensionData(this.extensionData);
     }
 
@@ -208,6 +225,7 @@ public record AgentDescriptor(
         private List<TemplateRef> templates;
         private List<AgentGoal>       goals;
         private List<AgentConstraint> constraints;
+        private List<ProviderConfig> providerConfigs;
         private Map<String, Object>  extensionData;
 
         public Builder agentId(String v)                                {
@@ -341,6 +359,11 @@ public record AgentDescriptor(
                                                                             return this;
                                                                         }
 
+        public Builder providerConfigs(List<ProviderConfig> v)        {
+                                                                            this.providerConfigs = v;
+                                                                            return this;
+                                                                        }
+
         public Builder extensionData(Map<String, Object> v)            {
                                                                             this.extensionData = v;
                                                                             return this;
@@ -357,7 +380,7 @@ public record AgentDescriptor(
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
                     voice, templates,
                     goals, constraints,
-                    extensionData);
+                    providerConfigs, extensionData);
         }
     }
 }

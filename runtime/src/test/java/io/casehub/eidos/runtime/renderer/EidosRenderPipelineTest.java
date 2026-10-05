@@ -10,6 +10,7 @@ import io.casehub.eidos.api.AgentPromptContext;
 import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.GoalContext;
 import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.ProviderConfig;
 import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.Visibility;
@@ -1582,4 +1583,45 @@ class EidosRenderPipelineTest {
         assertThat(node.has("avatar")).isTrue();
         assertThat(node.get("avatar").asText()).isEqualTo("https://example.com/img.png");
     }
+
+
+    @Test
+    void a2aCard_includesProviderConfigs() {
+        var desc = AgentDescriptor.builder()
+                .agentId("pc-render").name("Pool Agent").slot("worker").tenancyId("default")
+                .providerConfigs(List.of(
+                        new ProviderConfig("claudony", Map.of("pool", "my-pool", "command", "claude --model opus")),
+                        new ProviderConfig("ollama", Map.of("endpoint", "http://localhost:11434"))))
+                .build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("providerConfigs")).isTrue();
+        var configs = card.get("providerConfigs");
+        assertThat(configs.isArray()).isTrue();
+        assertThat(configs.size()).isEqualTo(2);
+        assertThat(configs.get(0).get("providerName").asText()).isEqualTo("claudony");
+        assertThat(configs.get(0).get("config").get("pool").asText()).isEqualTo("my-pool");
+        assertThat(configs.get(1).get("providerName").asText()).isEqualTo("ollama");
+    }
+
+    @Test
+    void a2aCard_omitsProviderConfigsWhenEmpty() {
+        var desc = AgentDescriptor.builder()
+                .agentId("no-pc").name("No PC").slot("s").tenancyId("t").build();
+        var card = renderA2aCard(desc);
+        assertThat(card.has("providerConfigs")).isFalse();
+    }
+
+    @Test
+    void markdown_doesNotIncludeProviderConfigs() {
+        var desc = AgentDescriptor.builder()
+                .agentId("md-pc").name("MD PC").slot("s").tenancyId("t")
+                .providerConfigs(List.of(new ProviderConfig("claudony", Map.of("pool", "p"))))
+                .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).doesNotContain("providerConfigs");
+        assertThat(result.content()).doesNotContain("claudony");
+    }
+
 }

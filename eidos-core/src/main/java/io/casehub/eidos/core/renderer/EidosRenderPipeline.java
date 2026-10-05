@@ -18,6 +18,7 @@ import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.DispositionValue;
 import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.ProviderConfig;
 import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
@@ -1119,6 +1120,18 @@ public class EidosRenderPipeline {
                 cNode.put("name", c.name());
                 cNode.put("description", c.description());
                 cNode.put("severity", c.severity().name());
+            }
+        }
+
+        if (!descriptor.providerConfigs().isEmpty()) {
+            final ArrayNode configsArray = card.putArray("providerConfigs");
+            for (final ProviderConfig pc : descriptor.providerConfigs()) {
+                final ObjectNode pcNode = configsArray.addObject();
+                pcNode.put("providerName", pc.providerName());
+                if (!pc.config().isEmpty()) {
+                    final ObjectNode cfgNode = pcNode.putObject("config");
+                    pc.config().forEach(cfgNode::put);
+                }
             }
         }
 
