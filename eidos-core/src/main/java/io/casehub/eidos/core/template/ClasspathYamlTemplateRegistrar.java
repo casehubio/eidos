@@ -2,9 +2,9 @@ package io.casehub.eidos.core.template;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.DescriptorTemplate;
 import io.casehub.eidos.api.spi.TemplateRegistrar;
+import io.casehub.yaml.jackson.YamlMappers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,7 @@ import java.util.List;
 public class ClasspathYamlTemplateRegistrar implements TemplateRegistrar {
 
     private static final String RESOURCE_PATH = "META-INF/eidos/templates.yaml";
-    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory())
+    private static final ObjectMapper YAML_MAPPER = YamlMappers.create()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
     @Override

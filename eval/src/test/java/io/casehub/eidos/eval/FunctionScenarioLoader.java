@@ -1,8 +1,8 @@
 package io.casehub.eidos.eval;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.eval.FunctionActivationJudge.FunctionScenario;
+import io.casehub.yaml.jackson.YamlMappers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +15,7 @@ final class FunctionScenarioLoader {
     private FunctionScenarioLoader() {}
 
     private static final ObjectMapper YAML =
-        new ObjectMapper(new YAMLFactory()).findAndRegisterModules();
+        YamlMappers.create().findAndRegisterModules();
 
     @SuppressWarnings("unchecked")
     static Map<String, List<FunctionScenario>> load() {

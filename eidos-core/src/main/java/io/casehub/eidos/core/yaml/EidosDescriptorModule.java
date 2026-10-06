@@ -3,10 +3,10 @@ package io.casehub.eidos.core.yaml;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.VocabularyRegistry;
+import io.casehub.yaml.jackson.YamlMappers;
 
 public class EidosDescriptorModule extends SimpleModule {
 
@@ -16,7 +16,7 @@ public class EidosDescriptorModule extends SimpleModule {
     }
 
     public static ObjectMapper createMapper(VocabularyRegistry vocabRegistry) {
-        return new ObjectMapper(new YAMLFactory())
+        return YamlMappers.create()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
             .registerModule(new EidosDescriptorModule(vocabRegistry));
     }

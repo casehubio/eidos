@@ -1,13 +1,12 @@
 package io.casehub.eidos.core.registrar;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
 import io.casehub.eidos.core.yaml.DescriptorPreprocessor;
 import io.casehub.eidos.core.yaml.EidosDescriptorModule;
 import io.casehub.yaml.core.resolver.VariableSource;
+import io.casehub.yaml.jackson.YamlMappers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,7 +51,7 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
     public List<AgentDescriptor> loadFrom(final InputStream yaml, final VocabularyRegistry vocabRegistry) {
         if (yaml == null) return List.of();
         try {
-            var plainMapper = new ObjectMapper(new YAMLFactory());
+            var plainMapper = YamlMappers.create();
             var rawMap = (Map<String, Object>) plainMapper.readValue(yaml, Map.class);
             if (rawMap == null) return List.of();
 

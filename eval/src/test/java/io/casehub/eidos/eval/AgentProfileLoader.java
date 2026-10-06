@@ -1,9 +1,9 @@
 package io.casehub.eidos.eval;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.yaml.jackson.YamlMappers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,12 +12,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 class AgentProfileLoader {
 
     private static final ObjectMapper YAML =
-        new ObjectMapper(new YAMLFactory()).findAndRegisterModules();
+        YamlMappers.create().findAndRegisterModules();
 
     List<AgentProfile> load() {
         final VariantIndex index = loadIndex();
