@@ -17,7 +17,7 @@ Any Quarkus app that depends on `casehub-eidos` can register agents with structu
 
 | artifactId | When to use | What you get |
 |---|---|---|
-| `casehub-eidos-api` | Always -- compile dependency | Domain types: `AgentDescriptor`, `AgentCapability`, `AgentDisposition`, `AgentGoal`, `AgentConstraint`, `AgentMatch`, `AgentQuery`, `AgentRegistry`, `AgentSelector`, `SelectionContext`, `CapabilityHealth`, `SystemPromptRenderer`, `VocabularyRegistry`, `TemplateRegistry`, `DispositionHealth`, `DispositionEvolution`, `AgentStateStore`, `BehavioralSignalStore`, `DispositionSignalStore`. SPIs in `api.spi`: `AgentDescriptorRegistrar`, `VocabularyRegistrar`, `TemplateRegistrar`. Utilities: `CapabilityResolver`, `BehavioralExpectations`, `AgentDescriptorComparator`, `DisplayTermResolver`. Sealed types: `MatchDegree`, `CapabilityStatus`, `AgentSelection`, `DispositionStatus`, `EvolutionResult`. Enums: `EscalationKind`, `CollaborationRelation`. Records: `Collaborator`. SPIs: `RuntimeCollaborationQuery`. Pure Java + `casehub-platform-api` (for `ModelQuery`), no CDI. |
+| `casehub-eidos-api` | Always -- compile dependency | Domain types: `AgentDescriptor`, `AgentCapability`, `AgentDisposition`, `AgentGoal`, `AgentConstraint`, `AgentMatch`, `AgentQuery`, `AgentRegistry`, `AgentSelector`, `SelectionContext`, `CapabilityHealth`, `SystemPromptRenderer`, `PromptAssembler`, `VocabularyRegistry`, `TemplateRegistry`, `DispositionHealth`, `DispositionEvolution`, `AgentStateStore`, `BehavioralSignalStore`, `DispositionSignalStore`. SPIs in `api.spi`: `AgentDescriptorRegistrar`, `VocabularyRegistrar`, `TemplateRegistrar`, `PromptContributor`. Utilities: `CapabilityResolver`, `BehavioralExpectations`, `AgentDescriptorComparator`, `DisplayTermResolver`. Sealed types: `MatchDegree`, `CapabilityStatus`, `AgentSelection`, `DispositionStatus`, `EvolutionResult`. Enums: `EscalationKind`, `CollaborationRelation`, `PromptTier`. Records: `Collaborator`, `PromptBlock`, `AssembledPrompt`. SPIs: `RuntimeCollaborationQuery`. Pure Java + `casehub-platform-api` (for `ModelQuery`), no CDI. |
 | `casehub-eidos` | Always -- runtime dependency | Quarkus extension: CDI registry, health implementations, renderer, JPA persistence, Flyway migrations. `@DefaultBean` for all SPIs. |
 | `casehub-eidos-memory` | Tests and prototyping | `@Alternative @Priority(1)` in-memory implementations: `InMemoryAgentRegistry`, `InMemoryTemplateRegistry`, `InMemoryAgentStateStore`, `InMemoryBehavioralSignalStore` (per-signal TTL via `@ConfigProperty`), `InMemoryDispositionSignalStore` (ConcurrentHashMap + AtomicInteger, no TTL), `InMemoryRenderedPromptCache`. Activate by adding as dependency. |
 | `casehub-eidos-vocab` | Optional -- domain vocabularies | Well-known vocabularies: `SvoTerm`, `ConscientiousnessTerm`, `CasehubSlotTerm`, `BelbinTerm` (9 team roles), `DiscTerm` (4 DISC types, `axisExactMatch`), `ThomasKilmannTerm` (5 conflict modes), `CasehubCapabilityTerm` (hierarchical capability taxonomy), `JungianFunctionTerm` (8 cognitive functions with `axisExactMatch`, `shadow()`, `opposite()`, `compatibleAuxiliaries()`), `MbtiTypeTerm` (16 MBTI types with `specializes()` to `JungianFunctionTerm`, `defaultProfile()`), `JungianEvolutionType` (4 JPAF reflection types), `ModelTierTerm` (4 LLM model tiers with linear subsumption FLAGSHIP→STANDARD→FAST, EMBEDDING standalone), `ArchetypeTerm` (48 sub-archetypes in 12 families from Hartwell & Chen, with `family()`, `validAdjectives()`, `invalidAdjectives()`), `ArchetypeFamily` (12 families grouped by 4 motivation quadrants), `ArchetypeCompatibility` (framework-to-archetype mapping), `ArchetypeResolver` (set-intersection archetype derivation). All optional -- consumers define their own vocabularies. |
@@ -178,6 +178,31 @@ SPI: `render(AgentDescriptor, AgentPromptContext)` returns `RenderedPrompt(conte
 **Semantic enrichment:** Two-step render pipeline -- structural assembly then optional LangChain4j `ChatModel` semantic pass. Falls back to structural output when no `ChatModel` is available. `RenderedPrompt.enriched` is true when LLM enrichment was applied.
 
 **Caching:** `RenderedPromptCache` SPI enables prompt caching. `descriptorHash` and `contextHash` on `RenderedPrompt` enable cache invalidation.
+
+### PromptAssembler
+
+SPI: `assemble(AgentDescriptor, AgentPromptContext)` returns `AssembledPrompt(systemPrompt, userMessage)`. Use instead of `SystemPromptRenderer.render()` when the agent needs tagged blocks (cognitive state, commands, conversation).
+
+**How it works:** Collects blocks from the existing renderer (IDENTITY tier) and all `PromptContributor` SPI implementations. Sorts by `PromptTier` (IDENTITY → COGNITIVE → COMMAND → CONVERSATION), then by salience (descending, default 0.0) within tier. Routes: IDENTITY tier → `systemPrompt`, all others → `userMessage`. Tagged blocks render as `[TAG]\ncontent`; untagged blocks render as bare content. Blocks separated by `\n\n`. Fail-open: if a contributor throws, it is logged and skipped.
+
+**When to use:** Apps with cognitive agents (neocortex integration). Apps without cognitive agents continue using `SystemPromptRenderer.render()`.
+
+### PromptContributor (SPI)
+
+Implement to inject blocks into the tagged prompt assembly. CDI-discovered via `Instance<PromptContributor>`.
+
+```java
+@FunctionalInterface
+public interface PromptContributor {
+    List<PromptBlock> contribute(AgentDescriptor descriptor, AgentPromptContext context);
+}
+```
+
+Each block carries a `PromptTier` determining its position and destination. Use `PromptBlock` convenience factories: `identity(content)`, `cognitive(tag, content)`, `command(content)`, `conversation(content)`. Contributors needing request-scoped state inject it via CDI `@RequestScoped` beans internally.
+
+### PromptBlock and PromptTier
+
+`PromptBlock(PromptTier tier, String tag, float salience, String content)` -- the universal unit of prompt content. `PromptTier` enum: `IDENTITY` (system prompt), `COGNITIVE` (user message, absorb), `COMMAND` (user message, execute), `CONVERSATION` (user message, respond). `tier.isSystemPrompt()` returns true for IDENTITY only.
 
 ### VocabularyRegistry
 
