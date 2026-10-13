@@ -1,9 +1,13 @@
 package io.casehub.eidos.memory;
 
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDescriptorRegistered;
+import io.casehub.eidos.api.AgentDescriptorRemoved;
+import io.casehub.eidos.api.AgentDescriptorUpdated;
 import io.casehub.eidos.api.AgentMatch;
 import io.casehub.eidos.api.AgentQuery;
 import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.AgentRegistryEvents;
 import io.casehub.eidos.api.CapabilityResolver;
 import io.casehub.eidos.api.CapabilityVocabularyValidator;
 import io.casehub.eidos.api.MatchDegree;
@@ -30,14 +34,33 @@ public class InMemoryAgentRegistry implements AgentRegistry {
     private final ConcurrentHashMap<String, AgentDescriptor> store = new ConcurrentHashMap<>();
 
     @Inject Instance<VocabularyRegistry> vocabularyRegistry;
+    @Inject Instance<AgentRegistryEvents> events;
 
     @Override
     public void register(AgentDescriptor descriptor) {
-        // Validate capability vocabularies before storing (only if VocabularyRegistry available)
         if (vocabularyRegistry.isResolvable()) {
             CapabilityVocabularyValidator.validate(descriptor, vocabularyRegistry.get());
         }
-        store.put(descriptor.agentId(), descriptor);
+        var previous = store.put(descriptor.agentId(), descriptor);
+        if (events.isResolvable()) {
+            if (previous == null) {
+                events.get().registered(new AgentDescriptorRegistered(descriptor));
+            } else {
+                events.get().updated(new AgentDescriptorUpdated(previous, descriptor));
+            }
+        }
+    }
+
+    @Override
+    public void deregister(String agentId, String tenancyId) {
+        Objects.requireNonNull(agentId, "agentId");
+        Objects.requireNonNull(tenancyId, "tenancyId");
+        var existing = store.get(agentId);
+        if (existing != null && existing.tenancyId().equals(tenancyId)) {
+            if (store.remove(agentId, existing) && events.isResolvable()) {
+                events.get().removed(new AgentDescriptorRemoved(agentId, tenancyId));
+            }
+        }
     }
 
     @Override
@@ -45,12 +68,14 @@ public class InMemoryAgentRegistry implements AgentRegistry {
         Objects.requireNonNull(agentId, "agentId");
         Objects.requireNonNull(tenancyId, "tenancyId");
         return Optional.ofNullable(store.get(agentId))
-            .filter(d -> d.tenancyId().equals(tenancyId));
+                       .filter(d -> d.tenancyId().equals(tenancyId));
     }
 
     void clear() {
         store.clear();
     }
+
+
 
     @Override
     public List<AgentMatch> find(AgentQuery query) {
@@ -104,12 +129,12 @@ public class InMemoryAgentRegistry implements AgentRegistry {
     private ResolvedCapability resolveCapability(AgentDescriptor descriptor, String capabilityName) {
         if (!vocabularyRegistry.isResolvable()) {
             return descriptor.capabilities().stream()
-                .filter(c -> c.name().equals(capabilityName))
-                .findFirst()
-                .map(c -> new ResolvedCapability(c, new MatchDegree.Exact()))
-                .orElse(null);
+                             .filter(c -> c.name().equals(capabilityName))
+                             .findFirst()
+                             .map(c -> new ResolvedCapability(c, new MatchDegree.Exact()))
+                             .orElse(null);
         }
         return CapabilityResolver.resolve(
-            descriptor.capabilities(), capabilityName, vocabularyRegistry.get());
+                descriptor.capabilities(), capabilityName, vocabularyRegistry.get());
     }
 }

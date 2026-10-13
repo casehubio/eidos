@@ -21,6 +21,9 @@ public interface AgentRegistry {
      */
     List<AgentMatch> find(AgentQuery query);
 
+
+    default void deregister(String agentId, String tenancyId) {}
+
     default void updateGoalLifecycleState(String agentId, String tenancyId,
                                            String goalName, GoalLifecycleState newState) {
         findById(agentId, tenancyId).ifPresent(descriptor -> {
