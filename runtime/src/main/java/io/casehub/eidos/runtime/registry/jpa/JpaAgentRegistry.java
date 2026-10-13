@@ -1,7 +1,11 @@
 package io.casehub.eidos.runtime.registry.jpa;
 
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDescriptorRegistered;
+import io.casehub.eidos.api.AgentDescriptorRemoved;
+import io.casehub.eidos.api.AgentDescriptorUpdated;
 import io.casehub.eidos.api.AgentMatch;
+import io.casehub.eidos.api.AgentRegistryEvents;
 import io.casehub.eidos.api.AgentQuery;
 import io.casehub.eidos.api.AgentRegistry;
 import io.casehub.eidos.api.CapabilityResolver;
@@ -33,22 +37,42 @@ public class JpaAgentRegistry implements AgentRegistry {
     @Inject EntityManager em;
     @Inject AgentDescriptorMapper mapper;
     @Inject VocabularyRegistry vocabularyRegistry;
+    @Inject AgentRegistryEvents events;
+
 
     @Override
     @Transactional
     public void register(AgentDescriptor descriptor) {
         CapabilityVocabularyValidator.validate(descriptor, vocabularyRegistry);
+        var previous = findById(descriptor.agentId(), descriptor.tenancyId()).orElse(null);
         em.createQuery("DELETE FROM AgentDescriptorEntity e WHERE e.agentId = :id AND e.tenancyId = :tenancyId")
           .setParameter("id", descriptor.agentId())
           .setParameter("tenancyId", descriptor.tenancyId())
           .executeUpdate();
-        // Flush and clear so the bulk delete is visible to the session before persist.
-        // Without this, Hibernate's first-level cache still holds the old entity
-        // and throws EntityExistsException on the subsequent persist.
         em.flush();
         em.clear();
         em.persist(mapper.toEntity(descriptor));
+        if (previous == null) {
+            events.registered(new AgentDescriptorRegistered(descriptor));
+        } else {
+            events.updated(new AgentDescriptorUpdated(previous, descriptor));
+        }
     }
+
+    @Override
+    @Transactional
+    public void deregister(String agentId, String tenancyId) {
+        Objects.requireNonNull(agentId, "agentId");
+        Objects.requireNonNull(tenancyId, "tenancyId");
+        int deleted = em.createQuery("DELETE FROM AgentDescriptorEntity e WHERE e.agentId = :id AND e.tenancyId = :tenancyId")
+                        .setParameter("id", agentId)
+                        .setParameter("tenancyId", tenancyId)
+                        .executeUpdate();
+        if (deleted > 0) {
+            events.removed(new AgentDescriptorRemoved(agentId, tenancyId));
+        }
+    }
+
 
     @Override
     @Transactional(TxType.SUPPORTS)
