@@ -6,6 +6,13 @@
 
 ## Methods
 
+### `public default void deregister(java.lang.String agentId, java.lang.String tenancyId)`
+
+#### Parameters
+
+- `agentId` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)
+
 ### `public abstract java.util.List<io.casehub.eidos.api.AgentMatch> find(io.casehub.eidos.api.AgentQuery query)`
 
 Finds agents matching the query criteria.
