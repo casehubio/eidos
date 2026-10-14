@@ -17,7 +17,8 @@ public class ClasspathYamlTemplateRegistrar implements TemplateRegistrar {
 
     private static final String RESOURCE_PATH = "META-INF/eidos/templates.yaml";
     private static final ObjectMapper YAML_MAPPER = YamlMappers.create()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+        .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
 
     @Override
     public List<DescriptorTemplate> templates() {
