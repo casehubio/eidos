@@ -30,3 +30,5 @@ proj
 .mvn/slot-settings.xml
 .worktrees
 .claude/
+
+.flattened-pom.xml
