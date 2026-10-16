@@ -6,7 +6,7 @@
 
   <groupId>io.casehub</groupId>
   <artifactId>casehub-eidos-parent</artifactId>
-  <version>0.3</version>
+  <version>0.4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>CaseHub Eidos - Parent</name>
@@ -66,10 +66,10 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
-    <casehub-platform-api.version>0.3</casehub-platform-api.version>
-    <casehub-ledger-api.version>0.3</casehub-ledger-api.version>
-    <casehub-ledger.version>0.3</casehub-ledger.version>
-    <casehub-platform-yaml-core.version>0.3</casehub-platform-yaml-core.version>
+    <casehub-platform-api.version>0.4-SNAPSHOT</casehub-platform-api.version>
+    <casehub-ledger-api.version>0.4-SNAPSHOT</casehub-ledger-api.version>
+    <casehub-ledger.version>0.4-SNAPSHOT</casehub-ledger.version>
+    <casehub-platform-yaml-core.version>0.4-SNAPSHOT</casehub-platform-yaml-core.version>
   </properties>
 
   <dependencyManagement>
