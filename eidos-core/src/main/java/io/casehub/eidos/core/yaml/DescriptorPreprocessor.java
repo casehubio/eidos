@@ -23,6 +23,20 @@ public final class DescriptorPreprocessor {
 
     private DescriptorPreprocessor() {}
 
+    static VariableSource withColonDefaults(VariableSource delegate) {
+        return name -> {
+            String value = delegate.resolve(name);
+            if (value != null) {return value;}
+            int colon = name.indexOf(':');
+            if (colon < 0) {return null;}
+            String realKey      = name.substring(0, colon);
+            String defaultValue = name.substring(colon + 1);
+            value = delegate.resolve(realKey);
+            return value != null ? value : defaultValue;
+        };
+    }
+
+
     @SuppressWarnings("unchecked")
     public static List<Map<String, Object>> preprocess(
             Map<String, Object> rawYaml,
@@ -43,7 +57,8 @@ public final class DescriptorPreprocessor {
             prefixSources.put("var", vars::get);
         }
 
-        prefixSources.putAll(externalSources);
+        externalSources.forEach((prefix, source) ->
+                prefixSources.put(prefix, withColonDefaults(source)));
 
         var resolver = new VariableResolver(prefixSources, Set.of());
 

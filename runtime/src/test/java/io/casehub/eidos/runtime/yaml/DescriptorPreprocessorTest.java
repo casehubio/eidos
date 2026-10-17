@@ -310,6 +310,34 @@ class DescriptorPreprocessorTest {
                 .hasMessageContaining("100");
     }
 
+
+    @Test
+    void external_source_with_default_value_uses_default_when_key_missing() {
+        VariableSource configSource = name -> null;
+        var raw = Map.<String, Object>of(
+                "descriptors", List.of(
+                        descriptor("${config.llm.agent-id:my-llm-fleet}-agent")));
+
+        var result = DescriptorPreprocessor.preprocess(
+                raw, Map.of("config", configSource), null);
+
+        assertThat(result.get(0).get("agentId")).isEqualTo("my-llm-fleet-agent");
+    }
+
+    @Test
+    void external_source_with_default_value_uses_source_when_key_present() {
+        VariableSource configSource = name ->
+                                              "llm.agent-id".equals(name) ? "custom-fleet" : null;
+        var raw = Map.<String, Object>of(
+                "descriptors", List.of(
+                        descriptor("${config.llm.agent-id:my-llm-fleet}-agent")));
+
+        var result = DescriptorPreprocessor.preprocess(
+                raw, Map.of("config", configSource), null);
+
+        assertThat(result.get(0).get("agentId")).isEqualTo("custom-fleet-agent");
+    }
+
     @Test
     void datasource_and_iteration_namespace_collision_throws() {
         var raw = new LinkedHashMap<String, Object>();
