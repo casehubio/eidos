@@ -49,18 +49,24 @@ public class ClasspathYamlDescriptorRegistrar implements AgentDescriptorRegistra
 
     @SuppressWarnings("unchecked")
     public List<AgentDescriptor> loadFrom(final InputStream yaml, final VocabularyRegistry vocabRegistry) {
+        var sources = new LinkedHashMap<String, VariableSource>();
+        try {
+            var config = org.eclipse.microprofile.config.ConfigProvider.getConfig();
+            sources.put("config", name ->
+                    config.getOptionalValue(name, String.class).orElse(null));
+        } catch (Exception ignored) {}
+        return loadFrom(yaml, vocabRegistry, sources);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<AgentDescriptor> loadFrom(final InputStream yaml,
+                                          final VocabularyRegistry vocabRegistry,
+                                          final Map<String, VariableSource> externalSources) {
         if (yaml == null) return List.of();
         try {
             var plainMapper = YamlMappers.create();
             var rawMap = (Map<String, Object>) plainMapper.readValue(yaml, Map.class);
             if (rawMap == null) return List.of();
-
-            var externalSources = new LinkedHashMap<String, VariableSource>();
-            try {
-                var config = org.eclipse.microprofile.config.ConfigProvider.getConfig();
-                externalSources.put("config", name ->
-                        config.getOptionalValue(name, String.class).orElse(null));
-            } catch (Exception ignored) {}
 
             var descriptorMaps = DescriptorPreprocessor.preprocess(
                     rawMap, externalSources,

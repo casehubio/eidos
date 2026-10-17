@@ -3,11 +3,13 @@ package io.casehub.eidos.runtime.registrar;
 import io.casehub.eidos.api.AgentDescriptor;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.core.registrar.ClasspathYamlDescriptorRegistrar;
+import io.casehub.yaml.core.resolver.VariableSource;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -649,6 +651,51 @@ class ClasspathYamlDescriptorRegistrarTest {
         assertThat(result.get(0).capabilities().get(0).name())
                 .isEqualTo("code-review");
     }
+
+    @Test
+    void custom_variable_sources_resolve_config_placeholders() {
+        var yaml = """
+                   descriptors:
+                     - agentId: ext-config
+                       name: External Config Agent
+                       slot: worker
+                       tenancyId: ${config.tenant}
+                       briefing: "Deployed in ${config.region}"
+                   """;
+        var descriptors = registrar.loadFrom(
+                new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
+                null,
+                Map.of("config", (VariableSource) name -> switch (name) {
+                    case "tenant" -> "acme-corp";
+                    case "region" -> "eu-west-1";
+                    default -> null;
+                }));
+        assertThat(descriptors).hasSize(1);
+        assertThat(descriptors.get(0).tenancyId()).isEqualTo("acme-corp");
+        assertThat(descriptors.get(0).briefing()).isEqualTo("Deployed in eu-west-1");
+    }
+
+    @Test
+    void custom_sources_override_default_config_prefix() {
+        var yaml = """
+                   variables:
+                     base: agent
+                   descriptors:
+                     - agentId: ${var.base}-1
+                       name: Agent
+                       slot: ${config.slot}
+                       tenancyId: t
+                   """;
+        var descriptors = registrar.loadFrom(
+                new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
+                null,
+                Map.of("config", (VariableSource) name ->
+                                                          "slot".equals(name) ? "planner" : null));
+        assertThat(descriptors).hasSize(1);
+        assertThat(descriptors.get(0).agentId()).isEqualTo("agent-1");
+        assertThat(descriptors.get(0).slot()).isEqualTo("planner");
+    }
+
 
     private io.casehub.eidos.api.VocabularyRegistry testVocabRegistry() {
         var registry = new io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry();
