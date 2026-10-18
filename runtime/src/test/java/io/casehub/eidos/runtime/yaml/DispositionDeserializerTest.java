@@ -77,6 +77,82 @@ class DispositionDeserializerTest {
     }
 
     @Test
+    void weightedAxis_parsesTermAndWeight() throws Exception {
+        var yaml = """
+                   socialOrient:
+                     - term: collaborative
+                       weight: 0.7
+                     - term: independent
+                       weight: 0.3
+                   ruleFollowing: strict
+                   """;
+        var disp = mapper.readValue(yaml, AgentDisposition.class);
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION)).hasSize(2);
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION).get(0).term()).isEqualTo("collaborative");
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION).get(0).weight()).isEqualTo(0.7);
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION).get(1).term()).isEqualTo("independent");
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION).get(1).weight()).isEqualTo(0.3);
+        // bare string form still works alongside
+        assertThat(disp.primaryTerm(DispositionAxis.RULE_FOLLOWING)).isEqualTo("strict");
+    }
+
+    @Test
+    void weightedAxis_allFiveAxes() throws Exception {
+        var yaml = """
+                   socialOrient:
+                     - term: collaborative
+                       weight: 0.7
+                     - term: independent
+                       weight: 0.3
+                   ruleFollowing:
+                     - term: strict
+                       weight: 0.6
+                     - term: flexible
+                       weight: 0.4
+                   riskAppetite:
+                     - term: bold
+                       weight: 0.8
+                     - term: cautious
+                       weight: 0.2
+                   autonomy:
+                     - term: autonomous
+                       weight: 0.9
+                     - term: guided
+                       weight: 0.1
+                   conflictMode:
+                     - term: competing
+                       weight: 0.5
+                     - term: collaborating
+                       weight: 0.5
+                   """;
+        var disp = mapper.readValue(yaml, AgentDisposition.class);
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION)).hasSize(2);
+        assertThat(disp.get(DispositionAxis.RULE_FOLLOWING)).hasSize(2);
+        assertThat(disp.get(DispositionAxis.RISK_APPETITE)).hasSize(2);
+        assertThat(disp.get(DispositionAxis.AUTONOMY)).hasSize(2);
+        assertThat(disp.get(DispositionAxis.CONFLICT_MODE)).hasSize(2);
+    }
+
+    @Test
+    void weightedAxis_preventsEnneagramOverride() throws Exception {
+        var registry        = testVocabRegistry();
+        var mapperWithVocab = createMapper(registry);
+        var yaml = """
+                   enneagramType: challenger
+                   socialOrient:
+                     - term: collaborative
+                       weight: 0.7
+                     - term: independent
+                       weight: 0.3
+                   """;
+        var disp = mapperWithVocab.readValue(yaml, AgentDisposition.class);
+        // explicit weighted axis should NOT be overwritten by enneagram derivation
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION)).hasSize(2);
+        assertThat(disp.get(DispositionAxis.SOCIAL_ORIENTATION).get(0).term()).isEqualTo("collaborative");
+    }
+
+
+    @Test
     void mbtiType_resolvesProfile_whenRegistryAvailable() throws Exception {
         var registry = testVocabRegistry();
         var mapperWithVocab = createMapper(registry);

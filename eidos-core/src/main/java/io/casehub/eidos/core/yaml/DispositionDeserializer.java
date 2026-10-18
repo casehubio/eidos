@@ -29,17 +29,25 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
         ObjectNode root    = p.readValueAsTree();
         var        builder = AgentDisposition.builder();
 
-        String explicitSocialOrient  = stringField(root, "socialOrient");
-        String explicitRuleFollowing = stringField(root, "ruleFollowing");
-        String explicitRiskAppetite  = stringField(root, "riskAppetite");
-        String explicitAutonomy      = stringField(root, "autonomy");
-        String explicitConflictMode  = stringField(root, "conflictMode");
+        var explicitAxes = new java.util.EnumMap<DispositionAxis, String>(DispositionAxis.class);
 
-        if (explicitSocialOrient != null) {builder.socialOrient(explicitSocialOrient);}
-        if (explicitRuleFollowing != null) {builder.ruleFollowing(explicitRuleFollowing);}
-        if (explicitRiskAppetite != null) {builder.riskAppetite(explicitRiskAppetite);}
-        if (explicitAutonomy != null) {builder.autonomy(explicitAutonomy);}
-        if (explicitConflictMode != null) {builder.conflictMode(explicitConflictMode);}
+        for (var axis : DispositionAxis.values()) {
+            String key = axis.jsonKey();
+            if (!root.has(key) || root.get(key).isNull()) {continue;}
+
+            JsonNode axisNode = root.get(key);
+            if (axisNode.isArray()) {
+                List<DispositionValue> values = parseWeightedList(root, key);
+                if (values != null && !values.isEmpty()) {
+                    setAxisValues(builder, axis, values);
+                    explicitAxes.put(axis, values.get(0).term());
+                }
+            } else {
+                String term = axisNode.asText();
+                setAxisTerm(builder, axis, term);
+                explicitAxes.put(axis, term);
+            }
+        }
 
         if (root.has("delegation")) {builder.delegation(root.get("delegation").asBoolean());}
 
@@ -49,13 +57,6 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
         List<DispositionValue> styleProfile = parseWeightedList(root, "styleProfile");
         if (styleProfile != null) {builder.styleProfile(styleProfile);}
 
-        var explicitAxes = new java.util.EnumMap<DispositionAxis, String>(DispositionAxis.class);
-        if (explicitSocialOrient != null) {explicitAxes.put(DispositionAxis.SOCIAL_ORIENTATION, explicitSocialOrient);}
-        if (explicitRuleFollowing != null) {explicitAxes.put(DispositionAxis.RULE_FOLLOWING, explicitRuleFollowing);}
-        if (explicitRiskAppetite != null) {explicitAxes.put(DispositionAxis.RISK_APPETITE, explicitRiskAppetite);}
-        if (explicitAutonomy != null) {explicitAxes.put(DispositionAxis.AUTONOMY, explicitAutonomy);}
-        if (explicitConflictMode != null) {explicitAxes.put(DispositionAxis.CONFLICT_MODE, explicitConflictMode);}
-
         String mbtiType      = root.has("mbtiType") ? root.get("mbtiType").asText() : "";
         String enneagramType = root.has("enneagramType") ? root.get("enneagramType").asText() : "";
 
@@ -63,10 +64,7 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
                 new PersonalityInput(mbtiType, enneagramType, explicitProfile != null, explicitAxes),
                 vocabRegistry, builder);
 
-        return builder.build();}
-
-    private static String stringField(ObjectNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText() : null;
+        return builder.build();
     }
 
     private static List<DispositionValue> parseWeightedList(ObjectNode node, String field) {
@@ -77,4 +75,25 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
         }
         return values;
     }
+
+    private static void setAxisTerm(AgentDisposition.Builder builder, DispositionAxis axis, String term) {
+        switch (axis) {
+            case SOCIAL_ORIENTATION -> builder.socialOrient(term);
+            case RULE_FOLLOWING -> builder.ruleFollowing(term);
+            case RISK_APPETITE -> builder.riskAppetite(term);
+            case AUTONOMY -> builder.autonomy(term);
+            case CONFLICT_MODE -> builder.conflictMode(term);
+        }
+    }
+
+    private static void setAxisValues(AgentDisposition.Builder builder, DispositionAxis axis, List<DispositionValue> values) {
+        switch (axis) {
+            case SOCIAL_ORIENTATION -> builder.socialOrient(values);
+            case RULE_FOLLOWING -> builder.ruleFollowing(values);
+            case RISK_APPETITE -> builder.riskAppetite(values);
+            case AUTONOMY -> builder.autonomy(values);
+            case CONFLICT_MODE -> builder.conflictMode(values);
+        }
+    }
+
 }
