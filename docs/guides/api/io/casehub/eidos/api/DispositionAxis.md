@@ -24,7 +24,13 @@
 
 ### `public java.lang.String description()`
 
+### `public java.lang.String displayName()`
+
+### `public java.lang.String highPoleLabel()`
+
 ### `public java.lang.String jsonKey()`
+
+### `public java.lang.String lowPoleLabel()`
 
 ### `public static io.casehub.eidos.api.DispositionAxis valueOf(java.lang.String name)`
 
