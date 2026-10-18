@@ -7,12 +7,17 @@ descriptors:
       CONFLICT_MODE: urn:casehub:vocab:thomas-kilmann
       RULE_FOLLOWING: urn:casehub:vocab:conscientiousness
     disposition:
-      conflictMode: collaborating
+      conflictMode:
+        - term: collaborating
+          weight: 0.7
+        - term: compromising
+          weight: 0.3
       ruleFollowing: strict
       delegation: false
     capabilities:
       - name: document-review
         tags: [structural]
+        qualityHint: 0.88
     templates:
       - ref: document-review-conventions
       - ref: communication-style
@@ -36,12 +41,17 @@ descriptors:
       CONFLICT_MODE: urn:casehub:vocab:thomas-kilmann
       RISK_APPETITE: urn:casehub:vocab:conscientiousness
     disposition:
-      conflictMode: competing
+      conflictMode:
+        - term: competing
+          weight: 0.8
+        - term: collaborating
+          weight: 0.2
       riskAppetite: conservative
       delegation: false
     capabilities:
       - name: document-review
         tags: [content]
+        qualityHint: 0.92
     briefing: >-
       You are the Content Reviewer for DraftHouse. Your focus is factual accuracy,
       technical correctness, and completeness of claims. You challenge assertions
@@ -59,12 +69,17 @@ descriptors:
       CONFLICT_MODE: urn:casehub:vocab:thomas-kilmann
       AUTONOMY: urn:casehub:vocab:conscientiousness
     disposition:
-      conflictMode: accommodating
+      conflictMode:
+        - term: accommodating
+          weight: 0.6
+        - term: compromising
+          weight: 0.4
       autonomy: directed
       delegation: false
     capabilities:
       - name: document-review
         tags: [readability]
+        qualityHint: 0.85
     briefing: >-
       You are the Readability Reviewer for DraftHouse. Your focus is clarity,
       sentence structure, jargon density, and audience appropriateness. You ensure
@@ -83,11 +98,16 @@ descriptors:
       RULE_FOLLOWING: urn:casehub:vocab:conscientiousness
     disposition:
       conflictMode: collaborating
-      ruleFollowing: strict
+      ruleFollowing:
+        - term: strict
+          weight: 0.8
+        - term: flexible
+          weight: 0.2
       delegation: false
     capabilities:
       - name: document-review
         tags: [completeness]
+        qualityHint: 0.90
     briefing: >-
       You are the Completeness Reviewer for DraftHouse. Your focus is coverage —
       whether the document addresses all stated goals, whether edge cases are
