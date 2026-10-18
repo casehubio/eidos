@@ -2,7 +2,12 @@ package io.casehub.eidos.api;
 
 import org.junit.jupiter.api.Test;
 
-import static io.casehub.eidos.api.DispositionAxis.*;
+import static io.casehub.eidos.api.DispositionAxis.AUTONOMY;
+import static io.casehub.eidos.api.DispositionAxis.CONFLICT_MODE;
+import static io.casehub.eidos.api.DispositionAxis.RISK_APPETITE;
+import static io.casehub.eidos.api.DispositionAxis.RULE_FOLLOWING;
+import static io.casehub.eidos.api.DispositionAxis.SOCIAL_ORIENTATION;
+import static io.casehub.eidos.api.DispositionAxis.values;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DispositionAxisTest {
@@ -42,4 +47,60 @@ class DispositionAxisTest {
         assertThat(AUTONOMY.description()).containsIgnoringCase("initiative");
         assertThat(CONFLICT_MODE.description()).containsIgnoringCase("conflict");
     }
+
+    @Test
+    void displayName_returns_humanReadable_for_each_axis() {
+        assertThat(SOCIAL_ORIENTATION.displayName()).isEqualTo("Social orientation");
+        assertThat(RULE_FOLLOWING.displayName()).isEqualTo("Rule following");
+        assertThat(RISK_APPETITE.displayName()).isEqualTo("Risk appetite");
+        assertThat(AUTONOMY.displayName()).isEqualTo("Autonomy");
+        assertThat(CONFLICT_MODE.displayName()).isEqualTo("Conflict mode");
+    }
+
+    @Test
+    void lowPoleLabel_returns_lowEnd_term_for_each_axis() {
+        assertThat(SOCIAL_ORIENTATION.lowPoleLabel()).isEqualTo("independent");
+        assertThat(RULE_FOLLOWING.lowPoleLabel()).isEqualTo("flexible");
+        assertThat(RISK_APPETITE.lowPoleLabel()).isEqualTo("cautious");
+        assertThat(AUTONOMY.lowPoleLabel()).isEqualTo("guided");
+        assertThat(CONFLICT_MODE.lowPoleLabel()).isEqualTo("avoiding");
+    }
+
+    @Test
+    void highPoleLabel_returns_highEnd_term_for_each_axis() {
+        assertThat(SOCIAL_ORIENTATION.highPoleLabel()).isEqualTo("collaborative");
+        assertThat(RULE_FOLLOWING.highPoleLabel()).isEqualTo("strict");
+        assertThat(RISK_APPETITE.highPoleLabel()).isEqualTo("bold");
+        assertThat(AUTONOMY.highPoleLabel()).isEqualTo("autonomous");
+        assertThat(CONFLICT_MODE.highPoleLabel()).isEqualTo("competing");
+    }
+
+    @Test
+    void displayName_covers_all_constants() {
+        for (final DispositionAxis axis : values()) {
+            assertThat(axis.displayName())
+                    .as("displayName() must be non-blank for %s", axis)
+                    .isNotBlank();
+        }
+    }
+
+    @Test
+    void lowPoleLabel_covers_all_constants() {
+        for (final DispositionAxis axis : values()) {
+            assertThat(axis.lowPoleLabel())
+                    .as("lowPoleLabel() must be non-blank for %s", axis)
+                    .isNotBlank();
+        }
+    }
+
+    @Test
+    void highPoleLabel_covers_all_constants() {
+        for (final DispositionAxis axis : values()) {
+            assertThat(axis.highPoleLabel())
+                    .as("highPoleLabel() must be non-blank for %s", axis)
+                    .isNotBlank();
+        }
+    }
+
+
 }

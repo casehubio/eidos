@@ -36,4 +36,35 @@ public enum DispositionAxis {
                 "accommodates, compromises, competes, or collaborates";
         };
     }
+
+    public String displayName() {
+        return switch (this) {
+            case SOCIAL_ORIENTATION -> "Social orientation";
+            case RULE_FOLLOWING -> "Rule following";
+            case RISK_APPETITE -> "Risk appetite";
+            case AUTONOMY -> "Autonomy";
+            case CONFLICT_MODE -> "Conflict mode";
+        };
+    }
+
+    public String lowPoleLabel() {
+        return switch (this) {
+            case SOCIAL_ORIENTATION -> "independent";
+            case RULE_FOLLOWING -> "flexible";
+            case RISK_APPETITE -> "cautious";
+            case AUTONOMY -> "guided";
+            case CONFLICT_MODE -> "avoiding";
+        };
+    }
+
+    public String highPoleLabel() {
+        return switch (this) {
+            case SOCIAL_ORIENTATION -> "collaborative";
+            case RULE_FOLLOWING -> "strict";
+            case RISK_APPETITE -> "bold";
+            case AUTONOMY -> "autonomous";
+            case CONFLICT_MODE -> "competing";
+        };
+    }
+
 }
