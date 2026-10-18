@@ -127,6 +127,23 @@ Registers a vocabulary enum. The class must carry `VocabularyMetadata`.
         the vocabulary, or if a different vocabulary is already registered under
         the same URI.
 
+### `public abstract void register(java.lang.String uri, java.lang.String name, java.lang.String version, java.lang.String description, java.util.List<? extends io.casehub.eidos.api.VocabularyTerm> terms)`
+
+Registers a data-driven vocabulary. Terms are stored under the given URI.
+
+#### Parameters
+
+- `uri` (`java.lang.String`)
+- `name` (`java.lang.String`)
+- `version` (`java.lang.String`)
+- `description` (`java.lang.String`)
+- `terms` (`java.util.List<? extends io.casehub.eidos.api.VocabularyTerm>`)
+
+#### Throws
+
+- `IllegalArgumentException` — if the URI is blank, if terms is empty,
+                                 or if a different vocabulary is already registered under the same URI.
+
 ### `public abstract java.util.Set<java.lang.String> registeredUris()`
 
 ### `public abstract java.util.Optional<T> resolve(java.lang.Class<T> vocab, java.lang.String value)`
@@ -160,13 +177,10 @@ Tests whether `generalValue` subsumes `specificValue` in the given vocabulary.
 
 true if `specificValue` specializes `generalValue`, or they are equal
 
-### `public abstract java.util.Optional<io.casehub.eidos.api.VocabularyMetadata> vocabularyMetadata(java.lang.String uri)`
+### `public abstract java.util.Optional<io.casehub.eidos.api.VocabularyInfo> vocabularyMetadata(java.lang.String uri)`
 
-Returns the vocabulary-level metadata annotation for the given URI.
+Returns the vocabulary-level metadata for the given URI.
 Empty if the URI is not registered.
-See `VocabularyMetadata` for field semantics — `name()`,
-`version()`, and `description()` default to `""`,
-meaning "not provided"; callers should treat `isEmpty()` as absent.
 
 #### Parameters
 

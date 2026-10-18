@@ -4,7 +4,8 @@
 
 **Kind:** `interface`
 
-A term within a vocabulary. Implemented by enum constants.
+A term within a vocabulary. Implemented by enum constants or data-driven records
+(see `DataDrivenTerm`).
 
 <p>`.exactMatch` and `.axisExactMatch` are independent. A term may implement
 either, both, or neither. The registry routes axis-aware and axis-unaware lookups to the
@@ -65,6 +66,8 @@ non-autonomy context.
 
 <p>Used by `BehavioralExpectations.escalationExpected` to determine
 whether escalation compliance should be monitored for an agent.
+
+### `public default java.util.List<java.lang.String> keywords()`
 
 ### `public abstract java.lang.String label()`
 

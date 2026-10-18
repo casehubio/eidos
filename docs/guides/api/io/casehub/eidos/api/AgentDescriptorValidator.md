@@ -104,6 +104,13 @@
 - `slot` (`java.lang.String`)
 - `tenancyId` (`java.lang.String`)
 
+### `static void validateChars(java.lang.String fieldName, java.lang.String value)`
+
+#### Parameters
+
+- `fieldName` (`java.lang.String`)
+- `value` (`java.lang.String`)
+
 ### `private static void validateField(java.lang.String fieldName, java.lang.String value, int maxLength)`
 
 #### Parameters
