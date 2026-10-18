@@ -2,6 +2,7 @@ package io.casehub.eidos.memory;
 
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.MatchDegree;
+import io.casehub.eidos.api.VocabularyInfo;
 import io.casehub.eidos.api.VocabularyMetadata;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
@@ -111,10 +112,19 @@ public class TestVocabularyRegistry implements VocabularyRegistry {
     }
 
     @Override
-    public Optional<VocabularyMetadata> vocabularyMetadata(String uri) {
+    public Optional<VocabularyInfo> vocabularyMetadata(String uri) {
         var vocab = byUri.get(uri);
-        return vocab != null ? Optional.of(vocab.getAnnotation(VocabularyMetadata.class)) : Optional.empty();
+        if (vocab == null) {return Optional.empty();}
+        var meta = vocab.getAnnotation(VocabularyMetadata.class);
+        return Optional.of(new VocabularyInfo(meta.uri(), meta.name(), meta.version(), meta.description()));
     }
+
+    @Override
+    public void register(String uri, String name, String version, String description,
+                         List<? extends VocabularyTerm> terms) {
+        throw new UnsupportedOperationException();
+    }
+
 
     @Override
     public boolean subsumes(String vocabUri, String generalValue, String specificValue) {

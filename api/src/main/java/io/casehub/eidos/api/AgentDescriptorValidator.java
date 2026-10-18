@@ -126,6 +126,19 @@ class AgentDescriptorValidator {
         return false;
     }
 
+
+    static void validateChars(final String fieldName, final String value) {
+        if (value == null || value.isEmpty()) {return;}
+        for (int i = 0; i < value.length(); ) {
+            final int cp = value.codePointAt(i);
+            if (isBanned(cp)) {
+                throw new AgentValidationException(fieldName,
+                                                   "contains banned character U+" + String.format("%04X", cp));
+            }
+            i += Character.charCount(cp);
+        }
+    }
+
     private static boolean isBanned(final int cp) {
         if (cp <= 0x001F) return true;                      // C0 control chars (0-31)
         if (cp >= 0x007F && cp <= 0x009F) return true;     // DEL + C1 control chars (127-159)

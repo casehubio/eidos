@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A term within a vocabulary. Implemented by enum constants.
+ * A term within a vocabulary. Implemented by enum constants or data-driven records
+ * (see {@link DataDrivenTerm}).
  *
  * <p>{@link #exactMatch} and {@link #axisExactMatch} are independent. A term may implement
  * either, both, or neither. The registry routes axis-aware and axis-unaware lookups to the
@@ -67,5 +68,8 @@ public interface VocabularyTerm {
     default String responseStyleGuidance() { return ""; }
 
     default String antiPatternWarning() { return ""; }
+
+    default List<String> keywords()     {return List.of();}
+
 
 }

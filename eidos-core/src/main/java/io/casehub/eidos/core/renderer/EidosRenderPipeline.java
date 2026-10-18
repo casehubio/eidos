@@ -23,7 +23,7 @@ import io.casehub.eidos.api.Resource;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import io.casehub.eidos.api.TemplateRegistry;
-import io.casehub.eidos.api.VocabularyMetadata;
+import io.casehub.eidos.api.VocabularyInfo;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.VocabularyTerm;
 
@@ -1152,7 +1152,7 @@ public class EidosRenderPipeline {
             .orElse(raw);
         final String vocabName = vocabUri
             .flatMap(uri -> vocab.vocabularyMetadata(uri))
-            .map(VocabularyMetadata::name)
+            .map(VocabularyInfo::name)
             .filter(n -> !n.isEmpty())
             .orElse(null);
         return vocabName != null ? label + " (" + vocabName + ")" : label;

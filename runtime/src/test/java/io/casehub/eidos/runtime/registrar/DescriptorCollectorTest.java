@@ -135,7 +135,10 @@ class DescriptorCollectorTest {
         public <S extends Enum<S> & io.casehub.eidos.api.VocabularyTerm, T extends Enum<T> & io.casehub.eidos.api.VocabularyTerm> java.util.Optional<T> equivalentValues(S from, Class<T> targetVocab, io.casehub.eidos.api.DispositionAxis axis) {return java.util.Optional.empty();}
 
         @Override
-        public java.util.Optional<io.casehub.eidos.api.VocabularyMetadata> vocabularyMetadata(String uri)                                                                                                                                         {return java.util.Optional.empty();}
+        public java.util.Optional<io.casehub.eidos.api.VocabularyInfo> vocabularyMetadata(String uri)                                                                                                                                         {return java.util.Optional.empty();}
+
+        @Override
+        public void register(String uri, String name, String version, String description, java.util.List<? extends io.casehub.eidos.api.VocabularyTerm> terms) { throw new UnsupportedOperationException(); }
 
         @Override
         public boolean subsumes(String vocabUri, String generalValue, String specificValue)                                                                                                                                                       {return false;}

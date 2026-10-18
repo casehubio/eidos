@@ -62,6 +62,19 @@ public final class DescriptorCollector {
                 }
             }
 
+            if (vocabRegistry.isRegistered("urn:casehub:vocab:epistemic-domain")) {
+                for (var cap : d.capabilities()) {
+                    if (cap.epistemicDomains() != null) {
+                        for (var domainKey : cap.epistemicDomains().keySet()) {
+                            if (vocabRegistry.resolve("urn:casehub:vocab:epistemic-domain", domainKey).isEmpty()) {
+                                LOG.warnf("Descriptor '%s' has epistemicDomains key '%s' not found in epistemic domain vocabulary",
+                                    d.agentId(), domainKey);
+                            }
+                        }
+                    }
+                }
+            }
+
             var derived = deriveDispositionAxes(d, vocabRegistry);
 
             if (coherenceValidator != null) {

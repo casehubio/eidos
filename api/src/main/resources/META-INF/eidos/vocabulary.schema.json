@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://casehub.io/eidos/vocabulary.schema.json",
+  "title": "Eidos Vocabulary Definition",
+  "description": "Schema for META-INF/eidos/vocabularies.yaml — data-driven vocabulary definitions for CaseHub Eidos",
+  "type": "object",
+  "required": ["uri", "terms"],
+  "additionalProperties": false,
+  "properties": {
+    "uri": {
+      "type": "string",
+      "description": "Unique vocabulary URI"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable vocabulary name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Vocabulary version"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this vocabulary covers"
+    },
+    "terms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Term" }
+    }
+  },
+  "$defs": {
+    "Term": {
+      "type": "object",
+      "required": ["value"],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Primary term identifier"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "What this term means"
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Alternative names for this term"
+        },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Associated concepts for text matching and LLM understanding"
+        },
+        "specializes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Parent term values within this vocabulary (hierarchy)"
+        }
+      }
+    }
+  }
+}

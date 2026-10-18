@@ -1,16 +1,22 @@
 package io.casehub.eidos.runtime.vocabulary;
 
-import io.casehub.eidos.api.*;
+import io.casehub.eidos.api.DataDrivenTerm;
+import io.casehub.eidos.api.DispositionAxis;
+import io.casehub.eidos.api.MatchDegree;
+import io.casehub.eidos.api.VocabularyInfo;
+import io.casehub.eidos.api.VocabularyMetadata;
+import io.casehub.eidos.api.VocabularyRegistry;
+import io.casehub.eidos.api.VocabularyTerm;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @QuarkusTest
 class CdiVocabularyRegistryTest {
@@ -1108,5 +1114,80 @@ class CdiVocabularyRegistryTest {
         assertThat(appExpansion.get("urn:test:chain-foundation")).contains("chain-base");
         assertThat(appExpansion.get("urn:test:chain-mid")).contains("chain-mid");
         assertThat(appExpansion.get("urn:test:chain-app")).contains("chain-app");
+    }
+
+// --- Data-driven vocabulary tests ---
+
+    @Test
+    void register_data_driven_vocabulary() {
+        var parent = new DataDrivenTerm("dd-parent", "Parent", "desc", List.of(), List.of("kw1"), List.of());
+        var child  = new DataDrivenTerm("dd-child", "Child", "desc", List.of(), List.of("kw2"), List.of(parent));
+        registry.register("urn:test:dd", "Test DD", "1.0", "desc", List.of(parent, child));
+
+        assertThat(registry.isRegistered("urn:test:dd")).isTrue();
+        assertThat(registry.registeredUris()).contains("urn:test:dd");
+        assertThat(registry.resolve("urn:test:dd", "dd-parent")).isPresent();
+        assertThat(registry.resolve("urn:test:dd", "dd-child")).isPresent();
+        assertThat(registry.resolve("urn:test:dd", "dd-child").get().keywords()).containsExactly("kw2");
+        assertThat(registry.allTerms("urn:test:dd")).hasSize(2);
+    }
+
+    @Test
+    void data_driven_hierarchy_works() {
+        var parent = new DataDrivenTerm("dd-h-parent", "P", "", List.of(), List.of(), List.of());
+        var child  = new DataDrivenTerm("dd-h-child", "C", "", List.of(), List.of(), List.of(parent));
+        registry.register("urn:test:dd-h", "T", "1", "", List.of(parent, child));
+
+        assertThat(registry.subsumes("urn:test:dd-h", "dd-h-parent", "dd-h-child")).isTrue();
+        assertThat(registry.ancestors("urn:test:dd-h", "dd-h-child")).extracting(VocabularyTerm::value).containsExactly("dd-h-parent");
+        assertThat(registry.descendants("urn:test:dd-h", "dd-h-parent")).extracting(VocabularyTerm::value).containsExactly("dd-h-child");
+
+        var match = registry.match("urn:test:dd-h", "dd-h-parent", "dd-h-child");
+        assertThat(match).isInstanceOf(MatchDegree.Plugin.class);
+    }
+
+    @Test
+    void data_driven_vocabularyMetadata_returns_VocabularyInfo() {
+        var t = new DataDrivenTerm("dd-m-a", "A", "", List.of(), List.of(), List.of());
+        registry.register("urn:test:dd-m", "My Vocab", "2.0", "A description", List.of(t));
+
+        var info = registry.vocabularyMetadata("urn:test:dd-m");
+        assertThat(info).isPresent();
+        assertThat(info.get().name()).isEqualTo("My Vocab");
+        assertThat(info.get().version()).isEqualTo("2.0");
+    }
+
+    @Test
+    void data_driven_duplicate_uri_rejected() {
+        var t = new DataDrivenTerm("dd-dup-a", "A", "", List.of(), List.of(), List.of());
+        registry.register("urn:test:dd-dup", "T", "1", "", List.of(t));
+        var t2 = new DataDrivenTerm("dd-dup-b", "B", "", List.of(), List.of(), List.of());
+        assertThatThrownBy(() -> registry.register("urn:test:dd-dup", "T2", "1", "", List.of(t2)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void data_driven_uri_collision_with_enum_rejected() {
+        registry.register(SourceTerm.class);
+        var t = new DataDrivenTerm("dd-col-a", "A", "", List.of(), List.of(), List.of());
+        assertThatThrownBy(() -> registry.register("urn:test:source", "T", "1", "", List.of(t)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void enum_vocabularyMetadata_returns_VocabularyInfo() {
+        registry.register(SourceTerm.class);
+        var info = registry.vocabularyMetadata("urn:test:source");
+        assertThat(info).isPresent();
+        assertThat(info.get()).isInstanceOf(VocabularyInfo.class);
+        assertThat(info.get().uri()).isEqualTo("urn:test:source");
+    }
+
+    @Test
+    void equivalentValues_returns_empty_for_data_driven_vocab() {
+        var t = new DataDrivenTerm("dd-eq-a", "A", "", List.of(), List.of(), List.of());
+        registry.register("urn:test:dd-eq", "T", "1", "", List.of(t));
+        registry.register(SourceTerm.class);
+        assertThat(registry.equivalentValues("urn:test:dd-eq", "dd-eq-a", "urn:test:source")).isEmpty();
     }
 }

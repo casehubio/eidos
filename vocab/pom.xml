@@ -26,6 +26,13 @@
       <artifactId>quarkus-arc</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-eidos-core</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <!-- Testing -->
     <dependency>
       <groupId>io.quarkus</groupId>

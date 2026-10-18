@@ -211,7 +211,8 @@ class DefaultCapabilityHealthBehavioralViolationTest {
         @Override public <T extends Enum<T> & VocabularyTerm> java.util.Optional<T> resolve(Class<T> vocab, String value) { return java.util.Optional.empty(); }
         @Override public <S extends Enum<S> & VocabularyTerm, T extends Enum<T> & VocabularyTerm> java.util.Optional<T> equivalentValues(S from, Class<T> targetVocab) { return java.util.Optional.empty(); }
         @Override public <S extends Enum<S> & VocabularyTerm, T extends Enum<T> & VocabularyTerm> java.util.Optional<T> equivalentValues(S from, Class<T> targetVocab, DispositionAxis axis) { return java.util.Optional.empty(); }
-        @Override public java.util.Optional<VocabularyMetadata> vocabularyMetadata(String uri) { return java.util.Optional.empty(); }
+        @Override public java.util.Optional<VocabularyInfo> vocabularyMetadata(String uri) { return java.util.Optional.empty(); }
+        @Override public void register(String uri, String name, String version, String description, java.util.List<? extends VocabularyTerm> terms) { throw new UnsupportedOperationException(); }
         @Override public boolean subsumes(String uri, String ancestor, String descendant) { return false; }
         @Override public MatchDegree match(String uri, String registered, String query) { return new MatchDegree.None(); }
         @Override public java.util.List<? extends VocabularyTerm> ancestors(String uri, String term) { return List.of(); }

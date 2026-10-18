@@ -326,8 +326,12 @@ class CapabilityResolverTest {
                 java.util.Optional<T> equivalentValues(S from, Class<T> targetVocab, DispositionAxis axis) {
             return java.util.Optional.empty();
         }
-        @Override public java.util.Optional<VocabularyMetadata> vocabularyMetadata(String uri) {
+        @Override public java.util.Optional<VocabularyInfo> vocabularyMetadata(String uri) {
             return java.util.Optional.empty();
+        }
+        @Override public void register(String uri, String name, String version, String description,
+                                       java.util.List<? extends VocabularyTerm> terms) {
+            throw new UnsupportedOperationException();
         }
         @Override public boolean subsumes(String vocabUri, String generalValue, String specificValue) {
             return false;

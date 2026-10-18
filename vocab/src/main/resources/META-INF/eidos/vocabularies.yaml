@@ -1,0 +1,279 @@
+# yaml-language-server: $schema=https://casehub.io/eidos/vocabulary.schema.json
+uri: "urn:casehub:vocab:epistemic-domain"
+name: Epistemic Domain Taxonomy
+version: "1.0"
+description: Knowledge areas for epistemic domain qualification
+
+terms:
+  # ── Top-level domains (no parent) ──
+  - value: software-engineering
+    label: Software Engineering
+    description: Design, development, testing, and maintenance of software systems
+    keywords:
+      - code
+      - software
+      - debug
+      - implement
+      - refactor
+      - compile
+      - test
+      - deploy
+      - architecture
+      - design pattern
+
+  - value: analysis
+    label: Analysis
+    description: Systematic examination and interpretation of information
+    keywords:
+      - investigation
+      - examination
+      - assessment
+      - pattern recognition
+      - diagnostic
+      - root cause
+      - evidence
+      - hypothesis
+
+  - value: security
+    label: Security
+    description: Protection of systems, networks, and data from threats
+    keywords:
+      - vulnerability
+      - threat
+      - exploit
+      - defense
+      - compliance
+      - audit
+      - penetration
+      - encryption
+
+  - value: data-engineering
+    label: Data Engineering
+    description: Design and operation of data processing systems and pipelines
+    keywords:
+      - pipeline
+      - ETL
+      - schema
+      - warehouse
+      - ingestion
+      - transformation
+      - streaming
+      - batch
+
+  - value: clinical-research
+    label: Clinical Research
+    description: Systematic investigation of health and illness in human populations
+    keywords:
+      - clinical
+      - trial
+      - patient
+      - diagnosis
+      - treatment
+      - evidence-based
+      - protocol
+      - outcome
+
+  - value: product-management
+    label: Product Management
+    description: Strategy, planning, and execution of product development
+    keywords:
+      - product
+      - roadmap
+      - stakeholder
+      - user research
+      - prioritization
+      - metrics
+      - backlog
+
+  - value: finance
+    label: Finance
+    description: Management, creation, and study of money and investments
+    keywords:
+      - financial
+      - trading
+      - portfolio
+      - risk
+      - valuation
+      - compliance
+      - accounting
+      - audit
+
+  - value: legal
+    label: Legal
+    description: Systems of rules and their application in governance and dispute resolution
+    keywords:
+      - contract
+      - compliance
+      - regulation
+      - liability
+      - intellectual property
+      - jurisdiction
+      - statute
+
+  # ── Under software-engineering ──
+  - value: java
+    label: Java
+    description: JVM-based programming language and ecosystem
+    specializes: [software-engineering]
+    keywords:
+      - jvm
+      - bytecode
+      - classpath
+      - maven
+      - gradle
+      - spring
+      - quarkus
+      - servlet
+      - annotation processing
+      - garbage collection
+
+  - value: python
+    label: Python
+    description: General-purpose programming language with strong ecosystem
+    specializes: [software-engineering]
+    keywords:
+      - pip
+      - virtualenv
+      - pandas
+      - numpy
+      - django
+      - flask
+      - cpython
+      - asyncio
+      - type hints
+
+  - value: rust
+    label: Rust
+    description: Systems programming language focused on safety and performance
+    specializes: [software-engineering]
+    keywords:
+      - cargo
+      - ownership
+      - borrowing
+      - lifetime
+      - unsafe
+      - crate
+      - trait
+      - pattern matching
+
+  - value: go
+    label: Go
+    description: Compiled language designed for simplicity and concurrency
+    specializes: [software-engineering]
+    keywords:
+      - goroutine
+      - channel
+      - module
+      - defer
+      - interface
+      - concurrency
+      - garbage collection
+
+  - value: typescript
+    label: TypeScript
+    description: Typed superset of JavaScript for large-scale applications
+    specializes: [software-engineering]
+    keywords:
+      - types
+      - generics
+      - declaration
+      - webpack
+      - eslint
+      - node
+      - interface
+      - union type
+
+  - value: distributed-systems
+    label: Distributed Systems
+    description: Systems that operate across multiple networked computers
+    specializes: [software-engineering]
+    keywords:
+      - consensus
+      - partition
+      - replication
+      - consistency
+      - availability
+      - latency
+      - fault tolerance
+
+  - value: machine-learning
+    label: Machine Learning
+    description: Systems that learn from data to make predictions or decisions
+    specializes: [software-engineering]
+    keywords:
+      - model
+      - training
+      - inference
+      - dataset
+      - feature
+      - neural network
+      - gradient
+      - embedding
+
+  - value: devops
+    label: DevOps
+    description: Practices combining software development and IT operations
+    specializes: [software-engineering]
+    keywords:
+      - ci/cd
+      - container
+      - kubernetes
+      - deployment
+      - monitoring
+      - infrastructure
+      - pipeline
+      - observability
+
+  # ── Under analysis ──
+  - value: static-analysis
+    label: Static Analysis
+    description: Examination of code without executing it
+    specializes: [analysis]
+    keywords:
+      - ast
+      - linter
+      - rule
+      - code smell
+      - metric
+      - complexity
+      - dead code
+
+  - value: data-analysis
+    label: Data Analysis
+    description: Inspection, transformation, and modeling of data for insight
+    specializes: [analysis]
+    keywords:
+      - statistics
+      - visualization
+      - correlation
+      - regression
+      - hypothesis
+      - trend
+      - outlier
+
+  # ── Under security ──
+  - value: application-security
+    label: Application Security
+    description: Security practices specific to software applications
+    specializes: [security]
+    keywords:
+      - owasp
+      - injection
+      - xss
+      - authentication
+      - authorization
+      - csrf
+      - session
+
+  - value: network-security
+    label: Network Security
+    description: Protection of network infrastructure and communications
+    specializes: [security]
+    keywords:
+      - firewall
+      - intrusion
+      - encryption
+      - certificate
+      - protocol
+      - tls
+      - vpn

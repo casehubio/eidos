@@ -18,6 +18,7 @@ import io.casehub.eidos.api.TaskSemanticEnricher;
 import io.casehub.eidos.api.TemplateRegistry;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.casehub.eidos.api.spi.AgentDescriptorRegistrar;
+import io.casehub.eidos.api.spi.DataDrivenVocabularyRegistrar;
 import io.casehub.eidos.api.spi.TemplateRegistrar;
 import io.casehub.eidos.core.display.DefaultDisplayTermResolver;
 import io.casehub.eidos.core.graph.NoOpAgentGraphBackfill;
@@ -37,6 +38,7 @@ import io.casehub.eidos.core.registrar.ClasspathYamlDescriptorRegistrar;
 import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.core.renderer.NoOpRenderedPromptCache;
 import io.casehub.eidos.core.template.ClasspathYamlTemplateRegistrar;
+import io.casehub.eidos.core.vocabulary.ClasspathYamlVocabularyRegistrar;
 import io.casehub.eidos.core.validator.BriefingCoherenceValidator;
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -148,4 +150,11 @@ public class EidosCoreProducer {
     TemplateRegistrar classpathYamlTemplateRegistrar() {
         return new ClasspathYamlTemplateRegistrar();
     }
+
+    @Produces
+    @ApplicationScoped
+    DataDrivenVocabularyRegistrar classpathYamlVocabularyRegistrar() {
+        return new ClasspathYamlVocabularyRegistrar();
+    }
+
 }

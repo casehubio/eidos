@@ -49,7 +49,8 @@ class BehavioralExpectationsTest {
             @Override public <T extends Enum<T> & VocabularyTerm> Optional<T> resolve(Class<T> vocab, String value) { return Optional.empty(); }
             @Override public <S extends Enum<S> & VocabularyTerm, T extends Enum<T> & VocabularyTerm> Optional<T> equivalentValues(S from, Class<T> targetVocab) { return Optional.empty(); }
             @Override public <S extends Enum<S> & VocabularyTerm, T extends Enum<T> & VocabularyTerm> Optional<T> equivalentValues(S from, Class<T> targetVocab, DispositionAxis axis) { return Optional.empty(); }
-            @Override public Optional<VocabularyMetadata> vocabularyMetadata(String uri) { return Optional.empty(); }
+            @Override public Optional<VocabularyInfo> vocabularyMetadata(String uri) { return Optional.empty(); }
+            @Override public void register(String uri, String name, String version, String description, List<? extends VocabularyTerm> terms) { throw new UnsupportedOperationException(); }
             @Override public boolean subsumes(String vocabUri, String generalValue, String specificValue) { return false; }
             @Override public MatchDegree match(String vocabUri, String declaredValue, String requestedValue) { return new MatchDegree.None(); }
             @Override public List<? extends VocabularyTerm> ancestors(String vocabUri, String value) { return List.of(); }

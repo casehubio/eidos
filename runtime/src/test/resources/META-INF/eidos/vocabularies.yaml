@@ -1,0 +1,21 @@
+uri: "urn:test:yaml-vocab"
+name: Test YAML Vocabulary
+version: "1.0"
+description: Vocabulary for ClasspathYamlVocabularyRegistrar tests
+
+terms:
+  - value: parent-term
+    label: Parent Term
+    description: A top-level term
+    keywords:
+      - keyword-a
+      - keyword-b
+
+  - value: child-term
+    label: Child Term
+    description: A child term
+    specializes: [parent-term]
+    keywords:
+      - keyword-c
+    aliases:
+      - child-alias

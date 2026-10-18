@@ -20,6 +20,16 @@ public interface VocabularyRegistry {
      */
     <T extends Enum<T> & VocabularyTerm> void register(Class<T> vocab);
 
+    /**
+     * Registers a data-driven vocabulary. Terms are stored under the given URI.
+     *
+     * @throws IllegalArgumentException if the URI is blank, if terms is empty,
+     *                                  or if a different vocabulary is already registered under the same URI.
+     */
+    void register(String uri, String name, String version, String description,
+                  List<? extends VocabularyTerm> terms);
+
+
     boolean isRegistered(String vocabUri);
 
     Set<String> registeredUris();
@@ -61,13 +71,10 @@ public interface VocabularyRegistry {
     // --- Vocabulary-level metadata ---
 
     /**
-     * Returns the vocabulary-level metadata annotation for the given URI.
+     * Returns the vocabulary-level metadata for the given URI.
      * Empty if the URI is not registered.
-     * See {@link VocabularyMetadata} for field semantics — {@code name()},
-     * {@code version()}, and {@code description()} default to {@code ""},
-     * meaning "not provided"; callers should treat {@code isEmpty()} as absent.
      */
-    Optional<VocabularyMetadata> vocabularyMetadata(String uri);
+    Optional<VocabularyInfo> vocabularyMetadata(String uri);
 
     // --- Hierarchy / subsumption ---
 
