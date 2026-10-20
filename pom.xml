@@ -23,6 +23,7 @@
     <module>vocab</module>
     <module>examples</module>
     <module>eval</module>
+    <module>graphql</module>
     <module>graph</module>
     <module>org-api</module>
     <module>org-memory</module>
