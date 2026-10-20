@@ -3,6 +3,7 @@ CREATE TABLE agent_descriptor (
     agent_id               VARCHAR(255)    NOT NULL,
     tenancy_id             VARCHAR(255)    NOT NULL,
     name                   VARCHAR(255),
+    description            VARCHAR(500),
     version                VARCHAR(255),
     provider               VARCHAR(255),
     model_family           VARCHAR(255),

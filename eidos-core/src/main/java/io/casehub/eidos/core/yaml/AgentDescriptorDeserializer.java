@@ -35,6 +35,7 @@ public class AgentDescriptorDeserializer extends JsonDeserializer<AgentDescripto
 
         builder.agentId(stringField(root, "agentId"));
         builder.name(stringField(root, "name"));
+        ifString(root, "description", builder::description);
         builder.slot(stringField(root, "slot"));
         builder.tenancyId(root.has("tenancyId") ? root.get("tenancyId").asText() : "default");
 

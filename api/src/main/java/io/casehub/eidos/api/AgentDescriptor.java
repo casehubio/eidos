@@ -7,6 +7,7 @@ import java.util.Optional;
 public record AgentDescriptor(
         String agentId,
         String name,
+        String description,
         String version,
         String provider,
         String modelFamily,
@@ -70,6 +71,7 @@ public record AgentDescriptor(
                 "exceeds maximum count " + AgentDescriptorValidator.MAX_ARCHETYPE_ADJECTIVES + " (was " + archetypeAdjectives.size() + ")");
         }
         AgentDescriptorValidator.validate(agentId, name, slot, tenancyId);
+        AgentDescriptorValidator.validateOptional("description", description, AgentDescriptorValidator.MAX_DESCRIPTION);
         AgentDescriptorValidator.validateOptional("archetype", archetype, AgentDescriptorValidator.MAX_ARCHETYPE);
         AgentDescriptorValidator.validateOptional("avatar", avatar, AgentDescriptorValidator.MAX_AVATAR);
         AgentDescriptorValidator.validateItems("archetypeAdjectives", archetypeAdjectives, AgentDescriptorValidator.MAX_ARCHETYPE_ADJECTIVE);
@@ -187,7 +189,7 @@ public record AgentDescriptor(
 
     public Builder toBuilder() {
         return new Builder()
-                .agentId(this.agentId).name(this.name).version(this.version)
+                .agentId(this.agentId).name(this.name).description(this.description).version(this.version)
                 .provider(this.provider).modelFamily(this.modelFamily)
                 .modelVersion(this.modelVersion).weightsFingerprint(this.weightsFingerprint)
                 .domainVocabulary(this.domainVocabulary).slotVocabulary(this.slotVocabulary)
@@ -209,7 +211,7 @@ public record AgentDescriptor(
     }
 
     public static final class Builder {
-        private String agentId, name, version, provider,
+        private String agentId, name, description, version, provider,
                 modelFamily, modelVersion, weightsFingerprint,
                 domainVocabulary, slotVocabulary, dispositionVocabulary,
                 styleVocabulary;
@@ -235,6 +237,11 @@ public record AgentDescriptor(
 
         public Builder name(String v)                                   {
                                                                             this.name = v;
+                                                                            return this;
+                                                                        }
+
+        public Builder description(String v)                           {
+                                                                            this.description = v;
                                                                             return this;
                                                                         }
 
@@ -371,7 +378,7 @@ public record AgentDescriptor(
 
         public AgentDescriptor build() {
             return new AgentDescriptor(
-                    agentId, name, version, provider,
+                    agentId, name, description, version, provider,
                     modelFamily, modelVersion, weightsFingerprint,
                     domainVocabulary, slotVocabulary, dispositionVocabulary,
                     styleVocabulary,

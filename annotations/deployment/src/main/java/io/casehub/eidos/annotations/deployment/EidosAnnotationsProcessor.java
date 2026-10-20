@@ -236,6 +236,7 @@ class EidosAnnotationsProcessor {
 
         config.agentId = resolveAgentId(identity, classInfo, derivedIds);
         config.name = resolveDisplayName(identity, classInfo);
+        config.description = stringValue(identity, "description");
         config.slot = stringValue(identity, "slot");
         config.provider = stringValue(identity, "provider");
         config.modelFamily = stringValue(identity, "modelFamily");

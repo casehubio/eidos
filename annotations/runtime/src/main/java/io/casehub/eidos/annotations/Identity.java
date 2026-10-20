@@ -12,6 +12,8 @@ public @interface Identity {
 
     String name() default "";
 
+    String description() default "";
+
     String slot();
 
     String provider() default "";

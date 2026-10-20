@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 
 public final class AgentDescriptorComparator {
 
-    static final int COMPARED_FIELD_COUNT = 26;
+    static final int COMPARED_FIELD_COUNT = 27;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 12;
-    static final int COMPARED_DISPOSITION_FIELD_COUNT = 8;
+    static final int COMPARED_DISPOSITION_FIELD_COUNT = 10;
     static final int COMPARED_GOAL_FIELD_COUNT = 7;
     static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
 
@@ -35,6 +35,7 @@ public final class AgentDescriptorComparator {
 
     private static void compareSimpleFields(List<FieldDrift> drifts, AgentDescriptor desired, AgentDescriptor actual) {
         compareField(drifts, "name", desired.name(), actual.name());
+        compareField(drifts, "description", desired.description(), actual.description());
         compareField(drifts, "slot", desired.slot(), actual.slot());
         compareField(drifts, "archetype", desired.archetype(), actual.archetype());
         compareField(drifts, "archetypeAdjectives", desired.archetypeAdjectives(), actual.archetypeAdjectives());
@@ -88,7 +89,10 @@ public final class AgentDescriptorComparator {
                                       String.valueOf(desired.delegation()), String.valueOf(actual.delegation())));
         }
         compareField(drifts, "disposition.dispositionProfile", desired.dispositionProfile(), actual.dispositionProfile());
-        compareField(drifts, "disposition.styleProfile", desired.styleProfile(), actual.styleProfile());}
+        compareField(drifts, "disposition.styleProfile", desired.styleProfile(), actual.styleProfile());
+        compareField(drifts, "disposition.mbtiType", desired.mbtiType(), actual.mbtiType());
+        compareField(drifts, "disposition.enneagramType", desired.enneagramType(), actual.enneagramType());
+    }
 
     private static void compareCapabilities(List<FieldDrift> drifts,
                                              List<AgentCapability> desired,

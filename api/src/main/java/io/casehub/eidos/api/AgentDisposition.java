@@ -10,7 +10,9 @@ public record AgentDisposition(
         List<DispositionValue> conflictMode,
         boolean delegation,
         List<DispositionValue> dispositionProfile,
-        List<DispositionValue> styleProfile
+        List<DispositionValue> styleProfile,
+        String mbtiType,
+        String enneagramType
 ) {
     public AgentDisposition {
         socialOrient       = sanitizeAxis(socialOrient);
@@ -52,6 +54,8 @@ public record AgentDisposition(
         private boolean                delegation;
         private List<DispositionValue> dispositionProfile = List.of();
         private List<DispositionValue> styleProfile       = List.of();
+        private String                 mbtiType;
+        private String                 enneagramType;
 
         public Builder socialOrient(String v) {
             this.socialOrient = v == null ? List.of() : List.of(DispositionValue.of(v));
@@ -153,10 +157,20 @@ public record AgentDisposition(
             return this;
         }
 
+        public Builder mbtiType(String v) {
+            this.mbtiType = v;
+            return this;
+        }
+
+        public Builder enneagramType(String v) {
+            this.enneagramType = v;
+            return this;
+        }
+
         public AgentDisposition build() {
             return new AgentDisposition(
                     socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
-                    delegation, dispositionProfile, styleProfile);
+                    delegation, dispositionProfile, styleProfile, mbtiType, enneagramType);
         }
     }
 }

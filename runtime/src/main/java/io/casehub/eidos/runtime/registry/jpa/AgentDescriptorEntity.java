@@ -38,6 +38,7 @@ public class AgentDescriptorEntity {
     String tenancyId;
 
     String name;
+    @Column(length = 500) String description;
     String version;
     String provider;
 

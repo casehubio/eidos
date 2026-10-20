@@ -27,7 +27,7 @@ class AgentDescriptorMapper {
 
     AgentDescriptor toRecord(AgentDescriptorEntity e) {
         return new AgentDescriptor(
-                e.agentId, e.name, e.version, e.provider,
+                e.agentId, e.name, e.description, e.version, e.provider,
                 e.modelFamily, e.modelVersion, e.weightsFingerprint,
                 e.domainVocabulary, e.slotVocabulary, e.dispositionVocabulary,
                 e.styleVocabulary,
@@ -54,6 +54,7 @@ class AgentDescriptorMapper {
         e.agentId               = d.agentId();
         e.tenancyId             = d.tenancyId();
         e.name                  = d.name();
+        e.description           = d.description();
         e.version               = d.version();
         e.provider              = d.provider();
         e.modelFamily           = d.modelFamily();

@@ -3,6 +3,7 @@ package io.casehub.eidos.annotations.runtime;
 public class AnnotatedAgentConfig {
     public String agentId;
     public String name;
+    public String description;
     public String slot;
     public String provider;
     public String modelFamily;

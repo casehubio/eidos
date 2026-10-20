@@ -25,6 +25,7 @@ public class EidosAnnotationsRecorder {
             var builder = AgentDescriptor.builder()
                                          .agentId(config.agentId).name(config.name).slot(config.slot).tenancyId(tenancyId);
 
+            if (notEmpty(config.description)) {builder.description(config.description);}
             if (notEmpty(config.provider)) {builder.provider(config.provider);}
             if (notEmpty(config.modelFamily)) {builder.modelFamily(config.modelFamily);}
             if (notEmpty(config.jurisdiction)) {builder.jurisdiction(config.jurisdiction);}
@@ -83,6 +84,9 @@ public class EidosAnnotationsRecorder {
                                 config.dispositionProfile != null && config.dispositionProfile.length > 0,
                                 explicitAxes),
                         vocabRegistry, db);
+
+                if (notEmpty(config.mbtiType)) {db.mbtiType(config.mbtiType);}
+                if (notEmpty(config.enneagramType)) {db.enneagramType(config.enneagramType);}
 
                 builder.disposition(db.build());
             }

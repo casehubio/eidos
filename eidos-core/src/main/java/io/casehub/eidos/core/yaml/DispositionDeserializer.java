@@ -64,6 +64,9 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
                 new PersonalityInput(mbtiType, enneagramType, explicitProfile != null, explicitAxes),
                 vocabRegistry, builder);
 
+        builder.mbtiType(mbtiType.isEmpty() ? null : mbtiType);
+        builder.enneagramType(enneagramType.isEmpty() ? null : enneagramType);
+
         return builder.build();
     }
 
