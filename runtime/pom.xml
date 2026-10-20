@@ -43,6 +43,12 @@
       <artifactId>casehub-platform-api</artifactId>
     </dependency>
 
+    <!-- Platform bootstrap — ClasspathYamlRegistrar SPI for agents/ directory scanning -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform-bootstrap</artifactId>
+    </dependency>
+
     <!-- CDI -->
     <dependency>
       <groupId>io.quarkus</groupId>
