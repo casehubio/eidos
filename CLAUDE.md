@@ -249,7 +249,7 @@ casehub-eidos/  (local folder: ~/claude/casehub/eidos)
 │   └── deployment/                      — casehub-eidos-annotations-deployment: Quarkus build extension
 │       └── src/main/java/io/casehub/eidos/annotations/deployment/
 │           ├── EidosAnnotationsProcessor.java — @BuildStep: Jandex scan, annotation extraction, synthetic bean generation, hybrid vocab validation
-│           └── EidosAnnotationProcessedBuildItem.java — coordination build item for blocks interop
+│           └── EidosAnnotationProcessedBuildItem.java — coordination build item for agency interop
 ├── runtime/
 │   └── src/main/java/io/casehub/eidos/runtime/
 │       ├── registry/jpa/                — JpaAgentRegistry (@ApplicationScoped), JpaReactiveAgentRegistry (@IfBuildProperty)
