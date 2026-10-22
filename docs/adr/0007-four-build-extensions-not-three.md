@@ -8,15 +8,15 @@
 
 The eidos annotation module (`casehub-eidos-annotations`) has its own Quarkus build extension (`EidosAnnotationsProcessor`) rather than relying on the blocks build extension to process eidos annotations.
 
-This means four build extensions in the annotation-driven model (LC4j, Engine, Eidos, Blocks), not the three shown in the blocks#115 design spec.
+This means four build extensions in the annotation-driven model (LC4j, Engine, Eidos, Blocks), not the three shown in the agency#115 design spec.
 
 ## Context
 
-The blocks#115 spec (§Build Extension Architecture) envisioned three build extensions with the blocks extension processing eidos annotations (`@Identity`, `@Disposition`, etc.) as part of cross-module composition. This creates a layering problem: any app that wants `@Identity` on an agent class would need `casehub-agency` on the classpath — even if it doesn't use debate, voting, HTN, or any blocks pattern.
+The agency#115 spec (§Build Extension Architecture) envisioned three build extensions with the blocks extension processing eidos annotations (`@Identity`, `@Disposition`, etc.) as part of cross-module composition. This creates a layering problem: any app that wants `@Identity` on an agent class would need `casehub-agency` on the classpath — even if it doesn't use debate, voting, HTN, or any blocks pattern.
 
 ## Alternatives Considered
 
-1. **Blocks processes eidos annotations** (spec's original design) — rejected: forces blocks dependency for identity-only apps
+1. **Blocks processes eidos annotations** (spec's original design) — rejected: forces agency dependency for identity-only apps
 2. **Annotations in eidos-api, processing in existing eidos-deployment** — rejected: forces annotation processing on all eidos consumers, not opt-in
 3. **Annotations in eidos-api, no build extension** — rejected: no build-time validation, no synthetic bean generation
 
