@@ -66,6 +66,9 @@ public final class PersonalityVocabManifestGenerator {
         manifest.put("archetypeCompatibility", buildArchetypeCompatibility());
         manifest.put("archetypeAffinities", buildArchetypeAffinities());
 
+        manifest.put("behavioralTendencies", buildBehavioralTendencies());
+        manifest.put("frameworkDescriptions", buildFrameworkDescriptions());
+
         return manifest;
     }
 
@@ -80,6 +83,8 @@ public final class PersonalityVocabManifestGenerator {
             m.put("description", axis.description());
             m.put("lowPole", axis.lowPoleLabel());
             m.put("highPole", axis.highPoleLabel());
+            m.put("lowPoleDescription", axis.lowPoleDescription());
+            m.put("highPoleDescription", axis.highPoleDescription());
             result.add(m);
         }
         return result;
@@ -146,6 +151,17 @@ public final class PersonalityVocabManifestGenerator {
             }
             m.put("defaultProfile", profile);
 
+            if (!type.detailedDescription().isEmpty()) {
+                m.put("detailedDescription", type.detailedDescription());
+            }
+            if (!type.adjective().isEmpty()) {
+                m.put("adjective", type.adjective());
+            }
+            var weights = buildSignalWeights(type);
+            if (!weights.isEmpty()) {
+                m.put("signalWeights", weights);
+            }
+
             result.add(m);
         }
         return result;
@@ -165,6 +181,16 @@ public final class PersonalityVocabManifestGenerator {
             }
             if (t.impliesSupervision()) {
                 m.put("impliesSupervision", true);
+            }
+            if (!t.detailedDescription().isEmpty()) {
+                m.put("detailedDescription", t.detailedDescription());
+            }
+            if (!t.adjective().isEmpty()) {
+                m.put("adjective", t.adjective());
+            }
+            var weights = buildSignalWeights(t);
+            if (!weights.isEmpty()) {
+                m.put("signalWeights", weights);
             }
             result.add(m);
         }
@@ -320,6 +346,62 @@ public final class PersonalityVocabManifestGenerator {
     }
 
     // ── Shared helpers ──────────────────────────────────────────
+
+
+    private static List<Map<String, Object>> buildBehavioralTendencies() {
+        var result = new ArrayList<Map<String, Object>>();
+        for (var t : BehavioralTendency.values()) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("name", t.label());
+            entry.put("description", t.description());
+            var conditions = new ArrayList<Map<String, Object>>();
+            for (var c : t.conditions()) {
+                Map<String, Object> cond = new LinkedHashMap<>();
+                cond.put("axis", c.axis().jsonKey());
+                cond.put("direction", c.direction().name().toLowerCase());
+                cond.put("threshold", c.threshold());
+                conditions.add(cond);
+            }
+            entry.put("conditions", conditions);
+            result.add(entry);
+        }
+        return result;
+    }
+
+    private static Map<String, Object> buildFrameworkDescriptions() {
+        var result = new LinkedHashMap<String, Object>();
+        result.put("mbti", Map.of(
+                "description", "Myers-Briggs personality type — 16 types based on four cognitive preference pairs.",
+                "detailedDescription", "The Myers-Briggs Type Indicator classifies personality along four axes: Introversion/Extraversion (energy source), Sensing/Intuition (information gathering), Thinking/Feeling (decision making), and Judging/Perceiving (lifestyle orientation). Each combination produces one of 16 types. In work contexts, MBTI helps predict communication style, decision-making approach, and team dynamics. The types describe preferences, not abilities — an INTJ can socialise and an ESFP can focus alone, but each draws energy differently."));
+        result.put("enneagram", Map.of(
+                "description", "Nine personality types based on core motivations and fears.",
+                "detailedDescription", "The Enneagram describes nine interconnected personality types, each driven by a core motivation and a core fear. Unlike trait-based models, it focuses on why people behave as they do rather than how. Type 1 fears being corrupt, Type 5 fears being helpless, Type 8 fears being controlled. Each type has healthy, average, and unhealthy expressions. In professional settings, the Enneagram reveals what drives engagement, what triggers stress, and how people respond under pressure."));
+        result.put("disc", Map.of(
+                "description", "Four behavioural styles — Dominance, Influence, Steadiness, Conscientiousness.",
+                "detailedDescription", "DISC measures observable behaviour across two axes: pace (fast vs. measured) and focus (task vs. people). D types are direct and results-driven. I types are enthusiastic and collaborative. S types are patient and supportive. C types are precise and analytical. Most people lead with one or two styles. DISC is widely used in workplace communication because it describes how people act rather than why — making it practical for adapting communication style to your audience."));
+        result.put("belbin", Map.of(
+                "description", "Nine team roles describing how people contribute to group work.",
+                "detailedDescription", "Belbin Team Roles identify nine clusters of behaviour that emerge in team settings. Each person typically has a primary role (strongest contribution), one or two secondary roles, and roles they avoid. The nine roles span three categories: thinking roles (Plant, Monitor Evaluator, Specialist), action roles (Shaper, Implementer, Completer-Finisher), and people roles (Co-ordinator, Teamworker, Resource Investigator). Balanced teams need coverage across all three categories."));
+        result.put("sdi", Map.of(
+                "description", "Strength Deployment Inventory — motivational values driving behaviour.",
+                "detailedDescription", "The SDI (Strength Deployment Inventory) maps three core motives: concern for people (Blue), concern for performance (Red), and concern for process (Green). Hub blends all three. Unlike behavioural models, SDI focuses on what people value and why they deploy their strengths. Crucially, SDI tracks how motives shift under conflict — a Blue (altruistic) person may shift to Red (assertive) when their values are threatened. This makes it particularly useful for understanding team friction."));
+        result.put("bigFive", Map.of(
+                "description", "Five broad personality dimensions backed by extensive research.",
+                "detailedDescription", "The Big Five (OCEAN) is the most empirically validated personality model. It measures Openness to experience, Conscientiousness, Extraversion, Agreeableness, and Neuroticism (emotional reactivity). Each dimension is a spectrum, not a binary. High Openness correlates with creativity and adaptability; high Conscientiousness with reliability and follow-through; high Extraversion with energy in social settings; high Agreeableness with cooperation; low Neuroticism with emotional stability under pressure."));
+        return result;
+    }
+
+
+    private static Map<String, Double> buildSignalWeights(VocabularyTerm term) {
+        var weights = new LinkedHashMap<String, Double>();
+        for (var axis : DispositionAxis.values()) {
+            double w = term.axisSignalWeight(axis);
+            if (w != 0.0) {
+                weights.put(axis.jsonKey(), w);
+            }
+        }
+        return weights;
+    }
 
     private static Map<String, Object> termEntry(VocabularyTerm term) {
         var m = new LinkedHashMap<String, Object>();

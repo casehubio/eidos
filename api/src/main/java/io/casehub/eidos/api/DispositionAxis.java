@@ -67,4 +67,25 @@ public enum DispositionAxis {
         };
     }
 
+    public String lowPoleDescription() {
+        return switch (this) {
+            case SOCIAL_ORIENTATION -> "Prefers working independently, forms own assessments before consulting others";
+            case RULE_FOLLOWING -> "Adapts approach based on circumstances, questions established rules when they don't fit";
+            case RISK_APPETITE -> "Flags risks proactively, errs on the side of safety, prefers proven approaches";
+            case AUTONOMY -> "Seeks guidance and validation, works within established hierarchies, defers to authority";
+            case CONFLICT_MODE -> "Prioritises harmony, seeks compromise, avoids direct confrontation";
+        };
+    }
+
+    public String highPoleDescription() {
+        return switch (this) {
+            case SOCIAL_ORIENTATION -> "Seeks consensus, builds on others' ideas, energised by teamwork";
+            case RULE_FOLLOWING -> "Follows established procedures, enforces standards consistently, values predictability";
+            case RISK_APPETITE -> "Explores novel approaches, embraces calculated risk, comfortable with uncertainty";
+            case AUTONOMY -> "Self-directed, forms independent judgments, resists external pressure on conclusions";
+            case CONFLICT_MODE -> "Challenges directly, pushes back on weak arguments, stands ground under pressure";
+        };
+    }
+
+
 }

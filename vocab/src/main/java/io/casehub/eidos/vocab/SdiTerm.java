@@ -105,4 +105,54 @@ public enum SdiTerm implements VocabularyTerm {
     @Override public String label()         { return label; }
     @Override public String description()   { return description; }
     @Override public List<String> aliases() { return aliases; }
+
+    @Override
+    public double axisSignalWeight(DispositionAxis axis) {
+        return switch (this) {
+            case BLUE -> switch (axis) {
+                case SOCIAL_ORIENTATION -> 0.6;
+                case CONFLICT_MODE -> -0.7;
+                default -> 0.0;
+            };
+            case RED -> switch (axis) {
+                case RISK_APPETITE -> 0.6;
+                case AUTONOMY -> 0.3;
+                case CONFLICT_MODE -> 0.7;
+                default -> 0.0;
+            };
+            case GREEN -> switch (axis) {
+                case RULE_FOLLOWING -> 0.4;
+                case RISK_APPETITE -> -0.3;
+                case AUTONOMY -> 0.7;
+                default -> 0.0;
+            };
+            case HUB -> switch (axis) {
+                case SOCIAL_ORIENTATION -> 0.3;
+                case RULE_FOLLOWING -> -0.3;
+                default -> 0.0;
+            };
+        };
+    }
+
+    @Override
+    public String adjective() {
+        return switch (this) {
+            case BLUE -> "altruistic";
+            case RED -> "assertive";
+            case GREEN -> "analytical";
+            case HUB -> "flexible";
+        };
+    }
+
+    @Override
+    public String detailedDescription() {
+        return switch (this) {
+            case BLUE -> "Blue SDI individuals are driven by concern for the welfare of others. They seek to protect, nurture, and develop people. They are most fulfilled when their work helps others grow or when they can create trusting relationships. Under conflict, they may initially accommodate, but can become fiercely assertive when core values around care and fairness are violated.";
+            case RED -> "Red SDI individuals are driven by performance, achievement, and taking charge. They seek challenges, set ambitious goals, and act decisively. They are most fulfilled when they can influence outcomes directly. Under conflict, they confront issues head-on and may become competitive or domineering. They respect competence and directness in others.";
+            case GREEN -> "Green SDI individuals are driven by a need to understand, organise, and ensure things are done correctly. They value thoughtful analysis, fair processes, and self-sufficiency. They are most fulfilled when they can work methodically toward well-reasoned outcomes. Under conflict, they may withdraw to analyse the situation, and can become stubbornly principled.";
+            case HUB -> "Hub SDI individuals are motivated by flexibility and cohesion. They draw on altruistic (Blue), assertive (Red), and analytical (Green) motives as the situation demands. They are natural mediators who see multiple perspectives. They are most fulfilled in roles that require versatility. Under conflict, they may initially try to find a flexible solution but can feel pulled in multiple directions.";
+        };
+    }
+
+
 }

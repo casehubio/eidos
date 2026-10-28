@@ -71,5 +71,11 @@ public interface VocabularyTerm {
 
     default List<String> keywords()     {return List.of();}
 
+    default double axisSignalWeight(DispositionAxis axis) {return 0.0;}
+
+    default String detailedDescription()                  {return "";}
+
+    default String adjective()                            {return "";}
+
 
 }

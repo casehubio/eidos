@@ -130,4 +130,56 @@ public enum DiscTerm implements VocabularyTerm {
     @Override public String label()         { return label; }
     @Override public String description()   { return description; }
     @Override public List<String> aliases() { return aliases; }
+
+    @Override
+    public double axisSignalWeight(DispositionAxis axis) {
+        return switch (this) {
+            case DOMINANCE -> switch (axis) {
+                case RISK_APPETITE -> 0.7;
+                case AUTONOMY -> 0.5;
+                case CONFLICT_MODE -> 0.8;
+                default -> 0.0;
+            };
+            case INFLUENCE -> switch (axis) {
+                case SOCIAL_ORIENTATION -> 0.8;
+                case RULE_FOLLOWING -> -0.5;
+                case RISK_APPETITE -> 0.3;
+                default -> 0.0;
+            };
+            case STEADINESS -> switch (axis) {
+                case RULE_FOLLOWING -> 0.3;
+                case RISK_APPETITE -> -0.6;
+                case CONFLICT_MODE -> -0.7;
+                default -> 0.0;
+            };
+            case CONSCIENTIOUSNESS_DISC -> switch (axis) {
+                case RULE_FOLLOWING -> 0.8;
+                case RISK_APPETITE -> -0.5;
+                case AUTONOMY -> 0.3;
+                default -> 0.0;
+            };
+        };
+    }
+
+    @Override
+    public String adjective() {
+        return switch (this) {
+            case DOMINANCE -> "decisive";
+            case INFLUENCE -> "influential";
+            case STEADINESS -> "steady";
+            case CONSCIENTIOUSNESS_DISC -> "conscientious";
+        };
+    }
+
+    @Override
+    public String detailedDescription() {
+        return switch (this) {
+            case DOMINANCE -> "D-style individuals are fast-paced and task-oriented. They focus on results, make quick decisions, and take charge of situations. They communicate bluntly, value efficiency, and become impatient with excessive detail or process. They are most effective when given autonomy and clear goals. Under pressure, they may become aggressive or dismissive of others' input.";
+            case INFLUENCE -> "I-style individuals are fast-paced and people-oriented. They build relationships easily, generate enthusiasm, and thrive in collaborative settings. They communicate expressively, value recognition, and become restless with isolation or rigid structure. They are most effective in dynamic, social environments. Under pressure, they may become disorganised or overly emotional.";
+            case STEADINESS -> "S-style individuals are measured and people-oriented. They provide steady, dependable support, maintain team harmony, and prefer predictable environments. They communicate warmly, value security, and become stressed by sudden change or conflict. They are most effective in stable, collaborative settings. Under pressure, they may become passive or resistant to change.";
+            case CONSCIENTIOUSNESS_DISC -> "C-style individuals are measured and task-oriented. They focus on accuracy, follow procedures, and maintain high standards. They communicate formally, value correctness, and become frustrated by sloppy work or arbitrary decisions. They are most effective when given time to analyse and verify. Under pressure, they may over-analyse or become critical.";
+        };
+    }
+
+
 }
