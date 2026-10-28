@@ -26,9 +26,13 @@
 
 ### `public java.lang.String displayName()`
 
+### `public java.lang.String highPoleDescription()`
+
 ### `public java.lang.String highPoleLabel()`
 
 ### `public java.lang.String jsonKey()`
+
+### `public java.lang.String lowPoleDescription()`
 
 ### `public java.lang.String lowPoleLabel()`
 

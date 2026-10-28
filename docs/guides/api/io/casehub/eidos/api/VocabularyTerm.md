@@ -14,6 +14,8 @@ appropriate method independently — calling the axis-unaware overload against a
 
 ## Methods
 
+### `public default java.lang.String adjective()`
+
 ### `public default java.util.List<java.lang.String> aliases()`
 
 ### `public default java.lang.String antiPatternWarning()`
@@ -37,11 +39,19 @@ no compile-time enforcement exists for the target-vocabulary dimension.
 - `targetVocab` (`java.lang.Class<?>`)
 - `axis` (`io.casehub.eidos.api.DispositionAxis`)
 
+### `public default double axisSignalWeight(io.casehub.eidos.api.DispositionAxis axis)`
+
+#### Parameters
+
+- `axis` (`io.casehub.eidos.api.DispositionAxis`)
+
 ### `public default java.util.List<io.casehub.eidos.api.DispositionValue> defaultProfile()`
 
 ### `public default java.lang.String description()`
 
 Returns `""` when no description was provided. Callers treat `isEmpty()` as absent.
+
+### `public default java.lang.String detailedDescription()`
 
 ### `public default java.util.Optional<io.casehub.eidos.api.VocabularyTerm> exactMatch(java.lang.Class<?> targetVocab)`
 
