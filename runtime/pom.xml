@@ -49,6 +49,12 @@
       <artifactId>casehub-platform-bootstrap</artifactId>
     </dependency>
 
+    <!-- Platform agent API — AgentResolver SPI for HTTP agent invocation -->
+    <dependency>
+      <groupId>io.casehub</groupId>
+      <artifactId>casehub-platform-agent-api</artifactId>
+    </dependency>
+
     <!-- CDI -->
     <dependency>
       <groupId>io.quarkus</groupId>

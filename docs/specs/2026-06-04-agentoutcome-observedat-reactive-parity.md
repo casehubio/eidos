@@ -56,12 +56,12 @@ public record AgentOutcome(
 
 Notes:
 - `taskId` and `result` null checks are explicit — consistent with `observedAt`. The enum type system and JPA store contract do not prevent null at construction time.
-- The `confidence` range guard is new — not currently enforced at the Java layer (only by the DB `CHECK` constraint). Adding it here fails fast at construction time.
+- The `RetentionScore` range guard is new — not currently enforced at the Java layer (only by the DB `CHECK` constraint). Adding it here fails fast at construction time.
 
 Nullability contract for all five fields:
 - `taskId` — required (non-null, compact constructor enforces)
 - `result` — required (non-null, compact constructor enforces)
-- `confidence` — required (primitive double, 0.0–1.0, enforced in compact constructor)
+- `RetentionScore` — required (primitive double, 0.0–1.0, enforced in compact constructor)
 - `observedAt` — required (non-null, compact constructor enforces)
 - `degradationReason` — nullable; null means no degradation applies
 

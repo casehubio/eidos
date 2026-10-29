@@ -6,7 +6,7 @@
 
 ## Fields
 
-### `confidence` (`double`)
+### `RetentionScore` (`double`)
 
 ### `degradationReason` (`io.casehub.eidos.api.DegradationReason`)
 
@@ -18,7 +18,7 @@
 
 ## Record Components
 
-### `confidence` (`double`)
+### `RetentionScore` (`double`)
 
 ### `degradationReason` (`io.casehub.eidos.api.DegradationReason`)
 
@@ -36,7 +36,7 @@
 
 - `taskId` (`java.lang.String`)
 - `result` (`io.casehub.eidos.api.TaskResult`)
-- `confidence` (`double`)
+- `RetentionScore` (`double`)
 - `observedAt` (`java.time.Instant`)
 - `degradationReason` (`io.casehub.eidos.api.DegradationReason`)
 
