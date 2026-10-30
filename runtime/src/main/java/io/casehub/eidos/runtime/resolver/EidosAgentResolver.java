@@ -7,6 +7,7 @@ import io.casehub.platform.agent.ResolvedAgent;
 import io.casehub.platform.api.identity.CurrentPrincipal;
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 import java.util.HashMap;
@@ -20,12 +21,12 @@ public class EidosAgentResolver implements AgentResolver {
 
     private final AgentRegistry registry;
     private final SystemPromptRenderer renderer;
-    private final CurrentPrincipal currentPrincipal;
+    private final Instance<CurrentPrincipal> currentPrincipal;
 
     @Inject
     public EidosAgentResolver(AgentRegistry registry,
                               SystemPromptRenderer renderer,
-                              CurrentPrincipal currentPrincipal) {
+                              Instance<CurrentPrincipal> currentPrincipal) {
         this.registry = registry;
         this.renderer = renderer;
         this.currentPrincipal = currentPrincipal;
@@ -33,13 +34,13 @@ public class EidosAgentResolver implements AgentResolver {
 
     @Override
     public Optional<ResolvedAgent> resolve(String agentId) {
-        return registry.findById(agentId, currentPrincipal.tenancyId())
+        return registry.findById(agentId, currentPrincipal.get().tenancyId())
                 .map(this::toResolvedAgent);
     }
 
     @Override
     public List<io.casehub.platform.agent.AgentDescriptor> discover() {
-        return registry.find(AgentQuery.all(currentPrincipal.tenancyId()))
+        return registry.find(AgentQuery.all(currentPrincipal.get().tenancyId()))
                 .stream()
                 .map(match -> toDiscoveryDescriptor(match.descriptor()))
                 .toList();

@@ -5,6 +5,7 @@ import io.casehub.eidos.api.SystemPromptRenderer.RenderFormat;
 import io.casehub.eidos.api.SystemPromptRenderer.RenderedPrompt;
 import io.casehub.platform.agent.ResolvedAgent;
 import io.casehub.platform.api.identity.CurrentPrincipal;
+import jakarta.enterprise.inject.Instance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,12 +23,15 @@ class EidosAgentResolverTest {
     private CurrentPrincipal principal;
     private EidosAgentResolver resolver;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
         registry = mock(AgentRegistry.class);
         renderer = mock(SystemPromptRenderer.class);
         principal = stubPrincipal("tenant-1");
-        resolver = new EidosAgentResolver(registry, renderer, principal);
+        Instance<CurrentPrincipal> principalInstance = mock(Instance.class);
+        when(principalInstance.get()).thenReturn(principal);
+        resolver = new EidosAgentResolver(registry, renderer, principalInstance);
     }
 
     @Test
