@@ -12,6 +12,7 @@ import io.casehub.eidos.api.DispositionProfileStore;
 import io.casehub.eidos.api.DispositionSignalStore;
 import io.casehub.eidos.api.GoalEvolution;
 import io.casehub.eidos.api.GoalSignalStore;
+import io.casehub.eidos.api.OrgAwareDispatch;
 import io.casehub.eidos.api.RenderedPromptCache;
 import io.casehub.eidos.api.RuntimeCollaborationQuery;
 import io.casehub.eidos.api.TaskSemanticEnricher;
@@ -33,13 +34,14 @@ import io.casehub.eidos.core.health.NoOpDispositionHealth;
 import io.casehub.eidos.core.health.NoOpDispositionProfileStore;
 import io.casehub.eidos.core.health.NoOpDispositionSignalStore;
 import io.casehub.eidos.core.health.NoOpGoalEvolution;
+import io.casehub.eidos.core.org.NoOpOrgAwareDispatch;
 import io.casehub.eidos.core.health.NoOpGoalSignalStore;
 import io.casehub.eidos.core.registrar.ClasspathYamlDescriptorRegistrar;
 import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.core.renderer.NoOpRenderedPromptCache;
 import io.casehub.eidos.core.template.ClasspathYamlTemplateRegistrar;
-import io.casehub.eidos.core.vocabulary.ClasspathYamlVocabularyRegistrar;
 import io.casehub.eidos.core.validator.BriefingCoherenceValidator;
+import io.casehub.eidos.core.vocabulary.ClasspathYamlVocabularyRegistrar;
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
@@ -157,4 +159,9 @@ public class EidosCoreProducer {
         return new ClasspathYamlVocabularyRegistrar();
     }
 
+    @Produces
+    @DefaultBean
+    OrgAwareDispatch orgAwareDispatch() {
+        return new NoOpOrgAwareDispatch();
+    }
 }
