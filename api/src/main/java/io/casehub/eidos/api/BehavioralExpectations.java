@@ -2,6 +2,9 @@ package io.casehub.eidos.api;
 
 import java.util.OptionalLong;
 
+// Behavioral expectations derived from disposition axes — maps personality to
+// observable behaviors (delegation, escalation). Autonomy axis gates supervision
+// expectation per self-determination theory (Deci & Ryan 1985).
 public final class BehavioralExpectations {
 
     private BehavioralExpectations() {}

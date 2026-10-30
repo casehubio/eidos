@@ -167,11 +167,14 @@ public enum JungianFunctionTerm implements VocabularyTerm {
 
     public static final String URI = "urn:casehub:vocab:jungian";
 
+    // Jungian cognitive function hierarchy — Jung (1921) Psychological Types;
+    // Myers & Briggs (1962) dominant > auxiliary > tertiary > inferior differentiation
     public static final double DOMINANT_MIN = 0.31;
     public static final double DOMINANT_MAX = 1.00;
     public static final double AUXILIARY_MIN = 0.06;
     public static final double AUXILIARY_MAX = 0.30;
     public static final double UNDIFFERENTIATED_MAX = 0.06;
+    // Reinforcement learning applied to function differentiation — Rescorla-Wagner (1972)
     public static final double REINFORCEMENT_DELTA = 0.06;
     public static final double DECAY_FACTOR = 0.20;
 

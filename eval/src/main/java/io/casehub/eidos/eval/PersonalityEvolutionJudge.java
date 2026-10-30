@@ -18,6 +18,7 @@ import java.util.List;
 @ApplicationScoped
 public class PersonalityEvolutionJudge {
 
+    // Jungian function thresholds — mirrors JungianFunctionTerm; Jung (1921)
     static final double DOMINANT_MIN = 0.31;
     static final double AUXILIARY_MIN = 0.06;
     static final double AUXILIARY_MAX = 0.30;

@@ -6,6 +6,8 @@ import java.util.Map;
 
 public class DefaultGoalEvolution implements GoalEvolution {
 
+    // Goal evolution thresholds — Locke & Latham (2002) goal-setting theory;
+    // Wrosch et al. (2003) goal disengagement and re-engagement
     static final int MIN_OUTCOMES = 5;
     static final double PROMOTION_THRESHOLD = 0.8;
     static final double DEMOTION_THRESHOLD = 0.7;

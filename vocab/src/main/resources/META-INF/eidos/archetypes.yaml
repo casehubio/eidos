@@ -1,0 +1,1087 @@
+# Eidos Archetype Data — Single source of truth
+# Consumed by: eidos-vocab (Java), blocks-ui (TypeScript)
+# Validated against Java enums by ArchetypeDataValidationTest
+
+families:
+  caregiver:
+    quadrant: stability
+    drive: "Service, compassion, generosity"
+    subArchetypes:
+      angel:
+        label: Angel
+        description: "Serves without expectation of return; radiates unconditional acceptance"
+        validAdjectives: [gentle, serene, selfless, patient, radiant, forgiving, compassionate]
+        invalidAdjectives: [aggressive, cynical, calculating, ruthless]
+        affinities:
+          mbti: [INFJ, ISFJ]
+          enneagram: [2, 9]
+      guardian:
+        label: Guardian
+        description: "Shields others from harm; enforces safety through vigilance"
+        validAdjectives: [vigilant, steadfast, protective, disciplined, reliable, firm, alert]
+        invalidAdjectives: [reckless, chaotic, negligent, indifferent]
+        affinities:
+          mbti: [ISTJ, ISFJ, ESTJ]
+          enneagram: [6, 1]
+      healer:
+        label: Healer
+        description: "Mends what is broken — emotional, physical, or systemic"
+        validAdjectives: [empathic, restorative, intuitive, nurturing, transformative, patient, holistic]
+        invalidAdjectives: [destructive, callous, impatient, clinical]
+        affinities:
+          mbti: [INFJ, INFP, ISFP]
+          enneagram: [2, 4]
+      samaritan:
+        label: Samaritan
+        description: "Practical help in the moment; shows up where needed"
+        validAdjectives: [pragmatic, responsive, generous, grounded, warm, community-minded, tireless]
+        invalidAdjectives: [detached, theoretical, self-serving, aloof]
+        affinities:
+          mbti: [ESFJ, ENFJ, ISFJ]
+          enneagram: [2, 6]
+
+  creator:
+    quadrant: stability
+    drive: "Innovation, expression, imagination"
+    subArchetypes:
+      artist:
+        label: Artist
+        description: "Creates from inner emotional truth; form matters as much as function"
+        validAdjectives: [expressive, sensitive, authentic, aesthetic, emotional, original, intense]
+        invalidAdjectives: [conformist, insensitive, utilitarian]
+        affinities:
+          mbti: [ISFP, INFP]
+          enneagram: [4]
+      entrepreneur:
+        label: Entrepreneur
+        description: "Creates ventures and systems; sees market gaps and fills them"
+        validAdjectives: [inventive, opportunistic, bold, driven, pragmatic, adaptive, ambitious]
+        invalidAdjectives: [passive, risk-averse, complacent]
+        affinities:
+          mbti: [ENTP, ENTJ, ESTP]
+          enneagram: [3, 7]
+      storyteller:
+        label: Storyteller
+        description: "Shapes understanding through story; gives experience a structure"
+        validAdjectives: [narrative, eloquent, engaging, imaginative, empathic, evocative, perceptive]
+        invalidAdjectives: [inarticulate, literal, dry, monotone]
+        affinities:
+          mbti: [ENFP, INFP, ENFJ]
+          enneagram: [4, 7]
+      visionary:
+        label: Visionary
+        description: "Imagines what does not yet exist; sees beyond current constraints"
+        validAdjectives: [prophetic, conceptual, revolutionary, far-sighted, paradigm-shifting, bold]
+        invalidAdjectives: [myopic, conventional, incremental, timid]
+        affinities:
+          mbti: [INTJ, INFJ, ENTP]
+          enneagram: [5, 4]
+
+  everyman:
+    quadrant: belonging
+    drive: "Belonging, empathy, realism"
+    subArchetypes:
+      advocate:
+        label: Advocate
+        description: "Speaks up for those who cannot; bridges power gaps"
+        validAdjectives: [principled, passionate, persistent, courageous, empathic, articulate, just]
+        invalidAdjectives: [apathetic, compliant, self-interested]
+        affinities:
+          mbti: [ENFJ, INFJ, ENFP]
+          enneagram: [1, 6]
+      citizen:
+        label: Citizen
+        description: "Upholds community standards; reliable contributor to shared goals"
+        validAdjectives: [responsible, dependable, civic-minded, fair, consistent, dutiful, cooperative]
+        invalidAdjectives: [anarchic, selfish, unreliable, reckless]
+        affinities:
+          mbti: [ESTJ, ISTJ, ESFJ]
+          enneagram: [6, 1]
+      networker:
+        label: Networker
+        description: "Weaves relationships; knows who to connect to whom"
+        validAdjectives: [gregarious, perceptive, resourceful, warm, strategic, inclusive, energetic]
+        invalidAdjectives: [isolated, rigid, secretive, antisocial]
+        affinities:
+          mbti: [ENFP, ESFJ, ENTP]
+          enneagram: [7, 3]
+      servant:
+        label: Servant
+        description: "Does the unglamorous work that holds things together"
+        validAdjectives: [humble, reliable, devoted, quiet, essential, steadfast, thorough]
+        invalidAdjectives: [proud, showy, demanding, self-promoting]
+        affinities:
+          mbti: [ISFJ, ISTJ]
+          enneagram: [2, 9]
+
+  explorer:
+    quadrant: independence
+    drive: "Freedom, discovery, self-sufficiency"
+    subArchetypes:
+      adventurer:
+        label: Adventurer
+        description: "Pushes boundaries through direct experience; thrives on the unknown"
+        validAdjectives: [bold, fearless, restless, physical, daring, energetic, spontaneous]
+        invalidAdjectives: [timid, sedentary, cautious, routine]
+        affinities:
+          mbti: [ESTP, ISTP, ESFP]
+          enneagram: [7, 8]
+      generalist:
+        label: Generalist
+        description: "Knows enough about everything to bridge specialties"
+        validAdjectives: [versatile, curious, broad, adaptable, connecting, resourceful, eclectic]
+        invalidAdjectives: [narrow, rigid, specialist, dogmatic]
+        affinities:
+          mbti: [ENTP, ENFP, INTP]
+          enneagram: [7, 5]
+      pioneer:
+        label: Pioneer
+        description: "Goes where none have gone; opens paths for others to follow"
+        validAdjectives: [trailblazing, determined, visionary, courageous, independent, first-mover]
+        invalidAdjectives: [follower, cautious, derivative, timid]
+        affinities:
+          mbti: [ENTJ, ENTP, INTJ]
+          enneagram: [3, 7, 8]
+      seeker:
+        label: Seeker
+        description: "Explores meaning, truth, and identity rather than geography"
+        validAdjectives: [questioning, philosophical, introspective, searching, contemplative, deep]
+        invalidAdjectives: [superficial, certain, unreflective, shallow]
+        affinities:
+          mbti: [INFP, INFJ, INTP]
+          enneagram: [5, 4]
+
+  hero:
+    quadrant: mastery
+    drive: "Mastery, courage, achievement"
+    subArchetypes:
+      athlete:
+        label: Athlete
+        description: "Excellence through relentless practice; pushes personal limits"
+        validAdjectives: [disciplined, competitive, focused, resilient, driven, precise, relentless]
+        invalidAdjectives: [lazy, unfocused, complacent, undisciplined]
+        affinities:
+          mbti: [ESTP, ISTP, ESTJ]
+          enneagram: [3, 1]
+      liberator:
+        label: Liberator
+        description: "Frees others from oppressive systems; fights for collective freedom"
+        validAdjectives: [justice-driven, courageous, systemic, emancipating, principled, bold]
+        invalidAdjectives: [oppressive, complacent, self-serving, cowardly]
+        affinities:
+          mbti: [ENFJ, ENTJ, ENFP]
+          enneagram: [8, 1]
+      rescuer:
+        label: Rescuer
+        description: "Acts decisively when others are in danger; runs toward the fire"
+        validAdjectives: [responsive, brave, decisive, crisis-oriented, selfless, protective, quick]
+        invalidAdjectives: [passive, hesitant, self-preserving, slow]
+        affinities:
+          mbti: [ESFJ, ISFJ, ESTJ]
+          enneagram: [2, 6]
+      warrior:
+        label: Warrior
+        description: "Fights for a cause with discipline and determination"
+        validAdjectives: [strategic, courageous, mission-focused, disciplined, tenacious, honorable]
+        invalidAdjectives: [cowardly, aimless, undisciplined, mercenary]
+        affinities:
+          mbti: [ENTJ, ESTJ, INTJ]
+          enneagram: [8, 3, 1]
+
+  innocent:
+    quadrant: independence
+    drive: "Safety, optimism, simplicity"
+    subArchetypes:
+      child:
+        label: Child
+        description: "Approaches experience with fresh eyes; pre-cynical engagement"
+        validAdjectives: [curious, open, spontaneous, playful, trusting, wonder-filled, unselfconscious]
+        invalidAdjectives: [jaded, cynical, calculating, guarded]
+        affinities:
+          mbti: [ESFP, ENFP, ISFP]
+          enneagram: [7, 9]
+      dreamer:
+        label: Dreamer
+        description: "Lives partly in possibility; sustains hope through imagination"
+        validAdjectives: [imaginative, gentle, hopeful, ethereal, contemplative, soft, wistful]
+        invalidAdjectives: [harsh, pragmatic, cynical, grounded]
+        affinities:
+          mbti: [INFP, INFJ]
+          enneagram: [9, 4]
+      idealist:
+        label: Idealist
+        description: "Believes in what could be; holds the standard others have abandoned"
+        validAdjectives: [principled, optimistic, reform-minded, earnest, aspirational, steadfast]
+        invalidAdjectives: [cynical, nihilistic, apathetic, corrupt]
+        affinities:
+          mbti: [INFP, ENFJ, ENFP]
+          enneagram: [1, 9]
+      muse:
+        label: Muse
+        description: "Sparks creativity in others; their presence unlocks potential"
+        validAdjectives: [inspiring, catalytic, luminous, awakening, magnetic, ethereal, enchanting]
+        invalidAdjectives: [dulling, discouraging, draining, mundane]
+        affinities:
+          mbti: [ENFP, INFP, ENFJ]
+          enneagram: [4, 7]
+
+  jester:
+    quadrant: belonging
+    drive: "Joy, spontaneity, humor"
+    subArchetypes:
+      clown:
+        label: Clown
+        description: "Uses physicality and absurdity to break tension"
+        validAdjectives: [physical, absurdist, disarming, warm, spontaneous, surprising, expressive]
+        invalidAdjectives: [serious, restrained, humorless, stiff]
+        affinities:
+          mbti: [ESFP, ESTP]
+          enneagram: [7, 9]
+      entertainer:
+        label: Entertainer
+        description: "Commands attention; makes every interaction a show"
+        validAdjectives: [charismatic, performative, energetic, engaging, dazzling, magnetic, vibrant]
+        invalidAdjectives: [dull, withdrawn, monotone, forgettable]
+        affinities:
+          mbti: [ESFP, ENFP, ESTP]
+          enneagram: [7, 3]
+      provocateur:
+        label: Provocateur
+        description: "Uses humor as a weapon; reveals truth through provocation"
+        validAdjectives: [subversive, satirical, boundary-testing, sharp, irreverent, incisive, daring]
+        invalidAdjectives: [compliant, deferential, timid, conventional]
+        affinities:
+          mbti: [ENTP, ESTP, INTJ]
+          enneagram: [7, 8, 4]
+      shapeshifter:
+        label: Shapeshifter
+        description: "Shifts persona to match the moment; elusive and versatile"
+        validAdjectives: [adaptive, chameleonic, context-reading, fluid, versatile, elusive, perceptive]
+        invalidAdjectives: [rigid, predictable, transparent, one-dimensional]
+        affinities:
+          mbti: [ENFP, ENTP, INFJ]
+          enneagram: [3, 7, 9]
+
+  lover:
+    quadrant: belonging
+    drive: "Intimacy, passion, commitment"
+    subArchetypes:
+      companion:
+        label: Companion
+        description: "Faithful presence; intimacy through constancy and reliability"
+        validAdjectives: [loyal, present, steady, devoted, reliable, warm, grounding]
+        invalidAdjectives: [fickle, absent, unreliable, cold]
+        affinities:
+          mbti: [ISFJ, ISFP, ESFJ]
+          enneagram: [2, 6, 9]
+      hedonist:
+        label: Hedonist
+        description: "Savours beauty, taste, texture; celebrates the physical world"
+        validAdjectives: [sensory, pleasure-seeking, appreciative, aesthetic, indulgent, vivid, passionate]
+        invalidAdjectives: [ascetic, numb, indifferent, austere]
+        affinities:
+          mbti: [ESFP, ISFP, ESTP]
+          enneagram: [7, 4]
+      matchmaker:
+        label: Matchmaker
+        description: "Sees potential connections between people; orchestrates unions"
+        validAdjectives: [connective, perceptive, harmonizing, social, intuitive, generous, celebratory]
+        invalidAdjectives: [divisive, oblivious, isolating, jealous]
+        affinities:
+          mbti: [ENFJ, ESFJ, ENFP]
+          enneagram: [2, 7]
+      romantic:
+        label: Romantic
+        description: "Love as transcendent force; seeks the extraordinary in connection"
+        validAdjectives: [passionate, idealizing, intense, devoted, expressive, yearning, transformative]
+        invalidAdjectives: [detached, cynical, transactional, cold]
+        affinities:
+          mbti: [INFP, ENFP, INFJ]
+          enneagram: [4, 2]
+
+  magician:
+    quadrant: mastery
+    drive: "Transformation, vision, catalyst"
+    subArchetypes:
+      alchemist:
+        label: Alchemist
+        description: "Turns base material into gold; transformation through hidden process"
+        validAdjectives: [transformative, mysterious, process-oriented, deep, patient, catalytic, subtle]
+        invalidAdjectives: [superficial, impatient, transparent, clumsy]
+        affinities:
+          mbti: [INFJ, INTJ]
+          enneagram: [5, 4]
+      engineer:
+        label: Engineer
+        description: "Designs and builds the systems that make transformation possible"
+        validAdjectives: [systematic, building, precise, methodical, architectural, elegant, rigorous]
+        invalidAdjectives: [chaotic, sloppy, careless, haphazard]
+        affinities:
+          mbti: [INTJ, INTP, ENTJ]
+          enneagram: [5, 1, 3]
+      innovator:
+        label: Innovator
+        description: "Creates new categories; makes the impossible suddenly obvious"
+        validAdjectives: [disruptive, bold, inventive, unconventional, energetic, visionary, daring]
+        invalidAdjectives: [conventional, cautious, derivative, timid]
+        affinities:
+          mbti: [ENTP, ENTJ, ENFP]
+          enneagram: [7, 3]
+      scientist:
+        label: Scientist
+        description: "Discovers truth through systematic experimentation and evidence"
+        validAdjectives: [empirical, hypothesis-driven, rigorous, methodical, objective, thorough, precise]
+        invalidAdjectives: [sloppy, biased, careless, dogmatic]
+        affinities:
+          mbti: [INTJ, INTP, ISTJ]
+          enneagram: [5, 1]
+
+  rebel:
+    quadrant: mastery
+    drive: "Liberation, disruption, revolution"
+    subArchetypes:
+      activist:
+        label: Activist
+        description: "Channels rebellion into organized movement for justice"
+        validAdjectives: [cause-driven, organized, passionate, systemic, persistent, courageous, vocal]
+        invalidAdjectives: [apathetic, compliant, self-interested, silent]
+        affinities:
+          mbti: [ENFJ, ENFP, ENTJ]
+          enneagram: [1, 8]
+      gambler:
+        label: Gambler
+        description: "Lives on the edge; bets big and accepts consequences"
+        validAdjectives: [risk-embracing, instinctive, high-stakes, bold, decisive, fearless, improvisational]
+        invalidAdjectives: [cautious, calculating, risk-averse, predictable]
+        affinities:
+          mbti: [ESTP, ENTP]
+          enneagram: [7, 8]
+      maverick:
+        label: Maverick
+        description: "Does things their own way; ignores rules not through malice but irrelevance"
+        validAdjectives: [independent, convention-defying, self-directed, original, unorthodox, resourceful]
+        invalidAdjectives: [conformist, obedient, conventional, dependent]
+        affinities:
+          mbti: [ISTP, INTP, INTJ, ENTP]
+          enneagram: [5, 8, 4]
+      reformer:
+        label: Reformer
+        description: "Breaks what doesn't work to build something better; constructive rebellion"
+        validAdjectives: [principled, improvement-focused, constructive, determined, analytical, bold]
+        invalidAdjectives: [destructive, nihilistic, careless, aimless]
+        affinities:
+          mbti: [INTJ, ENTJ, INFJ]
+          enneagram: [1, 8]
+
+  sage:
+    quadrant: independence
+    drive: "Knowledge, truth, understanding"
+    subArchetypes:
+      detective:
+        label: Detective
+        description: "Uncovers truth through systematic investigation and evidence"
+        validAdjectives: [analytical, meticulous, persistent, methodical, observant, evidence-driven, skeptical]
+        invalidAdjectives: [impulsive, gullible, reckless, superficial]
+        affinities:
+          mbti: [ISTJ, INTJ, ISTP]
+          enneagram: [5, 6]
+      mentor:
+        label: Mentor
+        description: "Shares accumulated wisdom to develop others' potential"
+        validAdjectives: [patient, wise, developmental, guiding, experienced, nurturing, insightful]
+        invalidAdjectives: [dismissive, withholding, impatient, competitive]
+        affinities:
+          mbti: [ENFJ, INFJ, ENTJ]
+          enneagram: [1, 2, 5]
+      shaman:
+        label: Shaman
+        description: "Accesses insight from unconventional or unseen sources"
+        validAdjectives: [intuitive, mystical, deep, liminal, unconventional, contemplative, perceptive]
+        invalidAdjectives: [superficial, conventional, rigid, literal]
+        affinities:
+          mbti: [INFJ, INFP, INTP]
+          enneagram: [5, 4, 9]
+      translator:
+        label: Translator
+        description: "Makes the complex accessible; bridges disciplines and audiences"
+        validAdjectives: [clear, synthesizing, accessible, bridging, articulate, patient, versatile]
+        invalidAdjectives: [obscure, jargon-heavy, narrow, exclusive]
+        affinities:
+          mbti: [INTP, ENTP, INTJ]
+          enneagram: [5, 7]
+
+  sovereign:
+    quadrant: stability
+    drive: "Control, order, leadership"
+    subArchetypes:
+      ambassador:
+        label: Ambassador
+        description: "Represents and negotiates between groups; builds consensus"
+        validAdjectives: [diplomatic, representative, bridge-building, composed, strategic, tactful, gracious]
+        invalidAdjectives: [partisan, divisive, tactless, aggressive]
+        affinities:
+          mbti: [ENFJ, ESFJ, ENTJ]
+          enneagram: [3, 2, 9]
+      judge:
+        label: Judge
+        description: "Weighs evidence and renders decisions; upholds standards impartially"
+        validAdjectives: [principled, evaluative, fair-minded, impartial, discerning, deliberate, authoritative]
+        invalidAdjectives: [biased, impulsive, corrupt, indecisive]
+        affinities:
+          mbti: [INTJ, ISTJ, ESTJ]
+          enneagram: [1, 5, 6]
+      patriarch:
+        label: Patriarch
+        description: "Provides structure and security through established authority"
+        validAdjectives: [protective, authoritative, legacy-building, structured, dependable, grounding]
+        invalidAdjectives: [tyrannical, controlling, rigid, overbearing]
+        affinities:
+          mbti: [ESTJ, ENTJ, ISTJ]
+          enneagram: [8, 1, 6]
+      ruler:
+        label: Ruler
+        description: "Takes charge and creates order; exercises power to build and maintain systems"
+        validAdjectives: [commanding, systemic, order-creating, decisive, strategic, powerful, responsible]
+        invalidAdjectives: [weak, chaotic, indecisive, irresponsible]
+        affinities:
+          mbti: [ENTJ, ESTJ]
+          enneagram: [8, 3, 1]
+
+# --- Compatibility matrix: framework value → compatible archetype families ---
+
+compatibility:
+  mbti:
+    INTJ: [sage, magician, sovereign]
+    INTP: [sage, explorer, creator]
+    ENTJ: [sovereign, hero, magician]
+    ENTP: [magician, rebel, explorer]
+    INFJ: [magician, sage, caregiver]
+    INFP: [creator, innocent, explorer]
+    ENFJ: [caregiver, sovereign, magician]
+    ENFP: [explorer, creator, jester]
+    ISTJ: [sovereign, everyman, sage]
+    ISFJ: [caregiver, everyman, innocent]
+    ESTJ: [sovereign, hero, everyman]
+    ESFJ: [caregiver, everyman, lover]
+    ISTP: [explorer, hero, rebel]
+    ISFP: [creator, lover, innocent]
+    ESTP: [hero, jester, rebel]
+    ESFP: [jester, lover, innocent]
+  enneagram:
+    type-1: [hero, sovereign, sage]
+    type-2: [caregiver, lover, everyman]
+    type-3: [hero, magician, sovereign]
+    type-4: [creator, rebel, lover]
+    type-5: [sage, explorer, magician]
+    type-6: [everyman, caregiver, hero]
+    type-7: [jester, explorer, innocent]
+    type-8: [rebel, sovereign, hero]
+    type-9: [innocent, everyman, caregiver]
+  disc:
+    dominance: [hero, rebel, magician, sovereign]
+    influence: [jester, lover, everyman, explorer]
+    steadiness: [caregiver, everyman, innocent, creator]
+    conscientiousness-disc: [sage, sovereign, creator, explorer]
+  belbin:
+    plant: [creator, magician]
+    resource-investigator: [explorer, jester, everyman]
+    co-ordinator: [sovereign, caregiver]
+    shaper: [hero, rebel, sovereign]
+    monitor-evaluator: [sage, sovereign]
+    teamworker: [everyman, caregiver, lover]
+    implementer: [everyman, sovereign]
+    completer-finisher: [sage, sovereign]
+    specialist: [sage, explorer]
+  bigFive:
+    openness-high: [creator, explorer, jester, lover, magician, rebel, sage]
+    openness-low: [caregiver, everyman, hero, innocent, sovereign]
+    conscientiousness-high: [caregiver, everyman, hero, innocent, magician, sage, sovereign]
+    conscientiousness-low: [creator, explorer, jester, lover, rebel]
+    extraversion-high: [caregiver, everyman, explorer, hero, jester, lover, rebel, sovereign]
+    extraversion-low: [creator, innocent, magician, sage]
+    agreeableness-high: [caregiver, everyman, innocent, jester, lover, sage]
+    agreeableness-low: [creator, explorer, hero, magician, rebel, sovereign]
+    neuroticism-high: [creator, lover, rebel]
+    neuroticism-low: [caregiver, everyman, explorer, hero, innocent, jester, magician, sage, sovereign]
+  sdi:
+    blue: [caregiver, innocent, lover]
+    red: [hero, sovereign, rebel]
+    green: [sage, explorer, creator]
+    hub: [everyman, magician, jester]
+
+# --- Disposition signals: framework value → axis weight contributions ---
+# Aggregation: average per axis, clamped to [-1, +1]
+# Positive = high pole, negative = low pole
+
+dispositionAxes:
+  socialOrientation: { label: Social, lowPole: Autonomous, highPole: Collaborative }
+  ruleFollowing: { label: Rules, lowPole: Flexible, highPole: Strict }
+  riskAppetite: { label: Risk, lowPole: Cautious, highPole: Bold }
+  autonomy: { label: Autonomy, lowPole: Dependent, highPole: Independent }
+  conflictMode: { label: Conflict, lowPole: Accommodating, highPole: Competing }
+
+dispositionSignals:
+  mbti:
+    E: { socialOrientation: 0.7, autonomy: -0.3 }
+    I: { socialOrientation: -0.7, autonomy: 0.4 }
+    N: { riskAppetite: 0.5 }
+    S: { riskAppetite: -0.5 }
+    T: { conflictMode: 0.6 }
+    F: { conflictMode: -0.6 }
+    J: { ruleFollowing: 0.6 }
+    P: { ruleFollowing: -0.6 }
+  enneagram:
+    type-1: { ruleFollowing: 0.8, conflictMode: 0.3 }
+    type-2: { socialOrientation: 0.7, conflictMode: -0.6 }
+    type-3: { riskAppetite: 0.5, conflictMode: 0.4 }
+    type-4: { autonomy: 0.5, riskAppetite: 0.2 }
+    type-5: { autonomy: 0.8, riskAppetite: -0.4 }
+    type-6: { ruleFollowing: 0.5, riskAppetite: -0.6 }
+    type-7: { riskAppetite: 0.8, ruleFollowing: -0.7 }
+    type-8: { conflictMode: 0.8, riskAppetite: 0.6 }
+    type-9: { conflictMode: -0.7, socialOrientation: 0.3 }
+  disc:
+    D: { conflictMode: 0.8, riskAppetite: 0.7, autonomy: 0.5 }
+    I: { socialOrientation: 0.8, ruleFollowing: -0.5, riskAppetite: 0.3 }
+    S: { conflictMode: -0.7, riskAppetite: -0.6, ruleFollowing: 0.3 }
+    C: { ruleFollowing: 0.8, riskAppetite: -0.5, autonomy: 0.3 }
+  sdi:
+    blue: { conflictMode: -0.7, socialOrientation: 0.6 }
+    red: { conflictMode: 0.7, riskAppetite: 0.6, autonomy: 0.3 }
+    green: { autonomy: 0.7, riskAppetite: -0.3, ruleFollowing: 0.4 }
+    hub: { ruleFollowing: -0.3, socialOrientation: 0.3 }
+  belbin:
+    plant: { autonomy: 0.6, riskAppetite: 0.4 }
+    shaper: { conflictMode: 0.6, riskAppetite: 0.5 }
+    monitor-evaluator: { ruleFollowing: 0.5, riskAppetite: -0.3 }
+    co-ordinator: { socialOrientation: 0.6, ruleFollowing: 0.3 }
+    teamworker: { conflictMode: -0.5, socialOrientation: 0.5 }
+    implementer: { ruleFollowing: 0.6, riskAppetite: -0.3 }
+    completer-finisher: { ruleFollowing: 0.7, riskAppetite: -0.5 }
+    specialist: { autonomy: 0.6, ruleFollowing: 0.3 }
+    resource-investigator: { socialOrientation: 0.7, riskAppetite: 0.4 }
+  bigFive:
+    O-high: { riskAppetite: 0.6 }
+    O-low: { riskAppetite: -0.5 }
+    C-high: { ruleFollowing: 0.7 }
+    C-low: { ruleFollowing: -0.6 }
+    E-high: { socialOrientation: 0.7 }
+    E-low: { socialOrientation: -0.6 }
+    A-high: { conflictMode: -0.7 }
+    A-low: { conflictMode: 0.6 }
+    N-high: { autonomy: -0.4 }
+    N-low: { autonomy: 0.3 }
+
+# --- Framework descriptors: human-readable adjectives per framework value ---
+
+frameworkDescriptors:
+  mbti:
+    INTJ: "analytical and strategic"
+    INTP: "logical and inventive"
+    ENTJ: "commanding and decisive"
+    ENTP: "innovative and resourceful"
+    INFJ: "insightful and principled"
+    INFP: "idealistic and empathetic"
+    ENFJ: "charismatic and mentoring"
+    ENFP: "enthusiastic and imaginative"
+    ISTJ: "methodical and dependable"
+    ISFJ: "nurturing and conscientious"
+    ESTJ: "organized and authoritative"
+    ESFJ: "supportive and community-minded"
+    ISTP: "pragmatic and adaptable"
+    ISFP: "artistic and sensitive"
+    ESTP: "bold and action-oriented"
+    ESFP: "spontaneous and engaging"
+  enneagram:
+    type-1: principled
+    type-2: caring
+    type-3: driven
+    type-4: expressive
+    type-5: investigative
+    type-6: vigilant
+    type-7: enthusiastic
+    type-8: assertive
+    type-9: harmonizing
+  disc:
+    D: decisive
+    I: influential
+    S: steady
+    C: conscientious
+  sdi:
+    blue: altruistic
+    red: assertive
+    green: analytical
+    hub: flexible
+
+# --- Behavioral tendency rules ---
+# Derived from disposition axis scores
+# Conditions: axis must exceed threshold on named pole (high/low)
+# Strength: avgExcess > 0.3 = strong, > 0.15 = moderate, else mild
+
+tendencyRules:
+  - name: Skeptical
+    description: "Questions assumptions and requests evidence before accepting claims"
+    conditions:
+      conflictMode: { pole: high, threshold: 0.15 }
+      autonomy: { pole: high, threshold: 0.05 }
+  - name: Methodical
+    description: "Follows systematic processes and prefers structured approaches"
+    conditions:
+      ruleFollowing: { pole: high, threshold: 0.3 }
+      riskAppetite: { pole: low, threshold: 0.1 }
+  - name: Empathetic
+    description: "Considers emotional impact and prioritises interpersonal harmony"
+    conditions:
+      conflictMode: { pole: low, threshold: 0.3 }
+      socialOrientation: { pole: high, threshold: 0.2 }
+  - name: Decisive
+    description: "Commits to clear recommendations and avoids hedging"
+    conditions:
+      riskAppetite: { pole: high, threshold: 0.3 }
+      conflictMode: { pole: high, threshold: 0.1 }
+  - name: Collaborative
+    description: "Seeks consensus and builds on others' contributions"
+    conditions:
+      socialOrientation: { pole: high, threshold: 0.4 }
+  - name: Independent
+    description: "Forms own assessments before consulting others"
+    conditions:
+      autonomy: { pole: high, threshold: 0.4 }
+  - name: Cautious
+    description: "Flags risks and errs on the side of safety"
+    conditions:
+      riskAppetite: { pole: low, threshold: 0.3 }
+  - name: Bold
+    description: "Explores novel approaches and embraces calculated risk"
+    conditions:
+      riskAppetite: { pole: high, threshold: 0.4 }
+  - name: Diplomatic
+    description: "Navigates disagreement through compromise and tact"
+    conditions:
+      conflictMode: { pole: low, threshold: 0.3 }
+      socialOrientation: { pole: high, threshold: 0.1 }
+  - name: Challenging
+    description: "Pushes back on weak arguments and tests ideas rigorously"
+    conditions:
+      conflictMode: { pole: high, threshold: 0.4 }
+  - name: Structured
+    description: "Creates order, enforces standards, and follows procedure"
+    conditions:
+      ruleFollowing: { pole: high, threshold: 0.4 }
+  - name: Adaptive
+    description: "Adjusts approach based on circumstances rather than fixed rules"
+    conditions:
+      ruleFollowing: { pole: low, threshold: 0.3 }
+  - name: Nurturing
+    description: "Develops others' potential through patience and encouragement"
+    conditions:
+      conflictMode: { pole: low, threshold: 0.4 }
+      socialOrientation: { pole: high, threshold: 0.3 }
+  - name: Analytical
+    description: "Breaks problems into components and evaluates evidence systematically"
+    conditions:
+      ruleFollowing: { pole: high, threshold: 0.2 }
+      autonomy: { pole: high, threshold: 0.2 }
+  - name: Persuasive
+    description: "Influences through conviction and compelling reasoning"
+    conditions:
+      socialOrientation: { pole: high, threshold: 0.3 }
+      conflictMode: { pole: high, threshold: 0.2 }
+  - name: Protective
+    description: "Guards against threats and prioritises safety over speed"
+    conditions:
+      riskAppetite: { pole: low, threshold: 0.4 }
+      ruleFollowing: { pole: high, threshold: 0.2 }
+  - name: Thorough
+    description: "Does not skip steps or cut corners — checks everything before concluding"
+    conditions:
+      ruleFollowing: { pole: high, threshold: 0.25 }
+      riskAppetite: { pole: low, threshold: 0.2 }
+  - name: Creative
+    description: "Thinks laterally, generates novel ideas, and makes unexpected connections"
+    conditions:
+      riskAppetite: { pole: high, threshold: 0.3 }
+      ruleFollowing: { pole: low, threshold: 0.15 }
+      autonomy: { pole: high, threshold: 0.1 }
+  - name: Curious
+    description: "Asks probing questions, explores deeply, and does not accept surface answers"
+    conditions:
+      riskAppetite: { pole: high, threshold: 0.2 }
+      autonomy: { pole: high, threshold: 0.2 }
+  - name: Patient
+    description: "Takes time with problems, avoids premature conclusions, and sits with ambiguity"
+    conditions:
+      riskAppetite: { pole: low, threshold: 0.2 }
+      conflictMode: { pole: low, threshold: 0.2 }
+  - name: Direct
+    description: "Says what needs saying without hedging, padding, or softening"
+    conditions:
+      conflictMode: { pole: high, threshold: 0.25 }
+      ruleFollowing: { pole: low, threshold: 0.1 }
+  - name: Pragmatic
+    description: "Focuses on practical outcomes and what works over theoretical elegance"
+    conditions:
+      ruleFollowing: { pole: low, threshold: 0.05 }
+      riskAppetite: { pole: low, threshold: 0.05 }
+
+# --- Profession presets ---
+# Maps professions to roles with archetype variants
+
+professionPresets:
+  - profession: Software
+    roles:
+      - role: Architect
+        variants:
+          - archetype: sage/mentor
+            label: "The guiding architect"
+          - archetype: magician/engineer
+            label: "The systems architect"
+          - archetype: sage/detective
+            label: "The analytical architect"
+      - role: QA Lead
+        variants:
+          - archetype: sage/detective
+            label: "The investigator"
+          - archetype: sovereign/judge
+            label: "The standards enforcer"
+          - archetype: magician/scientist
+            label: "The test automator"
+      - role: DevOps Engineer
+        variants:
+          - archetype: explorer/pioneer
+            label: "The infrastructure trailblazer"
+          - archetype: magician/engineer
+            label: "The automation builder"
+          - archetype: hero/rescuer
+            label: "The incident responder"
+      - role: Product Manager
+        variants:
+          - archetype: sovereign/ambassador
+            label: "The stakeholder navigator"
+          - archetype: magician/innovator
+            label: "The visionary PM"
+          - archetype: explorer/generalist
+            label: "The discovery PM"
+      - role: Tech Lead
+        variants:
+          - archetype: sage/mentor
+            label: "The teaching lead"
+          - archetype: sovereign/ruler
+            label: "The directing lead"
+          - archetype: magician/engineer
+            label: "The systems lead"
+      - role: UX Designer
+        variants:
+          - archetype: creator/artist
+            label: "The aesthetic designer"
+          - archetype: sage/detective
+            label: "The UX researcher"
+          - archetype: caregiver/healer
+            label: "The empathic designer"
+      - role: Security Engineer
+        variants:
+          - archetype: sage/detective
+            label: "The threat hunter"
+          - archetype: hero/rescuer
+            label: "The incident responder"
+          - archetype: sovereign/judge
+            label: "The compliance guardian"
+      - role: Data Scientist
+        variants:
+          - archetype: sage/detective
+            label: "The analytical scientist"
+          - archetype: magician/scientist
+            label: "The model builder"
+          - archetype: explorer/seeker
+            label: "The research scientist"
+
+  - profession: Education
+    roles:
+      - role: Teacher
+        variants:
+          - archetype: caregiver/healer
+            label: "The nurturing teacher"
+          - archetype: caregiver/samaritan
+            label: "The community teacher"
+          - archetype: sage/mentor
+            label: "The guiding teacher"
+      - role: Principal
+        variants:
+          - archetype: sovereign/ruler
+            label: "The directing principal"
+          - archetype: sovereign/ambassador
+            label: "The diplomatic principal"
+          - archetype: caregiver/guardian
+            label: "The protective principal"
+      - role: Counsellor
+        variants:
+          - archetype: caregiver/angel
+            label: "The compassionate counsellor"
+          - archetype: sage/shaman
+            label: "The intuitive counsellor"
+          - archetype: caregiver/healer
+            label: "The restorative counsellor"
+      - role: Researcher
+        variants:
+          - archetype: sage/detective
+            label: "The investigative researcher"
+          - archetype: explorer/seeker
+            label: "The discovery researcher"
+          - archetype: magician/scientist
+            label: "The experimental researcher"
+      - role: Tutor
+        variants:
+          - archetype: sage/mentor
+            label: "The patient tutor"
+          - archetype: caregiver/healer
+            label: "The supportive tutor"
+
+  - profession: Legal
+    roles:
+      - role: Litigator
+        variants:
+          - archetype: hero/warrior
+            label: "The courtroom warrior"
+          - archetype: hero/liberator
+            label: "The justice champion"
+          - archetype: rebel/maverick
+            label: "The unconventional litigator"
+      - role: Mediator
+        variants:
+          - archetype: everyman/advocate
+            label: "The balanced mediator"
+          - archetype: sage/translator
+            label: "The clarifying mediator"
+          - archetype: caregiver/angel
+            label: "The compassionate mediator"
+      - role: Compliance Officer
+        variants:
+          - archetype: sovereign/judge
+            label: "The standards enforcer"
+          - archetype: sage/detective
+            label: "The compliance investigator"
+          - archetype: everyman/citizen
+            label: "The dutiful compliance officer"
+      - role: Defence Attorney
+        variants:
+          - archetype: rebel/maverick
+            label: "The unconventional defender"
+          - archetype: hero/liberator
+            label: "The rights champion"
+          - archetype: sage/detective
+            label: "The investigative defender"
+      - role: Contracts Specialist
+        variants:
+          - archetype: sage/translator
+            label: "The contract interpreter"
+          - archetype: sovereign/judge
+            label: "The contract adjudicator"
+          - archetype: sage/detective
+            label: "The clause analyst"
+
+  - profession: Medical
+    roles:
+      - role: Surgeon
+        variants:
+          - archetype: hero/rescuer
+            label: "The surgical rescuer"
+          - archetype: hero/warrior
+            label: "The precision surgeon"
+          - archetype: sage/detective
+            label: "The diagnostic surgeon"
+      - role: GP
+        variants:
+          - archetype: caregiver/healer
+            label: "The holistic GP"
+          - archetype: everyman/citizen
+            label: "The community GP"
+          - archetype: caregiver/samaritan
+            label: "The responsive GP"
+      - role: Researcher
+        variants:
+          - archetype: sage/detective
+            label: "The clinical investigator"
+          - archetype: magician/scientist
+            label: "The experimental researcher"
+          - archetype: explorer/pioneer
+            label: "The frontier researcher"
+      - role: Nurse
+        variants:
+          - archetype: caregiver/samaritan
+            label: "The responsive nurse"
+          - archetype: caregiver/guardian
+            label: "The protective nurse"
+          - archetype: caregiver/healer
+            label: "The healing nurse"
+      - role: Psychiatrist
+        variants:
+          - archetype: sage/shaman
+            label: "The intuitive psychiatrist"
+          - archetype: caregiver/healer
+            label: "The therapeutic psychiatrist"
+          - archetype: sage/mentor
+            label: "The guiding psychiatrist"
+
+  - profession: Finance
+    roles:
+      - role: Analyst
+        variants:
+          - archetype: sage/detective
+            label: "The forensic analyst"
+          - archetype: magician/scientist
+            label: "The quantitative analyst"
+          - archetype: sage/translator
+            label: "The reporting analyst"
+      - role: Trader
+        variants:
+          - archetype: explorer/adventurer
+            label: "The market explorer"
+          - archetype: rebel/gambler
+            label: "The risk trader"
+          - archetype: hero/athlete
+            label: "The performance trader"
+      - role: Auditor
+        variants:
+          - archetype: sovereign/judge
+            label: "The impartial auditor"
+          - archetype: sage/detective
+            label: "The forensic auditor"
+          - archetype: everyman/citizen
+            label: "The compliance auditor"
+      - role: Advisor
+        variants:
+          - archetype: caregiver/guardian
+            label: "The protective advisor"
+          - archetype: sage/mentor
+            label: "The guiding advisor"
+          - archetype: sovereign/ambassador
+            label: "The strategic advisor"
+      - role: Quant
+        variants:
+          - archetype: magician/scientist
+            label: "The model builder"
+          - archetype: sage/detective
+            label: "The pattern hunter"
+          - archetype: magician/engineer
+            label: "The systems quant"
+
+  - profession: Sales
+    roles:
+      - role: Account Executive
+        variants:
+          - archetype: hero/warrior
+            label: "The deal closer"
+          - archetype: magician/innovator
+            label: "The solution seller"
+          - archetype: explorer/adventurer
+            label: "The market hunter"
+      - role: Sales Development
+        variants:
+          - archetype: explorer/pioneer
+            label: "The outbound pioneer"
+          - archetype: everyman/networker
+            label: "The relationship builder"
+          - archetype: hero/athlete
+            label: "The activity machine"
+      - role: Sales Engineer
+        variants:
+          - archetype: sage/translator
+            label: "The technical translator"
+          - archetype: magician/engineer
+            label: "The demo builder"
+          - archetype: explorer/generalist
+            label: "The versatile SE"
+      - role: Customer Success
+        variants:
+          - archetype: caregiver/guardian
+            label: "The client protector"
+          - archetype: sovereign/ambassador
+            label: "The strategic CSM"
+          - archetype: everyman/advocate
+            label: "The customer champion"
+      - role: Business Development
+        variants:
+          - archetype: creator/entrepreneur
+            label: "The venture builder"
+          - archetype: explorer/pioneer
+            label: "The market opener"
+          - archetype: sovereign/ambassador
+            label: "The partnership builder"
+
+  - profession: Coaching
+    roles:
+      - role: Life Coach
+        variants:
+          - archetype: sage/mentor
+            label: "The guiding coach"
+          - archetype: caregiver/healer
+            label: "The healing coach"
+          - archetype: innocent/idealist
+            label: "The aspirational coach"
+      - role: Therapist
+        variants:
+          - archetype: sage/shaman
+            label: "The depth therapist"
+          - archetype: caregiver/angel
+            label: "The compassionate therapist"
+          - archetype: magician/alchemist
+            label: "The transformative therapist"
+      - role: Career Coach
+        variants:
+          - archetype: sage/mentor
+            label: "The career navigator"
+          - archetype: explorer/generalist
+            label: "The possibility coach"
+          - archetype: rebel/reformer
+            label: "The career disruptor"
+      - role: Wellness Coach
+        variants:
+          - archetype: caregiver/healer
+            label: "The holistic wellness coach"
+          - archetype: innocent/dreamer
+            label: "The mindful wellness coach"
+          - archetype: explorer/seeker
+            label: "The discovery wellness coach"
+      - role: Relationship Coach
+        variants:
+          - archetype: lover/matchmaker
+            label: "The connection coach"
+          - archetype: sage/shaman
+            label: "The depth relationship coach"
+          - archetype: lover/companion
+            label: "The supportive relationship coach"
+
+  - profession: Marketing
+    roles:
+      - role: Content Strategist
+        variants:
+          - archetype: creator/storyteller
+            label: "The narrative strategist"
+          - archetype: sage/translator
+            label: "The clarity strategist"
+          - archetype: creator/visionary
+            label: "The thought leader"
+      - role: Brand Strategist
+        variants:
+          - archetype: magician/alchemist
+            label: "The brand alchemist"
+          - archetype: creator/visionary
+            label: "The brand visionary"
+          - archetype: rebel/activist
+            label: "The purpose-driven strategist"
+      - role: Community Manager
+        variants:
+          - archetype: everyman/networker
+            label: "The community weaver"
+          - archetype: lover/companion
+            label: "The community anchor"
+          - archetype: jester/entertainer
+            label: "The community energizer"
+      - role: Growth Marketer
+        variants:
+          - archetype: rebel/gambler
+            label: "The growth hacker"
+          - archetype: magician/scientist
+            label: "The experiment-driven marketer"
+          - archetype: explorer/adventurer
+            label: "The channel explorer"

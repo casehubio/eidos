@@ -970,7 +970,8 @@ public class EidosRenderPipeline {
             dispNode.put("canDelegate", d.delegation());
         }
 
-        // dispositionProfile — Jungian cognitive profile with roles and derived MBTI type
+        // dispositionProfile — Jungian cognitive profile — Jung (1921) Psychological Types;
+        // MBTI type derivation via Myers & Briggs (1962) dominant+auxiliary function pairing
         if (descriptor.disposition() != null && !descriptor.disposition().dispositionProfile().isEmpty()) {
             final List<DispositionValue> profile     = descriptor.disposition().dispositionProfile();
             final String                 vocabUri    = descriptor.dispositionVocabulary();

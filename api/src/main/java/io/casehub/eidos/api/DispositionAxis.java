@@ -1,5 +1,9 @@
 package io.casehub.eidos.api;
 
+// 5-axis behavioral disposition model — operationalizes personality for agent behavior.
+// CONFLICT_MODE: Thomas & Kilmann (1974) conflict mode instrument.
+// SOCIAL_ORIENTATION, RULE_FOLLOWING, RISK_APPETITE, AUTONOMY: organizational psychology
+// dimensions mapped from Big Five (Costa & McCrae 1992) to actionable behavioral axes.
 public enum DispositionAxis {
     SOCIAL_ORIENTATION,
     RULE_FOLLOWING,

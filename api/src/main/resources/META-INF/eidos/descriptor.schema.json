@@ -1,0 +1,503 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://casehub.io/eidos/descriptor.schema.json",
+  "title": "Eidos Agent Descriptors",
+  "description": "Schema for META-INF/eidos/descriptors.yaml — agent identity declarations for CaseHub Eidos",
+  "type": "object",
+  "required": ["descriptors"],
+  "additionalProperties": false,
+  "properties": {
+    "descriptors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/AgentDescriptor" }
+    }
+  },
+  "$defs": {
+    "AgentDescriptor": {
+      "type": "object",
+      "required": ["agentId", "name", "slot"],
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Unique agent identifier within a tenancy"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Human-readable display name"
+        },
+        "slot": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Role within a team (e.g. reviewer, planner, executor)"
+        },
+        "tenancyId": {
+          "type": "string",
+          "maxLength": 255,
+          "default": "default",
+          "description": "Tenancy scope for multi-tenant deployments"
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "provider": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "LLM provider (e.g. anthropic, openai)"
+        },
+        "modelFamily": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Model family (e.g. claude, gpt)"
+        },
+        "modelVersion": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Specific model version (e.g. claude-3-7)"
+        },
+        "weightsFingerprint": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Hash identifying the model weights version"
+        },
+        "domainVocabulary": {
+          "type": "string",
+          "maxLength": 500,
+          "format": "uri",
+          "description": "Default vocabulary URI for all fields"
+        },
+        "slotVocabulary": {
+          "type": "string",
+          "maxLength": 500,
+          "format": "uri",
+          "description": "Vocabulary URI for slot field (overrides domainVocabulary)"
+        },
+        "dispositionVocabulary": {
+          "type": "string",
+          "maxLength": 500,
+          "format": "uri",
+          "description": "Vocabulary URI for disposition axes (overrides domainVocabulary)"
+        },
+        "styleVocabulary": {
+          "type": "string",
+          "maxLength": 500,
+          "format": "uri",
+          "description": "Vocabulary URI for style profile"
+        },
+        "archetype": {
+          "type": "string",
+          "maxLength": 100,
+          "enum": [
+            "angel", "guardian", "healer", "samaritan",
+            "artist", "entrepreneur", "storyteller", "visionary",
+            "advocate", "citizen", "networker", "servant",
+            "adventurer", "generalist", "pioneer", "seeker",
+            "athlete", "liberator", "rescuer", "warrior",
+            "child", "dreamer", "idealist", "muse",
+            "clown", "entertainer", "provocateur", "shapeshifter",
+            "companion", "hedonist", "matchmaker", "romantic",
+            "alchemist", "engineer", "innovator", "scientist",
+            "activist", "gambler", "maverick", "reformer",
+            "detective", "mentor", "shaman", "translator",
+            "ambassador", "judge", "patriarch", "ruler"
+          ],
+          "description": "Sub-archetype from Hartwell & Chen's 48 archetypes"
+        },
+        "archetypeAdjectives": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "description": "Qualifying adjectives for the archetype (requires archetype to be set)"
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Visual avatar — collection code (e.g. mythic:P1B) or URL"
+        },
+        "jurisdiction": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Legal/regulatory jurisdiction constraints"
+        },
+        "dataHandlingPolicy": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Data handling and privacy policy reference"
+        },
+        "briefing": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Free-text prose describing agent identity and behavior"
+        },
+        "axisVocabularies": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "SOCIAL_ORIENTATION": { "type": "string", "maxLength": 500, "format": "uri" },
+            "RULE_FOLLOWING": { "type": "string", "maxLength": 500, "format": "uri" },
+            "RISK_APPETITE": { "type": "string", "maxLength": 500, "format": "uri" },
+            "AUTONOMY": { "type": "string", "maxLength": 500, "format": "uri" },
+            "CONFLICT_MODE": { "type": "string", "maxLength": 500, "format": "uri" }
+          },
+          "description": "Per-axis vocabulary URI overrides"
+        },
+        "disposition": { "$ref": "#/$defs/Disposition" },
+        "capabilities": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/Capability" }
+        },
+        "goals": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/Goal" }
+        },
+        "constraints": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/Constraint" }
+        },
+        "templates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TemplateRef" }
+        },
+        "voice": { "$ref": "#/$defs/VoiceProfile" },
+        "providerConfigs": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/ProviderConfig" }
+        },
+        "extensionData": {
+          "type": "object",
+          "description": "Arbitrary key-value extension data"
+        }
+      }
+    },
+    "Disposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "5-axis personality disposition with optional convenience derivation from MBTI/Enneagram",
+      "properties": {
+        "socialOrient": {
+          "type": ["string", "array"],
+          "description": "Social orientation axis — single term or weighted list",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "$ref": "#/$defs/WeightedValue" } }
+          ]
+        },
+        "ruleFollowing": {
+          "type": ["string", "array"],
+          "description": "Rule-following axis — single term or weighted list",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "$ref": "#/$defs/WeightedValue" } }
+          ]
+        },
+        "riskAppetite": {
+          "type": ["string", "array"],
+          "description": "Risk appetite axis — single term or weighted list",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "$ref": "#/$defs/WeightedValue" } }
+          ]
+        },
+        "autonomy": {
+          "type": ["string", "array"],
+          "description": "Autonomy axis — single term or weighted list",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "$ref": "#/$defs/WeightedValue" } }
+          ]
+        },
+        "conflictMode": {
+          "type": ["string", "array"],
+          "description": "Conflict mode axis — single term or weighted list",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "$ref": "#/$defs/WeightedValue" } }
+          ]
+        },
+        "delegation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this agent delegates work to others"
+        },
+        "dispositionProfile": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/WeightedValue" },
+          "description": "Holistic cognitive profile (e.g. Jungian function stack)"
+        },
+        "styleProfile": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/WeightedValue" },
+          "description": "Communication/interaction style profile"
+        },
+        "mbtiType": {
+          "type": "string",
+          "enum": [
+            "INTJ", "INTP", "ENTJ", "ENTP",
+            "INFJ", "INFP", "ENFJ", "ENFP",
+            "ISTJ", "ISFJ", "ESTJ", "ESFJ",
+            "ISTP", "ISFP", "ESTP", "ESFP"
+          ],
+          "description": "Convenience: auto-derives disposition from MBTI type"
+        },
+        "enneagramType": {
+          "type": "string",
+          "enum": [
+            "type-1", "type-2", "type-3", "type-4", "type-5",
+            "type-6", "type-7", "type-8", "type-9"
+          ],
+          "description": "Convenience: auto-derives disposition from Enneagram type"
+        }
+      }
+    },
+    "WeightedValue": {
+      "type": "object",
+      "required": ["term", "weight"],
+      "additionalProperties": false,
+      "properties": {
+        "term": { "type": "string" },
+        "weight": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "Capability": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Capability name — must be unique within a descriptor"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Human/LLM-readable description of what the capability does"
+        },
+        "capabilityVocabulary": {
+          "type": "string",
+          "maxLength": 500,
+          "format": "uri",
+          "description": "Vocabulary URI for subsumption matching"
+        },
+        "qualityHint": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Expected output quality (0.0–1.0)"
+        },
+        "latencyHintP50Ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected p50 latency in milliseconds"
+        },
+        "costHint": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Cost tier hint (e.g. premium, standard, low)"
+        },
+        "modelRef": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Model alias, tier ref (tier:FLAGSHIP), or model ID. Mutually exclusive with model."
+        },
+        "model": {
+          "description": "Inline model constraints. String = modelRef, object = ModelQuery. Mutually exclusive with modelRef.",
+          "oneOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/ModelQuery" }
+          ]
+        },
+        "inputTypes": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 200 }
+        },
+        "outputTypes": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 200 }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 200 }
+        },
+        "epistemicDomains": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "description": "Domain expertise scores (e.g. {java: 0.95, rust: 0.42})"
+        },
+        "excludedDomains": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 200 },
+          "uniqueItems": true,
+          "description": "Domains this capability categorically excludes"
+        }
+      }
+    },
+    "ModelQuery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": ["FLAGSHIP", "STANDARD", "FAST", "EMBEDDING"]
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "vendor": { "type": "string" },
+        "family": { "type": "string" },
+        "locality": { "type": "string" },
+        "max-cost": { "type": "string" },
+        "min-context": { "type": "integer", "minimum": 0 },
+        "min-output": { "type": "integer", "minimum": 0 },
+        "prefer-vendor": { "type": "string" }
+      }
+    },
+    "Goal": {
+      "type": "object",
+      "required": ["name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["PRIMARY", "SECONDARY"],
+          "default": "PRIMARY"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["PUBLIC", "PRIVATE"],
+          "default": "PUBLIC"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 100 },
+          "default": [],
+          "description": "Declared capability names this goal maps to (empty = cross-cutting)"
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "lifecycleState": {
+          "type": "string",
+          "enum": ["ACTIVE", "BLOCKED", "DEFERRED", "COMPLETED", "ABANDONED", "DORMANT"]
+        },
+        "horizon": {
+          "type": "string",
+          "enum": ["IMMEDIATE", "SHORT_TERM", "MEDIUM_TERM", "LONG_TERM", "ASPIRATIONAL"]
+        }
+      }
+    },
+    "Constraint": {
+      "type": "object",
+      "required": ["name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["PUBLIC", "PRIVATE"],
+          "default": "PUBLIC"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["HARD", "SOFT"],
+          "default": "HARD"
+        }
+      }
+    },
+    "TemplateRef": {
+      "type": "object",
+      "required": ["ref"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Template ID to reference"
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "maxLength": 1000 },
+          "description": "Template parameter substitutions"
+        }
+      }
+    },
+    "VoiceProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Agent voice and communication style",
+      "properties": {
+        "description": { "type": "string" },
+        "register": { "type": "string" },
+        "accent": { "type": "string" },
+        "catchphrases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "speech-patterns": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "vocabulary-uses": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "vocabulary-avoids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "quirks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "personas": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/VoiceProfile" },
+          "description": "Named persona variants (recursive)"
+        }
+      }
+    },
+    "ProviderConfig": {
+      "type": "object",
+      "required": ["providerName"],
+      "additionalProperties": false,
+      "properties": {
+        "providerName": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "config": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "maxLength": 500 },
+          "description": "Provider-specific configuration key-value pairs"
+        }
+      }
+    }
+  }
+}

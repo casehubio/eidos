@@ -2,6 +2,9 @@ package io.casehub.eidos.api;
 
 import java.util.Locale;
 
+// Maps personality type indicators to disposition axes via vocabulary equivalences.
+// MBTI: Myers & Briggs (1962); Enneagram: Riso & Hudson (1999) The Wisdom of the Enneagram.
+// Thomas-Kilmann: Thomas & Kilmann (1974) conflict mode instrument for CONFLICT_MODE axis.
 public final class PersonalityTypeDeriver {
 
     private PersonalityTypeDeriver() {}

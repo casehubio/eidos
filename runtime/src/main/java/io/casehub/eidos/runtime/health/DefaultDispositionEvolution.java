@@ -18,6 +18,7 @@ import java.util.List;
 @ApplicationScoped
 public class DefaultDispositionEvolution implements DispositionEvolution {
 
+    // Jungian function hierarchy weights — Jung (1921); Myers & Briggs (1962)
     static final double DEFAULT_DOMINANT_WEIGHT = 0.35;
     static final double DEFAULT_AUXILIARY_WEIGHT = 0.20;
     private final Instance<PreferenceProvider> preferenceProviderInstance;

@@ -32,6 +32,7 @@ public enum MbtiTypeTerm implements VocabularyTerm {
 
     public static final String URI = "urn:casehub:vocab:mbti";
 
+    // MBTI type function weights — Myers & Briggs (1962); dominant carries most weight
     private static final double DOM_WEIGHT = 0.35;
     private static final double AUX_WEIGHT = 0.20;
     private static final double REMAINING_TOTAL = 1.0 - DOM_WEIGHT - AUX_WEIGHT;
