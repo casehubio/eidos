@@ -1624,4 +1624,105 @@ class EidosRenderPipelineTest {
         assertThat(result.content()).doesNotContain("claudony");
     }
 
+    // --- Auto-briefing tests ---
+
+    @Test
+    void auto_briefing_composes_from_archetype_and_slot() {
+        var desc = AgentDescriptor.builder()
+                .agentId("test").name("Code Reviewer").tenancyId("t1")
+                .slot("reviewer").domain("software-engineering")
+                .archetype("sage").archetypeAdjectives(List.of("cautious", "methodical"))
+                .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content())
+                .contains("Operating Principles")
+                .contains("reviewer")
+                .contains("software-engineering")
+                .contains("sage")
+                .contains("cautious and methodical");
+    }
+
+    @Test
+    void explicit_briefing_wins_over_auto() {
+        var desc = AgentDescriptor.builder()
+                .agentId("test").name("Test").tenancyId("t1")
+                .slot("reviewer").archetype("sage")
+                .briefing("Custom operating instructions.")
+                .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content())
+                .contains("Custom operating instructions.")
+                .doesNotContain("embodying the");
+    }
+
+    @Test
+    void auto_briefing_works_with_minimal_fields() {
+        var desc = AgentDescriptor.builder()
+                .agentId("test").name("Test").tenancyId("t1")
+                .slot("reviewer").archetype("sage")
+                .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content())
+                .contains("You are a reviewer, embodying the sage archetype.")
+                .doesNotContain("domain");
+    }
+
+    @Test
+    void auto_briefing_in_prose_format() {
+        var desc = AgentDescriptor.builder()
+                .agentId("test").name("Code Reviewer").tenancyId("t1")
+                .slot("reviewer").domain("software-engineering")
+                .archetype("sage").archetypeAdjectives(List.of("cautious", "methodical"))
+                .build();
+        var ctx = AgentPromptContext.forFormat(PROSE);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content())
+                .contains("reviewer")
+                .contains("software-engineering")
+                .contains("sage");
+    }
+
+    @Test
+    void a2a_card_has_no_auto_briefing() {
+        var desc = AgentDescriptor.builder()
+                .agentId("test").name("Test").tenancyId("t1")
+                .slot("reviewer").archetype("sage")
+                .build();
+        var ctx = AgentPromptContext.forFormat(A2A_CARD);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).doesNotContain("Operating Principles");
+        assertThat(result.content()).doesNotContain("embodying the");
+    }
+
+    @Test
+    void domain_rendered_in_role_section_markdown() {
+        var desc = AgentDescriptor.builder()
+                .agentId("test").name("Test").tenancyId("t1")
+                .slot("reviewer").domain("software-engineering")
+                .build();
+        var ctx = AgentPromptContext.forFormat(MARKDOWN);
+        var s1 = pipeline.buildStage1(desc, ctx);
+        var result = pipeline.assemble(s1, Optional.empty(), Optional.empty(), desc, ctx);
+        assertThat(result.content()).contains("**Domain:** software-engineering");
+    }
+
+    @Test
+    void domain_rendered_in_a2a_card_payload() {
+        var desc = AgentDescriptor.builder()
+                .agentId("test").name("Test").tenancyId("t1")
+                .slot("reviewer").domain("software-engineering")
+                .build();
+        var payload = pipeline.buildDescriptorPayload(desc, A2A_CARD);
+        assertThat(payload.has("domain")).isTrue();
+        assertThat(payload.get("domain").asText()).isEqualTo("software-engineering");
+    }
+
 }

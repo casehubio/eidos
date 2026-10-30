@@ -19,6 +19,7 @@ public record AgentDescriptor(
         String styleVocabulary,
         Map<DispositionAxis, String> axisVocabularies,
         String slot,
+        String domain,
         String archetype,
         List<String> archetypeAdjectives,
         String avatar,
@@ -197,6 +198,7 @@ public record AgentDescriptor(
                 .styleVocabulary(this.styleVocabulary)
                 .axisVocabularies(this.axisVocabularies)
                 .slot(this.slot)
+                .domain(this.domain)
                 .archetype(this.archetype).archetypeAdjectives(this.archetypeAdjectives)
                 .avatar(this.avatar)
                 .capabilities(this.capabilities)
@@ -217,6 +219,7 @@ public record AgentDescriptor(
                 styleVocabulary;
         private Map<DispositionAxis, String> axisVocabularies;
         private String                       slot;
+        private String                       domain;
         private String                       archetype;
         private List<String>                 archetypeAdjectives;
         private String                       avatar;
@@ -300,6 +303,11 @@ public record AgentDescriptor(
                                                                             return this;
                                                                         }
 
+        public Builder domain(String v) {
+            this.domain = v;
+            return this;
+        }
+
         public Builder archetype(String v) {
             this.archetype = v;
             return this;
@@ -382,7 +390,7 @@ public record AgentDescriptor(
                     modelFamily, modelVersion, weightsFingerprint,
                     domainVocabulary, slotVocabulary, dispositionVocabulary,
                     styleVocabulary,
-                    axisVocabularies, slot, archetype, archetypeAdjectives,
+                    axisVocabularies, slot, domain, archetype, archetypeAdjectives,
                     avatar, capabilities, disposition,
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
                     voice, templates,

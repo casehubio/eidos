@@ -33,6 +33,7 @@ class AgentDescriptorMapper {
                 e.styleVocabulary,
                 readJson(e.axisVocabularies, new TypeReference<Map<DispositionAxis, String>>() {}),
                 e.slot,
+                e.domain,
                 e.archetype,
                 readJson(e.archetypeAdjectives, new TypeReference<List<String>>() {}),
                 e.avatar,
@@ -66,6 +67,7 @@ class AgentDescriptorMapper {
         e.styleVocabulary       = d.styleVocabulary();
         e.axisVocabularies      = writeJson(d.axisVocabularies());
         e.slot                  = d.slot();
+        e.domain                = d.domain();
         e.archetype             = d.archetype();
         e.archetypeAdjectives   = writeJson(d.archetypeAdjectives().isEmpty() ? null : d.archetypeAdjectives());
         e.avatar                = d.avatar();

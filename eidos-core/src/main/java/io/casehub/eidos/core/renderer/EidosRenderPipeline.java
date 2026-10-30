@@ -284,6 +284,7 @@ public class EidosRenderPipeline {
 
         addIfPresent(node, "weightsFingerprint", descriptor.weightsFingerprint());
         node.put("slot", descriptor.slot());
+        addIfNonBlank(node, "domain", descriptor.domain());
 
         // Vocabulary-resolved slot labels and vocabulary context — uses vocabUriForSlot()
         // so domainVocabulary is honoured as a fallback when slotVocabulary is absent.
@@ -545,6 +546,9 @@ public class EidosRenderPipeline {
                 ),
                 () -> sb.append(descriptor.slot()).append("\n")
             );
+            if (descriptor.domain() != null) {
+                sb.append("**Domain:** ").append(descriptor.domain()).append("\n");
+            }
         }
     }
 
@@ -751,10 +755,23 @@ public class EidosRenderPipeline {
             assembleMarkdownDisposition(sb, descriptor);
         }
 
-        // Briefing structural fallback
-        if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())
-            && descriptor.briefing() != null) {
-            sb.append("\n## Operating Principles\n").append(descriptor.briefing()).append("\n");
+        // Briefing — explicit or auto-composed
+        if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())) {
+            if (descriptor.briefing() != null) {
+                sb.append("\n## Operating Principles\n").append(descriptor.briefing()).append("\n");
+            } else if (descriptor.archetype() != null && descriptor.slot() != null) {
+                sb.append("\n## Operating Principles\n");
+                sb.append("You are a ").append(descriptor.slot());
+                if (descriptor.domain() != null) {
+                    sb.append(" in the ").append(descriptor.domain()).append(" domain");
+                }
+                sb.append(", embodying the ").append(descriptor.archetype()).append(" archetype.\n");
+                if (!descriptor.archetypeAdjectives().isEmpty()) {
+                    sb.append("Your approach is ").append(String.join(" and ", descriptor.archetypeAdjectives())).append(".\n");
+                }
+                vocab.resolve("urn:casehub:vocab:archetype", descriptor.archetype())
+                     .ifPresent(term -> sb.append(term.description()).append("\n"));
+            }
         }
 
         // Data Handling — always structural
@@ -876,9 +893,22 @@ public class EidosRenderPipeline {
             sb.append(" Can delegate: ").append(d.delegation() ? "yes" : "no").append(".\n");
         }
 
-        if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())
-            && descriptor.briefing() != null) {
-            sb.append("\n").append(descriptor.briefing()).append("\n");
+        if (!(enrichment.isPresent() && enrichment.get().dispositionNarrative().isPresent())) {
+            if (descriptor.briefing() != null) {
+                sb.append("\n").append(descriptor.briefing()).append("\n");
+            } else if (descriptor.archetype() != null && descriptor.slot() != null) {
+                sb.append("\nYou are a ").append(descriptor.slot());
+                if (descriptor.domain() != null) {
+                    sb.append(" in the ").append(descriptor.domain()).append(" domain");
+                }
+                sb.append(", embodying the ").append(descriptor.archetype()).append(" archetype.");
+                if (!descriptor.archetypeAdjectives().isEmpty()) {
+                    sb.append(" Your approach is ").append(String.join(" and ", descriptor.archetypeAdjectives())).append(".");
+                }
+                vocab.resolve("urn:casehub:vocab:archetype", descriptor.archetype())
+                     .ifPresent(term -> sb.append(" ").append(term.description()));
+                sb.append("\n");
+            }
         }
 
         if (enrichment.isPresent() && enrichment.get().goalNarrative().isPresent()) {

@@ -33,6 +33,11 @@
           "maxLength": 100,
           "description": "Role within a team (e.g. reviewer, planner, executor)"
         },
+        "domain": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Human-readable domain label (e.g. software-engineering, healthcare, legal)"
+        },
         "tenancyId": {
           "type": "string",
           "maxLength": 255,

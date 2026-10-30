@@ -238,6 +238,7 @@ class EidosAnnotationsProcessor {
         config.name = resolveDisplayName(identity, classInfo);
         config.description = stringValue(identity, "description");
         config.slot = stringValue(identity, "slot");
+        config.domain = stringValue(identity, "domain");
         config.provider = stringValue(identity, "provider");
         config.modelFamily = stringValue(identity, "modelFamily");
         config.jurisdiction = stringValue(identity, "jurisdiction");

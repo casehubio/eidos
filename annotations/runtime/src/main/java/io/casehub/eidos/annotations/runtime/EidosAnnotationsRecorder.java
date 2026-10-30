@@ -26,6 +26,7 @@ public class EidosAnnotationsRecorder {
                                          .agentId(config.agentId).name(config.name).slot(config.slot).tenancyId(tenancyId);
 
             if (notEmpty(config.description)) {builder.description(config.description);}
+            if (notEmpty(config.domain)) {builder.domain(config.domain);}
             if (notEmpty(config.provider)) {builder.provider(config.provider);}
             if (notEmpty(config.modelFamily)) {builder.modelFamily(config.modelFamily);}
             if (notEmpty(config.jurisdiction)) {builder.jurisdiction(config.jurisdiction);}

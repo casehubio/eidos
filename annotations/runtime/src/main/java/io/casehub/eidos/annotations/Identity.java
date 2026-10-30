@@ -16,6 +16,8 @@ public @interface Identity {
 
     String slot();
 
+    String domain() default "";
+
     String provider() default "";
 
     String modelFamily() default "";

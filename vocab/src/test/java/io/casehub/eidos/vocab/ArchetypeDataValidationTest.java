@@ -253,6 +253,51 @@ class ArchetypeDataValidationTest {
         }
     }
 
+    @Test
+    void yaml_compatibility_framework_keys_are_known() {
+        var knownFrameworks = Set.of("mbti", "enneagram", "disc", "belbin", "bigFive", "sdi");
+        var yamlFrameworks = fieldNames(root.get("compatibility"));
+        assertThat(yamlFrameworks).isSubsetOf(knownFrameworks);
+    }
+
+    @Test
+    void yaml_compatibility_family_values_are_valid_enums() {
+        var validFamilies = Arrays.stream(ArchetypeFamily.values())
+                .map(f -> f.name().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+        root.get("compatibility").fields().forEachRemaining(framework ->
+            framework.getValue().fields().forEachRemaining(entry ->
+                entry.getValue().forEach(f ->
+                    assertThat(f.asText())
+                        .as("compatibility.%s.%s value '%s'", framework.getKey(), entry.getKey(), f.asText())
+                        .isIn(validFamilies)
+                )
+            )
+        );
+    }
+
+    @Test
+    void descriptor_schema_archetype_enum_matches_yaml() throws IOException {
+        var schemaStream = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream("META-INF/eidos/descriptor.schema.json");
+        assertThat(schemaStream).as("descriptor.schema.json must be on classpath").isNotNull();
+        var json = new com.fasterxml.jackson.databind.ObjectMapper();
+        var schema = json.readTree(schemaStream);
+
+        var schemaArchetypes = new HashSet<String>();
+        schema.at("/$defs/AgentDescriptor/properties/archetype/enum")
+              .forEach(n -> schemaArchetypes.add(n.asText()));
+
+        var yamlArchetypes = new HashSet<String>();
+        root.get("families").fields().forEachRemaining(family ->
+                family.getValue().get("subArchetypes").fields().forEachRemaining(sub ->
+                        yamlArchetypes.add(sub.getKey())));
+
+        assertThat(schemaArchetypes)
+                .as("descriptor.schema.json archetype enum must match archetypes.yaml")
+                .containsExactlyInAnyOrderElementsOf(yamlArchetypes);
+    }
+
     private static Set<String> fieldNames(JsonNode node) {
         return StreamSupport.stream(
                 ((Iterable<Map.Entry<String, JsonNode>>) () -> node.fields()).spliterator(), false)

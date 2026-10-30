@@ -5,6 +5,7 @@ public class AnnotatedAgentConfig {
     public String name;
     public String description;
     public String slot;
+    public String domain;
     public String provider;
     public String modelFamily;
     public String jurisdiction;

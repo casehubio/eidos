@@ -54,6 +54,7 @@ public class AgentDescriptorEntity {
     String axisVocabularies;
 
     String slot;
+    String domain;
     String archetype;
 
     @Column(name = "archetype_adjectives", columnDefinition = "TEXT")

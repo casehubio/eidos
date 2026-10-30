@@ -1,11 +1,19 @@
 package io.casehub.eidos.runtime.registrar;
 
 import io.casehub.eidos.api.AgentDescriptor;
+import io.casehub.eidos.api.AgentDisposition;
 import io.casehub.eidos.api.DispositionValue;
+import io.casehub.eidos.api.PersonalityInput;
+import io.casehub.eidos.api.PersonalityTypeDeriver;
+import io.casehub.eidos.api.VocabularyRegistry;
+import io.casehub.eidos.vocab.ArchetypeCompatibility;
+import io.casehub.eidos.vocab.ArchetypeFamily;
 import io.casehub.eidos.vocab.ArchetypeResolver;
+import io.casehub.eidos.vocab.ArchetypeTerm;
 import io.casehub.eidos.vocab.AvatarCodec;
 
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Map;
 
 public final class ArchetypeDeriver {
@@ -39,6 +47,45 @@ public final class ArchetypeDeriver {
         }
 
         return deriveAvatar(descriptor);
+    }
+
+    public static AgentDescriptor deriveDispositionFromArchetype(AgentDescriptor descriptor,
+                                                                  VocabularyRegistry vocabRegistry) {
+        if (descriptor.archetype() == null) return descriptor;
+        if (descriptor.disposition() != null) {
+            var disp = descriptor.disposition();
+            if (disp.dispositionProfile() != null && !disp.dispositionProfile().isEmpty()) return descriptor;
+            if (disp.mbtiType() != null && !disp.mbtiType().isEmpty()) return descriptor;
+            if (disp.enneagramType() != null && !disp.enneagramType().isEmpty()) return descriptor;
+            for (var axis : io.casehub.eidos.api.DispositionAxis.values()) {
+                if (!disp.get(axis).isEmpty()) return descriptor;
+            }
+        }
+
+        String firstMbti = null;
+
+        try {
+            var term = ArchetypeTerm.valueOf(descriptor.archetype().toUpperCase(Locale.ROOT));
+            var affinities = ArchetypeCompatibility.mbtiAffinities(term);
+            if (!affinities.isEmpty()) firstMbti = affinities.getFirst();
+        } catch (IllegalArgumentException ignored) {}
+
+        if (firstMbti == null) {
+            try {
+                var family = ArchetypeFamily.valueOf(descriptor.archetype().toUpperCase(Locale.ROOT));
+                firstMbti = ArchetypeCompatibility.firstMbtiForFamily(family);
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        if (firstMbti == null) return descriptor;
+        var input = new PersonalityInput(firstMbti, null, false, Map.of());
+        var builder = AgentDisposition.builder();
+        PersonalityTypeDeriver.derive(input, vocabRegistry, builder);
+        var derived = builder.build();
+
+        if (derived.dispositionProfile() == null || derived.dispositionProfile().isEmpty()) return descriptor;
+
+        return descriptor.toBuilder().disposition(derived).build();
     }
 
     private static AgentDescriptor deriveAvatar(AgentDescriptor descriptor) {
