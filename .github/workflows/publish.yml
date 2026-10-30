@@ -35,6 +35,11 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven-
 
+      - name: Install parent POM
+        run: |
+          git clone --depth 1 https://github.com/casehubio/parent.git /tmp/casehub-parent
+          mvn --batch-mode -f /tmp/casehub-parent/pom.xml install -N
+
       - name: Build and test
         run: mvn --batch-mode verify
         env:
