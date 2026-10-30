@@ -6,13 +6,13 @@
 
 ## Fields
 
-### `RetentionScore` (`double`)
+### `confidence` (`double`)
 
 ### `domain` (`java.lang.String`)
 
 ## Record Components
 
-### `RetentionScore` (`double`)
+### `confidence` (`double`)
 
 ### `domain` (`java.lang.String`)
 
@@ -23,7 +23,7 @@
 #### Parameters
 
 - `domain` (`java.lang.String`)
-- `RetentionScore` (`double`)
+- `confidence` (`double`)
 
 ## Methods
 
