@@ -22,6 +22,14 @@
 - `capabilityName` (`java.lang.String`)
 - `tenancyId` (`java.lang.String`)
 
+### `public abstract int orgDistance(java.lang.String agentIdA, java.lang.String agentIdB, java.lang.String tenancyId)`
+
+#### Parameters
+
+- `agentIdA` (`java.lang.String`)
+- `agentIdB` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)
+
 ### `public abstract java.util.List<java.lang.String> teamMembers(java.lang.String agentId, java.lang.String tenancyId)`
 
 #### Parameters
