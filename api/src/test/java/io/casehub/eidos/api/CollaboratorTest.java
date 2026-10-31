@@ -11,18 +11,18 @@ class CollaboratorTest {
     @Test
     void valid_collaborator() {
         var c = new Collaborator("agent-1", "tenant-a",
-            Set.of(CollaborationRelation.COACTIVE), 0.8);
+            Set.of(NeighborRelation.COACTIVE), 0.8);
         assertThat(c.agentId()).isEqualTo("agent-1");
         assertThat(c.tenancyId()).isEqualTo("tenant-a");
-        assertThat(c.relations()).containsExactly(CollaborationRelation.COACTIVE);
+        assertThat(c.relations()).containsExactly(NeighborRelation.COACTIVE);
         assertThat(c.affinity()).isEqualTo(0.8);
     }
 
     @Test
     void relations_are_immutable() {
         var c = new Collaborator("a", "t",
-            Set.of(CollaborationRelation.COACTIVE, CollaborationRelation.COMPLEMENTARY), 0.5);
-        assertThatThrownBy(() -> c.relations().add(CollaborationRelation.SHARED_INTEREST))
+            Set.of(NeighborRelation.COACTIVE, NeighborRelation.COMPLEMENTARY), 0.5);
+        assertThatThrownBy(() -> c.relations().add(NeighborRelation.SHARED_INTEREST))
             .isInstanceOf(UnsupportedOperationException.class);
     }
 

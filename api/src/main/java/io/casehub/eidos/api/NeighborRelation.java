@@ -1,6 +1,6 @@
 package io.casehub.eidos.api;
 
-public enum CollaborationRelation {
+public enum NeighborRelation {
     COACTIVE,
     SHARED_INTEREST,
     SHARED_SIGNAL,

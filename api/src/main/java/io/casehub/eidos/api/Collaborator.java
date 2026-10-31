@@ -6,7 +6,7 @@ import java.util.Set;
 public record Collaborator(
     String agentId,
     String tenancyId,
-    Set<CollaborationRelation> relations,
+    Set<NeighborRelation> relations,
     double affinity
 ) {
     public Collaborator {
