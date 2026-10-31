@@ -10,6 +10,7 @@ import io.casehub.eidos.org.api.OrgRegistry;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,4 +75,52 @@ public class DefaultOrgAwareDispatch implements OrgAwareDispatch {
                 .distinct()
                 .toList();
     }
+
+    @Override
+    public int orgDistance(String agentIdA, String agentIdB, String tenancyId) {
+        if (agentIdA.equals(agentIdB)) {
+            return 0;
+        }
+        var unitsA = orgRegistry.unitsFor(agentIdA, tenancyId);
+        var unitsB = orgRegistry.unitsFor(agentIdB, tenancyId);
+        if (unitsA.isEmpty() || unitsB.isEmpty()) {
+            return -1;
+        }
+        int minDistance = Integer.MAX_VALUE;
+        for (var unitA : unitsA) {
+            var chainA = buildAncestorChain(unitA.unitId(), tenancyId);
+            for (var unitB : unitsB) {
+                if (unitA.unitId().equals(unitB.unitId())) {
+                    return 1;
+                }
+                var chainB = buildAncestorChain(unitB.unitId(), tenancyId);
+                int d      = lcaDistance(chainA, chainB);
+                if (d < minDistance) {
+                    minDistance = d;
+                }
+            }
+        }
+        return minDistance == Integer.MAX_VALUE ? -1 : minDistance;
+    }
+
+    private List<String> buildAncestorChain(String unitId, String tenancyId) {
+        var chain = new ArrayList<String>();
+        chain.add(unitId);
+        for (var ancestor : orgRegistry.ancestorUnits(unitId, tenancyId)) {
+            chain.add(ancestor.unitId());
+        }
+        return chain;
+    }
+
+    private int lcaDistance(List<String> chainA, List<String> chainB) {
+        for (int i = 0; i < chainA.size(); i++) {
+            for (int j = 0; j < chainB.size(); j++) {
+                if (chainA.get(i).equals(chainB.get(j))) {
+                    return Math.max(1, i + j);
+                }
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
+
 }

@@ -24,4 +24,10 @@ public class NoOpOrgAwareDispatch implements OrgAwareDispatch {
     public List<String> teamMembers(String agentId, String tenancyId) {
         return List.of();
     }
+
+    @Override
+    public int orgDistance(String agentIdA, String agentIdB, String tenancyId) {
+        return -1;
+    }
+
 }

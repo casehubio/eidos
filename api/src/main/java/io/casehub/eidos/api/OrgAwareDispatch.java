@@ -10,4 +10,7 @@ public interface OrgAwareDispatch {
     boolean canDelegateTo(String fromAgentId, String toAgentId, String tenancyId);
 
     List<String> teamMembers(String agentId, String tenancyId);
+
+    int orgDistance(String agentIdA, String agentIdB, String tenancyId);
+
 }

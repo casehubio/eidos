@@ -186,4 +186,117 @@ class DefaultOrgAwareDispatchTest {
         var members = dispatch.teamMembers("alice", "acme");
         assertThat(members).containsExactlyInAnyOrder("bob", "carol");
     }
+// --- org distance ---
+
+    @Test
+    void orgDistanceSameAgentIsZero() {
+        assertThat(dispatch.orgDistance("alice", "alice", "acme")).isEqualTo(0);
+    }
+
+    @Test
+    void orgDistanceSameUnitIsOne() {
+        var org = OrgStructure.define("acme")
+                              .unit("eng").name("Engineering").kind("team")
+                              .member("alice", "dev")
+                              .member("bob", "dev")
+                              .add()
+                              .build();
+        org.registerAll(orgRegistry);
+
+        assertThat(dispatch.orgDistance("alice", "bob", "acme")).isEqualTo(1);
+    }
+
+    @Test
+    void orgDistanceSiblingUnitsIsTwo() {
+        var org = OrgStructure.define("acme")
+                              .unit("company").name("Company").kind("org")
+                              .add()
+                              .unit("eng").name("Engineering").kind("team").parentUnit("company")
+                              .member("alice", "dev")
+                              .add()
+                              .unit("sales").name("Sales").kind("team").parentUnit("company")
+                              .member("bob", "rep")
+                              .add()
+                              .build();
+        org.registerAll(orgRegistry);
+
+        assertThat(dispatch.orgDistance("alice", "bob", "acme")).isEqualTo(2);
+    }
+
+    @Test
+    void orgDistanceThreeLevelTree() {
+        var org = OrgStructure.define("acme")
+                              .unit("root").name("Root").kind("org")
+                              .member("ceo", "executive")
+                              .add()
+                              .unit("division").name("Division").kind("division").parentUnit("root")
+                              .add()
+                              .unit("team").name("Team").kind("team").parentUnit("division")
+                              .member("dev", "engineer")
+                              .add()
+                              .build();
+        org.registerAll(orgRegistry);
+
+        assertThat(dispatch.orgDistance("ceo", "dev", "acme")).isEqualTo(2);
+    }
+
+    @Test
+    void orgDistanceCousinsIsFour() {
+        var org = OrgStructure.define("acme")
+                              .unit("root").name("Root").kind("org")
+                              .add()
+                              .unit("div-a").name("Div A").kind("division").parentUnit("root")
+                              .add()
+                              .unit("div-b").name("Div B").kind("division").parentUnit("root")
+                              .add()
+                              .unit("team-a").name("Team A").kind("team").parentUnit("div-a")
+                              .member("alice", "dev")
+                              .add()
+                              .unit("team-b").name("Team B").kind("team").parentUnit("div-b")
+                              .member("bob", "dev")
+                              .add()
+                              .build();
+        org.registerAll(orgRegistry);
+
+        assertThat(dispatch.orgDistance("alice", "bob", "acme")).isEqualTo(4);
+    }
+
+    @Test
+    void orgDistanceUnknownAgentIsNegativeOne() {
+        assertThat(dispatch.orgDistance("alice", "unknown", "acme")).isEqualTo(-1);
+    }
+
+    @Test
+    void orgDistanceNoCommonAncestorIsNegativeOne() {
+        var org = OrgStructure.define("acme")
+                              .unit("eng").name("Engineering").kind("team")
+                              .member("alice", "dev")
+                              .add()
+                              .unit("sales").name("Sales").kind("team")
+                              .member("bob", "rep")
+                              .add()
+                              .build();
+        org.registerAll(orgRegistry);
+
+        assertThat(dispatch.orgDistance("alice", "bob", "acme")).isEqualTo(-1);
+    }
+
+    @Test
+    void orgDistancePicksShortestPathAcrossMultipleUnits() {
+        var org = OrgStructure.define("acme")
+                              .unit("root").name("Root").kind("org")
+                              .add()
+                              .unit("eng").name("Engineering").kind("team").parentUnit("root")
+                              .member("alice", "dev")
+                              .member("bob", "dev")
+                              .add()
+                              .unit("sales").name("Sales").kind("team").parentUnit("root")
+                              .member("alice", "rep")
+                              .add()
+                              .build();
+        org.registerAll(orgRegistry);
+
+        assertThat(dispatch.orgDistance("alice", "bob", "acme")).isEqualTo(1);
+    }
+
 }

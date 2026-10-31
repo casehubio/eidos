@@ -20,4 +20,10 @@ class NoOpOrgAwareDispatchTest {
     @Test void teamMembersReturnsEmpty() {
         assertThat(dispatch.teamMembers("agent-1", "t1")).isEmpty();
     }
+
+    @Test
+    void orgDistanceReturnsNegativeOne() {
+        assertThat(dispatch.orgDistance("a", "b", "t1")).isEqualTo(-1);
+    }
+
 }
