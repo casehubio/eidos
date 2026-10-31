@@ -10,7 +10,7 @@
 
 ### `agentId` (`java.lang.String`)
 
-### `relations` (`java.util.Set<io.casehub.eidos.api.CollaborationRelation>`)
+### `relations` (`java.util.Set<io.casehub.eidos.api.NeighborRelation>`)
 
 ### `tenancyId` (`java.lang.String`)
 
@@ -20,19 +20,19 @@
 
 ### `agentId` (`java.lang.String`)
 
-### `relations` (`java.util.Set<io.casehub.eidos.api.CollaborationRelation>`)
+### `relations` (`java.util.Set<io.casehub.eidos.api.NeighborRelation>`)
 
 ### `tenancyId` (`java.lang.String`)
 
 ## Constructors
 
-### `public Collaborator(java.lang.String agentId, java.lang.String tenancyId, java.util.Set<io.casehub.eidos.api.CollaborationRelation> relations, double affinity)`
+### `public Collaborator(java.lang.String agentId, java.lang.String tenancyId, java.util.Set<io.casehub.eidos.api.NeighborRelation> relations, double affinity)`
 
 #### Parameters
 
 - `agentId` (`java.lang.String`)
 - `tenancyId` (`java.lang.String`)
-- `relations` (`java.util.Set<io.casehub.eidos.api.CollaborationRelation>`)
+- `relations` (`java.util.Set<io.casehub.eidos.api.NeighborRelation>`)
 - `affinity` (`double`)
 
 ## Methods
@@ -49,7 +49,7 @@
 
 ### `public final int hashCode()`
 
-### `public java.util.Set<io.casehub.eidos.api.CollaborationRelation> relations()`
+### `public java.util.Set<io.casehub.eidos.api.NeighborRelation> relations()`
 
 ### `public java.lang.String tenancyId()`
 
