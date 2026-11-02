@@ -67,27 +67,84 @@ public final class OrgStructure {
     }
 
     public static final class UnitBuilder {
-        private final OrgStructure parent;
-        private final String unitId;
-        private String name;
-        private String kind;
-        private String kindVocabulary;
-        private String parentUnitId;
-        private final List<Membership> members = new ArrayList<>();
+        private final OrgStructure          parent;
+        private final String                unitId;
+        private       String                name;
+        private       String                kind;
+        private       String                kindVocabulary;
+        private       String                parentUnitId;
+        private       String                topology;
+        private       String                topologyVocabulary;
+        private       AuthorityModel        authorityModel;
+        private       double                selfDetermination;
+        private       GroupPolicy           policy;
+        private final List<Membership>      members      = new ArrayList<>();
+        private       List<RoleSpec>        roleSpecs;
+        private       List<MissionSpec>     missions;
         private final List<AgentCapability> capabilities = new ArrayList<>();
-        private final List<AgentGoal> goals = new ArrayList<>();
-        private final List<AgentConstraint> constraints = new ArrayList<>();
+        private final List<AgentGoal>       goals        = new ArrayList<>();
+        private final List<AgentConstraint> constraints  = new ArrayList<>();
 
         UnitBuilder(OrgStructure parent, String unitId) {
             this.parent = parent;
             this.unitId = unitId;
-            this.name = unitId;
+            this.name   = unitId;
         }
 
-        public UnitBuilder name(String v) { this.name = v; return this; }
-        public UnitBuilder kind(String v) { this.kind = v; return this; }
-        public UnitBuilder kindVocabulary(String v) { this.kindVocabulary = v; return this; }
-        public UnitBuilder parentUnit(String v) { this.parentUnitId = v; return this; }
+        public UnitBuilder name(String v)                   {
+                                                                this.name = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder kind(String v)                   {
+                                                                this.kind = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder kindVocabulary(String v)         {
+                                                                this.kindVocabulary = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder parentUnit(String v)             {
+                                                                this.parentUnitId = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder topology(String v)               {
+                                                                this.topology = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder topologyVocabulary(String v)     {
+                                                                this.topologyVocabulary = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder authorityModel(AuthorityModel v) {
+                                                                this.authorityModel = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder selfDetermination(double v)      {
+                                                                this.selfDetermination = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder policy(GroupPolicy v)            {
+                                                                this.policy = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder roleSpecs(List<RoleSpec> v)      {
+                                                                this.roleSpecs = v;
+                                                                return this;
+                                                            }
+
+        public UnitBuilder missions(List<MissionSpec> v)    {
+                                                                this.missions = v;
+                                                                return this;
+                                                            }
 
         public UnitBuilder member(String agentId) {
             members.add(new Membership(agentId, null, null));
@@ -126,8 +183,10 @@ public final class OrgStructure {
 
         public OrgStructure add() {
             parent.units.add(new OrganizationalUnit(
-                unitId, name, kind, kindVocabulary, parent.tenancyId,
-                parentUnitId, members, capabilities, goals, constraints));
+                    unitId, name, kind, kindVocabulary, parent.tenancyId,
+                    parentUnitId, topology, topologyVocabulary, authorityModel,
+                    selfDetermination, policy, members, roleSpecs, missions,
+                    capabilities, goals, constraints));
             return parent;
         }
     }
