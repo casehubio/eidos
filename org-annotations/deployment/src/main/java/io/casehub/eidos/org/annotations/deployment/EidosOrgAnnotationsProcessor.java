@@ -93,12 +93,20 @@ class EidosOrgAnnotationsProcessor {
         config.kind = stringValue(orgUnit, "kind");
         config.kindVocabulary = stringValue(orgUnit, "kindVocabulary");
         config.parentUnit = stringValue(orgUnit, "parentUnit");
+        config.topology = stringValue(orgUnit, "topology");
+        config.topologyVocabulary = stringValue(orgUnit, "topologyVocabulary");
+        config.authorityModel = stringValue(orgUnit, "authorityModel");
+        var sd = orgUnit.value("selfDetermination");
+        config.selfDetermination = sd != null ? sd.asDouble() : 0.0;
 
         extractMembers(classInfo, config);
         extractRelationships(classInfo, config);
         extractCapabilities(orgUnit, config);
         extractGoals(orgUnit, config);
         extractConstraints(orgUnit, config);
+        extractPolicy(orgUnit, config);
+        extractRoleSpecs(orgUnit, config);
+        extractMissions(orgUnit, config);
 
         return config;
     }
@@ -271,6 +279,94 @@ class EidosOrgAnnotationsProcessor {
             c.severity = enumValue(defs[i], "severity", "HARD");
             c.visibility = enumValue(defs[i], "visibility", "PUBLIC");
             config.constraints[i] = c;
+        }
+    }
+
+    private void extractPolicy(AnnotationInstance orgUnit, AnnotatedOrgConfig config) {
+        var v = orgUnit.value("policy");
+        if (v == null) return;
+        var policyAnn = v.asNested();
+        var normPri = policyAnn.value("normativePriority");
+        int normativePriority = normPri != null ? normPri.asInt() : -1;
+        if (normativePriority < 0) return;
+
+        var pc = new AnnotatedOrgConfig.GroupPolicyConfig();
+        pc.normativePriority = normativePriority;
+        pc.normSpecificity = stringValue(policyAnn, "normSpecificity");
+
+        var frv = policyAnn.value("formationRules");
+        if (frv != null) {
+            var frAnn = frv.asNested();
+            var frc = new AnnotatedOrgConfig.FormationRulesConfig();
+            var ap = frAnn.value("allowedPaths");
+            frc.allowedPaths = ap != null ? ap.asStringArray() : new String[0];
+            var mgs = frAnn.value("minGroupSize");
+            frc.minGroupSize = mgs != null ? mgs.asInt() : 0;
+            var maxgs = frAnn.value("maxGroupSize");
+            frc.maxGroupSize = maxgs != null ? maxgs.asInt() : 0;
+            var asg = frAnn.value("allowSubGroups");
+            frc.allowSubGroups = asg != null && asg.asBoolean();
+            var pq = frAnn.value("proposalQuorum");
+            frc.proposalQuorum = pq != null ? pq.asDouble() : -1.0;
+            pc.formationRules = frc;
+        }
+        config.policy = pc;
+    }
+
+    private void extractRoleSpecs(AnnotationInstance orgUnit, AnnotatedOrgConfig config) {
+        var v = orgUnit.value("roleSpecs");
+        if (v == null) return;
+        var defs = v.asNestedArray();
+        if (defs.length == 0) return;
+        config.roleSpecs = new AnnotatedOrgConfig.RoleSpecConfig[defs.length];
+        for (int i = 0; i < defs.length; i++) {
+            var rsc = new AnnotatedOrgConfig.RoleSpecConfig();
+            rsc.roleName = defs[i].value("roleName").asString();
+            rsc.roleVocabulary = stringValue(defs[i], "roleVocabulary");
+            var minC = defs[i].value("minCardinality");
+            rsc.minCardinality = minC != null ? minC.asInt() : 0;
+            var maxC = defs[i].value("maxCardinality");
+            rsc.maxCardinality = maxC != null ? maxC.asInt() : 0;
+            var iw = defs[i].value("incompatibleWith");
+            rsc.incompatibleWith = iw != null ? iw.asStringArray() : new String[0];
+
+            var pv = defs[i].value("policies");
+            if (pv != null) {
+                var pDefs = pv.asNestedArray();
+                rsc.policies = new AnnotatedOrgConfig.RolePolicyConfig[pDefs.length];
+                for (int j = 0; j < pDefs.length; j++) {
+                    var rpc = new AnnotatedOrgConfig.RolePolicyConfig();
+                    rpc.capabilityName = pDefs[j].value("capabilityName").asString();
+                    rpc.kind = pDefs[j].value("kind").asString();
+                    var ev = pDefs[j].value("expectations");
+                    if (ev != null) {
+                        var eDefs = ev.asNestedArray();
+                        rpc.expectations = new AnnotatedOrgConfig.PolicyExpectationConfig[eDefs.length];
+                        for (int k = 0; k < eDefs.length; k++) {
+                            var pec = new AnnotatedOrgConfig.PolicyExpectationConfig();
+                            pec.key = eDefs[k].value("key").asString();
+                            pec.value = eDefs[k].value("value").asString();
+                            rpc.expectations[k] = pec;
+                        }
+                    }
+                    rsc.policies[j] = rpc;
+                }
+            }
+            config.roleSpecs[i] = rsc;
+        }
+    }
+
+    private void extractMissions(AnnotationInstance orgUnit, AnnotatedOrgConfig config) {
+        var v = orgUnit.value("missions");
+        if (v == null) return;
+        var defs = v.asNestedArray();
+        if (defs.length == 0) return;
+        config.missions = new AnnotatedOrgConfig.MissionSpecConfig[defs.length];
+        for (int i = 0; i < defs.length; i++) {
+            var mc = new AnnotatedOrgConfig.MissionSpecConfig();
+            mc.missionName = defs[i].value("missionName").asString();
+            mc.description = stringValue(defs[i], "description");
+            config.missions[i] = mc;
         }
     }
 

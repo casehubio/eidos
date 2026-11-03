@@ -17,6 +17,14 @@ public @interface OrgUnit {
     String kind() default "";
     String kindVocabulary() default "";
     String parentUnit() default "";
+    String topology() default "";
+    String topologyVocabulary() default "";
+    String authorityModel() default "";
+    double selfDetermination() default 0.0;
+
+    GroupPolicyDef policy() default @GroupPolicyDef;
+    RoleSpecDef[] roleSpecs() default {};
+    MissionSpecDef[] missions() default {};
 
     AgentCapabilityDef[] capabilities() default {};
     AgentGoalDef[] goals() default {};

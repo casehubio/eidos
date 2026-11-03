@@ -4,7 +4,11 @@ import io.casehub.eidos.api.BehavioralSignal;
 import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.Visibility;
+import io.casehub.eidos.org.api.AuthorityModel;
+import io.casehub.eidos.org.api.FormationPath;
+import io.casehub.eidos.org.api.NormSpecificity;
 import io.casehub.eidos.org.api.OrgRegistry;
+import io.casehub.eidos.org.api.PolicyKind;
 import io.casehub.eidos.org.api.RelationshipKind;
 import io.quarkus.test.QuarkusUnitTest;
 import jakarta.inject.Inject;
@@ -22,7 +26,8 @@ class EidosOrgAnnotationsProcessorTest {
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.ExplicitIdOrgUnit.class)
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.MinimalOrgUnit.class)
                     .addClass(io.casehub.eidos.org.annotations.deployment.test.HierarchyChildUnit.class)
-                    .addClass(io.casehub.eidos.org.annotations.deployment.test.EnrichedOrgUnit.class))
+                    .addClass(io.casehub.eidos.org.annotations.deployment.test.EnrichedOrgUnit.class)
+                    .addClass(io.casehub.eidos.org.annotations.deployment.test.SocietyOrgUnit.class))
             .overrideConfigKey("casehub.eidos.annotations.default-tenancy-id", "test-tenant")
             .overrideConfigKey("casehub.eidos.reactive.enabled", "false")
             .overrideConfigKey("quarkus.datasource.db-kind", "h2")
@@ -180,5 +185,77 @@ class EidosOrgAnnotationsProcessorTest {
         assertThat(rel.attestation().capabilityScope()).containsExactly("code-review");
         assertThat(rel.attestation().signalTypes())
                 .containsExactlyInAnyOrder(BehavioralSignal.COMPLIANT, BehavioralSignal.VIOLATED);
+    }
+
+    @Test
+    void societyUnitHasTopologyAndAuthority() {
+        var unit = registry.findUnit("dev-guild", "test-tenant").orElseThrow();
+        assertThat(unit.topology()).isEqualTo("mesh");
+        assertThat(unit.topologyVocabulary()).isEqualTo("urn:casehub:vocab:topology");
+        assertThat(unit.authorityModel()).isEqualTo(AuthorityModel.DISTRIBUTED);
+        assertThat(unit.selfDetermination()).isEqualTo(0.8);
+    }
+
+    @Test
+    void societyUnitHasGroupPolicy() {
+        var unit = registry.findUnit("dev-guild", "test-tenant").orElseThrow();
+        assertThat(unit.policy()).isNotNull();
+        assertThat(unit.policy().normativePriority()).isEqualTo(2);
+        assertThat(unit.policy().normSpecificity()).isEqualTo(NormSpecificity.DOMAIN);
+    }
+
+    @Test
+    void societyUnitHasFormationRules() {
+        var rules = registry.findUnit("dev-guild", "test-tenant").orElseThrow().policy().formationRules();
+        assertThat(rules).isNotNull();
+        assertThat(rules.allowedPaths()).containsExactlyInAnyOrder(FormationPath.BOTTOM_UP, FormationPath.EMERGENCE);
+        assertThat(rules.minGroupSize()).isEqualTo(3);
+        assertThat(rules.maxGroupSize()).isEqualTo(10);
+        assertThat(rules.allowSubGroups()).isTrue();
+        assertThat(rules.proposalQuorum()).isEqualTo(0.6);
+    }
+
+    @Test
+    void societyUnitHasRoleSpecs() {
+        var unit = registry.findUnit("dev-guild", "test-tenant").orElseThrow();
+        assertThat(unit.roleSpecs()).hasSize(2);
+
+        var lead = unit.roleSpecs().stream()
+                .filter(r -> r.roleName().equals("lead")).findFirst().orElseThrow();
+        assertThat(lead.roleVocabulary()).isEqualTo("urn:casehub:vocab:roles");
+        assertThat(lead.minCardinality()).isEqualTo(1);
+        assertThat(lead.maxCardinality()).isEqualTo(1);
+        assertThat(lead.policies()).hasSize(2);
+
+        var obligation = lead.policies().stream()
+                .filter(p -> p.kind() == PolicyKind.OBLIGATION).findFirst().orElseThrow();
+        assertThat(obligation.capabilityName()).isEqualTo("code-review");
+        assertThat(obligation.expectations()).containsEntry("turnaround", "24h");
+
+        var contributor = unit.roleSpecs().stream()
+                .filter(r -> r.roleName().equals("contributor")).findFirst().orElseThrow();
+        assertThat(contributor.minCardinality()).isEqualTo(2);
+        assertThat(contributor.maxCardinality()).isEqualTo(-1);
+        assertThat(contributor.incompatibleWith()).containsExactly("lead");
+    }
+
+    @Test
+    void societyUnitHasMissions() {
+        var unit = registry.findUnit("dev-guild", "test-tenant").orElseThrow();
+        assertThat(unit.missions()).hasSize(2);
+        var apiMission = unit.missions().stream()
+                .filter(m -> m.missionName().equals("platform-api-v2")).findFirst().orElseThrow();
+        assertThat(apiMission.description()).isEqualTo("Deliver v2 of the platform API");
+    }
+
+    @Test
+    void unitWithoutSocietyFieldsHasDefaults() {
+        var unit = registry.findUnit("simple-org-unit", "test-tenant").orElseThrow();
+        assertThat(unit.topology()).isNull();
+        assertThat(unit.authorityModel()).isNull();
+        assertThat(unit.selfDetermination()).isEqualTo(0.0);
+        assertThat(unit.policy()).isNull();
+        assertThat(unit.roleSpecs()).isEmpty();
+        assertThat(unit.missions()).isEmpty();
     }
 }

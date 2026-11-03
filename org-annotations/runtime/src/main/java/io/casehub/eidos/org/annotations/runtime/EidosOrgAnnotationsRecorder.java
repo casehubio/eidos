@@ -10,10 +10,19 @@ import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.org.api.AgentRelationship;
 import io.casehub.eidos.org.api.AttestationGrant;
+import io.casehub.eidos.org.api.AuthorityModel;
+import io.casehub.eidos.org.api.FormationPath;
+import io.casehub.eidos.org.api.FormationRules;
+import io.casehub.eidos.org.api.GroupPolicy;
 import io.casehub.eidos.org.api.Membership;
+import io.casehub.eidos.org.api.MissionSpec;
+import io.casehub.eidos.org.api.NormSpecificity;
 import io.casehub.eidos.org.api.OrganizationalUnit;
+import io.casehub.eidos.org.api.PolicyKind;
 import io.casehub.eidos.org.api.RelationshipKind;
 import io.casehub.eidos.org.api.RelationshipScope;
+import io.casehub.eidos.org.api.RolePolicy;
+import io.casehub.eidos.org.api.RoleSpec;
 import io.casehub.eidos.org.api.spi.OrgRegistrar;
 import io.quarkus.arc.SyntheticCreationalContext;
 import io.quarkus.runtime.annotations.Recorder;
@@ -45,6 +54,14 @@ public class EidosOrgAnnotationsRecorder {
             if (notEmpty(config.kind)) {builder.kind(config.kind);}
             if (notEmpty(config.kindVocabulary)) {builder.kindVocabulary(config.kindVocabulary);}
             if (notEmpty(config.parentUnit)) {builder.parentUnitId(config.parentUnit);}
+            if (notEmpty(config.topology)) {builder.topology(config.topology);}
+            if (notEmpty(config.topologyVocabulary)) {builder.topologyVocabulary(config.topologyVocabulary);}
+            if (notEmpty(config.authorityModel)) {builder.authorityModel(AuthorityModel.valueOf(config.authorityModel));}
+            builder.selfDetermination(config.selfDetermination);
+
+            if (config.policy != null) {builder.policy(buildPolicy(config.policy));}
+            if (config.roleSpecs != null && config.roleSpecs.length > 0) {builder.roleSpecs(buildRoleSpecs(config.roleSpecs));}
+            if (config.missions != null && config.missions.length > 0) {builder.missions(buildMissions(config.missions));}
 
             if (config.members != null && config.members.length > 0) {
                 var members = new ArrayList<Membership>();
@@ -135,6 +152,50 @@ public class EidosOrgAnnotationsRecorder {
         for (var c : constraints) {
             result.add(new AgentConstraint(c.name, c.description,
                     Visibility.valueOf(c.visibility), ConstraintSeverity.valueOf(c.severity)));
+        }
+        return result;
+    }
+
+    private static GroupPolicy buildPolicy(AnnotatedOrgConfig.GroupPolicyConfig pc) {
+        FormationRules fr = null;
+        if (pc.formationRules != null) {
+            var frc = pc.formationRules;
+            Set<FormationPath> paths = null;
+            if (frc.allowedPaths != null && frc.allowedPaths.length > 0) {
+                paths = new HashSet<>();
+                for (var p : frc.allowedPaths) {paths.add(FormationPath.valueOf(p));}
+            }
+            fr = new FormationRules(paths, frc.minGroupSize > 0 ? frc.minGroupSize : FormationRules.DEFAULT_MIN_GROUP_SIZE, frc.maxGroupSize != 0 ? frc.maxGroupSize : -1, frc.allowSubGroups, frc.proposalQuorum >= 0 ? frc.proposalQuorum : FormationRules.DEFAULT_QUORUM);
+        }
+        NormSpecificity ns = notEmpty(pc.normSpecificity) ? NormSpecificity.valueOf(pc.normSpecificity) : null;
+        return new GroupPolicy(fr, pc.normativePriority, ns);
+    }
+
+    private static List<RoleSpec> buildRoleSpecs(AnnotatedOrgConfig.RoleSpecConfig[] specs) {
+        var result = new ArrayList<RoleSpec>();
+        for (var rs : specs) {
+            Set<String> incompatible = rs.incompatibleWith != null && rs.incompatibleWith.length > 0 ? Set.of(rs.incompatibleWith) : null;
+            List<RolePolicy> policies = null;
+            if (rs.policies != null && rs.policies.length > 0) {
+                policies = new ArrayList<>();
+                for (var rp : rs.policies) {
+                    Map<String, String> expectations = null;
+                    if (rp.expectations != null && rp.expectations.length > 0) {
+                        expectations = new HashMap<>();
+                        for (var e : rp.expectations) {expectations.put(e.key, e.value);}
+                    }
+                    policies.add(new RolePolicy(rp.capabilityName, PolicyKind.valueOf(rp.kind), expectations));
+                }
+            }
+            result.add(new RoleSpec(rs.roleName, notEmpty(rs.roleVocabulary) ? rs.roleVocabulary : null, rs.minCardinality, rs.maxCardinality != 0 ? rs.maxCardinality : -1, incompatible, policies));
+        }
+        return result;
+    }
+
+    private static List<MissionSpec> buildMissions(AnnotatedOrgConfig.MissionSpecConfig[] specs) {
+        var result = new ArrayList<MissionSpec>();
+        for (var m : specs) {
+            result.add(new MissionSpec(m.missionName, notEmpty(m.description) ? m.description : null));
         }
         return result;
     }
