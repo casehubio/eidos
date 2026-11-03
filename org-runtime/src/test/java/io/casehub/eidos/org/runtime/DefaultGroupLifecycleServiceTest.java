@@ -54,6 +54,13 @@ class DefaultGroupLifecycleServiceTest {
         orgRegistry.registerUnit(unit);
     }
 
+    private void registerSpecWithMissions(String unitId, List<RoleSpec> roleSpecs, List<MissionSpec> missions) {
+        var unit = OrganizationalUnit.builder()
+            .unitId(unitId).name("Test").tenancyId("t1")
+            .roleSpecs(roleSpecs).missions(missions).build();
+        orgRegistry.registerUnit(unit);
+    }
+
     @Test void createGroupTopDown() {
         registerSpec("spec-1", List.of(new RoleSpec("reviewer", null, 0, 3, Set.of(), List.of())));
         var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
@@ -278,6 +285,75 @@ class DefaultGroupLifecycleServiceTest {
 
         var updated = service.findInstance(gi.instanceId(), "t1").orElseThrow();
         assertThat(updated.state()).isEqualTo(GroupLifecycleState.ACTIVE);
+    }
+
+    @Test void commitToMissionValidatesMissionExists() {
+        registerSpecWithMissions("spec-m", List.of(), List.of(new MissionSpec("build-api", "Build the API")));
+        var gi = service.createGroup("spec-m", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        assertThatThrownBy(() -> service.commitToMission(gi.instanceId(), "agent-1", "nonexistent", "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("not defined");
+    }
+
+    @Test void commitToMissionValidatesRequiredRoles() {
+        var mission = new MissionSpec("review", "Review work", Set.of("reviewer"), 0, 0);
+        registerSpecWithMissions("spec-m", List.of(new RoleSpec("reviewer", null, 0, -1, Set.of(), List.of())), List.of(mission));
+        var gi = service.createGroup("spec-m", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        assertThatThrownBy(() -> service.commitToMission(gi.instanceId(), "agent-1", "review", "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("required role");
+
+        service.adoptRole(gi.instanceId(), "agent-1", "reviewer", "t1");
+        service.commitToMission(gi.instanceId(), "agent-1", "review", "t1");
+        var updated = service.findInstance(gi.instanceId(), "t1").orElseThrow();
+        assertThat(updated.missionCommitments()).hasSize(1);
+    }
+
+    @Test void commitToMissionEnforcesMaxCommitters() {
+        var mission = new MissionSpec("solo-task", "Solo", Set.of(), 0, 1);
+        registerSpecWithMissions("spec-m", List.of(), List.of(mission));
+        var gi = service.createGroup("spec-m", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        service.joinGroup(gi.instanceId(), "agent-2", "t1");
+        service.commitToMission(gi.instanceId(), "agent-1", "solo-task", "t1");
+        assertThatThrownBy(() -> service.commitToMission(gi.instanceId(), "agent-2", "solo-task", "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("max committers");
+    }
+
+    @Test void withdrawFromMissionValidatesCommitmentExists() {
+        registerSpecWithMissions("spec-m", List.of(), List.of(new MissionSpec("build-api", "Build")));
+        var gi = service.createGroup("spec-m", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        assertThatThrownBy(() -> service.withdrawFromMission(gi.instanceId(), "agent-1", "build-api", "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("no commitment");
+    }
+
+    @Test void fulfillMissionValidatesMinCommitters() {
+        var mission = new MissionSpec("team-task", "Team", Set.of(), 2, 0);
+        registerSpecWithMissions("spec-m", List.of(), List.of(mission));
+        var gi = service.createGroup("spec-m", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        service.commitToMission(gi.instanceId(), "agent-1", "team-task", "t1");
+        assertThatThrownBy(() -> service.fulfillMission(gi.instanceId(), "team-task", "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("at least 2");
+    }
+
+    @Test void fulfillMissionSucceedsWhenMinCommittersMet() {
+        var mission = new MissionSpec("team-task", "Team", Set.of(), 2, 0);
+        registerSpecWithMissions("spec-m", List.of(), List.of(mission));
+        var gi = service.createGroup("spec-m", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        service.joinGroup(gi.instanceId(), "agent-2", "t1");
+        service.commitToMission(gi.instanceId(), "agent-1", "team-task", "t1");
+        service.commitToMission(gi.instanceId(), "agent-2", "team-task", "t1");
+        service.fulfillMission(gi.instanceId(), "team-task", "t1");
+        var updated = service.findInstance(gi.instanceId(), "t1").orElseThrow();
+        assertThat(updated.missionCommitments()).isEmpty();
     }
 
     @Test void instancesForAgent() {

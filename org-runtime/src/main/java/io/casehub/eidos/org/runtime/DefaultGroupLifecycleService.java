@@ -295,6 +295,25 @@ public class DefaultGroupLifecycleService implements GroupLifecycleService {
     public void commitToMission(String instanceId, String agentId, String missionName, String tenancyId) {
         mutate(instanceId, tenancyId, gi -> {
             requireNonTerminal(gi);
+            var spec = resolveSpec(gi.specId(), tenancyId);
+            var missionSpec = spec.missions().stream()
+                .filter(m -> m.missionName().equals(missionName)).findFirst()
+                .orElseThrow(() -> new OrgValidationException("missionName", "mission '" + missionName + "' not defined in spec"));
+
+            if (!missionSpec.requiredRoles().isEmpty()) {
+                var heldRoles = gi.roleAdoptions().stream()
+                    .filter(ra -> ra.agentId().equals(agentId))
+                    .map(RoleAdoption::roleName).toList();
+                if (heldRoles.stream().noneMatch(missionSpec.requiredRoles()::contains))
+                    throw new OrgValidationException("requiredRoles", "agent '" + agentId + "' does not hold any required role for mission '" + missionName + "'");
+            }
+
+            if (missionSpec.maxCommitters() > 0) {
+                long count = gi.missionCommitments().stream().filter(mc -> mc.missionName().equals(missionName)).count();
+                if (count >= missionSpec.maxCommitters())
+                    throw new OrgValidationException("maxCommitters", "mission '" + missionName + "' at max committers (" + missionSpec.maxCommitters() + ")");
+            }
+
             var newCommitments = new ArrayList<>(gi.missionCommitments());
             newCommitments.add(new MissionCommitment(agentId, missionName, Instant.now()));
             return new GroupInstance(
@@ -310,6 +329,8 @@ public class DefaultGroupLifecycleService implements GroupLifecycleService {
     @Override
     public void withdrawFromMission(String instanceId, String agentId, String missionName, String tenancyId) {
         mutate(instanceId, tenancyId, gi -> {
+            if (gi.missionCommitments().stream().noneMatch(mc -> mc.agentId().equals(agentId) && mc.missionName().equals(missionName)))
+                throw new OrgValidationException("missionName", "agent '" + agentId + "' has no commitment to mission '" + missionName + "'");
             var newCommitments = gi.missionCommitments().stream()
                 .filter(mc -> !(mc.agentId().equals(agentId) && mc.missionName().equals(missionName)))
                 .toList();
@@ -326,6 +347,17 @@ public class DefaultGroupLifecycleService implements GroupLifecycleService {
     @Override
     public void fulfillMission(String instanceId, String missionName, String tenancyId) {
         mutate(instanceId, tenancyId, gi -> {
+            var spec = resolveSpec(gi.specId(), tenancyId);
+            var missionSpec = spec.missions().stream()
+                .filter(m -> m.missionName().equals(missionName)).findFirst()
+                .orElseThrow(() -> new OrgValidationException("missionName", "mission '" + missionName + "' not defined in spec"));
+
+            if (missionSpec.minCommitters() > 0) {
+                long count = gi.missionCommitments().stream().filter(mc -> mc.missionName().equals(missionName)).count();
+                if (count < missionSpec.minCommitters())
+                    throw new OrgValidationException("minCommitters", "mission '" + missionName + "' requires at least " + missionSpec.minCommitters() + " committer(s) but has " + count);
+            }
+
             var newCommitments = gi.missionCommitments().stream()
                 .filter(mc -> !mc.missionName().equals(missionName))
                 .toList();
