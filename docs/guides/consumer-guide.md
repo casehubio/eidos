@@ -293,7 +293,49 @@ Optional module providing agent organizational structure -- units, memberships, 
 - `OrgStructure.define(tenancyId)` -- compositional DSL for programmatic org definition.
 - `OrgGoalCompiler` -- maps org POJOs to desiredstate graph for reconciliation.
 
-**Annotations (casehub-eidos-org-annotations):** `@OrgUnit` on a class declares a unit (ID auto-derived from class name); supports `capabilities` (`@AgentCapabilityDef[]`), `goals` (`@AgentGoalDef[]`), `constraints` (`@AgentConstraintDef[]`) reused from eidos-annotations. `@OrgMembers` defines membership list. `@Supervises` (repeatable) declares supervision with optional `scopeDomain`/`scopeCondition`. `@OrgRelationships`/`@OrgRelationshipDef` for other relationship types with structured scope and `@AttestationGrantDef` for attestation grants. Build extension produces `OrgRegistrar` CDI beans.
+**Society types on OrganizationalUnit:** `topology` (open string), `topologyVocabulary`, `authorityModel` (`AuthorityModel` enum: CENTRALISED, DISTRIBUTED, HYBRID, HIERARCHICAL, GRADUATED), `selfDetermination` (0.0--1.0), `policy` (`GroupPolicy` with `FormationRules`, `normativePriority`, `NormSpecificity`), `roleSpecs` (`List<RoleSpec>` with cardinality, incompatibility, and `RolePolicy` per role), `missions` (`List<MissionSpec>` with `requiredRoles`, `minCommitters`, `maxCommitters`).
+
+### Dynamic Group Lifecycle
+
+Groups are runtime instances of `OrganizationalUnit` specs. `GroupLifecycleService` manages the lifecycle:
+
+```java
+@Inject GroupLifecycleService lifecycle;
+
+// Create a group from an org spec
+var group = lifecycle.createGroup("review-team", tenancyId, FormationOrigin.TOP_DOWN);
+// State: FORMING
+
+// Add members and assign roles
+lifecycle.joinGroup(group.instanceId(), "alice", tenancyId);
+lifecycle.adoptRole(group.instanceId(), "alice", "reviewer", tenancyId);
+
+// Activate when role requirements are met
+lifecycle.activateGroup(group.instanceId(), tenancyId);
+// State: ACTIVE — validates minCardinality on all roleSpecs
+
+// Topology changes go through REORGANISING state
+lifecycle.changeTopology(group.instanceId(), "mesh", vocabUri, tenancyId);
+// ACTIVE → REORGANISING → ACTIVE (membership frozen during transition)
+
+// Mission commitment with validation
+lifecycle.commitToMission(group.instanceId(), "alice", "api-v2", tenancyId);
+
+// Dissolve when done
+lifecycle.dissolveGroup(group.instanceId(), tenancyId, "work complete");
+```
+
+**State machine:** PROPOSED → FORMING → ACTIVE → REORGANISING → ACTIVE. Terminal: REJECTED, FAILED, DISSOLVED.
+
+**Validation enforced:**
+- `adoptRole` checks max cardinality and role incompatibility
+- `activateGroup` checks min cardinality across all role specs
+- `commitToMission` checks mission exists on spec, agent holds required role, max committers
+- `fulfillMission` checks min committers before clearing
+
+**SPIs:** `GroupInstanceStore` (persistence), `GroupLifecycleListener` (event callbacks: formation, dissolution, member join/leave, role adoption/release, topology change, state transition).
+
+**Annotations (casehub-eidos-org-annotations):** `@OrgUnit` on a class declares a unit (ID auto-derived from class name); supports `topology`, `topologyVocabulary`, `authorityModel`, `selfDetermination`, `policy` (`@GroupPolicyDef` with `@FormationRulesDef`), `roleSpecs` (`@RoleSpecDef[]` with `@RolePolicyDef[]` and `@PolicyExpectation`), `missions` (`@MissionSpecDef[]`), plus `capabilities` (`@AgentCapabilityDef[]`), `goals` (`@AgentGoalDef[]`), `constraints` (`@AgentConstraintDef[]`) reused from eidos-annotations. `@OrgMembers` defines membership list. `@Supervises` (repeatable) declares supervision with optional `scopeDomain`/`scopeCondition`. `@OrgRelationships`/`@OrgRelationshipDef` for other relationship types with structured scope and `@AttestationGrantDef` for attestation grants. Build extension produces `OrgRegistrar` CDI beans.
 
 ---
 
