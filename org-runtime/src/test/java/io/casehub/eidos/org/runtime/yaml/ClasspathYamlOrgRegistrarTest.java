@@ -4,6 +4,7 @@ import io.casehub.eidos.org.api.RelationshipKind;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ClasspathYamlOrgRegistrarTest {
 
@@ -89,5 +90,23 @@ class ClasspathYamlOrgRegistrarTest {
         var org = registrar.loadFrom(null);
         assertThat(org.units()).isEmpty();
         assertThat(org.relationships()).isEmpty();
+    }
+
+    @Test void yamlWithNoOrganizationKeyReturnsEmpty() {
+        var yaml = new java.io.ByteArrayInputStream("other:\n  key: value\n".getBytes());
+        var org = registrar.loadFrom(yaml);
+        assertThat(org.units()).isEmpty();
+        assertThat(org.relationships()).isEmpty();
+    }
+
+    @Test void yamlWithMissingRequiredFieldThrows() {
+        var yaml = new java.io.ByteArrayInputStream("""
+            organization:
+              units:
+                - kind: team
+                  tenancyId: t1
+            """.getBytes());
+        assertThatThrownBy(() -> registrar.loadFrom(yaml))
+            .isInstanceOf(IllegalStateException.class);
     }
 }
