@@ -356,6 +356,14 @@ class DefaultGroupLifecycleServiceTest {
         assertThat(updated.missionCommitments()).isEmpty();
     }
 
+    @Test void normSpecificityPreservedOnSpec() {
+        var rules = new FormationRules(Set.of(FormationPath.TOP_DOWN), 2, 10, false, 1.0);
+        registerSpecWithPolicy("spec-ns", List.of(), new GroupPolicy(rules, 3, NormSpecificity.DOMAIN));
+        var spec = orgRegistry.findUnit("spec-ns", "t1").orElseThrow();
+        assertThat(spec.policy().normSpecificity()).isEqualTo(NormSpecificity.DOMAIN);
+        assertThat(spec.policy().normativePriority()).isEqualTo(3);
+    }
+
     @Test void instancesForAgent() {
         registerSpec("spec-1", List.of());
         var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
