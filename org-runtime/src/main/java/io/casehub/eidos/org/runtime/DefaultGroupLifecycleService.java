@@ -139,16 +139,30 @@ public class DefaultGroupLifecycleService implements GroupLifecycleService {
         requireStateOneOf(before, GroupLifecycleState.ACTIVE, GroupLifecycleState.FORMING);
         String oldTopology = before.topology();
 
-        mutate(instanceId, tenancyId, gi -> {
-            requireStateOneOf(gi, GroupLifecycleState.ACTIVE, GroupLifecycleState.FORMING);
-            return new GroupInstance(
-                gi.instanceId(), gi.specId(), gi.tenancyId(),
-                gi.state(), gi.formationOrigin(),
-                newTopology, newTopologyVocabulary, gi.effectiveAuthority(),
-                gi.members(), gi.roleAdoptions(), gi.missionCommitments(),
-                gi.createdAt(), Instant.now(), gi.version()
-            );
-        });
+        if (before.state() == GroupLifecycleState.FORMING) {
+            mutate(instanceId, tenancyId, gi -> {
+                requireState(gi, GroupLifecycleState.FORMING);
+                return withTopology(gi, newTopology, newTopologyVocabulary);
+            });
+        } else {
+            mutate(instanceId, tenancyId, gi -> {
+                requireState(gi, GroupLifecycleState.ACTIVE);
+                return withState(gi, GroupLifecycleState.REORGANISING);
+            });
+            fireStateTransition(instanceId, GroupLifecycleState.ACTIVE, GroupLifecycleState.REORGANISING, tenancyId);
+
+            try {
+                mutate(instanceId, tenancyId, gi -> {
+                    requireState(gi, GroupLifecycleState.REORGANISING);
+                    return withTopology(withState(gi, GroupLifecycleState.ACTIVE), newTopology, newTopologyVocabulary);
+                });
+                fireStateTransition(instanceId, GroupLifecycleState.REORGANISING, GroupLifecycleState.ACTIVE, tenancyId);
+            } catch (Exception e) {
+                mutate(instanceId, tenancyId, gi -> withState(gi, GroupLifecycleState.ACTIVE));
+                fireStateTransition(instanceId, GroupLifecycleState.REORGANISING, GroupLifecycleState.ACTIVE, tenancyId);
+                throw e;
+            }
+        }
         for (var l : listeners) l.onTopologyChange(instanceId, oldTopology, newTopology, tenancyId);
     }
 
@@ -388,6 +402,16 @@ public class DefaultGroupLifecycleService implements GroupLifecycleService {
             }
         }
         throw new StaleGroupInstanceException(instanceId, -1);
+    }
+
+    private GroupInstance withTopology(GroupInstance gi, String topology, String topologyVocabulary) {
+        return new GroupInstance(
+            gi.instanceId(), gi.specId(), gi.tenancyId(),
+            gi.state(), gi.formationOrigin(),
+            topology, topologyVocabulary, gi.effectiveAuthority(),
+            gi.members(), gi.roleAdoptions(), gi.missionCommitments(),
+            gi.createdAt(), Instant.now(), gi.version()
+        );
     }
 
     private GroupInstance withState(GroupInstance gi, GroupLifecycleState newState) {

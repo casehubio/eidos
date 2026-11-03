@@ -141,13 +141,55 @@ class DefaultGroupLifecycleServiceTest {
         assertThat(events).contains("release:agent-1:reviewer");
     }
 
-    @Test void changeTopologyOnFormingGroup() {
+    @Test void changeTopologyOnFormingGroupDirectSwap() {
         registerSpec("spec-1", List.of());
         var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
+        events.clear();
         service.changeTopology(gi.instanceId(), "mesh", null, "t1");
         var updated = service.findInstance(gi.instanceId(), "t1").orElseThrow();
         assertThat(updated.topology()).isEqualTo("mesh");
+        assertThat(updated.state()).isEqualTo(GroupLifecycleState.FORMING);
+        assertThat(events).noneMatch(e -> e.contains("REORGANISING"));
         assertThat(events).anyMatch(e -> e.contains("topology:"));
+    }
+
+    @Test void changeTopologyOnActiveGroupGoesViaReorganising() {
+        registerSpec("spec-1", List.of());
+        var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
+        service.activateGroup(gi.instanceId(), "t1");
+        events.clear();
+
+        service.changeTopology(gi.instanceId(), "ring", "urn:vocab:topo", "t1");
+
+        var updated = service.findInstance(gi.instanceId(), "t1").orElseThrow();
+        assertThat(updated.topology()).isEqualTo("ring");
+        assertThat(updated.topologyVocabulary()).isEqualTo("urn:vocab:topo");
+        assertThat(updated.state()).isEqualTo(GroupLifecycleState.ACTIVE);
+        assertThat(events).containsSubsequence(
+            "state:ACTIVE->REORGANISING",
+            "state:REORGANISING->ACTIVE",
+            "topology:null->ring"
+        );
+    }
+
+    @Test void roleAdoptionBlockedDuringReorganising() {
+        registerSpec("spec-1", List.of(new RoleSpec("reviewer", null, 0, -1, Set.of(), List.of())));
+        var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        service.activateGroup(gi.instanceId(), "t1");
+
+        var current = service.findInstance(gi.instanceId(), "t1").orElseThrow();
+        store.save(new GroupInstance(
+            current.instanceId(), current.specId(), current.tenancyId(),
+            GroupLifecycleState.REORGANISING, current.formationOrigin(),
+            current.topology(), current.topologyVocabulary(), current.effectiveAuthority(),
+            current.members(), current.roleAdoptions(), current.missionCommitments(),
+            current.createdAt(), current.lastTransitionAt(), current.version()
+        ));
+
+        assertThatThrownBy(() -> service.adoptRole(gi.instanceId(), "agent-1", "reviewer", "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("REORGANISING");
     }
 
     @Test void dissolveEmptyGroupAutoCompletes() {
