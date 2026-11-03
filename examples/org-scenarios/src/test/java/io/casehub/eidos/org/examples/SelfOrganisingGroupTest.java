@@ -62,6 +62,10 @@ class SelfOrganisingGroupTest {
             .isInstanceOf(OrgValidationException.class)
             .hasMessageContaining("cardinality");
 
+        lifecycleService.activateGroup(group.instanceId(), "t1");
+        updated = lifecycleService.findInstance(group.instanceId(), "t1").orElseThrow();
+        assertThat(updated.state()).isEqualTo(GroupLifecycleState.ACTIVE);
+
         lifecycleService.changeTopology(group.instanceId(), "mesh", null, "t1");
         updated = lifecycleService.findInstance(group.instanceId(), "t1").orElseThrow();
         assertThat(updated.topology()).isEqualTo("mesh");

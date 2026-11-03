@@ -193,6 +193,51 @@ class DefaultGroupLifecycleServiceTest {
         assertThat(gi.state()).isEqualTo(GroupLifecycleState.FORMING);
     }
 
+    @Test void activateGroupTransitionsToActive() {
+        registerSpec("spec-1", List.of(new RoleSpec("reviewer", null, 1, 3, Set.of(), List.of())));
+        var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        service.adoptRole(gi.instanceId(), "agent-1", "reviewer", "t1");
+        events.clear();
+
+        service.activateGroup(gi.instanceId(), "t1");
+
+        var updated = service.findInstance(gi.instanceId(), "t1").orElseThrow();
+        assertThat(updated.state()).isEqualTo(GroupLifecycleState.ACTIVE);
+        assertThat(events).contains("state:FORMING->ACTIVE", "formed:" + gi.instanceId());
+    }
+
+    @Test void activateGroupRejectsInsufficientRoles() {
+        registerSpec("spec-1", List.of(new RoleSpec("reviewer", null, 2, 3, Set.of(), List.of())));
+        var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
+        service.joinGroup(gi.instanceId(), "agent-1", "t1");
+        service.adoptRole(gi.instanceId(), "agent-1", "reviewer", "t1");
+
+        assertThatThrownBy(() -> service.activateGroup(gi.instanceId(), "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("reviewer")
+            .hasMessageContaining("at least 2");
+    }
+
+    @Test void activateGroupRejectsNonFormingState() {
+        registerSpec("spec-1", List.of());
+        var gi = service.proposeGroup("spec-1", "t1", "agent-1");
+
+        assertThatThrownBy(() -> service.activateGroup(gi.instanceId(), "t1"))
+            .isInstanceOf(OrgValidationException.class)
+            .hasMessageContaining("FORMING");
+    }
+
+    @Test void activateGroupWithNoRoleSpecs() {
+        registerSpec("spec-1", List.of());
+        var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);
+
+        service.activateGroup(gi.instanceId(), "t1");
+
+        var updated = service.findInstance(gi.instanceId(), "t1").orElseThrow();
+        assertThat(updated.state()).isEqualTo(GroupLifecycleState.ACTIVE);
+    }
+
     @Test void instancesForAgent() {
         registerSpec("spec-1", List.of());
         var gi = service.createGroup("spec-1", "t1", FormationOrigin.TOP_DOWN);

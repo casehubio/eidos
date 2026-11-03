@@ -95,6 +95,23 @@ public class DefaultGroupLifecycleService implements GroupLifecycleService {
     }
 
     @Override
+    public void activateGroup(String instanceId, String tenancyId) {
+        var gi = store.findById(instanceId, tenancyId)
+            .orElseThrow(() -> new OrgValidationException("instanceId", "not found: " + instanceId));
+        requireState(gi, GroupLifecycleState.FORMING);
+
+        var spec = resolveSpec(gi.specId(), tenancyId);
+        validateMinCardinality(gi, spec);
+
+        mutate(instanceId, tenancyId, current -> {
+            requireState(current, GroupLifecycleState.FORMING);
+            return withState(current, GroupLifecycleState.ACTIVE);
+        });
+        fireStateTransition(instanceId, GroupLifecycleState.FORMING, GroupLifecycleState.ACTIVE, tenancyId);
+        for (var l : listeners) l.onFormationComplete(instanceId, tenancyId);
+    }
+
+    @Override
     public void dissolveGroup(String instanceId, String tenancyId, String reason) {
         var gi = mutate(instanceId, tenancyId, current -> {
             requireNonTerminal(current);
@@ -326,6 +343,21 @@ public class DefaultGroupLifecycleService implements GroupLifecycleService {
     private OrganizationalUnit resolveSpec(String specId, String tenancyId) {
         return orgRegistry.findUnit(specId, tenancyId)
             .orElseThrow(() -> new OrgValidationException("specId", "spec not found: " + specId));
+    }
+
+    private void validateMinCardinality(GroupInstance gi, OrganizationalUnit spec) {
+        for (var roleSpec : spec.roleSpecs()) {
+            if (roleSpec.minCardinality() > 0) {
+                long count = gi.roleAdoptions().stream()
+                    .filter(ra -> ra.roleName().equals(roleSpec.roleName()))
+                    .count();
+                if (count < roleSpec.minCardinality()) {
+                    throw new OrgValidationException("activation",
+                        "role '" + roleSpec.roleName() + "' requires at least " + roleSpec.minCardinality()
+                        + " adoption(s) but has " + count);
+                }
+            }
+        }
     }
 
     private void validateFormationPath(OrganizationalUnit spec, FormationOrigin origin) {

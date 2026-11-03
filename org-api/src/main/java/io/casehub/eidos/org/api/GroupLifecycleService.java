@@ -9,6 +9,7 @@ public interface GroupLifecycleService {
     GroupInstance proposeGroup(String specId, String tenancyId, String proposerAgentId);
     void approveProposal(String instanceId, String tenancyId);
     void rejectProposal(String instanceId, String tenancyId, String reason);
+    void activateGroup(String instanceId, String tenancyId);
     void dissolveGroup(String instanceId, String tenancyId, String reason);
 
     void changeTopology(String instanceId, String newTopology, String newTopologyVocabulary, String tenancyId);
