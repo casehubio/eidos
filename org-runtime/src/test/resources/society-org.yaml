@@ -1,0 +1,86 @@
+organization:
+  units:
+    - unitId: dev-guild
+      name: Developer Guild
+      kind: guild
+      kindVocabulary: urn:casehub:vocab:org
+      tenancyId: testco
+      topology: mesh
+      topologyVocabulary: urn:casehub:vocab:topology
+      authorityModel: DISTRIBUTED
+      selfDetermination: 0.8
+      policy:
+        formationRules:
+          allowedPaths: [BOTTOM_UP, EMERGENCE]
+          minGroupSize: 3
+          maxGroupSize: 10
+          allowSubGroups: true
+          proposalQuorum: 0.6
+        normativePriority: 2
+        normSpecificity: DOMAIN
+      members:
+        - agentId: alice
+          role: lead
+        - agentId: bob
+          role: contributor
+        - agentId: carol
+          role: contributor
+      roleSpecs:
+        - roleName: lead
+          roleVocabulary: urn:casehub:vocab:roles
+          minCardinality: 1
+          maxCardinality: 1
+          incompatibleWith: []
+          policies:
+            - capabilityName: code-review
+              kind: OBLIGATION
+              expectations:
+                turnaround: "24h"
+            - capabilityName: merge-authority
+              kind: PERMISSION
+        - roleName: contributor
+          minCardinality: 2
+          maxCardinality: -1
+          policies:
+            - capabilityName: code-review
+              kind: ELIGIBILITY
+      missions:
+        - missionName: platform-api-v2
+          description: Deliver v2 of the platform API
+        - missionName: tech-debt-reduction
+          description: Reduce critical tech debt by 30%
+      capabilities:
+        - name: code-review
+        - name: merge-authority
+
+    - unitId: ops-squad
+      name: Operations Squad
+      kind: squad
+      tenancyId: testco
+      authorityModel: CENTRALISED
+      selfDetermination: 0.3
+      policy:
+        formationRules:
+          allowedPaths: [TOP_DOWN]
+          minGroupSize: 2
+          maxGroupSize: 5
+          allowSubGroups: false
+          proposalQuorum: 1.0
+        normativePriority: 0
+        normSpecificity: UNIVERSAL
+      members:
+        - agentId: dave
+          role: ops-lead
+      roleSpecs:
+        - roleName: ops-lead
+          minCardinality: 1
+          maxCardinality: 1
+      missions:
+        - missionName: uptime-99
+          description: Maintain 99.9% uptime
+
+  relationships:
+    - sourceAgentId: alice
+      targetAgentId: bob
+      kind: SUPERVISES
+      tenancyId: testco

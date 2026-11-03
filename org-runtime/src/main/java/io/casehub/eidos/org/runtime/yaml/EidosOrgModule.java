@@ -1,6 +1,7 @@
 package io.casehub.eidos.org.runtime.yaml;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.casehub.eidos.org.api.RelationshipKind;
@@ -15,6 +16,7 @@ public class EidosOrgModule extends SimpleModule {
     public static ObjectMapper createMapper() {
         return YamlMappers.create()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
             .registerModule(new EidosOrgModule());
     }
 }
