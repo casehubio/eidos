@@ -168,7 +168,7 @@ public class EidosOrgAnnotationsRecorder {
             fr = new FormationRules(paths, frc.minGroupSize > 0 ? frc.minGroupSize : FormationRules.DEFAULT_MIN_GROUP_SIZE, frc.maxGroupSize != 0 ? frc.maxGroupSize : -1, frc.allowSubGroups, frc.proposalQuorum >= 0 ? frc.proposalQuorum : FormationRules.DEFAULT_QUORUM);
         }
         NormSpecificity ns = notEmpty(pc.normSpecificity) ? NormSpecificity.valueOf(pc.normSpecificity) : null;
-        return new GroupPolicy(fr, pc.normativePriority, ns);
+        return new GroupPolicy(fr, pc.normativePriority, ns, pc.dissolutionDrainTimeoutMinutes);
     }
 
     private static List<RoleSpec> buildRoleSpecs(AnnotatedOrgConfig.RoleSpecConfig[] specs) {
@@ -187,7 +187,9 @@ public class EidosOrgAnnotationsRecorder {
                     policies.add(new RolePolicy(rp.capabilityName, PolicyKind.valueOf(rp.kind), expectations));
                 }
             }
-            result.add(new RoleSpec(rs.roleName, notEmpty(rs.roleVocabulary) ? rs.roleVocabulary : null, rs.minCardinality, rs.maxCardinality != 0 ? rs.maxCardinality : -1, incompatible, policies));
+            List<String> obligations = rs.obligations != null && rs.obligations.length > 0 ? List.of(rs.obligations) : null;
+            List<String> permissions = rs.permissions != null && rs.permissions.length > 0 ? List.of(rs.permissions) : null;
+            result.add(new RoleSpec(rs.roleName, notEmpty(rs.roleVocabulary) ? rs.roleVocabulary : null, rs.minCardinality, rs.maxCardinality != 0 ? rs.maxCardinality : -1, incompatible, policies, obligations, permissions));
         }
         return result;
     }

@@ -18,6 +18,7 @@ organization:
           proposalQuorum: 0.6
         normativePriority: 2
         normSpecificity: DOMAIN
+        dissolutionDrainTimeoutMinutes: 15
       members:
         - agentId: alice
           role: lead
@@ -31,6 +32,14 @@ organization:
           minCardinality: 1
           maxCardinality: 1
           incompatibleWith: []
+          obligations:
+            - review-output
+            - approve-plan
+            - report-status
+          permissions:
+            - provision-agent
+            - change-topology
+            - create-subgroup
           policies:
             - capabilityName: code-review
               kind: OBLIGATION
@@ -41,6 +50,11 @@ organization:
         - roleName: contributor
           minCardinality: 2
           maxCardinality: -1
+          obligations:
+            - process-assigned-work
+          permissions:
+            - signal-consensus
+            - request-collaboration
           policies:
             - capabilityName: code-review
               kind: ELIGIBILITY

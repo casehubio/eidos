@@ -81,7 +81,7 @@ class OrganizationalUnitTest {
 
     @Test
     void withTopologyAndRoleSpecs() {
-        var roleSpec = new RoleSpec("reviewer", null, 1, 3, Set.of(), List.of());
+        var roleSpec = new RoleSpec("reviewer", null, 1, 3, Set.of(), List.of(), null, null);
         var unit = OrganizationalUnit.builder()
                                      .unitId("team-1").name("Review Team").tenancyId("t1")
                                      .topology("mesh").topologyVocabulary("urn:casehub:topologies")
@@ -116,7 +116,7 @@ class OrganizationalUnitTest {
     @Test
     void withGroupPolicy() {
         var rules  = new FormationRules(Set.of(FormationPath.TOP_DOWN), 2, 10, false, 1.0);
-        var policy = new GroupPolicy(rules, 0, null);
+        var policy = new GroupPolicy(rules, 0, null, 0);
         var unit = OrganizationalUnit.builder()
                                      .unitId("t").name("T").tenancyId("t1")
                                      .policy(policy).build();
@@ -125,8 +125,8 @@ class OrganizationalUnitTest {
 
     @Test
     void rejectsDuplicateRoleSpecNames() {
-        var r1 = new RoleSpec("reviewer", null, 0, -1, Set.of(), List.of());
-        var r2 = new RoleSpec("reviewer", null, 1, 5, Set.of(), List.of());
+        var r1 = new RoleSpec("reviewer", null, 0, -1, Set.of(), List.of(), null, null);
+        var r2 = new RoleSpec("reviewer", null, 1, 5, Set.of(), List.of(), null, null);
         assertThatThrownBy(() -> OrganizationalUnit.builder()
                                                    .unitId("t").name("T").tenancyId("t1")
                                                    .roleSpecs(List.of(r1, r2)).build())
@@ -136,7 +136,7 @@ class OrganizationalUnitTest {
 
     @Test
     void rejectsIncompatibleWithUnknownRole() {
-        var r1 = new RoleSpec("reviewer", null, 0, -1, Set.of("unknown-role"), List.of());
+        var r1 = new RoleSpec("reviewer", null, 0, -1, Set.of("unknown-role"), List.of(), null, null);
         assertThatThrownBy(() -> OrganizationalUnit.builder()
                                                    .unitId("t").name("T").tenancyId("t1")
                                                    .roleSpecs(List.of(r1)).build())
@@ -146,8 +146,8 @@ class OrganizationalUnitTest {
 
     @Test
     void allowsMultiRoleSeedMembership() {
-        var r1 = new RoleSpec("reviewer", null, 0, -1, Set.of(), List.of());
-        var r2 = new RoleSpec("author", null, 0, -1, Set.of(), List.of());
+        var r1 = new RoleSpec("reviewer", null, 0, -1, Set.of(), List.of(), null, null);
+        var r2 = new RoleSpec("author", null, 0, -1, Set.of(), List.of(), null, null);
         var m1 = new Membership("agent-1", "reviewer", null);
         var m2 = new Membership("agent-1", "author", null);
         var unit = OrganizationalUnit.builder()
@@ -159,8 +159,8 @@ class OrganizationalUnitTest {
 
     @Test
     void rejectsIncompatibleSeedMembership() {
-        var r1 = new RoleSpec("auditor", null, 0, -1, Set.of("developer"), List.of());
-        var r2 = new RoleSpec("developer", null, 0, -1, Set.of("auditor"), List.of());
+        var r1 = new RoleSpec("auditor", null, 0, -1, Set.of("developer"), List.of(), null, null);
+        var r2 = new RoleSpec("developer", null, 0, -1, Set.of("auditor"), List.of(), null, null);
         var m1 = new Membership("agent-1", "auditor", null);
         var m2 = new Membership("agent-1", "developer", null);
         assertThatThrownBy(() -> OrganizationalUnit.builder()

@@ -39,4 +39,52 @@ public record GroupInstance(
                     "agent " + ra.agentId() + " has role adoption but is not a member (membership invariant)");
         }
     }
+
+    public GroupInstance withState(GroupLifecycleState newState) {
+        return new GroupInstance(instanceId, specId, tenancyId, newState, formationOrigin,
+                                 topology, topologyVocabulary, effectiveAuthority, members, roleAdoptions,
+                                 missionCommitments, createdAt, lastTransitionAt, version);
+    }
+
+    public GroupInstance withTopology(String newTopology, String newTopologyVocabulary) {
+        return new GroupInstance(instanceId, specId, tenancyId, state, formationOrigin,
+                                 newTopology, newTopologyVocabulary, effectiveAuthority, members, roleAdoptions,
+                                 missionCommitments, createdAt, lastTransitionAt, version);
+    }
+
+    public GroupInstance withEffectiveAuthority(AuthorityModel newAuthority) {
+        return new GroupInstance(instanceId, specId, tenancyId, state, formationOrigin,
+                                 topology, topologyVocabulary, newAuthority, members, roleAdoptions,
+                                 missionCommitments, createdAt, lastTransitionAt, version);
+    }
+
+    public GroupInstance withMembers(List<ActualMembership> newMembers) {
+        return new GroupInstance(instanceId, specId, tenancyId, state, formationOrigin,
+                                 topology, topologyVocabulary, effectiveAuthority, newMembers, roleAdoptions,
+                                 missionCommitments, createdAt, lastTransitionAt, version);
+    }
+
+    public GroupInstance withRoleAdoptions(List<RoleAdoption> newAdoptions) {
+        return new GroupInstance(instanceId, specId, tenancyId, state, formationOrigin,
+                                 topology, topologyVocabulary, effectiveAuthority, members, newAdoptions,
+                                 missionCommitments, createdAt, lastTransitionAt, version);
+    }
+
+    public GroupInstance withMissionCommitments(List<MissionCommitment> newCommitments) {
+        return new GroupInstance(instanceId, specId, tenancyId, state, formationOrigin,
+                                 topology, topologyVocabulary, effectiveAuthority, members, roleAdoptions,
+                                 newCommitments, createdAt, lastTransitionAt, version);
+    }
+
+    public GroupInstance withLastTransitionAt(Instant newLastTransitionAt) {
+        return new GroupInstance(instanceId, specId, tenancyId, state, formationOrigin,
+                                 topology, topologyVocabulary, effectiveAuthority, members, roleAdoptions,
+                                 missionCommitments, createdAt, newLastTransitionAt, version);
+    }
+
+    public GroupInstance withVersion(long newVersion) {
+        return new GroupInstance(instanceId, specId, tenancyId, state, formationOrigin,
+                                 topology, topologyVocabulary, effectiveAuthority, members, roleAdoptions,
+                                 missionCommitments, createdAt, lastTransitionAt, newVersion);
+    }
 }

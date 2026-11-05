@@ -310,6 +310,8 @@ class EidosOrgAnnotationsProcessor {
             frc.proposalQuorum = pq != null ? pq.asDouble() : -1.0;
             pc.formationRules = frc;
         }
+        var ddt = policyAnn.value("dissolutionDrainTimeoutMinutes");
+        pc.dissolutionDrainTimeoutMinutes = ddt != null ? ddt.asLong() : 0;
         config.policy = pc;
     }
 
@@ -352,6 +354,10 @@ class EidosOrgAnnotationsProcessor {
                     rsc.policies[j] = rpc;
                 }
             }
+            var ob = defs[i].value("obligations");
+            rsc.obligations = ob != null ? ob.asStringArray() : new String[0];
+            var pm = defs[i].value("permissions");
+            rsc.permissions = pm != null ? pm.asStringArray() : new String[0];
             config.roleSpecs[i] = rsc;
         }
     }

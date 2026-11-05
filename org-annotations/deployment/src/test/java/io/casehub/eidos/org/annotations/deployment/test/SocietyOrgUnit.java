@@ -21,6 +21,7 @@ import io.casehub.eidos.org.annotations.RoleSpecDef;
     policy = @GroupPolicyDef(
         normativePriority = 2,
         normSpecificity = "DOMAIN",
+        dissolutionDrainTimeoutMinutes = 15,
         formationRules = @FormationRulesDef(
             allowedPaths = {"BOTTOM_UP", "EMERGENCE"},
             minGroupSize = 3,
@@ -35,6 +36,8 @@ import io.casehub.eidos.org.annotations.RoleSpecDef;
             roleVocabulary = "urn:casehub:vocab:roles",
             minCardinality = 1,
             maxCardinality = 1,
+            obligations = {"review-output", "approve-plan"},
+            permissions = {"provision-agent", "change-topology"},
             policies = {
                 @RolePolicyDef(capabilityName = "code-review", kind = "OBLIGATION",
                     expectations = @PolicyExpectation(key = "turnaround", value = "24h")),

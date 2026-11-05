@@ -110,4 +110,117 @@ class GroupInstanceTest {
         assertThat(gi.topology()).isEqualTo("mesh");
         assertThat(gi.effectiveAuthority()).isEqualTo(AuthorityModel.DISTRIBUTED);
     }
+
+    @Test
+    void withState() {
+        var now = Instant.now();
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.FORMING, FormationOrigin.TOP_DOWN,
+                                   null, null, null, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var updated = gi.withState(GroupLifecycleState.ACTIVE);
+        assertThat(updated.state()).isEqualTo(GroupLifecycleState.ACTIVE);
+        assertThat(updated.instanceId()).isEqualTo("gi");
+        assertThat(updated.version()).isZero();
+    }
+
+    @Test
+    void withTopology() {
+        var now = Instant.now();
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   "swarm", null, null, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var updated = gi.withTopology("hive", "urn:topo");
+        assertThat(updated.topology()).isEqualTo("hive");
+        assertThat(updated.topologyVocabulary()).isEqualTo("urn:topo");
+        assertThat(updated.state()).isEqualTo(GroupLifecycleState.ACTIVE);
+    }
+
+    @Test
+    void withEffectiveAuthority() {
+        var now = Instant.now();
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   null, null, AuthorityModel.DISTRIBUTED, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var updated = gi.withEffectiveAuthority(AuthorityModel.CENTRALISED);
+        assertThat(updated.effectiveAuthority()).isEqualTo(AuthorityModel.CENTRALISED);
+    }
+
+    @Test
+    void withMembers() {
+        var now = Instant.now();
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   null, null, null, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var member  = new ActualMembership("agent-1", now);
+        var updated = gi.withMembers(List.of(member));
+        assertThat(updated.members()).containsExactly(member);
+        assertThat(updated.instanceId()).isEqualTo("gi");
+    }
+
+    @Test
+    void withRoleAdoptions() {
+        var now    = Instant.now();
+        var member = new ActualMembership("agent-1", now);
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   null, null, null, List.of(member), List.of(), List.of(),
+                                   now, now, 0);
+        var adoption = new RoleAdoption("agent-1", "lead", null, now);
+        var updated  = gi.withRoleAdoptions(List.of(adoption));
+        assertThat(updated.roleAdoptions()).containsExactly(adoption);
+    }
+
+    @Test
+    void withMissionCommitments() {
+        var now = Instant.now();
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   null, null, null, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var commitment = new MissionCommitment("mission-1", "agent-1", now);
+        var updated    = gi.withMissionCommitments(List.of(commitment));
+        assertThat(updated.missionCommitments()).containsExactly(commitment);
+    }
+
+    @Test
+    void withLastTransitionAt() {
+        var now   = Instant.now();
+        var later = now.plusSeconds(60);
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   null, null, null, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var updated = gi.withLastTransitionAt(later);
+        assertThat(updated.lastTransitionAt()).isEqualTo(later);
+        assertThat(updated.createdAt()).isEqualTo(now);
+    }
+
+    @Test
+    void withVersion() {
+        var now = Instant.now();
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   null, null, null, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var updated = gi.withVersion(5);
+        assertThat(updated.version()).isEqualTo(5);
+    }
+
+    @Test
+    void witherValidatesRoleAdoptionMembershipInvariant() {
+        var now = Instant.now();
+        var gi = new GroupInstance("gi", "s", "t",
+                                   GroupLifecycleState.ACTIVE, FormationOrigin.TOP_DOWN,
+                                   null, null, null, List.of(), List.of(), List.of(),
+                                   now, now, 0);
+        var adoption = new RoleAdoption("nonexistent", "lead", null, now);
+        assertThatThrownBy(() -> gi.withRoleAdoptions(List.of(adoption)))
+                .isInstanceOf(OrgValidationException.class)
+                .hasMessageContaining("membership");
+    }
+
 }

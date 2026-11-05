@@ -293,7 +293,9 @@ Optional module providing agent organizational structure -- units, memberships, 
 - `OrgStructure.define(tenancyId)` -- compositional DSL for programmatic org definition.
 - `OrgGoalCompiler` -- maps org POJOs to desiredstate graph for reconciliation.
 
-**Society types on OrganizationalUnit:** `topology` (open string), `topologyVocabulary`, `authorityModel` (`AuthorityModel` enum: CENTRALISED, DISTRIBUTED, HYBRID, HIERARCHICAL, GRADUATED), `selfDetermination` (0.0--1.0), `policy` (`GroupPolicy` with `FormationRules`, `normativePriority`, `NormSpecificity`), `roleSpecs` (`List<RoleSpec>` with cardinality, incompatibility, and `RolePolicy` per role), `missions` (`List<MissionSpec>` with `requiredRoles`, `minCommitters`, `maxCommitters`).
+**Society types on OrganizationalUnit:** `topology` (open string), `topologyVocabulary`, `authorityModel` (`AuthorityModel` enum: CENTRALISED, DISTRIBUTED, HYBRID, HIERARCHICAL, GRADUATED), `selfDetermination` (0.0--1.0), `policy` (`GroupPolicy` with `FormationRules`, `normativePriority`, `NormSpecificity`, `dissolutionDrainTimeoutMinutes`), `roleSpecs` (`List<RoleSpec>` with cardinality, incompatibility, `RolePolicy` per role, `obligations` and `permissions` as norm identifiers), `missions` (`List<MissionSpec>` with `requiredRoles`, `minCommitters`, `maxCommitters`).
+
+**Topology governance:** `TopologyFamily` enum (DISTRIBUTED, CENTRALISED, INDEPENDENT) classifies topology values into families. `TopologyFamilyClassifier` SPI resolves topology strings to families — `WellKnownTopologyFamilyClassifier` is the `@DefaultBean` mapping swarm/mesh → DISTRIBUTED, hive → CENTRALISED, many → INDEPENDENT.
 
 ### Dynamic Group Lifecycle
 

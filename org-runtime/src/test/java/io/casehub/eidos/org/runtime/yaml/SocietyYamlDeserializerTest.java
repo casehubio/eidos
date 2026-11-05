@@ -1,6 +1,11 @@
 package io.casehub.eidos.org.runtime.yaml;
 
-import io.casehub.eidos.org.api.*;
+import io.casehub.eidos.org.api.AuthorityModel;
+import io.casehub.eidos.org.api.FormationPath;
+import io.casehub.eidos.org.api.GroupPolicy;
+import io.casehub.eidos.org.api.NormSpecificity;
+import io.casehub.eidos.org.api.OrganizationalUnit;
+import io.casehub.eidos.org.api.PolicyKind;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -91,6 +96,34 @@ class SocietyYamlDeserializerTest {
             .filter(p -> p.kind() == PolicyKind.PERMISSION).findFirst().orElseThrow();
         assertThat(permission.capabilityName()).isEqualTo("merge-authority");
     }
+
+    @Test
+    void obligationsAndPermissionsDeserialized() {
+        var guild = unitById("dev-guild");
+        var lead = guild.roleSpecs().stream()
+                        .filter(r -> r.roleName().equals("lead")).findFirst().orElseThrow();
+        assertThat(lead.obligations()).containsExactly("review-output", "approve-plan", "report-status");
+        assertThat(lead.permissions()).containsExactly("provision-agent", "change-topology", "create-subgroup");
+
+        var contributor = guild.roleSpecs().stream()
+                               .filter(r -> r.roleName().equals("contributor")).findFirst().orElseThrow();
+        assertThat(contributor.obligations()).containsExactly("process-assigned-work");
+        assertThat(contributor.permissions()).containsExactly("signal-consensus", "request-collaboration");
+    }
+
+    @Test
+    void dissolutionDrainTimeoutDeserialized() {
+        var guild = unitById("dev-guild");
+        assertThat(guild.policy().dissolutionDrainTimeoutMinutes()).isEqualTo(15);
+    }
+
+    @Test
+    void defaultDrainTimeoutWhenOmitted() {
+        var squad = unitById("ops-squad");
+        assertThat(squad.policy().dissolutionDrainTimeoutMinutes())
+                .isEqualTo(GroupPolicy.DEFAULT_DISSOLUTION_DRAIN_TIMEOUT_MINUTES);
+    }
+
 
     @Test void missionsDeserialized() {
         var guild = unitById("dev-guild");

@@ -55,9 +55,10 @@ public class AnnotatedOrgConfig {
     }
 
     public static class GroupPolicyConfig {
-        public int normativePriority;
-        public String normSpecificity;
+        public int                  normativePriority;
+        public String               normSpecificity;
         public FormationRulesConfig formationRules;
+        public long                 dissolutionDrainTimeoutMinutes;
 
         public GroupPolicyConfig() {}
     }
@@ -73,12 +74,14 @@ public class AnnotatedOrgConfig {
     }
 
     public static class RoleSpecConfig {
-        public String roleName;
-        public String roleVocabulary;
-        public int minCardinality;
-        public int maxCardinality;
-        public String[] incompatibleWith;
+        public String             roleName;
+        public String             roleVocabulary;
+        public int                minCardinality;
+        public int                maxCardinality;
+        public String[]           incompatibleWith;
         public RolePolicyConfig[] policies;
+        public String[]           obligations;
+        public String[]           permissions;
 
         public RoleSpecConfig() {}
     }
