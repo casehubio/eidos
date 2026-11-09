@@ -14,6 +14,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.List;
+import java.util.Optional;
 
 @McpDomain(value = "eidos/agents", app = "eidos",
     basePath = "/api/eidos/agents",
@@ -33,13 +34,13 @@ public class EidosAgentApi {
     @PlatformQuery("Find agents matching optional criteria — no params lists all")
     @RestPath("")
     public List<AgentDescriptor> findAgents(
-            @QueryParam("slot") String slot,
-            @QueryParam("capability") String capabilityName,
-            @QueryParam("goal") String goalName,
-            @QueryParam("domain") String taskDomain,
-            @QueryParam("maxDepth") Integer maxDepth) {
+            @QueryParam("slot") Optional<String> slot,
+            @QueryParam("capability") Optional<String> capabilityName,
+            @QueryParam("goal") Optional<String> goalName,
+            @QueryParam("domain") Optional<String> taskDomain,
+            @QueryParam("maxDepth") Optional<Integer> maxDepth) {
         String tenancyId = currentPrincipal.tenancyId();
-        var query = new AgentQuery(slot, capabilityName, tenancyId, taskDomain, goalName, maxDepth);
+        var query = new AgentQuery(slot.orElse(null), capabilityName.orElse(null), tenancyId, taskDomain.orElse(null), goalName.orElse(null), maxDepth.orElse(null));
         return registry.find(query).stream()
                 .map(AgentMatch::descriptor)
                 .map(this::filterPrivate)
