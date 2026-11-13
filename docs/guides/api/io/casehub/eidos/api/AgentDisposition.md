@@ -6,6 +6,8 @@
 
 ## Fields
 
+### `ampdFacets` (`java.util.List<io.casehub.eidos.api.AmpdFacet>`)
+
 ### `autonomy` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
 ### `conflictMode` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
@@ -27,6 +29,8 @@
 ### `styleProfile` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
 ## Record Components
+
+### `ampdFacets` (`java.util.List<io.casehub.eidos.api.AmpdFacet>`)
 
 ### `autonomy` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
@@ -65,7 +69,25 @@
 - `mbtiType` (`java.lang.String`)
 - `enneagramType` (`java.lang.String`)
 
+### `public AgentDisposition(java.util.List<io.casehub.eidos.api.DispositionValue> socialOrient, java.util.List<io.casehub.eidos.api.DispositionValue> ruleFollowing, java.util.List<io.casehub.eidos.api.DispositionValue> riskAppetite, java.util.List<io.casehub.eidos.api.DispositionValue> autonomy, java.util.List<io.casehub.eidos.api.DispositionValue> conflictMode, boolean delegation, java.util.List<io.casehub.eidos.api.DispositionValue> dispositionProfile, java.util.List<io.casehub.eidos.api.DispositionValue> styleProfile, java.lang.String mbtiType, java.lang.String enneagramType, java.util.List<io.casehub.eidos.api.AmpdFacet> ampdFacets)`
+
+#### Parameters
+
+- `socialOrient` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `ruleFollowing` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `riskAppetite` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `autonomy` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `conflictMode` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `delegation` (`boolean`)
+- `dispositionProfile` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `styleProfile` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `mbtiType` (`java.lang.String`)
+- `enneagramType` (`java.lang.String`)
+- `ampdFacets` (`java.util.List<io.casehub.eidos.api.AmpdFacet>`)
+
 ## Methods
+
+### `public java.util.List<io.casehub.eidos.api.AmpdFacet> ampdFacets()`
 
 ### `public java.util.List<io.casehub.eidos.api.DispositionValue> autonomy()`
 
