@@ -12,7 +12,8 @@ public record AgentDisposition(
         List<DispositionValue> dispositionProfile,
         List<DispositionValue> styleProfile,
         String mbtiType,
-        String enneagramType
+        String enneagramType,
+        List<AmpdFacet> ampdFacets
 ) {
     public AgentDisposition {
         socialOrient       = sanitizeAxis(socialOrient);
@@ -22,6 +23,23 @@ public record AgentDisposition(
         conflictMode       = sanitizeAxis(conflictMode);
         dispositionProfile = dispositionProfile == null ? List.of() : List.copyOf(dispositionProfile);
         styleProfile       = styleProfile == null ? List.of() : List.copyOf(styleProfile);
+        ampdFacets         = ampdFacets == null ? List.of() : List.copyOf(ampdFacets);
+    }
+
+    public AgentDisposition(
+            List<DispositionValue> socialOrient,
+            List<DispositionValue> ruleFollowing,
+            List<DispositionValue> riskAppetite,
+            List<DispositionValue> autonomy,
+            List<DispositionValue> conflictMode,
+            boolean delegation,
+            List<DispositionValue> dispositionProfile,
+            List<DispositionValue> styleProfile,
+            String mbtiType,
+            String enneagramType
+                           ) {
+        this(socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
+             delegation, dispositionProfile, styleProfile, mbtiType, enneagramType, List.of());
     }
 
     private static List<DispositionValue> sanitizeAxis(List<DispositionValue> values) {
@@ -56,6 +74,7 @@ public record AgentDisposition(
         private List<DispositionValue> styleProfile       = List.of();
         private String                 mbtiType;
         private String                 enneagramType;
+        private List<AmpdFacet>        ampdFacets         = List.of();
 
         public Builder socialOrient(String v) {
             this.socialOrient = v == null ? List.of() : List.of(DispositionValue.of(v));
@@ -167,10 +186,21 @@ public record AgentDisposition(
             return this;
         }
 
+        public Builder ampdFacets(List<AmpdFacet> v) {
+            this.ampdFacets = v == null ? List.of() : List.copyOf(v);
+            return this;
+        }
+
+        public Builder ampdFacets(AmpdFacet... values) {
+            this.ampdFacets = List.of(values);
+            return this;
+        }
+
         public AgentDisposition build() {
             return new AgentDisposition(
                     socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
-                    delegation, dispositionProfile, styleProfile, mbtiType, enneagramType);
+                    delegation, dispositionProfile, styleProfile, mbtiType, enneagramType,
+                    ampdFacets);
         }
     }
 }
