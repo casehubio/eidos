@@ -38,7 +38,7 @@ class EidosAgentApiTest {
         when(registry.find(any(AgentQuery.class)))
             .thenReturn(List.of(new AgentMatch(descriptor, null)));
 
-        var result = api.findAgents(null, null, null, null, null);
+        var result = api.findAgents(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().agentId()).isEqualTo("agent-1");
@@ -49,7 +49,7 @@ class EidosAgentApiTest {
         when(registry.find(any(AgentQuery.class)))
             .thenReturn(List.of());
 
-        api.findAgents("planner", null, null, null, null);
+        api.findAgents(Optional.of("planner"), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 
         verify(registry).find(
             org.mockito.ArgumentMatchers.argThat(q ->
@@ -74,7 +74,7 @@ class EidosAgentApiTest {
         when(registry.find(any(AgentQuery.class)))
             .thenReturn(List.of(new AgentMatch(descriptor, null)));
 
-        var result = api.findAgents(null, null, null, null, null);
+        var result = api.findAgents(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().goals()).hasSize(1);
