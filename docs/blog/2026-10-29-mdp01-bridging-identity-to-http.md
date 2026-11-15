@@ -2,7 +2,7 @@
 layout: post
 title: "Bridging Identity to HTTP"
 date: 2026-10-29
-entry_type: article
+entry_type: note
 subtype: diary
 projects: [casehubio/eidos]
 tags: [eidos, spi, http, agent-identity, platform-integration]

@@ -2,7 +2,7 @@
 layout: post
 title: "The Manifest That Ends the Copies"
 date: 2026-10-27
-entry_type: article
+entry_type: note
 subtype: diary
 projects: [casehubio/eidos]
 tags: [vocabulary, personality, json, build-time-generation, cross-repo]

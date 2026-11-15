@@ -2,7 +2,7 @@
 layout: post
 title: "Six Fields to a Personality"
 date: 2026-10-30
-entry_type: article
+entry_type: note
 subtype: diary
 projects: [casehubio/eidos]
 tags: [archetype, disposition, identity, yaml, auto-derivation, personality]
