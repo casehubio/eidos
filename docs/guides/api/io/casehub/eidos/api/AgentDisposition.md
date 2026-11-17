@@ -24,6 +24,8 @@
 
 ### `ruleFollowing` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
+### `situationalProfiles` (`java.util.List<io.casehub.eidos.api.SituationalProfile>`)
+
 ### `socialOrient` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
 ### `styleProfile` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
@@ -47,6 +49,8 @@
 ### `riskAppetite` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
 ### `ruleFollowing` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+
+### `situationalProfiles` (`java.util.List<io.casehub.eidos.api.SituationalProfile>`)
 
 ### `socialOrient` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
@@ -84,6 +88,23 @@
 - `mbtiType` (`java.lang.String`)
 - `enneagramType` (`java.lang.String`)
 - `ampdFacets` (`java.util.List<io.casehub.eidos.api.AmpdFacet>`)
+
+### `public AgentDisposition(java.util.List<io.casehub.eidos.api.DispositionValue> socialOrient, java.util.List<io.casehub.eidos.api.DispositionValue> ruleFollowing, java.util.List<io.casehub.eidos.api.DispositionValue> riskAppetite, java.util.List<io.casehub.eidos.api.DispositionValue> autonomy, java.util.List<io.casehub.eidos.api.DispositionValue> conflictMode, boolean delegation, java.util.List<io.casehub.eidos.api.DispositionValue> dispositionProfile, java.util.List<io.casehub.eidos.api.DispositionValue> styleProfile, java.lang.String mbtiType, java.lang.String enneagramType, java.util.List<io.casehub.eidos.api.AmpdFacet> ampdFacets, java.util.List<io.casehub.eidos.api.SituationalProfile> situationalProfiles)`
+
+#### Parameters
+
+- `socialOrient` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `ruleFollowing` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `riskAppetite` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `autonomy` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `conflictMode` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `delegation` (`boolean`)
+- `dispositionProfile` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `styleProfile` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
+- `mbtiType` (`java.lang.String`)
+- `enneagramType` (`java.lang.String`)
+- `ampdFacets` (`java.util.List<io.casehub.eidos.api.AmpdFacet>`)
+- `situationalProfiles` (`java.util.List<io.casehub.eidos.api.SituationalProfile>`)
 
 ## Methods
 
@@ -133,8 +154,16 @@
 
 - `values` (`java.util.List<io.casehub.eidos.api.DispositionValue>`)
 
+### `public java.util.List<io.casehub.eidos.api.SituationalProfile> situationalProfiles()`
+
 ### `public java.util.List<io.casehub.eidos.api.DispositionValue> socialOrient()`
 
 ### `public java.util.List<io.casehub.eidos.api.DispositionValue> styleProfile()`
 
 ### `public final java.lang.String toString()`
+
+### `private static void validateSituationalProfiles(java.util.List<io.casehub.eidos.api.SituationalProfile> profiles)`
+
+#### Parameters
+
+- `profiles` (`java.util.List<io.casehub.eidos.api.SituationalProfile>`)
