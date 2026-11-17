@@ -1,0 +1,396 @@
+# Archetype-family situational personality profiles
+# 12 families × 5 modes = 60 profiles
+# Facet deltas on 0-100 AMPD scale (|delta| <= 50)
+# Provenance: empirical (published study), consensus (expert panel), estimated (model-derived)
+
+families:
+  caregiver:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 15}
+        - {facet: Emotional Lability, delta: 12}
+        - {facet: Withdrawal, delta: -10}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: -10}
+        - {facet: Withdrawal, delta: -8}
+        - {facet: Callousness, delta: -5}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: -8}
+        - {facet: Withdrawal, delta: -12}
+        - {facet: Attention Seeking, delta: 5}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 10}
+        - {facet: Hostility, delta: -8}
+        - {facet: Withdrawal, delta: 8}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 8}
+        - {facet: Grandiosity, delta: -5}
+        - {facet: Suspiciousness, delta: 5}
+
+  creator:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Emotional Lability, delta: 15}
+        - {facet: Withdrawal, delta: 12}
+        - {facet: Impulsivity, delta: 8}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Impulsivity, delta: 10}
+        - {facet: Risk Taking, delta: 8}
+        - {facet: Withdrawal, delta: -15}
+        - {facet: Anxiousness, delta: -12}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Attention Seeking, delta: 10}
+        - {facet: Grandiosity, delta: 5}
+        - {facet: Withdrawal, delta: -8}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 12}
+        - {facet: Attention Seeking, delta: 10}
+        - {facet: Hostility, delta: 5}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 8}
+        - {facet: Manipulativeness, delta: 5}
+        - {facet: Suspiciousness, delta: 5}
+
+  everyman:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 12}
+        - {facet: Suspiciousness, delta: 8}
+        - {facet: Withdrawal, delta: 10}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: -8}
+        - {facet: Withdrawal, delta: -10}
+        - {facet: Suspiciousness, delta: -5}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Withdrawal, delta: -15}
+        - {facet: Anxiousness, delta: -8}
+        - {facet: Suspiciousness, delta: -8}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 12}
+        - {facet: Withdrawal, delta: 10}
+        - {facet: Suspiciousness, delta: 8}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 10}
+        - {facet: Grandiosity, delta: -8}
+        - {facet: Withdrawal, delta: 5}
+
+  explorer:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Risk Taking, delta: 10}
+        - {facet: Impulsivity, delta: 12}
+        - {facet: Anxiousness, delta: -5}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Risk Taking, delta: 15}
+        - {facet: Impulsivity, delta: 8}
+        - {facet: Anxiousness, delta: -12}
+        - {facet: Withdrawal, delta: -10}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Withdrawal, delta: -8}
+        - {facet: Intimacy Avoidance, delta: -5}
+        - {facet: Risk Taking, delta: 5}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Risk Taking, delta: 12}
+        - {facet: Grandiosity, delta: 8}
+        - {facet: Hostility, delta: 5}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Hostility, delta: 8}
+        - {facet: Impulsivity, delta: 8}
+        - {facet: Grandiosity, delta: 5}
+
+  hero:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Risk Taking, delta: 15}
+        - {facet: Grandiosity, delta: 10}
+        - {facet: Hostility, delta: 8}
+        - {facet: Anxiousness, delta: -8}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 10}
+        - {facet: Risk Taking, delta: 10}
+        - {facet: Anxiousness, delta: -15}
+        - {facet: Emotional Lability, delta: -8}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 8}
+        - {facet: Attention Seeking, delta: 8}
+        - {facet: Withdrawal, delta: -10}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 15}
+        - {facet: Hostility, delta: 10}
+        - {facet: Risk Taking, delta: 10}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 12}
+        - {facet: Hostility, delta: 8}
+        - {facet: Manipulativeness, delta: 5}
+
+  innocent:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 18}
+        - {facet: Emotional Lability, delta: 15}
+        - {facet: Withdrawal, delta: 12}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: -12}
+        - {facet: Emotional Lability, delta: -8}
+        - {facet: Risk Taking, delta: 5}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: -10}
+        - {facet: Withdrawal, delta: -12}
+        - {facet: Suspiciousness, delta: -8}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 15}
+        - {facet: Withdrawal, delta: 15}
+        - {facet: Emotional Lability, delta: 10}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Anxiousness, delta: 12}
+        - {facet: Withdrawal, delta: 10}
+        - {facet: Suspiciousness, delta: 8}
+
+  jester:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Impulsivity, delta: 12}
+        - {facet: Attention Seeking, delta: 15}
+        - {facet: Emotional Lability, delta: 8}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Impulsivity, delta: 10}
+        - {facet: Risk Taking, delta: 10}
+        - {facet: Attention Seeking, delta: 12}
+        - {facet: Anxiousness, delta: -10}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Attention Seeking, delta: 15}
+        - {facet: Impulsivity, delta: 8}
+        - {facet: Withdrawal, delta: -15}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Attention Seeking, delta: 12}
+        - {facet: Manipulativeness, delta: 8}
+        - {facet: Deceitfulness, delta: 5}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Hostility, delta: 8}
+        - {facet: Impulsivity, delta: 10}
+        - {facet: Deceitfulness, delta: 5}
+
+  lover:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Emotional Lability, delta: 18}
+        - {facet: Anxiousness, delta: 15}
+        - {facet: Intimacy Avoidance, delta: -10}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Emotional Lability, delta: 8}
+        - {facet: Anxiousness, delta: -10}
+        - {facet: Intimacy Avoidance, delta: -15}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Intimacy Avoidance, delta: -15}
+        - {facet: Withdrawal, delta: -12}
+        - {facet: Attention Seeking, delta: 8}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Emotional Lability, delta: 12}
+        - {facet: Anxiousness, delta: 10}
+        - {facet: Manipulativeness, delta: 8}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Manipulativeness, delta: 8}
+        - {facet: Attention Seeking, delta: 10}
+        - {facet: Intimacy Avoidance, delta: -5}
+
+  magician:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Withdrawal, delta: 15}
+        - {facet: Suspiciousness, delta: 10}
+        - {facet: Grandiosity, delta: 8}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 12}
+        - {facet: Risk Taking, delta: 8}
+        - {facet: Anxiousness, delta: -10}
+        - {facet: Withdrawal, delta: -8}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 8}
+        - {facet: Withdrawal, delta: -5}
+        - {facet: Manipulativeness, delta: 5}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 15}
+        - {facet: Manipulativeness, delta: 10}
+        - {facet: Suspiciousness, delta: 8}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 10}
+        - {facet: Manipulativeness, delta: 10}
+        - {facet: Callousness, delta: 5}
+
+  rebel:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Hostility, delta: 15}
+        - {facet: Impulsivity, delta: 12}
+        - {facet: Risk Taking, delta: 10}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Risk Taking, delta: 15}
+        - {facet: Impulsivity, delta: 8}
+        - {facet: Grandiosity, delta: 8}
+        - {facet: Anxiousness, delta: -10}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Hostility, delta: -8}
+        - {facet: Suspiciousness, delta: -5}
+        - {facet: Withdrawal, delta: -5}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Hostility, delta: 15}
+        - {facet: Grandiosity, delta: 12}
+        - {facet: Risk Taking, delta: 10}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Hostility, delta: 18}
+        - {facet: Impulsivity, delta: 12}
+        - {facet: Grandiosity, delta: 10}
+
+  sage:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Withdrawal, delta: 15}
+        - {facet: Suspiciousness, delta: 12}
+        - {facet: Callousness, delta: 8}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Withdrawal, delta: -8}
+        - {facet: Anxiousness, delta: -10}
+        - {facet: Suspiciousness, delta: -5}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Withdrawal, delta: -10}
+        - {facet: Callousness, delta: -5}
+        - {facet: Grandiosity, delta: 5}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 10}
+        - {facet: Callousness, delta: 8}
+        - {facet: Withdrawal, delta: 8}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 8}
+        - {facet: Suspiciousness, delta: 8}
+        - {facet: Callousness, delta: 5}
+
+  sovereign:
+    stress:
+      provenance: estimated
+      shifts:
+        - {facet: Hostility, delta: 12}
+        - {facet: Grandiosity, delta: 10}
+        - {facet: Manipulativeness, delta: 8}
+    flow:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 12}
+        - {facet: Callousness, delta: 5}
+        - {facet: Anxiousness, delta: -10}
+    social_collaborative:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 8}
+        - {facet: Manipulativeness, delta: 5}
+        - {facet: Callousness, delta: -5}
+    social_competitive:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 15}
+        - {facet: Hostility, delta: 10}
+        - {facet: Manipulativeness, delta: 10}
+    social_hierarchical:
+      provenance: estimated
+      shifts:
+        - {facet: Grandiosity, delta: 15}
+        - {facet: Callousness, delta: 8}
+        - {facet: Manipulativeness, delta: 10}
