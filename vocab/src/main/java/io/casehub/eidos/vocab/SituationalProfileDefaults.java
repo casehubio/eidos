@@ -16,13 +16,17 @@ public final class SituationalProfileDefaults {
     private static final Map<ArchetypeFamily, List<SituationalProfile>> DEFAULTS;
 
     static {
+        Map<String, Object> root;
         var yaml = new Yaml();
-        InputStream is = SituationalProfileDefaults.class.getClassLoader()
-                .getResourceAsStream("META-INF/eidos/archetype-situational-profiles.yaml");
-        if (is == null) {
-            throw new IllegalStateException("archetype-situational-profiles.yaml not found on classpath");
+        try (InputStream is = SituationalProfileDefaults.class.getClassLoader()
+                .getResourceAsStream("META-INF/eidos/archetype-situational-profiles.yaml")) {
+            if (is == null) {
+                throw new IllegalStateException("archetype-situational-profiles.yaml not found on classpath");
+            }
+            root = yaml.load(is);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Failed to load archetype-situational-profiles.yaml", e);
         }
-        Map<String, Object> root = yaml.load(is);
         @SuppressWarnings("unchecked")
         Map<String, Object> families = (Map<String, Object>) root.get("families");
 

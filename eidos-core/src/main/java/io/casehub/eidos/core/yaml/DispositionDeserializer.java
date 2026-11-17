@@ -77,6 +77,7 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
                 var shifts = new ArrayList<AmpdFacetShift>();
                 if (profileNode.has("shifts") && profileNode.get("shifts").isArray()) {
                     for (JsonNode shiftNode : profileNode.get("shifts")) {
+                        if (!shiftNode.has("facet") || !shiftNode.has("delta")) continue;
                         shifts.add(new AmpdFacetShift(
                                 shiftNode.get("facet").asText(),
                                 shiftNode.get("delta").asInt()));

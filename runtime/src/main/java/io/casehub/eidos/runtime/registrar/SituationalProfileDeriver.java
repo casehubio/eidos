@@ -49,12 +49,20 @@ public final class SituationalProfileDeriver {
         var disp = descriptor.disposition() != null
                 ? descriptor.disposition() : io.casehub.eidos.api.AgentDisposition.builder().build();
 
-        var updatedDisp = new io.casehub.eidos.api.AgentDisposition(
-                disp.socialOrient(), disp.ruleFollowing(), disp.riskAppetite(),
-                disp.autonomy(), disp.conflictMode(), disp.delegation(),
-                disp.dispositionProfile(), disp.styleProfile(),
-                disp.mbtiType(), disp.enneagramType(), disp.ampdFacets(),
-                List.copyOf(merged));
+        var updatedDisp = io.casehub.eidos.api.AgentDisposition.builder()
+                .socialOrient(disp.socialOrient())
+                .ruleFollowing(disp.ruleFollowing())
+                .riskAppetite(disp.riskAppetite())
+                .autonomy(disp.autonomy())
+                .conflictMode(disp.conflictMode())
+                .delegation(disp.delegation())
+                .dispositionProfile(disp.dispositionProfile())
+                .styleProfile(disp.styleProfile())
+                .mbtiType(disp.mbtiType())
+                .enneagramType(disp.enneagramType())
+                .ampdFacets(disp.ampdFacets())
+                .situationalProfiles(List.copyOf(merged))
+                .build();
 
         return descriptor.toBuilder().disposition(updatedDisp).build();
     }

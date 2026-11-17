@@ -14,7 +14,7 @@ public final class AgentDescriptorComparator {
 
     static final int COMPARED_FIELD_COUNT = 28;
     static final int COMPARED_CAPABILITY_FIELD_COUNT = 12;
-    static final int COMPARED_DISPOSITION_FIELD_COUNT = 11;
+    static final int COMPARED_DISPOSITION_FIELD_COUNT = 12;
     static final int COMPARED_GOAL_FIELD_COUNT = 7;
     static final int COMPARED_CONSTRAINT_FIELD_COUNT = 3;
 
@@ -94,6 +94,7 @@ public final class AgentDescriptorComparator {
         compareField(drifts, "disposition.mbtiType", desired.mbtiType(), actual.mbtiType());
         compareField(drifts, "disposition.enneagramType", desired.enneagramType(), actual.enneagramType());
         compareField(drifts, "disposition.ampdFacets", desired.ampdFacets(), actual.ampdFacets());
+        compareField(drifts, "disposition.situationalProfiles", desired.situationalProfiles(), actual.situationalProfiles());
     }
 
     private static void compareCapabilities(List<FieldDrift> drifts,
