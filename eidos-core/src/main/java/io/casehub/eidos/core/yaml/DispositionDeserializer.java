@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AmpdFacetShift;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.DispositionValue;
 import io.casehub.eidos.api.PersonalityInput;
 import io.casehub.eidos.api.PersonalityTypeDeriver;
+import io.casehub.eidos.api.SituationalProfile;
 import io.casehub.eidos.api.VocabularyRegistry;
 
 import java.io.IOException;
@@ -66,6 +68,24 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
 
         builder.mbtiType(mbtiType.isEmpty() ? null : mbtiType);
         builder.enneagramType(enneagramType.isEmpty() ? null : enneagramType);
+
+        if (root.has("situationalProfiles") && root.get("situationalProfiles").isArray()) {
+            var profiles = new ArrayList<SituationalProfile>();
+            for (JsonNode profileNode : root.get("situationalProfiles")) {
+                String mode = profileNode.has("mode") ? profileNode.get("mode").asText() : null;
+                String provenance = profileNode.has("provenance") ? profileNode.get("provenance").asText() : null;
+                var shifts = new ArrayList<AmpdFacetShift>();
+                if (profileNode.has("shifts") && profileNode.get("shifts").isArray()) {
+                    for (JsonNode shiftNode : profileNode.get("shifts")) {
+                        shifts.add(new AmpdFacetShift(
+                                shiftNode.get("facet").asText(),
+                                shiftNode.get("delta").asInt()));
+                    }
+                }
+                profiles.add(new SituationalProfile(mode, shifts, provenance));
+            }
+            builder.situationalProfiles(profiles);
+        }
 
         return builder.build();
     }
