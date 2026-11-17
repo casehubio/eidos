@@ -13,17 +13,20 @@ public record AgentDisposition(
         List<DispositionValue> styleProfile,
         String mbtiType,
         String enneagramType,
-        List<AmpdFacet> ampdFacets
+        List<AmpdFacet> ampdFacets,
+        List<SituationalProfile> situationalProfiles
 ) {
     public AgentDisposition {
-        socialOrient       = sanitizeAxis(socialOrient);
-        ruleFollowing      = sanitizeAxis(ruleFollowing);
-        riskAppetite       = sanitizeAxis(riskAppetite);
-        autonomy           = sanitizeAxis(autonomy);
-        conflictMode       = sanitizeAxis(conflictMode);
-        dispositionProfile = dispositionProfile == null ? List.of() : List.copyOf(dispositionProfile);
-        styleProfile       = styleProfile == null ? List.of() : List.copyOf(styleProfile);
-        ampdFacets         = ampdFacets == null ? List.of() : List.copyOf(ampdFacets);
+        socialOrient        = sanitizeAxis(socialOrient);
+        ruleFollowing       = sanitizeAxis(ruleFollowing);
+        riskAppetite        = sanitizeAxis(riskAppetite);
+        autonomy            = sanitizeAxis(autonomy);
+        conflictMode        = sanitizeAxis(conflictMode);
+        dispositionProfile  = dispositionProfile == null ? List.of() : List.copyOf(dispositionProfile);
+        styleProfile        = styleProfile == null ? List.of() : List.copyOf(styleProfile);
+        ampdFacets          = ampdFacets == null ? List.of() : List.copyOf(ampdFacets);
+        situationalProfiles = situationalProfiles == null ? List.of() : List.copyOf(situationalProfiles);
+        validateSituationalProfiles(situationalProfiles);
     }
 
     public AgentDisposition(
@@ -39,7 +42,34 @@ public record AgentDisposition(
             String enneagramType
                            ) {
         this(socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
-             delegation, dispositionProfile, styleProfile, mbtiType, enneagramType, List.of());
+             delegation, dispositionProfile, styleProfile, mbtiType, enneagramType, List.of(), List.of());
+    }
+
+    public AgentDisposition(
+            List<DispositionValue> socialOrient,
+            List<DispositionValue> ruleFollowing,
+            List<DispositionValue> riskAppetite,
+            List<DispositionValue> autonomy,
+            List<DispositionValue> conflictMode,
+            boolean delegation,
+            List<DispositionValue> dispositionProfile,
+            List<DispositionValue> styleProfile,
+            String mbtiType,
+            String enneagramType,
+            List<AmpdFacet> ampdFacets
+                           ) {
+        this(socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
+             delegation, dispositionProfile, styleProfile, mbtiType, enneagramType, ampdFacets, List.of());
+    }
+
+    private static void validateSituationalProfiles(List<SituationalProfile> profiles) {
+        if (profiles == null || profiles.isEmpty()) {return;}
+        var seen = new java.util.HashSet<String>();
+        for (var profile : profiles) {
+            if (!seen.add(profile.mode())) {
+                throw new IllegalArgumentException("Duplicate situational mode: " + profile.mode());
+            }
+        }
     }
 
     private static List<DispositionValue> sanitizeAxis(List<DispositionValue> values) {
@@ -64,17 +94,18 @@ public record AgentDisposition(
     }
 
     public static final class Builder {
-        private List<DispositionValue> socialOrient       = List.of();
-        private List<DispositionValue> ruleFollowing      = List.of();
-        private List<DispositionValue> riskAppetite       = List.of();
-        private List<DispositionValue> autonomy           = List.of();
-        private List<DispositionValue> conflictMode       = List.of();
-        private boolean                delegation;
-        private List<DispositionValue> dispositionProfile = List.of();
-        private List<DispositionValue> styleProfile       = List.of();
-        private String                 mbtiType;
-        private String                 enneagramType;
-        private List<AmpdFacet>        ampdFacets         = List.of();
+        private List<DispositionValue>   socialOrient        = List.of();
+        private List<DispositionValue>   ruleFollowing       = List.of();
+        private List<DispositionValue>   riskAppetite        = List.of();
+        private List<DispositionValue>   autonomy            = List.of();
+        private List<DispositionValue>   conflictMode        = List.of();
+        private boolean                  delegation;
+        private List<DispositionValue>   dispositionProfile  = List.of();
+        private List<DispositionValue>   styleProfile        = List.of();
+        private String                   mbtiType;
+        private String                   enneagramType;
+        private List<AmpdFacet>          ampdFacets          = List.of();
+        private List<SituationalProfile> situationalProfiles = List.of();
 
         public Builder socialOrient(String v) {
             this.socialOrient = v == null ? List.of() : List.of(DispositionValue.of(v));
@@ -196,11 +227,21 @@ public record AgentDisposition(
             return this;
         }
 
+        public Builder situationalProfiles(List<SituationalProfile> v) {
+            this.situationalProfiles = v == null ? List.of() : List.copyOf(v);
+            return this;
+        }
+
+        public Builder situationalProfiles(SituationalProfile... values) {
+            this.situationalProfiles = List.of(values);
+            return this;
+        }
+
         public AgentDisposition build() {
             return new AgentDisposition(
                     socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
                     delegation, dispositionProfile, styleProfile, mbtiType, enneagramType,
-                    ampdFacets);
+                    ampdFacets, situationalProfiles);
         }
     }
 }
