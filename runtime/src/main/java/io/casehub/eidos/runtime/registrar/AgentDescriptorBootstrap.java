@@ -40,6 +40,7 @@ public class AgentDescriptorBootstrap {
                            .map(d -> ArchetypeDeriver.deriveDispositionFromArchetype(d, vocabRegistry))
                            .map(d -> DescriptorCollector.deriveDispositionAxes(d, vocabRegistry))
                            .map(ArchetypeDeriver::deriveArchetype)
+                           .map(SituationalProfileDeriver::deriveSituationalProfiles)
                            .forEach(registry::register);
     }
 
