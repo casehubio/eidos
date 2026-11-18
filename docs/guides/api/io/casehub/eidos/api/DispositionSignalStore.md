@@ -11,7 +11,7 @@ Persistent store for cognitive function activation signals used by JPAF personal
 
 ## Methods
 
-### `public abstract java.util.Map<java.lang.String,java.lang.Integer> activationCounts(java.lang.String agentId, java.lang.String tenancyId)`
+### `public abstract java.util.Map<java.lang.String,java.lang.Double> activationCounts(java.lang.String agentId, java.lang.String tenancyId)`
 
 #### Parameters
 
