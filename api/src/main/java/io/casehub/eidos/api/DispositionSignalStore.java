@@ -12,7 +12,7 @@ public interface DispositionSignalStore {
 
     void recordActivation(String agentId, String tenancyId, String functionTerm);
 
-    Map<String, Integer> activationCounts(String agentId, String tenancyId);
+    Map<String, Double> activationCounts(String agentId, String tenancyId);
 
     /**
      * Multiplicative decay of all activation counts for an agent.
@@ -33,7 +33,7 @@ public interface DispositionSignalStore {
     default Map<String, ValenceCounts> valenceCounts(String agentId, String tenancyId) {
         var counts = activationCounts(agentId, tenancyId);
         var result = new java.util.LinkedHashMap<String, ValenceCounts>();
-        counts.forEach((k, v) -> result.put(k, new ValenceCounts(v, 0)));
+        counts.forEach((k, v) -> result.put(k, new ValenceCounts((int) Math.round(v), 0)));
         return result;
     }
 

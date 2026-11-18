@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class InMemoryDispositionSignalStoreTest {
 
@@ -19,7 +20,7 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("agent-1", "tenant-1", "ti");
         store.recordActivation("agent-1", "tenant-1", "ti");
         var counts = store.activationCounts("agent-1", "tenant-1");
-        assertThat(counts).containsEntry("ti", 2);
+        assertThat(counts).containsEntry("ti", 2.0);
     }
 
     @Test
@@ -28,7 +29,7 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("a", "t", "ne");
         store.recordActivation("a", "t", "ne");
         var counts = store.activationCounts("a", "t");
-        assertThat(counts).containsEntry("ti", 1).containsEntry("ne", 2);
+        assertThat(counts).containsEntry("ti", 1.0).containsEntry("ne", 2.0);
     }
 
     @Test
@@ -40,54 +41,53 @@ class InMemoryDispositionSignalStoreTest {
     void decay_retains_fraction_of_counts() {
         for (int i = 0; i < 10; i++) {store.recordActivation("a", "t", "ti");}
         store.decay("a", "t", 0.20);
-        // 0.20 retention: 10 * 0.2 = 2
-        assertThat(store.activationCounts("a", "t")).containsEntry("ti", 2);
+        // 0.20 retention: 10 * 0.2 = 2.0
+        assertThat(store.activationCounts("a", "t")).containsEntry("ti", 2.0);
     }
 
     @Test
-    void decay_single_activation_drops_to_zero() {
+    void decay_single_activation_retains_fractional_weight() {
         store.recordActivation("a", "t", "ne");
         store.decay("a", "t", 0.20);
-        // 1 * 0.2 = 0.2 → truncated to 0
-        assertThat(store.activationCounts("a", "t").getOrDefault("ne", 0)).isEqualTo(0);
+        // 1.0 * 0.2 = 0.2 — no longer truncated to zero
+        assertThat(store.activationCounts("a", "t")).containsEntry("ne", 0.2);
     }
 
     @Test
     void decay_retains_fraction_of_higher_counts() {
         for (int i = 0; i < 100; i++) {store.recordActivation("a", "t", "fi");}
         store.decay("a", "t", 0.20);
-        // 0.20 retention: 100 * 0.2 = 20
-        assertThat(store.activationCounts("a", "t")).containsEntry("fi", 20);
+        // 0.20 retention: 100 * 0.2 = 20.0
+        assertThat(store.activationCounts("a", "t")).containsEntry("fi", 20.0);
     }
 
     @Test
-    void decay_truncates_to_integer() {
+    void decay_preserves_fractional_weight() {
         for (int i = 0; i < 3; i++) {store.recordActivation("a", "t", "se");}
         store.decay("a", "t", 0.70);
-        // 3 * 0.7 = 2.1 → truncated to 2
-        assertThat(store.activationCounts("a", "t")).containsEntry("se", 2);
+        // 3.0 * 0.7 = 2.1 — no longer truncated
+        assertThat(store.activationCounts("a", "t").get("se")).isCloseTo(2.1, within(0.001));
     }
 
     @Test
     void decay_zero_factor_clears_all() {
         for (int i = 0; i < 5; i++) {store.recordActivation("a", "t", "ti");}
         store.decay("a", "t", 0.0);
-        // 0.0 retention = instant reset
-        assertThat(store.activationCounts("a", "t").getOrDefault("ti", 0)).isEqualTo(0);
+        assertThat(store.activationCounts("a", "t")).doesNotContainKey("ti");
     }
 
     @Test
     void decay_full_factor_retains_all() {
         for (int i = 0; i < 5; i++) {store.recordActivation("a", "t", "ti");}
         store.decay("a", "t", 1.0);
-        // 1.0 retention = no decay
-        assertThat(store.activationCounts("a", "t")).containsEntry("ti", 5);
+        assertThat(store.activationCounts("a", "t")).containsEntry("ti", 5.0);
     }
 
     @Test
-    void decay_removes_zero_count_entries() {
+    void decay_removes_zero_weight_entries() {
         store.recordActivation("a", "t", "ne");
-        store.decay("a", "t", 0.20);
+        store.decay("a", "t", 0.0);
+        // 0.0 retention: 1.0 * 0.0 = 0.0 → removed
         assertThat(store.activationCounts("a", "t")).doesNotContainKey("ne");
     }
 
@@ -121,7 +121,7 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("a2", "t", "fe");
         store.clear("a1", "t");
         assertThat(store.activationCounts("a1", "t")).isEmpty();
-        assertThat(store.activationCounts("a2", "t")).containsEntry("fe", 1);
+        assertThat(store.activationCounts("a2", "t")).containsEntry("fe", 1.0);
     }
 
     @Test
@@ -129,21 +129,20 @@ class InMemoryDispositionSignalStoreTest {
         for (int i = 0; i < 10; i++) {store.recordActivation("a1", "t", "ti");}
         for (int i = 0; i < 10; i++) {store.recordActivation("a2", "t", "ti");}
         store.decay("a1", "t", 0.50);
-        // 0.50 retention: 10 * 0.5 = 5
-        assertThat(store.activationCounts("a1", "t")).containsEntry("ti", 5);
-        assertThat(store.activationCounts("a2", "t")).containsEntry("ti", 10);
+        assertThat(store.activationCounts("a1", "t")).containsEntry("ti", 5.0);
+        assertThat(store.activationCounts("a2", "t")).containsEntry("ti", 10.0);
     }
 
     @Test
     void concurrent_recordActivation_is_thread_safe() throws Exception {
-        final int threads = 20;
-        final Thread[] ts = new Thread[threads];
+        final int      threads = 20;
+        final Thread[] ts      = new Thread[threads];
         for (int i = 0; i < threads; i++) {
             ts[i] = new Thread(() -> store.recordActivation("a", "t", "ti"));
         }
-        for (final Thread t : ts) t.start();
-        for (final Thread t : ts) t.join();
-        assertThat(store.activationCounts("a", "t")).containsEntry("ti", threads);
+        for (final Thread t : ts) {t.start();}
+        for (final Thread t : ts) {t.join();}
+        assertThat(store.activationCounts("a", "t")).containsEntry("ti", (double) threads);
     }
 
     @Test

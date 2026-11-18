@@ -15,26 +15,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ApplicationScoped
 public class InMemoryDispositionSignalStore implements DispositionSignalStore {
 
-    private final ConcurrentHashMap<String, ConcurrentHashMap<String, AtomicInteger>> store =
+    private final ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> store =
             new ConcurrentHashMap<>();
 
     @Override
     public void recordActivation(final String agentId, final String tenancyId,
-                                  final String functionTerm) {
+                                 final String functionTerm) {
         store.computeIfAbsent(key(agentId, tenancyId), k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(functionTerm, k -> new AtomicInteger())
-                .incrementAndGet();
+             .merge(functionTerm, 1.0, Double::sum);
     }
 
     @Override
-    public Map<String, Integer> activationCounts(final String agentId,
-                                                  final String tenancyId) {
+    public Map<String, Double> activationCounts(final String agentId,
+                                                final String tenancyId) {
         final var functions = store.get(key(agentId, tenancyId));
-        if (functions == null) return Map.of();
-        final var result = new HashMap<String, Integer>();
-        functions.forEach((term, count) -> {
-            final int v = count.get();
-            if (v > 0) result.put(term, v);
+        if (functions == null) {return Map.of();}
+        final var result = new HashMap<String, Double>();
+        functions.forEach((term, weight) -> {
+            if (weight > 0.0) {result.put(term, weight);}
         });
         return Map.copyOf(result);
     }
@@ -44,11 +42,9 @@ public class InMemoryDispositionSignalStore implements DispositionSignalStore {
                       final double decayFactor) {
         final var functions = store.get(key(agentId, tenancyId));
         if (functions == null) {return;}
-        functions.forEach((term, count) -> {
-            final int newCount = (int) (count.get() * decayFactor);
-            count.set(newCount);
-        });
-        functions.entrySet().removeIf(e -> e.getValue().get() <= 0);}
+        functions.replaceAll((term, weight) -> weight * decayFactor);
+        functions.entrySet().removeIf(e -> e.getValue() <= 0.0);
+    }
 
     @Override
     public void clear(final String agentId, final String tenancyId) {
