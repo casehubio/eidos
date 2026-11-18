@@ -8,7 +8,7 @@ import io.casehub.eidos.api.AgentStateStore;
 import io.casehub.eidos.api.BehavioralSignalStore;
 import io.casehub.eidos.api.DispositionEvolution;
 import io.casehub.eidos.api.DispositionHealth;
-import io.casehub.eidos.api.DispositionProfileStore;
+import io.casehub.eidos.api.DispositionProfileListener;
 import io.casehub.eidos.api.LivedDispositionSource;
 import io.casehub.eidos.api.DispositionSignalStore;
 import io.casehub.eidos.api.GoalEvolution;
@@ -32,7 +32,7 @@ import io.casehub.eidos.core.health.NoOpAgentStateStore;
 import io.casehub.eidos.core.health.NoOpBehavioralSignalStore;
 import io.casehub.eidos.core.health.NoOpDispositionEvolution;
 import io.casehub.eidos.core.health.NoOpDispositionHealth;
-import io.casehub.eidos.core.health.NoOpDispositionProfileStore;
+import io.casehub.eidos.core.health.NoOpDispositionProfileListener;
 import io.casehub.eidos.core.health.NoOpLivedDispositionSource;
 import io.casehub.eidos.core.health.NoOpDispositionSignalStore;
 import io.casehub.eidos.core.health.NoOpGoalEvolution;
@@ -99,8 +99,8 @@ public class EidosCoreProducer {
     }
 
     @Produces @DefaultBean
-    DispositionProfileStore dispositionProfileStore() {
-        return new NoOpDispositionProfileStore();
+    DispositionProfileListener dispositionProfileListener() {
+        return new NoOpDispositionProfileListener();
     }
 
     @Produces
