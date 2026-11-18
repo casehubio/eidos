@@ -24,7 +24,7 @@ Any Quarkus app that depends on `casehub-eidos` can register agents with structu
 | `casehub-eidos-annotations` | Optional -- annotation-driven identity | Quarkus extension: `@Identity` (+ `weightsFingerprint`, `modelVersion`), `@Disposition` (+ `@DispositionWeight[]` weighted profiles, `mbtiType`, `enneagramType`, `@AxisVocabulary[]`), `@AgentGoals`, `@AgentConstraints` generate `AgentDescriptorRegistrar` beans at build time. `@AgentCapabilityDef` (repeatable, full capability metadata with `@EpistemicDomain`) — merge semantics with `@Discoverable` (union, name collision → build error). `@AgentTemplateRef` (repeatable, with `@TemplateArg`). `@ExtensionData` (with `@ExtensionEntry` for flat key-value extension data). Build-time validation: NaN guards, range checks, duplicate detection, orphan warnings. Depends on `casehub-eidos`. |
 | `casehub-eidos-routing` | Optional -- engine-aware selection | `EngineAwareAgentSelector` `@Alternative @Priority(1)`. Bridges `AgentMatch` → `AgentCandidate` → `AgentRoutingStrategy`. Requires `casehub-engine-api` on classpath. Displaces `SimpleAgentSelector` via CDI priority. Add when deploying with casehub-engine for trust-maturity-model-compliant selection. |
 | `casehub-eidos-org-api` | Optional -- org model compile dependency | Organizational model types: `OrganizationalUnit`, `AgentRelationship`, `Membership`, `RelationshipKind`, `RelationshipScope`, `AttestationGrant`, `OrgQuery`, `OrgRegistry` SPI, `OrgRegistrar` SPI, `OrgStructure` DSL. Pure Java + `casehub-platform-api` (for `ModelQuery`), no CDI. |
-| `casehub-eidos-org` | Optional -- org model runtime | `OrgBootstrap` (startup registrar discovery), `OrgGoalCompiler` (desiredstate integration), `ClasspathYamlOrgRegistrar` (META-INF/eidos/organization.yaml), YAML Jackson module. |
+| `casehub-eidos-org` | Optional -- org model runtime | `OrgBootstrap` (startup registrar discovery), `OrgGoalCompiler` (desiredstate integration), `ClasspathYamlOrgRegistrar` (META-INF/eidos/organization.yaml), YAML Jackson module. Trust relevance: `OrgProximityRelevanceFactor` (attestation relevance via org distance), `OrgDistanceAttestationEnricher` (write-time org distance snapshot). Requires `casehub-ledger-api` on classpath. |
 | `casehub-eidos-org-memory` | Tests and prototyping | `@Alternative @Priority(1)` `InMemoryOrgRegistry` with cycle detection. Activate by adding as dependency. |
 | `casehub-eidos-org-annotations` | Optional -- annotation-driven org structure | Quarkus extension: `@OrgUnit`, `@OrgMembers`, `@Supervises` (repeatable), `@OrgRelationships` generate `OrgRegistrar` beans at build time. Depends on `casehub-eidos-org`. |
 | `casehub-eidos-graph` | Optional -- knowledge graph | Graph SPIs: `AgentGraphStore` (write task/outcome/attestation events), `AgentGraphQuery` (read agent history, rank agents by outcome), `AgentGraphBackfill` (ledger ingestion), `TaskSemanticEnricher` (application-tier enrichment). JPA persistence with Flyway V3. Activates by classpath presence. |
@@ -296,6 +296,22 @@ Optional module providing agent organizational structure -- units, memberships, 
 **Society types on OrganizationalUnit:** `topology` (open string), `topologyVocabulary`, `authorityModel` (`AuthorityModel` enum: CENTRALISED, DISTRIBUTED, HYBRID, HIERARCHICAL, GRADUATED), `selfDetermination` (0.0--1.0), `policy` (`GroupPolicy` with `FormationRules`, `normativePriority`, `NormSpecificity`, `dissolutionDrainTimeoutMinutes`), `roleSpecs` (`List<RoleSpec>` with cardinality, incompatibility, `RolePolicy` per role, `obligations` and `permissions` as norm identifiers), `missions` (`List<MissionSpec>` with `requiredRoles`, `minCommitters`, `maxCommitters`).
 
 **Topology governance:** `TopologyFamily` enum (DISTRIBUTED, CENTRALISED, INDEPENDENT) classifies topology values into families. `TopologyFamilyClassifier` SPI resolves topology strings to families — `WellKnownTopologyFamilyClassifier` is the `@DefaultBean` mapping swarm/mesh → DISTRIBUTED, hive → CENTRALISED, many → INDEPENDENT.
+
+### Trust Relevance (ledger integration)
+
+When `casehub-ledger-api` is on the classpath, two CDI beans activate automatically:
+
+- `OrgProximityRelevanceFactor` -- implements `AttestationRelevanceFactor`. Reads `"org-distance"` from an attestation's relevance snapshot and maps it via a configurable distance-indexed weight table. Same-unit attestors get full weight (1.0); cross-unit attestors get progressively lower weights.
+- `OrgDistanceAttestationEnricher` -- implements `LedgerAttestationEnricher`. At attestation write time, calls `OrgAwareDispatch.orgDistance()` to compute the LCA hop distance between attestor and scored actor, and stores it in the attestation's relevance snapshot JSON.
+
+**Config:**
+```properties
+# Distance-indexed weight table (last entry repeats for all greater distances)
+# Index 1 = same/parent-child unit, index 2 = sibling units, etc.
+casehub.eidos.trust.relevance.weights=1.0,0.7,0.65,0.6
+```
+
+No org structure on classpath → both beans return NEUTRAL / no-op. No configuration needed to disable.
 
 ### Dynamic Group Lifecycle
 
