@@ -162,6 +162,12 @@
 
 ### `public final java.lang.String toString()`
 
+### `private static void validateAmpdFacets(java.util.List<io.casehub.eidos.api.AmpdFacet> facets)`
+
+#### Parameters
+
+- `facets` (`java.util.List<io.casehub.eidos.api.AmpdFacet>`)
+
 ### `private static void validateSituationalProfiles(java.util.List<io.casehub.eidos.api.SituationalProfile> profiles)`
 
 #### Parameters
