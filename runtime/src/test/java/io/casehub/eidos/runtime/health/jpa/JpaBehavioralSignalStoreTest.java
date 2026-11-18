@@ -138,6 +138,15 @@ class JpaBehavioralSignalStoreTest {
         assertThat(store.count("a1", "t1", "code-review", "rust", SUCCESS)).isEqualTo(3);
     }
 
+    @Test
+    void record_same_key_twice_increments_not_duplicates() {
+        store.record("a1", "t1", "code-review", "rust", DECLINE);
+        store.record("a1", "t1", "code-review", "rust", DECLINE);
+        assertThat(store.count("a1", "t1", "code-review", "rust", DECLINE)).isEqualTo(2);
+        assertThat(store.learned("a1", "t1", "code-review", DECLINE)).containsEntry("rust", 2);
+    }
+
+
     // --- COMPLIANT signal tests ---
 
     @Test
