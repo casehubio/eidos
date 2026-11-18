@@ -151,4 +151,49 @@ class InMemoryDispositionSignalStoreTest {
         var counts = store.activationCounts("a", "t");
         assertThat(counts).isUnmodifiable();
     }
+
+    @Test
+    void concurrent_n_threads_m_activations_exact_count() throws Exception {
+        final int      threads   = 10;
+        final int      perThread = 50;
+        final Thread[] ts        = new Thread[threads];
+        for (int i = 0; i < threads; i++) {
+            ts[i] = new Thread(() -> {
+                for (int j = 0; j < perThread; j++) {
+                    store.recordActivation("a", "t", "fi");
+                }
+            });
+        }
+        for (final Thread t : ts) {t.start();}
+        for (final Thread t : ts) {t.join();}
+        assertThat(store.activationCounts("a", "t")).containsEntry("fi", (double) (threads * perThread));
+    }
+
+    @Test
+    void concurrent_decay_and_recordActivation_loses_no_increment() throws Exception {
+        for (int i = 0; i < 100; i++) {store.recordActivation("a", "t", "ti");}
+        final Thread decayer = new Thread(() -> store.decay("a", "t", 0.5));
+        final Thread adder   = new Thread(() -> store.recordActivation("a", "t", "ti"));
+        decayer.start();
+        adder.start();
+        decayer.join();
+        adder.join();
+        double weight = store.activationCounts("a", "t").getOrDefault("ti", 0.0);
+        // Either decay then add (50.0 + 1.0 = 51.0) or add then decay ((101) * 0.5 = 50.5)
+        assertThat(weight).isIn(51.0, 50.5);
+    }
+
+    @Test
+    void concurrent_first_activations_do_not_throw() throws Exception {
+        final int      threads = 20;
+        final Thread[] ts      = new Thread[threads];
+        for (int i = 0; i < threads; i++) {
+            final String term = "f" + i;
+            ts[i] = new Thread(() -> store.recordActivation("a", "t", term));
+        }
+        for (final Thread t : ts) {t.start();}
+        for (final Thread t : ts) {t.join();}
+        assertThat(store.activationCounts("a", "t")).hasSize(threads);
+    }
+
 }

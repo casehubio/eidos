@@ -18,15 +18,33 @@ public class JpaDispositionSignalStore implements DispositionSignalStore {
     @Inject EntityManager em;
 
     @Override
-    @Transactional
+    @Transactional(TxType.REQUIRES_NEW)
     public void recordActivation(final String agentId, final String tenancyId,
                                  final String functionTerm) {
-        final var id       = new DispositionSignalId(agentId, tenancyId, functionTerm);
-        final var existing = em.find(DispositionSignalEntity.class, id);
-        if (existing != null) {
-            existing.weight += 1.0;
-        } else {
-            em.persist(new DispositionSignalEntity(agentId, tenancyId, functionTerm, 1.0));
+        int updated = em.createQuery(
+                                "UPDATE DispositionSignalEntity e SET e.weight = e.weight + 1"
+                                + " WHERE e.id.agentId = :agentId"
+                                + " AND e.id.tenancyId = :tenancyId"
+                                + " AND e.id.functionTerm = :functionTerm")
+                        .setParameter("agentId", agentId)
+                        .setParameter("tenancyId", tenancyId)
+                        .setParameter("functionTerm", functionTerm)
+                        .executeUpdate();
+        if (updated == 0) {
+            try {
+                em.persist(new DispositionSignalEntity(agentId, tenancyId, functionTerm, 1.0));
+                em.flush();
+            } catch (jakarta.persistence.PersistenceException e) {
+                em.createQuery(
+                          "UPDATE DispositionSignalEntity e SET e.weight = e.weight + 1"
+                          + " WHERE e.id.agentId = :agentId"
+                          + " AND e.id.tenancyId = :tenancyId"
+                          + " AND e.id.functionTerm = :functionTerm")
+                  .setParameter("agentId", agentId)
+                  .setParameter("tenancyId", tenancyId)
+                  .setParameter("functionTerm", functionTerm)
+                  .executeUpdate();
+            }
         }
     }
 
@@ -55,18 +73,14 @@ public class JpaDispositionSignalStore implements DispositionSignalStore {
     @Transactional
     public void decay(final String agentId, final String tenancyId,
                       final double decayFactor) {
-        final var results = em.createQuery(
-                                      "SELECT e FROM DispositionSignalEntity e"
-                                      + " WHERE e.id.agentId = :agentId"
-                                      + " AND e.id.tenancyId = :tenancyId",
-                                      DispositionSignalEntity.class)
-                              .setParameter("agentId", agentId)
-                              .setParameter("tenancyId", tenancyId)
-                              .getResultList();
-
-        for (final var e : results) {
-            e.weight = e.weight * decayFactor;
-        }
+        em.createQuery(
+                  "UPDATE DispositionSignalEntity e SET e.weight = e.weight * :factor"
+                  + " WHERE e.id.agentId = :agentId"
+                  + " AND e.id.tenancyId = :tenancyId")
+          .setParameter("factor", decayFactor)
+          .setParameter("agentId", agentId)
+          .setParameter("tenancyId", tenancyId)
+          .executeUpdate();
 
         em.createQuery(
                   "DELETE FROM DispositionSignalEntity e"
