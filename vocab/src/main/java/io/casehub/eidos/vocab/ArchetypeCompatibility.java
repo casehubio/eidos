@@ -106,6 +106,17 @@ public final class ArchetypeCompatibility {
         return null;
     }
 
+    /**
+     * Affinity term values of a sub-archetype for one framework, in the order declared in
+     * {@code archetypes.yaml} (strongest first). Empty when none are declared.
+     */
+    public static List<String> affinities(ArchetypeTerm term, String frameworkUri) {
+        var affinities = AFFINITY_MAP.get(term);
+        if (affinities == null) return List.of();
+        var values = affinities.get(frameworkUri);
+        return values != null ? values : List.of();
+    }
+
     public static List<String> mbtiAffinities(ArchetypeTerm term) {
         var affinities = AFFINITY_MAP.get(term);
         if (affinities == null) return List.of();
