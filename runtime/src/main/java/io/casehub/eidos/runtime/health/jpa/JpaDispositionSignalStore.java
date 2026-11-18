@@ -8,6 +8,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 
+import jakarta.annotation.PostConstruct;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,11 +20,10 @@ public class JpaDispositionSignalStore implements DispositionSignalStore {
     @Inject EntityManager em;
     private boolean       postgres;
 
-    @jakarta.annotation.PostConstruct
+    @PostConstruct
     void init() {
         postgres = JpaDialect.isPostgres(em);
     }
-
 
     @Override
     @Transactional(TxType.REQUIRES_NEW)
