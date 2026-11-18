@@ -355,7 +355,7 @@ activation counts accumulate without expiry until explicitly decayed
 by evolution or cleared post-transition.
 
 - `recordActivation` — records a single function activation event
-- `activationCounts` — returns function → count mapping (cumulative, no TTL)
+- `activationWeights` — returns function → count mapping (cumulative, no TTL)
 - `decay` — multiplies all activation counts by `(1 - decayFactor)`,
   truncated to integer. `DECAY_FACTOR = 0.20` means 20% of accumulated
   signal is removed (80% retained), matching JPAF's "80% decay" semantics.

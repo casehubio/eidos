@@ -21,24 +21,27 @@ public class JpaDispositionSignalStore implements DispositionSignalStore {
     @Transactional(TxType.REQUIRES_NEW)
     public void recordActivation(final String agentId, final String tenancyId,
                                  final String functionTerm) {
-        int updated = em.createQuery(
-                                "UPDATE DispositionSignalEntity e SET e.weight = e.weight + 1"
-                                + " WHERE e.id.agentId = :agentId"
-                                + " AND e.id.tenancyId = :tenancyId"
-                                + " AND e.id.functionTerm = :functionTerm")
-                        .setParameter("agentId", agentId)
-                        .setParameter("tenancyId", tenancyId)
-                        .setParameter("functionTerm", functionTerm)
-                        .executeUpdate();
-        if (updated == 0) {
-            em.persist(new DispositionSignalEntity(agentId, tenancyId, functionTerm, 1.0));
-        }
+        em.createNativeQuery(
+                        "MERGE INTO disposition_signal AS ds"
+                        + " USING (VALUES (CAST(:agentId AS VARCHAR), CAST(:tenancyId AS VARCHAR),"
+                        + " CAST(:functionTerm AS VARCHAR)))"
+                        + " AS src(agent_id, tenancy_id, function_term)"
+                        + " ON ds.agent_id = src.agent_id"
+                        + " AND ds.tenancy_id = src.tenancy_id"
+                        + " AND ds.function_term = src.function_term"
+                        + " WHEN MATCHED THEN UPDATE SET weight = ds.weight + 1"
+                        + " WHEN NOT MATCHED THEN INSERT (agent_id, tenancy_id, function_term, weight)"
+                        + " VALUES (src.agent_id, src.tenancy_id, src.function_term, 1.0)")
+          .setParameter("agentId", agentId)
+          .setParameter("tenancyId", tenancyId)
+          .setParameter("functionTerm", functionTerm)
+          .executeUpdate();
     }
 
     @Override
     @Transactional(TxType.SUPPORTS)
-    public Map<String, Double> activationCounts(final String agentId,
-                                                final String tenancyId) {
+    public Map<String, Double> activationWeights(final String agentId,
+                                                 final String tenancyId) {
         final var results = em.createQuery(
                                       "SELECT e FROM DispositionSignalEntity e"
                                       + " WHERE e.id.agentId = :agentId"

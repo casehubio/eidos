@@ -1,5 +1,6 @@
 package io.casehub.eidos.api;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,7 +15,7 @@ public final class AmpdFacets {
 
     private static final Map<String, String> LOOKUP = CANONICAL.stream()
             .collect(Collectors.toUnmodifiableMap(
-                    name -> name.toLowerCase().strip(),
+                    name -> name.toLowerCase(Locale.ROOT).strip(),
                     name -> name));
 
     private AmpdFacets() {}
@@ -23,7 +24,7 @@ public final class AmpdFacets {
         if (facet == null || facet.isBlank()) {
             throw new IllegalArgumentException("AMPD facet name must not be blank");
         }
-        String canonical = LOOKUP.get(facet.strip().toLowerCase());
+        String canonical = LOOKUP.get(facet.strip().toLowerCase(Locale.ROOT));
         if (canonical == null) {
             throw new IllegalArgumentException("Unknown AMPD facet: " + facet
                     + ". Valid: " + CANONICAL);

@@ -13,8 +13,8 @@ public class NoOpDispositionSignalStore implements DispositionSignalStore {
                                   final String functionTerm) {}
 
     @Override
-    public Map<String, Double> activationCounts(final String agentId,
-                                                final String tenancyId) {
+    public Map<String, Double> activationWeights(final String agentId,
+                                                 final String tenancyId) {
         return Map.of();
     }
 

@@ -20,7 +20,7 @@ class DispositionSignalStoreDefaultsTest {
             }
 
             @Override
-            public Map<String, Double> activationCounts(String a, String t) {return Map.of();}
+            public Map<String, Double> activationWeights(String a, String t) {return Map.of();}
 
             @Override
             public void decay(String a, String t, double f)                 {}
@@ -40,7 +40,7 @@ class DispositionSignalStoreDefaultsTest {
             public void recordActivation(String a, String t, String f) {}
 
             @Override
-            public Map<String, Double> activationCounts(String a, String t) {
+            public Map<String, Double> activationWeights(String a, String t) {
                 var m = new LinkedHashMap<String, Double>();
                 m.put("ti", 5.0);
                 m.put("ne", 3.0);

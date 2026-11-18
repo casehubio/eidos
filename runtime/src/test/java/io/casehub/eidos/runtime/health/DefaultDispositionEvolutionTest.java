@@ -224,7 +224,7 @@ class DefaultDispositionEvolutionTest {
 
         evolution.evaluate(descriptor, pending);
 
-        var counts  = signalStore.activationCounts("a1", "t1");
+        var counts  = signalStore.activationWeights("a1", "t1");
         double f2Count = counts.getOrDefault("f2", 0.0);
         assertThat(f2Count).isEqualTo(5.0);
     }

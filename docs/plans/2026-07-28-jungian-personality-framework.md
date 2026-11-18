@@ -519,7 +519,7 @@ Closes #110, Closes #109"
 - Test: `persistence-memory/src/test/java/io/casehub/eidos/memory/InMemoryDispositionSignalStoreTest.java`
 
 **Interfaces:**
-- Produces: `DispositionSignalStore` SPI with `recordActivation`, `activationCounts`, `decay`, `clear`
+- Produces: `DispositionSignalStore` SPI with `recordActivation`, `activationWeights`, `decay`, `clear`
 
 - [ ] **Step 1: Write InMemoryDispositionSignalStore tests**
 

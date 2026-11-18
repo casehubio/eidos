@@ -19,7 +19,7 @@ class InMemoryDispositionSignalStoreTest {
     void recordActivation_increments_count() {
         store.recordActivation("agent-1", "tenant-1", "ti");
         store.recordActivation("agent-1", "tenant-1", "ti");
-        var counts = store.activationCounts("agent-1", "tenant-1");
+        var counts = store.activationWeights("agent-1", "tenant-1");
         assertThat(counts).containsEntry("ti", 2.0);
     }
 
@@ -28,13 +28,13 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("a", "t", "ti");
         store.recordActivation("a", "t", "ne");
         store.recordActivation("a", "t", "ne");
-        var counts = store.activationCounts("a", "t");
+        var counts = store.activationWeights("a", "t");
         assertThat(counts).containsEntry("ti", 1.0).containsEntry("ne", 2.0);
     }
 
     @Test
-    void activationCounts_empty_when_no_signals() {
-        assertThat(store.activationCounts("a", "t")).isEmpty();
+    void activationWeights_empty_when_no_signals() {
+        assertThat(store.activationWeights("a", "t")).isEmpty();
     }
 
     @Test
@@ -42,7 +42,7 @@ class InMemoryDispositionSignalStoreTest {
         for (int i = 0; i < 10; i++) {store.recordActivation("a", "t", "ti");}
         store.decay("a", "t", 0.20);
         // 0.20 retention: 10 * 0.2 = 2.0
-        assertThat(store.activationCounts("a", "t")).containsEntry("ti", 2.0);
+        assertThat(store.activationWeights("a", "t")).containsEntry("ti", 2.0);
     }
 
     @Test
@@ -50,7 +50,7 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("a", "t", "ne");
         store.decay("a", "t", 0.20);
         // 1.0 * 0.2 = 0.2 — no longer truncated to zero
-        assertThat(store.activationCounts("a", "t")).containsEntry("ne", 0.2);
+        assertThat(store.activationWeights("a", "t")).containsEntry("ne", 0.2);
     }
 
     @Test
@@ -58,7 +58,7 @@ class InMemoryDispositionSignalStoreTest {
         for (int i = 0; i < 100; i++) {store.recordActivation("a", "t", "fi");}
         store.decay("a", "t", 0.20);
         // 0.20 retention: 100 * 0.2 = 20.0
-        assertThat(store.activationCounts("a", "t")).containsEntry("fi", 20.0);
+        assertThat(store.activationWeights("a", "t")).containsEntry("fi", 20.0);
     }
 
     @Test
@@ -66,21 +66,21 @@ class InMemoryDispositionSignalStoreTest {
         for (int i = 0; i < 3; i++) {store.recordActivation("a", "t", "se");}
         store.decay("a", "t", 0.70);
         // 3.0 * 0.7 = 2.1 — no longer truncated
-        assertThat(store.activationCounts("a", "t").get("se")).isCloseTo(2.1, within(0.001));
+        assertThat(store.activationWeights("a", "t").get("se")).isCloseTo(2.1, within(0.001));
     }
 
     @Test
     void decay_zero_factor_clears_all() {
         for (int i = 0; i < 5; i++) {store.recordActivation("a", "t", "ti");}
         store.decay("a", "t", 0.0);
-        assertThat(store.activationCounts("a", "t")).doesNotContainKey("ti");
+        assertThat(store.activationWeights("a", "t")).doesNotContainKey("ti");
     }
 
     @Test
     void decay_full_factor_retains_all() {
         for (int i = 0; i < 5; i++) {store.recordActivation("a", "t", "ti");}
         store.decay("a", "t", 1.0);
-        assertThat(store.activationCounts("a", "t")).containsEntry("ti", 5.0);
+        assertThat(store.activationWeights("a", "t")).containsEntry("ti", 5.0);
     }
 
     @Test
@@ -88,7 +88,7 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("a", "t", "ne");
         store.decay("a", "t", 0.0);
         // 0.0 retention: 1.0 * 0.0 = 0.0 → removed
-        assertThat(store.activationCounts("a", "t")).doesNotContainKey("ne");
+        assertThat(store.activationWeights("a", "t")).doesNotContainKey("ne");
     }
 
     @Test
@@ -96,23 +96,23 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("a", "t", "ti");
         store.recordActivation("a", "t", "ne");
         store.clear("a", "t");
-        assertThat(store.activationCounts("a", "t")).isEmpty();
+        assertThat(store.activationWeights("a", "t")).isEmpty();
     }
 
     @Test
     void tenancy_isolation() {
         store.recordActivation("a", "t1", "ti");
         store.recordActivation("a", "t2", "fe");
-        assertThat(store.activationCounts("a", "t1")).containsOnlyKeys("ti");
-        assertThat(store.activationCounts("a", "t2")).containsOnlyKeys("fe");
+        assertThat(store.activationWeights("a", "t1")).containsOnlyKeys("ti");
+        assertThat(store.activationWeights("a", "t2")).containsOnlyKeys("fe");
     }
 
     @Test
     void agent_isolation() {
         store.recordActivation("a1", "t", "ti");
         store.recordActivation("a2", "t", "fe");
-        assertThat(store.activationCounts("a1", "t")).containsOnlyKeys("ti");
-        assertThat(store.activationCounts("a2", "t")).containsOnlyKeys("fe");
+        assertThat(store.activationWeights("a1", "t")).containsOnlyKeys("ti");
+        assertThat(store.activationWeights("a2", "t")).containsOnlyKeys("fe");
     }
 
     @Test
@@ -120,8 +120,8 @@ class InMemoryDispositionSignalStoreTest {
         store.recordActivation("a1", "t", "ti");
         store.recordActivation("a2", "t", "fe");
         store.clear("a1", "t");
-        assertThat(store.activationCounts("a1", "t")).isEmpty();
-        assertThat(store.activationCounts("a2", "t")).containsEntry("fe", 1.0);
+        assertThat(store.activationWeights("a1", "t")).isEmpty();
+        assertThat(store.activationWeights("a2", "t")).containsEntry("fe", 1.0);
     }
 
     @Test
@@ -129,8 +129,8 @@ class InMemoryDispositionSignalStoreTest {
         for (int i = 0; i < 10; i++) {store.recordActivation("a1", "t", "ti");}
         for (int i = 0; i < 10; i++) {store.recordActivation("a2", "t", "ti");}
         store.decay("a1", "t", 0.50);
-        assertThat(store.activationCounts("a1", "t")).containsEntry("ti", 5.0);
-        assertThat(store.activationCounts("a2", "t")).containsEntry("ti", 10.0);
+        assertThat(store.activationWeights("a1", "t")).containsEntry("ti", 5.0);
+        assertThat(store.activationWeights("a2", "t")).containsEntry("ti", 10.0);
     }
 
     @Test
@@ -142,13 +142,13 @@ class InMemoryDispositionSignalStoreTest {
         }
         for (final Thread t : ts) {t.start();}
         for (final Thread t : ts) {t.join();}
-        assertThat(store.activationCounts("a", "t")).containsEntry("ti", (double) threads);
+        assertThat(store.activationWeights("a", "t")).containsEntry("ti", (double) threads);
     }
 
     @Test
-    void activationCounts_returns_immutable_map() {
+    void activationWeights_returns_immutable_map() {
         store.recordActivation("a", "t", "ti");
-        var counts = store.activationCounts("a", "t");
+        var counts = store.activationWeights("a", "t");
         assertThat(counts).isUnmodifiable();
     }
 
@@ -166,7 +166,7 @@ class InMemoryDispositionSignalStoreTest {
         }
         for (final Thread t : ts) {t.start();}
         for (final Thread t : ts) {t.join();}
-        assertThat(store.activationCounts("a", "t")).containsEntry("fi", (double) (threads * perThread));
+        assertThat(store.activationWeights("a", "t")).containsEntry("fi", (double) (threads * perThread));
     }
 
     @Test
@@ -178,7 +178,7 @@ class InMemoryDispositionSignalStoreTest {
         adder.start();
         decayer.join();
         adder.join();
-        double weight = store.activationCounts("a", "t").getOrDefault("ti", 0.0);
+        double weight = store.activationWeights("a", "t").getOrDefault("ti", 0.0);
         // Either decay then add (50.0 + 1.0 = 51.0) or add then decay ((101) * 0.5 = 50.5)
         assertThat(weight).isIn(51.0, 50.5);
     }
@@ -193,7 +193,7 @@ class InMemoryDispositionSignalStoreTest {
         }
         for (final Thread t : ts) {t.start();}
         for (final Thread t : ts) {t.join();}
-        assertThat(store.activationCounts("a", "t")).hasSize(threads);
+        assertThat(store.activationWeights("a", "t")).hasSize(threads);
     }
 
 }

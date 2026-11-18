@@ -5,19 +5,19 @@ import java.util.Map;
 /**
  * Persistent store for cognitive function activation signals used by JPAF personality adaptation.
  *
- * <p>Activation counts drive effective weight computation:
- * {@code effectiveWeight(f) = baseWeight(f) + activationCount(f) × Δw}.
+ * <p>Activation weights drive effective weight computation:
+ * {@code effectiveWeight(f) = baseWeight(f) + activationWeight(f) × Δw}.
  */
 public interface DispositionSignalStore {
 
     void recordActivation(String agentId, String tenancyId, String functionTerm);
 
-    Map<String, Double> activationCounts(String agentId, String tenancyId);
+    Map<String, Double> activationWeights(String agentId, String tenancyId);
 
     /**
-     * Multiplicative decay of all activation counts for an agent.
+     * Multiplicative decay of all activation weights for an agent.
      *
-     * <p>{@code decayFactor} is the <em>retention fraction</em>: each count is multiplied
+     * <p>{@code decayFactor} is the <em>retention fraction</em>: each weight is multiplied
      * by this value. Semantics: 0.0 = instant reset (retain nothing),
      * 1.0 = no decay (retain everything). JPAF default is 0.2 (retain 20%).
      */
@@ -31,7 +31,7 @@ public interface DispositionSignalStore {
     }
 
     default Map<String, ValenceCounts> valenceCounts(String agentId, String tenancyId) {
-        var counts = activationCounts(agentId, tenancyId);
+        var counts = activationWeights(agentId, tenancyId);
         var result = new java.util.LinkedHashMap<String, ValenceCounts>();
         counts.forEach((k, v) -> result.put(k, new ValenceCounts((int) Math.round(v), 0)));
         return result;

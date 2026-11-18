@@ -53,7 +53,7 @@ public class DefaultDispositionHealth implements DispositionHealth {
         }
 
         final double delta = reinforcementDelta(descriptor.tenancyId());
-        final var counts = signalStore.activationCounts(
+        final var counts = signalStore.activationWeights(
                 descriptor.agentId(), descriptor.tenancyId());
 
         final var base         = new LinkedHashMap<String, Double>();
