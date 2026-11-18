@@ -16,26 +16,45 @@ import java.util.Map;
 public class JpaDispositionSignalStore implements DispositionSignalStore {
 
     @Inject EntityManager em;
+    private boolean       postgres;
+
+    @jakarta.annotation.PostConstruct
+    void init() {
+        postgres = JpaDialect.isPostgres(em);
+    }
+
 
     @Override
     @Transactional(TxType.REQUIRES_NEW)
     public void recordActivation(final String agentId, final String tenancyId,
                                  final String functionTerm) {
-        em.createNativeQuery(
-                        "MERGE INTO disposition_signal AS ds"
-                        + " USING (VALUES (CAST(:agentId AS VARCHAR), CAST(:tenancyId AS VARCHAR),"
-                        + " CAST(:functionTerm AS VARCHAR)))"
-                        + " AS src(agent_id, tenancy_id, function_term)"
-                        + " ON ds.agent_id = src.agent_id"
-                        + " AND ds.tenancy_id = src.tenancy_id"
-                        + " AND ds.function_term = src.function_term"
-                        + " WHEN MATCHED THEN UPDATE SET weight = ds.weight + 1"
-                        + " WHEN NOT MATCHED THEN INSERT (agent_id, tenancy_id, function_term, weight)"
-                        + " VALUES (src.agent_id, src.tenancy_id, src.function_term, 1.0)")
-          .setParameter("agentId", agentId)
-          .setParameter("tenancyId", tenancyId)
-          .setParameter("functionTerm", functionTerm)
-          .executeUpdate();
+        if (postgres) {
+            em.createNativeQuery(
+                      "INSERT INTO disposition_signal (agent_id, tenancy_id, function_term, weight)"
+                      + " VALUES (:agentId, :tenancyId, :functionTerm, 1.0)"
+                      + " ON CONFLICT (agent_id, tenancy_id, function_term)"
+                      + " DO UPDATE SET weight = disposition_signal.weight + 1")
+              .setParameter("agentId", agentId)
+              .setParameter("tenancyId", tenancyId)
+              .setParameter("functionTerm", functionTerm)
+              .executeUpdate();
+        } else {
+            em.createNativeQuery(
+                      "MERGE INTO disposition_signal AS ds"
+                      + " USING (VALUES (CAST(:agentId AS VARCHAR), CAST(:tenancyId AS VARCHAR),"
+                      + " CAST(:functionTerm AS VARCHAR)))"
+                      + " AS src(agent_id, tenancy_id, function_term)"
+                      + " ON ds.agent_id = src.agent_id"
+                      + " AND ds.tenancy_id = src.tenancy_id"
+                      + " AND ds.function_term = src.function_term"
+                      + " WHEN MATCHED THEN UPDATE SET weight = ds.weight + 1"
+                      + " WHEN NOT MATCHED THEN INSERT (agent_id, tenancy_id, function_term, weight)"
+                      + " VALUES (src.agent_id, src.tenancy_id, src.function_term, 1.0)")
+              .setParameter("agentId", agentId)
+              .setParameter("tenancyId", tenancyId)
+              .setParameter("functionTerm", functionTerm)
+              .executeUpdate();
+        }
     }
 
     @Override
