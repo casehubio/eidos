@@ -37,6 +37,17 @@ Finds agents matching the query criteria.
 
 - `NullPointerException` — if agentId or tenancyId is null
 
+### `public default java.util.Optional<io.casehub.eidos.api.AgentDescriptor> findEffective(java.lang.String agentId, java.lang.String tenancyId)`
+
+Returns the descriptor with any evolved disposition composed on top of
+the authored baseline. The default returns the authored descriptor as-is;
+Runtime implementations compose via `LivedDispositionSource`.
+
+#### Parameters
+
+- `agentId` (`java.lang.String`)
+- `tenancyId` (`java.lang.String`)
+
 ### `public abstract void register(io.casehub.eidos.api.AgentDescriptor descriptor)`
 
 #### Parameters
