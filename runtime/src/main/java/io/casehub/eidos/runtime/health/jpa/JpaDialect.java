@@ -1,6 +1,7 @@
 package io.casehub.eidos.runtime.health.jpa;
 
 import jakarta.persistence.EntityManager;
+import org.hibernate.Session;
 
 final class JpaDialect {
 
@@ -10,15 +11,14 @@ final class JpaDialect {
     private JpaDialect() {}
 
     static boolean isPostgres(EntityManager em) {
-        var props = em.getEntityManagerFactory().getProperties();
-        var url   = (String) props.get("jakarta.persistence.jdbc.url");
-        if (url == null) {
-            url = (String) props.get("javax.persistence.jdbc.url");
-        }
-        if (url == null) {
-            LOG.warning("JDBC URL not found in EntityManagerFactory properties; defaulting to H2 dialect");
+        try {
+            return em.unwrap(Session.class).doReturningWork(connection -> {
+                var product = connection.getMetaData().getDatabaseProductName();
+                return product != null && product.equalsIgnoreCase("PostgreSQL");
+            });
+        } catch (Exception e) {
+            LOG.warning("Could not determine database dialect via connection metadata; defaulting to H2: " + e.getMessage());
             return false;
         }
-        return url.startsWith("jdbc:postgresql");
     }
 }
