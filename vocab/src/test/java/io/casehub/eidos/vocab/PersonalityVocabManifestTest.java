@@ -179,6 +179,14 @@ class PersonalityVocabManifestTest {
     }
 
     @Test
+    void archetypeAffinitiesKeepSourcePriorityOrder() {
+        // archetypes.yaml lists affinities strongest first; consumers take the first as the primary type.
+        var warrior = asMap(asMap(manifest.get("archetypeAffinities")).get("warrior"));
+        assertThat(asList(warrior.get("mbti"))).containsExactly("entj", "estj", "intj");
+        assertThat(asList(warrior.get("enneagram"))).containsExactly("type-8", "type-3", "type-1");
+    }
+
+    @Test
     void impliesSupervisionFlagPresent() {
         var enneagram = asList(manifest.get("enneagram"));
         var type2 = enneagram.stream()
