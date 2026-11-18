@@ -320,20 +320,14 @@ public final class PersonalityVocabManifestGenerator {
     private static Map<String, Object> buildArchetypeAffinities() {
         String[] uris = { MbtiTypeTerm.URI, EnneagramTerm.URI };
         String[] keys = { "mbti", "enneagram" };
-        VocabularyTerm[][] allTerms = {
-                MbtiTypeTerm.values(), EnneagramTerm.values()
-        };
 
         var result = new LinkedHashMap<String, Object>();
         for (var archetype : ArchetypeTerm.values()) {
             var affinities = new LinkedHashMap<String, List<String>>();
             for (int i = 0; i < uris.length; i++) {
-                var matching = new ArrayList<String>();
-                for (var term : allTerms[i]) {
-                    if (ArchetypeCompatibility.subArchetypeAffinity(archetype, uris[i], term.value())) {
-                        matching.add(term.value());
-                    }
-                }
+                // Keep the archetypes.yaml order: affinities are listed strongest first,
+                // and consumers take the first entry as the primary type.
+                var matching = ArchetypeCompatibility.affinities(archetype, uris[i]);
                 if (!matching.isEmpty()) {
                     affinities.put(keys[i], matching);
                 }
