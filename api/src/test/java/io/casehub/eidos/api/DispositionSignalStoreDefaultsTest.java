@@ -14,12 +14,19 @@ class DispositionSignalStoreDefaultsTest {
     void valenceAwareRecordDelegatesToOriginal() {
         var recorded = new AtomicReference<String>();
         DispositionSignalStore store = new DispositionSignalStore() {
-            @Override public void recordActivation(String agentId, String tenancyId, String functionTerm) {
+            @Override
+            public void recordActivation(String agentId, String tenancyId, String functionTerm) {
                 recorded.set(functionTerm);
             }
-            @Override public Map<String, Integer> activationCounts(String a, String t) { return Map.of(); }
-            @Override public void decay(String a, String t, double f) {}
-            @Override public void clear(String a, String t) {}
+
+            @Override
+            public Map<String, Double> activationCounts(String a, String t) {return Map.of();}
+
+            @Override
+            public void decay(String a, String t, double f)                 {}
+
+            @Override
+            public void clear(String a, String t)                           {}
         };
 
         store.recordActivation("agent1", "tenant1", "ti", SignalValence.NEGATIVE);
@@ -29,15 +36,22 @@ class DispositionSignalStoreDefaultsTest {
     @Test
     void valenceCountsWrapsExistingCountsAsPositive() {
         DispositionSignalStore store = new DispositionSignalStore() {
-            @Override public void recordActivation(String a, String t, String f) {}
-            @Override public Map<String, Integer> activationCounts(String a, String t) {
-                var m = new LinkedHashMap<String, Integer>();
-                m.put("ti", 5);
-                m.put("ne", 3);
+            @Override
+            public void recordActivation(String a, String t, String f) {}
+
+            @Override
+            public Map<String, Double> activationCounts(String a, String t) {
+                var m = new LinkedHashMap<String, Double>();
+                m.put("ti", 5.0);
+                m.put("ne", 3.0);
                 return m;
             }
-            @Override public void decay(String a, String t, double f) {}
-            @Override public void clear(String a, String t) {}
+
+            @Override
+            public void decay(String a, String t, double f) {}
+
+            @Override
+            public void clear(String a, String t)           {}
         };
 
         var counts = store.valenceCounts("a", "t");

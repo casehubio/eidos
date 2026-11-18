@@ -63,7 +63,7 @@ public class DefaultDispositionHealth implements DispositionHealth {
         for (final var dv : profile) {
             base.put(dv.term(), dv.weight());
             final double raw = dv.weight()
-                               + counts.getOrDefault(dv.term(), 0) * delta;
+                               + counts.getOrDefault(dv.term(), 0.0) * delta;
             rawEffective.put(dv.term(), raw);
             sum += raw;
         }
@@ -83,7 +83,6 @@ public class DefaultDispositionHealth implements DispositionHealth {
         final var dominant  = sorted.get(0);
         final var auxiliary = sorted.size() > 1 ? sorted.get(1) : null;
 
-        // Over-reinforcement: dominant effective exceeds ceiling
         final double overThreshold = overReinforcementThreshold(descriptor.tenancyId());
         if (effective.getOrDefault(dominant.term(), 0.0) >= overThreshold) {
             final String mostActivated = counts.entrySet().stream()

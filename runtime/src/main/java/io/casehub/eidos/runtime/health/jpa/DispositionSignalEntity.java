@@ -9,14 +9,14 @@ public class DispositionSignalEntity {
     @EmbeddedId
     DispositionSignalId id;
 
-    @Column(name = "count", nullable = false)
-    int count;
+    @Column(name = "weight", nullable = false)
+    double weight;
 
     protected DispositionSignalEntity() {}
 
     DispositionSignalEntity(final String agentId, final String tenancyId,
-                            final String functionTerm, final int count) {
-        this.id = new DispositionSignalId(agentId, tenancyId, functionTerm);
-        this.count = count;
+                            final String functionTerm, final double weight) {
+        this.id     = new DispositionSignalId(agentId, tenancyId, functionTerm);
+        this.weight = weight;
     }
 }
