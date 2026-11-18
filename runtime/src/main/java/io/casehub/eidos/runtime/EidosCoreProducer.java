@@ -9,6 +9,7 @@ import io.casehub.eidos.api.BehavioralSignalStore;
 import io.casehub.eidos.api.DispositionEvolution;
 import io.casehub.eidos.api.DispositionHealth;
 import io.casehub.eidos.api.DispositionProfileStore;
+import io.casehub.eidos.api.LivedDispositionSource;
 import io.casehub.eidos.api.DispositionSignalStore;
 import io.casehub.eidos.api.GoalEvolution;
 import io.casehub.eidos.api.GoalSignalStore;
@@ -32,10 +33,11 @@ import io.casehub.eidos.core.health.NoOpBehavioralSignalStore;
 import io.casehub.eidos.core.health.NoOpDispositionEvolution;
 import io.casehub.eidos.core.health.NoOpDispositionHealth;
 import io.casehub.eidos.core.health.NoOpDispositionProfileStore;
+import io.casehub.eidos.core.health.NoOpLivedDispositionSource;
 import io.casehub.eidos.core.health.NoOpDispositionSignalStore;
 import io.casehub.eidos.core.health.NoOpGoalEvolution;
-import io.casehub.eidos.core.org.NoOpOrgAwareDispatch;
 import io.casehub.eidos.core.health.NoOpGoalSignalStore;
+import io.casehub.eidos.core.org.NoOpOrgAwareDispatch;
 import io.casehub.eidos.core.registrar.ClasspathYamlDescriptorRegistrar;
 import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.core.renderer.NoOpRenderedPromptCache;
@@ -100,6 +102,13 @@ public class EidosCoreProducer {
     DispositionProfileStore dispositionProfileStore() {
         return new NoOpDispositionProfileStore();
     }
+
+    @Produces
+    @DefaultBean
+    LivedDispositionSource livedDispositionSource() {
+        return new NoOpLivedDispositionSource();
+    }
+
 
     @Produces @DefaultBean
     GoalEvolution goalEvolution() {
