@@ -63,7 +63,6 @@ public record AgentDisposition(
              delegation, dispositionProfile, styleProfile, mbtiType, enneagramType, ampdFacets, List.of());
     }
 
-
     private static void validateAmpdFacets(List<AmpdFacet> facets) {
         if (facets == null || facets.isEmpty()) {return;}
         var seen = new java.util.HashSet<String>();
