@@ -17,14 +17,15 @@ public record AgentDisposition(
         List<SituationalProfile> situationalProfiles
 ) {
     public AgentDisposition {
-        socialOrient        = sanitizeAxis(socialOrient);
-        ruleFollowing       = sanitizeAxis(ruleFollowing);
-        riskAppetite        = sanitizeAxis(riskAppetite);
-        autonomy            = sanitizeAxis(autonomy);
-        conflictMode        = sanitizeAxis(conflictMode);
-        dispositionProfile  = dispositionProfile == null ? List.of() : List.copyOf(dispositionProfile);
-        styleProfile        = styleProfile == null ? List.of() : List.copyOf(styleProfile);
-        ampdFacets          = ampdFacets == null ? List.of() : List.copyOf(ampdFacets);
+        socialOrient       = sanitizeAxis(socialOrient);
+        ruleFollowing      = sanitizeAxis(ruleFollowing);
+        riskAppetite       = sanitizeAxis(riskAppetite);
+        autonomy           = sanitizeAxis(autonomy);
+        conflictMode       = sanitizeAxis(conflictMode);
+        dispositionProfile = dispositionProfile == null ? List.of() : List.copyOf(dispositionProfile);
+        styleProfile       = styleProfile == null ? List.of() : List.copyOf(styleProfile);
+        ampdFacets         = ampdFacets == null ? List.of() : List.copyOf(ampdFacets);
+        validateAmpdFacets(ampdFacets);
         situationalProfiles = situationalProfiles == null ? List.of() : List.copyOf(situationalProfiles);
         validateSituationalProfiles(situationalProfiles);
     }
@@ -60,6 +61,17 @@ public record AgentDisposition(
                            ) {
         this(socialOrient, ruleFollowing, riskAppetite, autonomy, conflictMode,
              delegation, dispositionProfile, styleProfile, mbtiType, enneagramType, ampdFacets, List.of());
+    }
+
+
+    private static void validateAmpdFacets(List<AmpdFacet> facets) {
+        if (facets == null || facets.isEmpty()) {return;}
+        var seen = new java.util.HashSet<String>();
+        for (var facet : facets) {
+            if (!seen.add(facet.facet())) {
+                throw new IllegalArgumentException("Duplicate AMPD facet: " + facet.facet());
+            }
+        }
     }
 
     private static void validateSituationalProfiles(List<SituationalProfile> profiles) {
