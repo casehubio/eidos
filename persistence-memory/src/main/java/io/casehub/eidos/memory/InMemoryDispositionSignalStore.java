@@ -27,8 +27,8 @@ public class InMemoryDispositionSignalStore implements DispositionSignalStore {
     }
 
     @Override
-    public Map<String, Double> activationCounts(final String agentId,
-                                                final String tenancyId) {
+    public Map<String, Double> activationWeights(final String agentId,
+                                                 final String tenancyId) {
         final var functions = store.get(new StoreKey(agentId, tenancyId));
         if (functions == null) {return Map.of();}
         final var result = new HashMap<String, Double>();
