@@ -22,6 +22,15 @@ public interface AgentRegistry {
     List<AgentMatch> find(AgentQuery query);
 
 
+    /**
+     * Returns the descriptor with any evolved disposition composed on top of
+     * the authored baseline. The default returns the authored descriptor as-is;
+     * Runtime implementations compose via {@link LivedDispositionSource}.
+     */
+    default Optional<AgentDescriptor> findEffective(String agentId, String tenancyId) {
+        return findById(agentId, tenancyId);
+    }
+
     default void deregister(String agentId, String tenancyId) {}
 
     default void updateGoalLifecycleState(String agentId, String tenancyId,

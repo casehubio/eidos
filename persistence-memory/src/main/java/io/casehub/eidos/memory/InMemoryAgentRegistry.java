@@ -10,6 +10,7 @@ import io.casehub.eidos.api.AgentRegistry;
 import io.casehub.eidos.api.AgentRegistryEvents;
 import io.casehub.eidos.api.CapabilityResolver;
 import io.casehub.eidos.api.CapabilityVocabularyValidator;
+import io.casehub.eidos.api.LivedDispositionSource;
 import io.casehub.eidos.api.MatchDegree;
 import io.casehub.eidos.api.ResolvedCapability;
 import io.casehub.eidos.api.VocabularyRegistry;
@@ -35,6 +36,8 @@ public class InMemoryAgentRegistry implements AgentRegistry {
 
     @Inject Instance<VocabularyRegistry> vocabularyRegistry;
     @Inject Instance<AgentRegistryEvents> events;
+    @Inject Instance<LivedDispositionSource> livedDispositionSource;
+
 
     @Override
     public void register(AgentDescriptor descriptor) {
@@ -70,6 +73,18 @@ public class InMemoryAgentRegistry implements AgentRegistry {
         return Optional.ofNullable(store.get(agentId))
                        .filter(d -> d.tenancyId().equals(tenancyId));
     }
+
+    @Override
+    public Optional<AgentDescriptor> findEffective(String agentId, String tenancyId) {
+        return findById(agentId, tenancyId).map(descriptor -> {
+            if (!livedDispositionSource.isResolvable()) {return descriptor;}
+            var effective = livedDispositionSource.get()
+                                                  .resolveEffective(agentId, tenancyId, descriptor.disposition());
+            if (effective == descriptor.disposition()) {return descriptor;}
+            return descriptor.toBuilder().disposition(effective).build();
+        });
+    }
+
 
     void clear() {
         store.clear();

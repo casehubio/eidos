@@ -5,15 +5,17 @@ import io.casehub.eidos.api.AgentDescriptorRegistered;
 import io.casehub.eidos.api.AgentDescriptorRemoved;
 import io.casehub.eidos.api.AgentDescriptorUpdated;
 import io.casehub.eidos.api.AgentMatch;
-import io.casehub.eidos.api.AgentRegistryEvents;
 import io.casehub.eidos.api.AgentQuery;
 import io.casehub.eidos.api.AgentRegistry;
+import io.casehub.eidos.api.AgentRegistryEvents;
 import io.casehub.eidos.api.CapabilityResolver;
 import io.casehub.eidos.api.CapabilityVocabularyValidator;
+import io.casehub.eidos.api.LivedDispositionSource;
 import io.casehub.eidos.api.ResolvedCapability;
 import io.casehub.eidos.api.VocabularyRegistry;
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -38,6 +40,7 @@ public class JpaAgentRegistry implements AgentRegistry {
     @Inject AgentDescriptorMapper mapper;
     @Inject VocabularyRegistry vocabularyRegistry;
     @Inject AgentRegistryEvents events;
+    @Inject Instance<LivedDispositionSource> livedDispositionSource;
 
 
     @Override
@@ -89,6 +92,19 @@ public class JpaAgentRegistry implements AgentRegistry {
             .findFirst()
             .map(mapper::toRecord);
     }
+
+    @Override
+    @Transactional(TxType.SUPPORTS)
+    public Optional<AgentDescriptor> findEffective(String agentId, String tenancyId) {
+        return findById(agentId, tenancyId).map(descriptor -> {
+            if (!livedDispositionSource.isResolvable()) {return descriptor;}
+            var effective = livedDispositionSource.get()
+                                                  .resolveEffective(agentId, tenancyId, descriptor.disposition());
+            if (effective == descriptor.disposition()) {return descriptor;}
+            return descriptor.toBuilder().disposition(effective).build();
+        });
+    }
+
 
     @Override
     @Transactional(TxType.SUPPORTS)
