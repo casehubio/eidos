@@ -6,12 +6,12 @@
 
 Persistent store for cognitive function activation signals used by JPAF personality adaptation.
 
-<p>Activation counts drive effective weight computation:
-`effectiveWeight(f) = baseWeight(f) + activationCount(f) × \u0394w`.
+<p>Activation weights drive effective weight computation:
+`effectiveWeight(f) = baseWeight(f) + activationWeight(f) × \u0394w`.
 
 ## Methods
 
-### `public abstract java.util.Map<java.lang.String,java.lang.Double> activationCounts(java.lang.String agentId, java.lang.String tenancyId)`
+### `public abstract java.util.Map<java.lang.String,java.lang.Double> activationWeights(java.lang.String agentId, java.lang.String tenancyId)`
 
 #### Parameters
 
@@ -27,9 +27,9 @@ Persistent store for cognitive function activation signals used by JPAF personal
 
 ### `public abstract void decay(java.lang.String agentId, java.lang.String tenancyId, double decayFactor)`
 
-Multiplicative decay of all activation counts for an agent.
+Multiplicative decay of all activation weights for an agent.
 
-<p>`decayFactor` is the <em>retention fraction</em>: each count is multiplied
+<p>`decayFactor` is the <em>retention fraction</em>: each weight is multiplied
 by this value. Semantics: 0.0 = instant reset (retain nothing),
 1.0 = no decay (retain everything). JPAF default is 0.2 (retain 20%).
 
