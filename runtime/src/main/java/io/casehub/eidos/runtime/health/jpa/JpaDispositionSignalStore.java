@@ -31,20 +31,7 @@ public class JpaDispositionSignalStore implements DispositionSignalStore {
                         .setParameter("functionTerm", functionTerm)
                         .executeUpdate();
         if (updated == 0) {
-            try {
-                em.persist(new DispositionSignalEntity(agentId, tenancyId, functionTerm, 1.0));
-                em.flush();
-            } catch (jakarta.persistence.PersistenceException e) {
-                em.createQuery(
-                          "UPDATE DispositionSignalEntity e SET e.weight = e.weight + 1"
-                          + " WHERE e.id.agentId = :agentId"
-                          + " AND e.id.tenancyId = :tenancyId"
-                          + " AND e.id.functionTerm = :functionTerm")
-                  .setParameter("agentId", agentId)
-                  .setParameter("tenancyId", tenancyId)
-                  .setParameter("functionTerm", functionTerm)
-                  .executeUpdate();
-            }
+            em.persist(new DispositionSignalEntity(agentId, tenancyId, functionTerm, 1.0));
         }
     }
 

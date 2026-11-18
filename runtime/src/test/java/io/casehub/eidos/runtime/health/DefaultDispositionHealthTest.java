@@ -245,4 +245,47 @@ class DefaultDispositionHealthTest {
         assertThat(status1).isInstanceOf(DispositionStatus.EvolutionPending.class);
         assertThat(status2).isInstanceOf(DispositionStatus.Aligned.class);
     }
+
+    @Test
+    void swap_does_not_oscillate_under_balanced_input() {
+        // Property: no counts (d, a) exist where both probe(P) and probe(swap(P))
+        // return EvolutionPending(DOMINANT_AUXILIARY_SWAP).
+        var profile = List.of(
+                new DispositionValue("f1", 0.35),
+                new DispositionValue("f2", 0.25),
+                new DispositionValue("f3", 0.15),
+                new DispositionValue("f4", 0.10),
+                new DispositionValue("f5", 0.08),
+                new DispositionValue("f6", 0.07));
+        var swapped = List.of(
+                new DispositionValue("f2", 0.35),
+                new DispositionValue("f1", 0.25),
+                new DispositionValue("f3", 0.15),
+                new DispositionValue("f4", 0.10),
+                new DispositionValue("f5", 0.08),
+                new DispositionValue("f6", 0.07));
+
+        for (int d = 0; d <= 20; d++) {
+            for (int a = 0; a <= 20; a++) {
+                signalStore.clear("prop", "t1");
+                for (int i = 0; i < d; i++) {signalStore.recordActivation("prop", "t1", "f1");}
+                for (int i = 0; i < a; i++) {signalStore.recordActivation("prop", "t1", "f2");}
+
+                var descP   = agentWithProfile("prop", profile);
+                var descS   = agentWithProfile("prop", swapped);
+                var statusP = health.probe(descP, ProbeContext.of(null));
+                var statusS = health.probe(descS, ProbeContext.of(null));
+
+                boolean swapP = statusP instanceof DispositionStatus.EvolutionPending ep
+                                && ep.type().name().equals("DOMINANT_AUXILIARY_SWAP");
+                boolean swapS = statusS instanceof DispositionStatus.EvolutionPending es
+                                && es.type().name().equals("DOMINANT_AUXILIARY_SWAP");
+
+                assertThat(swapP && swapS)
+                        .as("Oscillation at d=%d, a=%d: both P and swap(P) trigger DOMINANT_AUXILIARY_SWAP", d, a)
+                        .isFalse();
+            }
+        }
+    }
+
 }

@@ -92,8 +92,10 @@ public class DefaultDispositionHealth implements DispositionHealth {
                     Map.copyOf(effective), mostActivated, computeL2(base, effective));
         }
 
+        final double swapMargin = swapMargin(descriptor.tenancyId());
         if (auxiliary != null
-            && effective.getOrDefault(auxiliary.term(), 0.0) >= dominant.weight()) {
+            && effective.getOrDefault(auxiliary.term(), 0.0)
+                >= effective.getOrDefault(dominant.term(), 0.0) + swapMargin) {
             return new DispositionStatus.EvolutionPending(
                     DOMINANT_AUXILIARY_SWAP, auxiliary.term(), Map.copyOf(effective));
         }
@@ -163,6 +165,15 @@ public class DefaultDispositionHealth implements DispositionHealth {
         return preferenceProviderInstance.get()
                                          .resolve(SettingsScope.root(tenancyId))
                                          .getOrDefault(DispositionPreferenceKeys.OVER_REINFORCEMENT_THRESHOLD).value();
+    }
+
+    private double swapMargin(final String tenancyId) {
+        if (preferenceProviderInstance.isUnsatisfied()) {
+            return DispositionPreferenceKeys.SWAP_MARGIN.defaultValue().value();
+        }
+        return preferenceProviderInstance.get()
+                                         .resolve(SettingsScope.root(tenancyId))
+                                         .getOrDefault(DispositionPreferenceKeys.SWAP_MARGIN).value();
     }
 
     private String resolveVocabUri(final AgentDescriptor descriptor) {

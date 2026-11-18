@@ -36,4 +36,15 @@ public final class DispositionPreferenceKeys {
             new PreferenceKey<>("casehub.eidos", "disposition.decay-factor",
                                 new DecayFactorPreference(0.20),
                                 s -> new DecayFactorPreference(Double.parseDouble(s)));
+
+    /**
+     * Hysteresis margin for the dominant-auxiliary swap condition.
+     * The auxiliary's effective weight must exceed the dominant's effective
+     * weight by at least this margin to trigger a swap.
+     * Default: 0.03 (3 percentage points).
+     */
+    public static final PreferenceKey<SwapMarginPreference> SWAP_MARGIN =
+            new PreferenceKey<>("casehub.eidos", "disposition.swap-margin",
+                                new SwapMarginPreference(0.03),
+                                s -> new SwapMarginPreference(Double.parseDouble(s)));
 }
