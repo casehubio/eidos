@@ -91,12 +91,62 @@ class SituationalProfileApiTest {
 
     @Test
     void all13FacetsAreValid() {
-        assertThat(AmpdFacetShift.VALID_FACETS).hasSize(13);
+        assertThat(AmpdFacets.CANONICAL).hasSize(13);
+        assertThat(AmpdFacetShift.VALID_FACETS).isSameAs(AmpdFacets.CANONICAL);
         for (String facet : List.of("Anxiousness", "Callousness", "Deceitfulness",
-                "Emotional Lability", "Grandiosity", "Hostility", "Impulsivity",
-                "Intimacy Avoidance", "Manipulativeness", "Risk Taking",
-                "Suspiciousness", "Withdrawal", "Attention Seeking")) {
-            assertThat(AmpdFacetShift.VALID_FACETS).contains(facet);
+                                    "Emotional Lability", "Grandiosity", "Hostility", "Impulsivity",
+                                    "Intimacy Avoidance", "Manipulativeness", "Risk Taking",
+                                    "Suspiciousness", "Withdrawal", "Attention Seeking")) {
+            assertThat(AmpdFacets.CANONICAL).contains(facet);
         }
     }
+
+    @Test
+    void ampdFacetCanonicalisesLowerCase() {
+        assertThat(new AmpdFacet("anxiousness", 40).facet()).isEqualTo("Anxiousness");
+    }
+
+    @Test
+    void ampdFacetCanonicalisesWithWhitespace() {
+        assertThat(new AmpdFacet("  emotional lability  ", 50).facet()).isEqualTo("Emotional Lability");
+    }
+
+    @Test
+    void ampdFacetRejectsUnknownName() {
+        assertThatThrownBy(() -> new AmpdFacet("Anxiety", 40))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unknown AMPD facet");
+    }
+
+    @Test
+    void ampdFacetShiftCanonicalisesLowerCase() {
+        assertThat(new AmpdFacetShift("hostility", 10).facet()).isEqualTo("Hostility");
+    }
+
+    @Test
+    void dispositionRejectsDuplicateAmpdFacets() {
+        assertThatThrownBy(() -> AgentDisposition.builder()
+                                                 .ampdFacets(new AmpdFacet("Anxiousness", 40), new AmpdFacet("Anxiousness", 60))
+                                                 .build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Duplicate AMPD facet");
+    }
+
+    @Test
+    void dispositionRejectsDuplicateAmpdFacetsAfterCanonicalisation() {
+        assertThatThrownBy(() -> AgentDisposition.builder()
+                                                 .ampdFacets(new AmpdFacet("anxiousness", 40), new AmpdFacet("Anxiousness", 60))
+                                                 .build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Duplicate AMPD facet");
+    }
+
+    @Test
+    void dispositionAcceptsDistinctAmpdFacets() {
+        var disp = AgentDisposition.builder()
+                                   .ampdFacets(new AmpdFacet("Anxiousness", 40), new AmpdFacet("Hostility", 30))
+                                   .build();
+        assertThat(disp.ampdFacets()).hasSize(2);
+    }
+
 }
