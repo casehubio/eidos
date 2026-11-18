@@ -10,6 +10,8 @@ import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.annotation.PostConstruct;
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +22,6 @@ public class JpaBehavioralSignalStore implements BehavioralSignalStore {
 
     @Inject EntityManager em;
     private boolean       postgres;
-
 
     @ConfigProperty(name = "casehub.eidos.behavioral-signal.decline-ttl-days", defaultValue = "30")
     int declineTtlDays;
@@ -34,7 +35,7 @@ public class JpaBehavioralSignalStore implements BehavioralSignalStore {
     @ConfigProperty(name = "casehub.eidos.behavioral-signal.violated-ttl-days", defaultValue = "90")
     int violatedTtlDays;
 
-    @jakarta.annotation.PostConstruct
+    @PostConstruct
     void init() {
         postgres = JpaDialect.isPostgres(em);
     }
