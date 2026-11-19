@@ -38,7 +38,11 @@ public class OrgProximityRelevanceFactor implements AttestationRelevanceFactor {
             return RelevanceAssessment.NEUTRAL;
         }
 
-        int distance = ((Number) snapshot.get(SNAPSHOT_KEY)).intValue();
+        Object raw = snapshot.get(SNAPSHOT_KEY);
+        if (!(raw instanceof Number)) {
+            return RelevanceAssessment.NEUTRAL;
+        }
+        int distance = ((Number) raw).intValue();
 
         if (distance <= 0) {
             return RelevanceAssessment.NEUTRAL;

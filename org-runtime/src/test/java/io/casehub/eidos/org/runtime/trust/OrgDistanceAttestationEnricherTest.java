@@ -126,6 +126,28 @@ class OrgDistanceAttestationEnricherTest {
         assertThat(snapshot).containsEntry("org-distance", 7);
     }
 
+    @Test
+    void round_trip_enricher_to_factor() throws Exception {
+        when(orgAwareDispatch.orgDistance("attestor-1", "actor-1", "tenant-1"))
+                .thenReturn(2);
+
+        var att = attestation("attestor-1");
+        enricher.enrich(att, entry("actor-1", "tenant-1"));
+
+        // Parse the snapshot the same way RelevanceComposer builds the context
+        Map<String, Object> snapshot = MAPPER.readValue(
+                att.relevanceSnapshot, new TypeReference<>() {});
+
+        var factor = new OrgProximityRelevanceFactor(java.util.List.of(1.0, 0.7, 0.65, 0.6));
+        var ctx = new io.casehub.ledger.api.spi.AttestationRelevanceContext(
+                att.id, att.attestorId, att.attestorType, att.attestorRole,
+                "actor-1", "tenant-1", "cap", null,
+                java.time.Instant.now(), snapshot);
+        var result = factor.assess(ctx);
+        assertThat(result.weight()).isEqualTo(0.7);
+        assertThat(result.reason()).contains("org-distance:2");
+    }
+
     static class TestLedgerEntry extends LedgerEntry {
         TestLedgerEntry(String actorId, String tenancyId) {
             this.actorId = actorId;
