@@ -132,6 +132,12 @@ class OrgProximityRelevanceFactorTest {
     }
 
     @Test
+    void non_number_value_returns_neutral() {
+        var result = factor(DEFAULT_WEIGHTS).assess(ctx(Map.of("org-distance", "not-a-number")));
+        assertThat(result).isEqualTo(RelevanceAssessment.NEUTRAL);
+    }
+
+    @Test
     void reason_includes_weight() {
         var result = factor(DEFAULT_WEIGHTS).assess(ctx(Map.of("org-distance", 2)));
         assertThat(result.reason()).contains("weight:0.7");
