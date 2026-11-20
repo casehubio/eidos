@@ -4,9 +4,9 @@ import io.casehub.eidos.api.DispositionSignalStore;
 import io.casehub.eidos.api.DispositionSignalStoreContractTest;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 
 @QuarkusTest
 class JpaDispositionSignalStoreTest extends DispositionSignalStoreContractTest {

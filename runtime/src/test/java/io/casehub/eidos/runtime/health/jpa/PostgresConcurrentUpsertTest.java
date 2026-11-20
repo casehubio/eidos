@@ -45,7 +45,7 @@ class PostgresConcurrentUpsertTest {
     }
 
     @Test
-    void concurrent_behavioral_signal_upsert_preserves_count() throws InterruptedException {
+    void concurrent_behavioral_signal_upsert_preserves_count() {
         var failures = new AtomicInteger();
 
         try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -69,7 +69,7 @@ class PostgresConcurrentUpsertTest {
     }
 
     @Test
-    void concurrent_disposition_signal_upsert_preserves_weight() throws InterruptedException {
+    void concurrent_disposition_signal_upsert_preserves_weight() {
         var failures = new AtomicInteger();
 
         try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -93,7 +93,7 @@ class PostgresConcurrentUpsertTest {
     }
 
     @Test
-    void concurrent_agent_state_upsert_survives_contention() throws InterruptedException {
+    void concurrent_agent_state_upsert_survives_contention() {
         var failures = new AtomicInteger();
         var expiresAt = Instant.now().plusSeconds(3600);
 
