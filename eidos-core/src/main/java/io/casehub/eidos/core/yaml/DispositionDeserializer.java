@@ -69,6 +69,17 @@ public class DispositionDeserializer extends JsonDeserializer<AgentDisposition> 
         builder.mbtiType(mbtiType.isEmpty() ? null : mbtiType);
         builder.enneagramType(enneagramType.isEmpty() ? null : enneagramType);
 
+        if (root.has("ampdFacets") && root.get("ampdFacets").isArray()) {
+            var facets = new ArrayList<io.casehub.eidos.api.AmpdFacet>();
+            for (JsonNode facetNode : root.get("ampdFacets")) {
+                if (!facetNode.has("facet") || !facetNode.has("score")) continue;
+                facets.add(new io.casehub.eidos.api.AmpdFacet(
+                        facetNode.get("facet").asText(),
+                        facetNode.get("score").asInt()));
+            }
+            builder.ampdFacets(facets);
+        }
+
         if (root.has("situationalProfiles") && root.get("situationalProfiles").isArray()) {
             var profiles = new ArrayList<SituationalProfile>();
             for (JsonNode profileNode : root.get("situationalProfiles")) {

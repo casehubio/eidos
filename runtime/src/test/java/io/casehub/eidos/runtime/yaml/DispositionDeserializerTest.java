@@ -3,12 +3,14 @@ package io.casehub.eidos.runtime.yaml;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.casehub.eidos.api.AgentDisposition;
+import io.casehub.eidos.api.AmpdFacet;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.core.yaml.DispositionDeserializer;
 import io.casehub.yaml.jackson.YamlMappers;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DispositionDeserializerTest {
 
@@ -215,6 +217,43 @@ class DispositionDeserializerTest {
         var disp = mapper.readValue(yaml, AgentDisposition.class);
         assertThat(disp.dispositionProfile()).isEmpty();
     }
+
+    @Test
+    void ampdFacets_deserializesFromYaml() throws Exception {
+        var yaml = """
+                   ampdFacets:
+                     - facet: Anxiousness
+                       score: 85
+                     - facet: Hostility
+                       score: 40
+                   """;
+        var disp = mapper.readValue(yaml, AgentDisposition.class);
+        assertThat(disp.ampdFacets()).hasSize(2);
+        assertThat(disp.ampdFacets().get(0).facet()).isEqualTo("Anxiousness");
+        assertThat(disp.ampdFacets().get(0).score()).isEqualTo(85);
+        assertThat(disp.ampdFacets().get(1).facet()).isEqualTo("Hostility");
+        assertThat(disp.ampdFacets().get(1).score()).isEqualTo(40);
+    }
+
+    @Test
+    void ampdFacets_missingDefaultsToEmptyList() throws Exception {
+        var yaml = "delegation: false";
+        var disp = mapper.readValue(yaml, AgentDisposition.class);
+        assertThat(disp.ampdFacets()).isEmpty();
+    }
+
+    @Test
+    void ampdFacets_invalidScoreRejected() {
+        var yaml = """
+                   ampdFacets:
+                     - facet: Anxiousness
+                       score: 150
+                   """;
+        assertThatThrownBy(() -> mapper.readValue(yaml, AgentDisposition.class))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("0-100");
+    }
+
 
     private static io.casehub.eidos.api.VocabularyRegistry testVocabRegistry() {
         var registry = new io.casehub.eidos.runtime.vocabulary.CdiVocabularyRegistry();
