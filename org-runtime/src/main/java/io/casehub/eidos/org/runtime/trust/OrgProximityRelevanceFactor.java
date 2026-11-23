@@ -11,8 +11,6 @@ import java.util.List;
 @ApplicationScoped
 public class OrgProximityRelevanceFactor implements AttestationRelevanceFactor {
 
-    static final String SNAPSHOT_KEY = "org-distance";
-
     private final List<Double> weights;
 
     public OrgProximityRelevanceFactor(
@@ -33,17 +31,7 @@ public class OrgProximityRelevanceFactor implements AttestationRelevanceFactor {
 
     @Override
     public RelevanceAssessment assess(AttestationRelevanceContext ctx) {
-        var snapshot = ctx.snapshot();
-        if (snapshot == null || !snapshot.containsKey(SNAPSHOT_KEY)) {
-            return RelevanceAssessment.NEUTRAL;
-        }
-
-        Object raw = snapshot.get(SNAPSHOT_KEY);
-        if (!(raw instanceof Number)) {
-            return RelevanceAssessment.NEUTRAL;
-        }
-        int distance = ((Number) raw).intValue();
-
+        int distance = OrgDistanceUtil.extractDistance(ctx.snapshot());
         if (distance <= 0) {
             return RelevanceAssessment.NEUTRAL;
         }

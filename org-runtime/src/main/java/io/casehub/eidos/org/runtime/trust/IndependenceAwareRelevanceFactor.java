@@ -45,7 +45,7 @@ public class IndependenceAwareRelevanceFactor implements AttestationRelevanceFac
         List<UUID> unknown = new ArrayList<>();
 
         for (AttestationRelevanceContext ctx : ctxs) {
-            int distance = extractDistance(ctx);
+            int distance = OrgDistanceUtil.extractDistance(ctx.snapshot());
             if (distance == 1) {
                 sameUnit.add(ctx.attestationId());
             } else if (distance > 1) {
@@ -102,15 +102,5 @@ public class IndependenceAwareRelevanceFactor implements AttestationRelevanceFac
         return "independence";
     }
 
-    private static int extractDistance(AttestationRelevanceContext ctx) {
-        var snapshot = ctx.snapshot();
-        if (snapshot == null || !snapshot.containsKey(OrgProximityRelevanceFactor.SNAPSHOT_KEY)) {
-            return -1;
-        }
-        Object raw = snapshot.get(OrgProximityRelevanceFactor.SNAPSHOT_KEY);
-        if (!(raw instanceof Number)) {
-            return -1;
-        }
-        return ((Number) raw).intValue();
-    }
+
 }

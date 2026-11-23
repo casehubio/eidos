@@ -41,7 +41,7 @@ public class OrgDistanceAttestationEnricher implements LedgerAttestationEnricher
             Map<String, Object> snapshot = attestation.relevanceSnapshot != null
                     ? MAPPER.readValue(attestation.relevanceSnapshot, MAP_TYPE)
                     : new LinkedHashMap<>();
-            snapshot.put(OrgProximityRelevanceFactor.SNAPSHOT_KEY, distance);
+            snapshot.put(OrgDistanceUtil.SNAPSHOT_KEY, distance);
             attestation.relevanceSnapshot = MAPPER.writeValueAsString(snapshot);
         } catch (JsonProcessingException e) {
             LOG.warnf("Failed to write org-distance to relevance snapshot: %s", e.getMessage());
