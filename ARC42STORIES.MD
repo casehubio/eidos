@@ -133,6 +133,30 @@ See `../parent/docs/PLATFORM.md` Capability Ownership table and `../parent/docs/
 | L6 Eval Framework | `PromptJudge` (4 dimensions); `ProximityJudge`; personality preservation (3-stage attribution); real-world profile library | C4, C5 |
 | L7 Knowledge Graph | `AgentGraphStore` / `AgentGraphQuery` SPIs; JPA graph (`casehub-eidos-graph`); Wilson ranking; `TaskSemanticEnricher` pull interface | C6 |
 
+### Attestation Relevance Pipeline
+
+Eidos contributes to the casehub-ledger trust computation weight chain via the `AttestationRelevanceFactor` SPI. The effective weight per attestation in the ledger is:
+
+```
+effectiveWeight = decay × confidence × credibility × normalised_relevance
+```
+
+Relevance is the fourth factor in this chain. It is **pair-scoped** — "is attestor Y's judgment pertinent to actor X specifically?" — unlike credibility which is attestor-scoped ("is Y a reliable judge in general?"). The two concepts require separate SPIs because they answer independent questions.
+
+**Enricher/factor pattern:** each relevance dimension consists of two beans: an enricher that writes snapshot data at attestation time, and a factor that reads it at trust computation time. Adding a new relevance dimension requires only a new enricher + factor bean — no ledger schema change.
+
+| Component | Module | SPI | What it does |
+|---|---|---|---|
+| `OrgDistanceAttestationEnricher` | `casehub-eidos-org` | `LedgerAttestationEnricher` | Write-time: calls `orgDistance(attestorId, actorId, tenancyId)` using raw (pre-tokenised) identities; writes `{"org-distance": N}` to the attestation's `relevanceSnapshot` JSON |
+| `OrgProximityRelevanceFactor` | `casehub-eidos-org` | `AttestationRelevanceFactor` | Read-time: maps `org-distance` via configurable weight table (default: `1.0, 0.7, 0.65, 0.6` for distances 1–4+); accuracy-biased — same-unit attestors receive higher weight |
+| `IndependenceAwareRelevanceFactor` | `casehub-eidos-org` | `AttestationRelevanceFactor` | Read-time: caps same-unit share of a group's evidence mass (default 60%); requires `assessBatch()` override since it needs the full group to compute share ratios; counterweights the accuracy bias of org-proximity |
+
+**Mass-preserving normalisation:** relevance changes **whose** evidence dominates within a trust computation pass, never **how much** evidence exists. Without normalisation, any uniform discount on attestations reduces total evidence mass, pulling Beta scores toward the 0.5 prior. Normalisation runs inside `TrustScoreComputer.compute()` per invocation. Unknown/null-snapshot attestations receive the mean raw relevance of known attestations in the same pass group — truly neutral, neither boosted nor penalised.
+
+**Dependency direction:** eidos → `casehub-ledger-api` (existing edge). Ledger has zero eidos dependency. The org-proximity and independence factors activate by classpath presence — with zero factors, `RelevanceComposer` returns NEUTRAL for all assessments.
+
+**Design refs:** `casehub-ledger#231` spec (attestation relevance design), `casehub-ledger ADR-0018` (AttestationRelevanceFactor SPI), eidos#248 (org-proximity implementation), eidos#257 (independence-aware factor).
+
 ### Chapter sequencing rationale
 
 - C1 before C2: `DefaultCapabilityHealth` takes `AgentDescriptor` directly — C1 must define the type
@@ -1255,6 +1279,7 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | `EpistemicallyWeak` acts as hard gate (excludes rather than deprioritises) | Medium | Open | Filed as eidos#8 — tracked for engine dispatch; `EpistemicallyWeak` agents should be deprioritised, not gated |
 | Reactive renderer A2A path not integration-tested | Low | Open | `DefaultReactiveSystemPromptRenderer` A2A path (`ReactiveA2ASemanticEnrichmentStep`) has unit coverage but no `@QuarkusTest` integration test |
 | `BlockingToReactiveGraphBridge` is worker-thread-per-call, not genuine async I/O | Low | Accepted | Acknowledged at design time; a Vert.x reactive PG driver implementation is a future `@Alternative @Priority(1)` |
+| In-unit attestation amplification (accuracy-vs-independence trade-off) | Medium | Mitigated | `OrgProximityRelevanceFactor` is deliberately accuracy-biased: same-unit attestors receive higher relevance weight because shared operational context makes their judgments more informed. Mass-preserving normalisation (§Attestation Relevance Pipeline) prevents topology from shrinking total evidence, but does not prevent in-unit amplification — by design, same-unit attestations receive proportionally more influence. A unit of agents whose positive attestations correlate will produce higher trust scores than the same performance attested by cross-unit peers. `IndependenceAwareRelevanceFactor` (eidos#257) provides the counterweight: it caps same-unit share of a group's evidence mass (default 60%) and down-weights same-unit attestations when over-represented, using the same `AttestationRelevanceFactor` SPI pipeline. The two factors compose: accuracy amplifies in-unit weight, independence caps it. |
 
 ---
 
@@ -1305,6 +1330,11 @@ Cross-cutting decisions not captured inline in layer entries. Layer-specific dec
 | `TaskSemanticEnricher` | Pull SPI at query time; applications provide personality axis correlation and semantic domain equivalence; eidos asks, the enricher answers, eidos applies without domain knowledge |
 | `Wilson lower bound` | 95% confidence interval lower bound for a proportion with n observations; penalises small samples even when raw quality is high; used in `AgentGraphQuery.topAgentsByOutcome()` ranking |
 | `observedAt` | The instant the agent produced the result, as known to the caller at `recordOutcome()` time; `Instant.now()` captured at the call site, not at persistence time |
+| `OrgProximityRelevanceFactor` | `@ApplicationScoped` bean implementing `AttestationRelevanceFactor`; reads `"org-distance"` from attestation snapshot and maps via configurable weight table (default: `1.0, 0.7, 0.65, 0.6` for distances 1–4+); accuracy-biased — same-unit attestors receive higher weight; returns NEUTRAL when no org structure is available |
+| `IndependenceAwareRelevanceFactor` | `@ApplicationScoped` bean implementing `AttestationRelevanceFactor`; caps same-unit share of a group's evidence mass (configurable, default 60%); overrides `assessBatch()` since it needs the full group to compute share ratios; counterweights the accuracy bias of `OrgProximityRelevanceFactor`; returns NEUTRAL when only same-unit or only cross-unit attestations exist |
+| `OrgDistanceAttestationEnricher` | `@ApplicationScoped` bean implementing `LedgerAttestationEnricher`; write-time enricher that calls `orgDistance(attestorId, actorId, tenancyId)` and writes `{"org-distance": N}` to the attestation's `relevanceSnapshot` JSON; uses raw (pre-tokenised) identities; absent when eidos is not on the classpath |
+| `AttestationRelevanceFactor` | `casehub-ledger-api` SPI for per-attestation relevance weighting in the trust computation pipeline; each factor computes one dimension (org proximity, independence, etc.); the ledger's `RelevanceComposer` aggregates all discovered factors via product-with-floor; with no factors on the classpath, all assessments are NEUTRAL |
+| `LedgerAttestationEnricher` | `casehub-ledger-api` SPI for write-time attestation enrichment; enrichers populate the `relevanceSnapshot` JSON on `LedgerAttestation` with their own keys; each enricher writes its own keys, each factor reads its own key; failures are non-fatal |
 | `@DefaultBean` | Quarkus CDI qualifier that makes a bean the lowest-priority default — displaceable by any `@ApplicationScoped` or `@Alternative @Priority(N)` without modifying the default implementation |
 | `@IfBuildProperty` | Quarkus build-time conditional that activates a bean only when a specified property has a given value; used for reactive build gating throughout eidos |
 | Jandex library pattern | A module packaged without `quarkus:build` goal; activates by classpath presence; Jandex indexing required for CDI bean discovery |
