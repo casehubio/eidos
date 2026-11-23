@@ -34,7 +34,8 @@ public record AgentDescriptor(
         List<AgentGoal> goals,
         List<AgentConstraint> constraints,
         List<ProviderConfig> providerConfigs,
-        Map<String, Object> extensionData
+        Map<String, Object> extensionData,
+        RoleProfile roleProfile
 ) {
     public AgentDescriptor {
         capabilities = capabilities != null ? List.copyOf(capabilities) : List.of();
@@ -209,7 +210,8 @@ public record AgentDescriptor(
                 .templates(this.templates).goals(this.goals)
                 .constraints(this.constraints)
                 .providerConfigs(this.providerConfigs)
-                .extensionData(this.extensionData);
+                .extensionData(this.extensionData)
+                .roleProfile(this.roleProfile);
     }
 
     public static final class Builder {
@@ -232,6 +234,7 @@ public record AgentDescriptor(
         private List<AgentConstraint> constraints;
         private List<ProviderConfig> providerConfigs;
         private Map<String, Object>  extensionData;
+        private RoleProfile          roleProfile;
 
         public Builder agentId(String v)                                {
                                                                             this.agentId = v;
@@ -384,6 +387,11 @@ public record AgentDescriptor(
                                                                             return this;
                                                                         }
 
+        public Builder roleProfile(RoleProfile v) {
+            this.roleProfile = v;
+            return this;
+        }
+
         public AgentDescriptor build() {
             return new AgentDescriptor(
                     agentId, name, description, version, provider,
@@ -395,7 +403,7 @@ public record AgentDescriptor(
                     jurisdiction, dataHandlingPolicy, tenancyId, briefing,
                     voice, templates,
                     goals, constraints,
-                    providerConfigs, extensionData);
+                    providerConfigs, extensionData, roleProfile);
         }
     }
 }
