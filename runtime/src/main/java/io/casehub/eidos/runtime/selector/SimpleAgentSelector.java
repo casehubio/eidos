@@ -4,7 +4,6 @@ import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.CapabilityStatus;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
 import io.casehub.ledger.api.spi.TrustScoreSource;
-import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -15,7 +14,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.OptionalDouble;
 
-@DefaultBean
 @ApplicationScoped
 public class SimpleAgentSelector implements AgentSelector {
 
