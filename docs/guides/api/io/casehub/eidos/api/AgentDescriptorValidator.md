@@ -60,6 +60,12 @@
 
 ### `MAX_PROVIDER_CONFIG_VALUE` (`int`)
 
+### `MAX_ROLE_DECLARATIONS` (`int`)
+
+### `MAX_ROLE_NAME` (`int`)
+
+### `MAX_ROLE_VOCABULARY` (`int`)
+
 ### `MAX_SLOT` (`int`)
 
 ### `MAX_TEMPLATE_CONTENT` (`int`)
