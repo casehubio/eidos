@@ -92,6 +92,21 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
             .toList();
     }
 
+    private List<AgentOutcome> outcomesForRole(final String agentId, final String roleName,
+                                               final String tenancyId, final Instant since) {
+        return em.createQuery(
+                         "SELECT o FROM AgentOutcomeEntity o JOIN o.task t " +
+                         "WHERE t.agentId = :a AND t.role = :role AND t.tenancyId = :tn " +
+                         "AND t.startedAt >= :since",
+                         AgentOutcomeEntity.class)
+                 .setParameter("a", agentId).setParameter("role", roleName)
+                 .setParameter("tn", tenancyId).setParameter("since", since)
+                 .getResultList().stream()
+                 .map(AgentOutcomeEntity::toRecord)
+                 .toList();
+    }
+
+
     @Override
     @Transactional(TxType.SUPPORTS)
     public AgentTaskHistory historyByCapability(final String agentId, final String capabilityTag,
@@ -110,6 +125,34 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
             tasks.stream().map(AgentTaskEntity::toRecord).toList(),
             outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
+
+    @Override
+    @Transactional(TxType.SUPPORTS)
+    public AgentTaskHistory historyByRole(final String agentId, final String roleName,
+                                          final String tenancyId, final Instant since) {
+        Objects.requireNonNull(agentId, "agentId");
+        Objects.requireNonNull(roleName, "roleName");
+        Objects.requireNonNull(tenancyId, "tenancyId");
+        Objects.requireNonNull(since, "since");
+        List<AgentTaskEntity> tasks = em.createQuery(
+                                                "SELECT t FROM AgentTaskEntity t WHERE t.agentId = :a " +
+                                                "AND t.tenancyId = :tn AND t.role = :role " +
+                                                "AND t.startedAt >= :since ORDER BY t.startedAt DESC",
+                                                AgentTaskEntity.class)
+                                        .setParameter("a", agentId)
+                                        .setParameter("tn", tenancyId)
+                                        .setParameter("role", roleName)
+                                        .setParameter("since", since)
+                                        .getResultList();
+
+        List<AgentOutcome>   outcomes = outcomesForRole(agentId, roleName, tenancyId, since);
+        List<AttestationRef> refs     = attestationsFor(agentId, tenancyId);
+        int                  n        = outcomes.size();
+        return new AgentTaskHistory(agentId, tenancyId,
+                                    tasks.stream().map(AgentTaskEntity::toRecord).toList(),
+                                    outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+    }
+
 
     @Override
     @Transactional(TxType.SUPPORTS)

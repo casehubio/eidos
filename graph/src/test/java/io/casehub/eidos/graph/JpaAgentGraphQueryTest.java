@@ -32,7 +32,7 @@ class JpaAgentGraphQueryTest {
                               int count, TaskResult result, double confidence) {
         for (int i = 0; i < count; i++) {
             String tid = "t-" + agentId + "-" + i;
-            store.recordTask(new AgentTask(tid, agentId, "t1", cap, domain,
+            store.recordTask(new AgentTask(tid, agentId, "t1", cap, domain, null,
                                            "ref-" + i, Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, agentId, "t1"),
                                 new AgentOutcome(tid, result, confidence, Instant.now(), null));
@@ -98,14 +98,14 @@ class JpaAgentGraphQueryTest {
         // Use capability prefix in IDs to avoid key collision in the same test transaction.
         for (int i = 0; i < 3; i++) {
             String tid = "cr-agent-a-" + i;
-            store.recordTask(new AgentTask(tid, "agent-a", "t1", "code-review", "java",
+            store.recordTask(new AgentTask(tid, "agent-a", "t1", "code-review", "java", null,
                                            "r", Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, "agent-a", "t1"),
                                 new AgentOutcome(tid, TaskResult.SUCCEEDED, 0.9, Instant.now(), null));
         }
         for (int i = 0; i < 2; i++) {
             String tid = "pl-agent-a-" + i;
-            store.recordTask(new AgentTask(tid, "agent-a", "t1", "planning", "agile",
+            store.recordTask(new AgentTask(tid, "agent-a", "t1", "planning", "agile", null,
                                            "r", Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, "agent-a", "t1"),
                                 new AgentOutcome(tid, TaskResult.FAILED, 0.1, Instant.now(), null));
@@ -130,7 +130,7 @@ class JpaAgentGraphQueryTest {
         for (int i = 0; i < 5; i++) {
             String tid = "tz-" + i;
             store.recordTask(new AgentTask(tid, "agent-a", "other-tenant",
-                "code-review", "java", "r", Instant.now(), Instant.now()));
+                "code-review", "java", null, "r", Instant.now(), Instant.now()));
             store.recordOutcome(new AgentTaskId(tid, "agent-a", "other-tenant"),
                 new AgentOutcome(tid, TaskResult.SUCCEEDED, 0.9, Instant.now(), null));
         }
@@ -143,8 +143,8 @@ class JpaAgentGraphQueryTest {
 
     @Test
     void coActiveAgents_returns_agents_with_in_progress_tasks() {
-        store.recordTask(new AgentTask("t1", "agent-x", "t1", "cap", "java", "case-42", Instant.now(), null));
-        store.recordTask(new AgentTask("t2", "agent-y", "t1", "cap", "java", "case-42", Instant.now(), null));
+        store.recordTask(new AgentTask("t1", "agent-x", "t1", "cap", "java", null, "case-42", Instant.now(), null));
+        store.recordTask(new AgentTask("t2", "agent-y", "t1", "cap", "java", null, "case-42", Instant.now(), null));
 
         var result = query.coActiveAgents("case-42", "t1");
         assertThat(result).containsExactlyInAnyOrder("agent-x", "agent-y");
@@ -152,8 +152,8 @@ class JpaAgentGraphQueryTest {
 
     @Test
     void coActiveAgents_excludes_completed_tasks() {
-        store.recordTask(new AgentTask("t3", "agent-done", "t1", "cap", "java", "case-42", Instant.now(), Instant.now()));
-        store.recordTask(new AgentTask("t4", "agent-active", "t1", "cap", "java", "case-42", Instant.now(), null));
+        store.recordTask(new AgentTask("t3", "agent-done", "t1", "cap", "java", null, "case-42", Instant.now(), Instant.now()));
+        store.recordTask(new AgentTask("t4", "agent-active", "t1", "cap", "java", null, "case-42", Instant.now(), null));
 
         var result = query.coActiveAgents("case-42", "t1");
         assertThat(result).containsExactly("agent-active");
@@ -161,8 +161,8 @@ class JpaAgentGraphQueryTest {
 
     @Test
     void coActiveAgents_isolates_by_tenancy() {
-        store.recordTask(new AgentTask("t5", "agent-a", "tenant-a", "cap", "java", "case-99", Instant.now(), null));
-        store.recordTask(new AgentTask("t6", "agent-b", "tenant-b", "cap", "java", "case-99", Instant.now(), null));
+        store.recordTask(new AgentTask("t5", "agent-a", "tenant-a", "cap", "java", null, "case-99", Instant.now(), null));
+        store.recordTask(new AgentTask("t6", "agent-b", "tenant-b", "cap", "java", null, "case-99", Instant.now(), null));
 
         var result = query.coActiveAgents("case-99", "tenant-a");
         assertThat(result).containsExactly("agent-a");

@@ -1,5 +1,6 @@
 package io.casehub.eidos.api;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface AgentGraphQuery {
@@ -7,6 +8,10 @@ public interface AgentGraphQuery {
     AgentTaskHistory agentHistory(String agentId, String tenancyId);
 
     AgentTaskHistory historyByCapability(String agentId, String capabilityTag, String tenancyId);
+
+    AgentTaskHistory historyByRole(String agentId, String roleName,
+                                   String tenancyId, Instant since);
+
 
     /**
      * Returns agentIds ranked by Wilson lower bound score.

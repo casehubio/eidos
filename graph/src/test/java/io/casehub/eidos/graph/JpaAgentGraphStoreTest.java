@@ -17,7 +17,7 @@ class JpaAgentGraphStoreTest {
     @Inject AgentGraphQuery query;
 
     static AgentTask task(String taskId, String agentId, String cap, String domain) {
-        return new AgentTask(taskId, agentId, "t1", cap, domain, "ref-" + taskId,
+        return new AgentTask(taskId, agentId, "t1", cap, domain, null, "ref-" + taskId,
                              Instant.now(), null);
     }
 
@@ -62,7 +62,7 @@ class JpaAgentGraphStoreTest {
     @Test
     void tenancy_isolation() {
         store.recordTask(new AgentTask("t4", "agent-a", "tenant-A",
-            "code-review", "java", "ref", Instant.now(), null));
+            "code-review", "java", null, "ref", Instant.now(), null));
 
         assertThat(query.agentHistory("agent-a", "tenant-B").tasks()).isEmpty();
     }
@@ -81,7 +81,7 @@ class JpaAgentGraphStoreTest {
     @Test
     void inProgress_tasks_included_in_history() {
         store.recordTask(new AgentTask("t6", "agent-a", "t1",
-            "code-review", "java", "ref", Instant.now(), null));
+            "code-review", "java", null, "ref", Instant.now(), null));
         assertThat(query.agentHistory("agent-a", "t1").tasks()).hasSize(1);
         assertThat(query.agentHistory("agent-a", "t1").tasks().get(0).endedAt()).isNull();
     }

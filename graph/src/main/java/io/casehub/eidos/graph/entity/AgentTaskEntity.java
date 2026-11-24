@@ -1,7 +1,15 @@
 package io.casehub.eidos.graph.entity;
 
 import io.casehub.eidos.api.AgentTask;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +26,9 @@ public class AgentTaskEntity {
     @Column(name = "tenancy_id",     nullable = false) String tenancyId;
     @Column(name = "capability_tag", nullable = false) String capabilityTag;
     @Column(name = "task_domain")                      String taskDomain;
+    @Column(name = "role", length = 100)
+                                                       String role;
+
     @Column(name = "external_ref",   columnDefinition = "TEXT") String externalRef;
     @Column(name = "started_at",     nullable = false) Instant startedAt;
     @Column(name = "ended_at")                         Instant endedAt;
@@ -38,6 +49,7 @@ public class AgentTaskEntity {
         e.tenancyId     = t.tenancyId();
         e.capabilityTag = t.capabilityTag();
         e.taskDomain    = t.taskDomain();
+        e.role          = t.role();
         e.externalRef   = t.externalRef();
         e.startedAt     = t.startedAt();
         e.endedAt       = t.endedAt();
@@ -46,7 +58,7 @@ public class AgentTaskEntity {
 
     public AgentTask toRecord() {
         return new AgentTask(taskId, agentId, tenancyId, capabilityTag,
-                             taskDomain, externalRef, startedAt, endedAt);
+                             taskDomain, role, externalRef, startedAt, endedAt);
     }
 
     public String agentId()              { return agentId; }

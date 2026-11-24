@@ -23,6 +23,13 @@ public class NoOpAgentGraphQuery implements AgentGraphQuery {
     }
 
     @Override
+    public AgentTaskHistory historyByRole(final String agentId, final String roleName,
+                                          final String tenancyId, final java.time.Instant since) {
+        return agentHistory(agentId, tenancyId);
+    }
+
+
+    @Override
     public List<String> topAgentsByOutcome(final String capabilityTag, final String taskDomain,
                                             final String tenancyId, final int limit) {
         return List.of();
