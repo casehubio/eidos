@@ -3,8 +3,10 @@ package io.casehub.eidos.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
@@ -71,5 +73,23 @@ class RoleProfileTest {
   void empty_roles_accepted() {
     var profile = new RoleProfile(List.of(), RoleChangePolicy.ADVISORY);
     assertThat(profile.declaredRoles()).isEmpty();
+  }
+
+  @Test
+  void roles_at_max_count_accepted() {
+    var roles = IntStream.range(0, 10)
+        .mapToObj(i -> new RoleDeclaration("role-" + i, null))
+        .toList();
+    assertThatNoException().isThrownBy(() -> new RoleProfile(roles, POLICY));
+  }
+
+  @Test
+  void roles_exceeding_max_count_rejected() {
+    var roles = IntStream.range(0, 11)
+        .mapToObj(i -> new RoleDeclaration("role-" + i, null))
+        .toList();
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> new RoleProfile(roles, POLICY))
+        .withMessageContaining("declaredRoles");
   }
 }

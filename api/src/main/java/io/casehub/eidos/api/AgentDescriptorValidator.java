@@ -44,6 +44,7 @@ class AgentDescriptorValidator {
     static final int MAX_PROVIDER_CONFIG_VALUE  = 500;
     static final int MAX_ROLE_NAME             = 100;
     static final int MAX_ROLE_VOCABULARY       = 500;
+    static final int MAX_ROLE_DECLARATIONS     = 10;
 
 
     static void validate(final String agentId, final String name,
