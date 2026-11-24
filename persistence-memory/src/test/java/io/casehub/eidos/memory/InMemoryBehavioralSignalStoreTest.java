@@ -7,7 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 
-import static io.casehub.eidos.api.BehavioralSignal.*;
+import static io.casehub.eidos.api.BehavioralSignal.COMPLIANT;
+import static io.casehub.eidos.api.BehavioralSignal.DECLINE;
+import static io.casehub.eidos.api.BehavioralSignal.SUCCESS;
+import static io.casehub.eidos.api.BehavioralSignal.VIOLATED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class InMemoryBehavioralSignalStoreTest extends BehavioralSignalStoreContractTest {
@@ -69,10 +72,19 @@ class InMemoryBehavioralSignalStoreTest extends BehavioralSignalStoreContractTes
     }
 
     @Test
+    void compliant_expires_after_ttl() throws Exception {
+        setTtl(store, "compliantTtlDays", -1);
+        store.record("a1", "t1", "code-review", "latency", COMPLIANT);
+        assertThat(store.count("a1", "t1", "code-review", "latency", COMPLIANT)).isEqualTo(0);
+        assertThat(store.learned("a1", "t1", "code-review", COMPLIANT)).isEmpty();
+    }
+
+    @Test
     void violated_expires_after_ttl() throws Exception {
         setTtl(store, "violatedTtlDays", -1);
         store.record("a1", "t1", "code-review", "latency", VIOLATED);
         assertThat(store.count("a1", "t1", "code-review", "latency", VIOLATED)).isEqualTo(0);
+        assertThat(store.learned("a1", "t1", "code-review", VIOLATED)).isEmpty();
     }
 
     // --- In-memory-specific: thread safety ---
