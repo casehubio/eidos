@@ -12,6 +12,9 @@ import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.GoalPriority;
 import io.casehub.eidos.api.MatchDegree;
+import io.casehub.eidos.api.RoleChangePolicy;
+import io.casehub.eidos.api.RoleDeclaration;
+import io.casehub.eidos.api.RoleProfile;
 import io.casehub.eidos.api.TestCapabilityVocab;
 import io.casehub.eidos.api.Visibility;
 import io.casehub.eidos.api.VocabularyMetadata;
@@ -829,10 +832,10 @@ class JpaAgentRegistryTest {
     @Test
     @TestTransaction
     void roleProfile_roundTrip() {
-        var profile = new io.casehub.eidos.api.RoleProfile(
-            List.of(new io.casehub.eidos.api.RoleDeclaration("coordinator", "urn:test:roles"),
-                    new io.casehub.eidos.api.RoleDeclaration("analyst", null)),
-            io.casehub.eidos.api.RoleChangePolicy.ADVISORY);
+        var profile = new RoleProfile(
+            List.of(new RoleDeclaration("coordinator", "urn:test:roles"),
+                    new RoleDeclaration("analyst", null)),
+            RoleChangePolicy.ADVISORY);
 
         var d = AgentDescriptor.builder()
             .agentId("role-roundtrip").name("Role Test").slot("tester")
@@ -849,7 +852,7 @@ class JpaAgentRegistryTest {
         assertThat(found.get().roleProfile().declaredRoles().get(0).roleVocabulary()).isEqualTo("urn:test:roles");
         assertThat(found.get().roleProfile().declaredRoles().get(1).roleName()).isEqualTo("analyst");
         assertThat(found.get().roleProfile().changePolicy().mode())
-            .isEqualTo(io.casehub.eidos.api.RoleChangePolicy.Mode.ADVISORY);
+            .isEqualTo(RoleChangePolicy.Mode.ADVISORY);
     }
 
     @Test

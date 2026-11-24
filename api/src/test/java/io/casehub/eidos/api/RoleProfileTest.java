@@ -1,9 +1,9 @@
 package io.casehub.eidos.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -35,12 +35,12 @@ class RoleProfileTest {
 
   @Test
   void duplicate_role_names_rejected() {
-    assertThatIllegalArgumentException()
-        .isThrownBy(() -> new RoleProfile(
+    assertThatThrownBy(() -> new RoleProfile(
             List.of(new RoleDeclaration("coordinator", null),
                     new RoleDeclaration("coordinator", "urn:other")),
             POLICY))
-        .withMessageContaining("duplicate");
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("duplicate");
   }
 
   @Test
@@ -88,8 +88,8 @@ class RoleProfileTest {
     var roles = IntStream.range(0, 11)
         .mapToObj(i -> new RoleDeclaration("role-" + i, null))
         .toList();
-    assertThatIllegalArgumentException()
-        .isThrownBy(() -> new RoleProfile(roles, POLICY))
-        .withMessageContaining("declaredRoles");
+    assertThatThrownBy(() -> new RoleProfile(roles, POLICY))
+        .isInstanceOf(AgentValidationException.class)
+        .hasMessageContaining("declaredRoles");
   }
 }

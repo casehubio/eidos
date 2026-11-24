@@ -13,6 +13,7 @@ import io.casehub.eidos.api.LivedDispositionSource;
 import io.casehub.eidos.api.DispositionSignalStore;
 import io.casehub.eidos.api.GoalEvolution;
 import io.casehub.eidos.api.GoalSignalStore;
+import io.casehub.eidos.api.CrossUnitEvidenceAssessor;
 import io.casehub.eidos.api.OrgAwareDispatch;
 import io.casehub.eidos.api.RenderedPromptCache;
 import io.casehub.eidos.api.RuntimeCollaborationQuery;
@@ -38,6 +39,7 @@ import io.casehub.eidos.core.health.NoOpDispositionSignalStore;
 import io.casehub.eidos.core.health.NoOpGoalEvolution;
 import io.casehub.eidos.core.health.NoOpGoalSignalStore;
 import io.casehub.eidos.core.org.NoOpOrgAwareDispatch;
+import io.casehub.eidos.core.trust.NoOpCrossUnitEvidenceAssessor;
 import io.casehub.eidos.core.registrar.ClasspathYamlDescriptorRegistrar;
 import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.core.renderer.NoOpRenderedPromptCache;
@@ -172,5 +174,11 @@ public class EidosCoreProducer {
     @DefaultBean
     OrgAwareDispatch orgAwareDispatch() {
         return new NoOpOrgAwareDispatch();
+    }
+
+    @Produces
+    @DefaultBean
+    CrossUnitEvidenceAssessor crossUnitEvidenceAssessor() {
+        return new NoOpCrossUnitEvidenceAssessor();
     }
 }
