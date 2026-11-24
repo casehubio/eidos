@@ -826,6 +826,46 @@ class JpaAgentRegistryTest {
         assertThat(found.get().extensionData()).isNull();
     }
 
+    @Test
+    @TestTransaction
+    void roleProfile_roundTrip() {
+        var profile = new io.casehub.eidos.api.RoleProfile(
+            List.of(new io.casehub.eidos.api.RoleDeclaration("coordinator", "urn:test:roles"),
+                    new io.casehub.eidos.api.RoleDeclaration("analyst", null)),
+            io.casehub.eidos.api.RoleChangePolicy.ADVISORY);
+
+        var d = AgentDescriptor.builder()
+            .agentId("role-roundtrip").name("Role Test").slot("tester")
+            .tenancyId("test-tenant")
+            .roleProfile(profile)
+            .build();
+        registry.register(d);
+
+        var found = registry.findById("role-roundtrip", "test-tenant");
+        assertThat(found).isPresent();
+        assertThat(found.get().roleProfile()).isNotNull();
+        assertThat(found.get().roleProfile().declaredRoles()).hasSize(2);
+        assertThat(found.get().roleProfile().declaredRoles().get(0).roleName()).isEqualTo("coordinator");
+        assertThat(found.get().roleProfile().declaredRoles().get(0).roleVocabulary()).isEqualTo("urn:test:roles");
+        assertThat(found.get().roleProfile().declaredRoles().get(1).roleName()).isEqualTo("analyst");
+        assertThat(found.get().roleProfile().changePolicy().mode())
+            .isEqualTo(io.casehub.eidos.api.RoleChangePolicy.Mode.ADVISORY);
+    }
+
+    @Test
+    @TestTransaction
+    void roleProfile_null_roundTrip() {
+        var d = AgentDescriptor.builder()
+            .agentId("role-null").name("Role Null").slot("tester")
+            .tenancyId("test-tenant")
+            .build();
+        registry.register(d);
+
+        var found = registry.findById("role-null", "test-tenant");
+        assertThat(found).isPresent();
+        assertThat(found.get().roleProfile()).isNull();
+    }
+
 // --- Proximity query tests ---
 
     static AgentDescriptor groundedDescriptor(String agentId, String tenancyId, String... capNames) {

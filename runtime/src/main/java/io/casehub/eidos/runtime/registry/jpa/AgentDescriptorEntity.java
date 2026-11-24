@@ -76,6 +76,9 @@ public class AgentDescriptorEntity {
     @Column(name = "extension_data", columnDefinition = "TEXT")
     String extensionData;
 
+    @Column(name = "role_profile", columnDefinition = "TEXT")
+    String roleProfile;
+
     @Column(columnDefinition = "TEXT")
     String disposition;
 

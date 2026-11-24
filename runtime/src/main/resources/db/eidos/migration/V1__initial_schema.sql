@@ -25,6 +25,7 @@ CREATE TABLE agent_descriptor (
     disposition            TEXT,
     templates              TEXT,
     extension_data         TEXT,
+    role_profile           TEXT,
     CONSTRAINT uq_agent UNIQUE (agent_id, tenancy_id)
 );
 CREATE INDEX idx_agent_descriptor_tenancy_slot ON agent_descriptor(tenancy_id, slot);

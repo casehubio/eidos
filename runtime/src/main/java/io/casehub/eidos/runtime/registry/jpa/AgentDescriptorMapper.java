@@ -10,6 +10,7 @@ import io.casehub.eidos.api.AgentGoal;
 import io.casehub.eidos.api.ConstraintSeverity;
 import io.casehub.eidos.api.DispositionAxis;
 import io.casehub.eidos.api.GoalPriority;
+import io.casehub.eidos.api.RoleProfile;
 import io.casehub.eidos.api.TemplateRef;
 import io.casehub.eidos.api.Visibility;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -47,7 +48,7 @@ class AgentDescriptorMapper {
                 e.constraints.stream().map(this::toConstraint).toList(),
                 null,
                 readJson(e.extensionData, new TypeReference<Map<String, Object>>() {}),
-                null
+                readJson(e.roleProfile, RoleProfile.class)
         );
     }
 
@@ -77,6 +78,7 @@ class AgentDescriptorMapper {
         e.briefing              = d.briefing();
         e.templates             = writeJson(d.templates());
         e.extensionData         = writeJson(d.extensionData());
+        e.roleProfile           = writeJson(d.roleProfile());
         e.disposition           = writeJson(d.disposition());
         d.capabilities().stream()
          .map(c -> toCapabilityEntity(c, e))
