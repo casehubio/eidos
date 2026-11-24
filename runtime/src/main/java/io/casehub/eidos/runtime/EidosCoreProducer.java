@@ -6,16 +6,19 @@ import io.casehub.eidos.api.AgentGraphQuery;
 import io.casehub.eidos.api.AgentGraphStore;
 import io.casehub.eidos.api.AgentStateStore;
 import io.casehub.eidos.api.BehavioralSignalStore;
+import io.casehub.eidos.api.CrossUnitEvidenceAssessor;
 import io.casehub.eidos.api.DispositionEvolution;
 import io.casehub.eidos.api.DispositionHealth;
 import io.casehub.eidos.api.DispositionProfileListener;
-import io.casehub.eidos.api.LivedDispositionSource;
 import io.casehub.eidos.api.DispositionSignalStore;
 import io.casehub.eidos.api.GoalEvolution;
 import io.casehub.eidos.api.GoalSignalStore;
-import io.casehub.eidos.api.CrossUnitEvidenceAssessor;
+import io.casehub.eidos.api.LivedDispositionSource;
 import io.casehub.eidos.api.OrgAwareDispatch;
 import io.casehub.eidos.api.RenderedPromptCache;
+import io.casehub.eidos.api.RoleHealth;
+import io.casehub.eidos.api.RoleHoldCycleStore;
+import io.casehub.eidos.api.RoleTransitionAdvisor;
 import io.casehub.eidos.api.RuntimeCollaborationQuery;
 import io.casehub.eidos.api.TaskSemanticEnricher;
 import io.casehub.eidos.api.TemplateRegistry;
@@ -34,16 +37,19 @@ import io.casehub.eidos.core.health.NoOpBehavioralSignalStore;
 import io.casehub.eidos.core.health.NoOpDispositionEvolution;
 import io.casehub.eidos.core.health.NoOpDispositionHealth;
 import io.casehub.eidos.core.health.NoOpDispositionProfileListener;
-import io.casehub.eidos.core.health.NoOpLivedDispositionSource;
 import io.casehub.eidos.core.health.NoOpDispositionSignalStore;
 import io.casehub.eidos.core.health.NoOpGoalEvolution;
 import io.casehub.eidos.core.health.NoOpGoalSignalStore;
+import io.casehub.eidos.core.health.NoOpRoleHealth;
+import io.casehub.eidos.core.health.NoOpRoleHoldCycleStore;
+import io.casehub.eidos.core.health.NoOpRoleTransitionAdvisor;
+import io.casehub.eidos.core.health.NoOpLivedDispositionSource;
 import io.casehub.eidos.core.org.NoOpOrgAwareDispatch;
-import io.casehub.eidos.core.trust.NoOpCrossUnitEvidenceAssessor;
 import io.casehub.eidos.core.registrar.ClasspathYamlDescriptorRegistrar;
 import io.casehub.eidos.core.renderer.EidosRenderPipeline;
 import io.casehub.eidos.core.renderer.NoOpRenderedPromptCache;
 import io.casehub.eidos.core.template.ClasspathYamlTemplateRegistrar;
+import io.casehub.eidos.core.trust.NoOpCrossUnitEvidenceAssessor;
 import io.casehub.eidos.core.validator.BriefingCoherenceValidator;
 import io.casehub.eidos.core.vocabulary.ClasspathYamlVocabularyRegistrar;
 import io.quarkus.arc.DefaultBean;
@@ -181,4 +187,23 @@ public class EidosCoreProducer {
     CrossUnitEvidenceAssessor crossUnitEvidenceAssessor() {
         return new NoOpCrossUnitEvidenceAssessor();
     }
+
+    @Produces
+    @DefaultBean
+    RoleHealth roleHealth() {
+        return new NoOpRoleHealth();
+    }
+
+    @Produces
+    @DefaultBean
+    RoleTransitionAdvisor roleTransitionAdvisor() {
+        return new NoOpRoleTransitionAdvisor();
+    }
+
+    @Produces
+    @DefaultBean
+    RoleHoldCycleStore roleHoldCycleStore() {
+        return new NoOpRoleHoldCycleStore();
+    }
+
 }
