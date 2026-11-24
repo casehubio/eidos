@@ -1,10 +1,10 @@
 package io.casehub.eidos.api;
 
+import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-
-import org.junit.jupiter.api.Test;
 
 class RoleChangePolicyTest {
 
@@ -13,10 +13,13 @@ class RoleChangePolicyTest {
     assertThat(RoleChangePolicy.ADVISORY.mode()).isEqualTo(RoleChangePolicy.Mode.ADVISORY);
   }
 
-  @Test
-  void disabled_constant_has_unreachable_threshold() {
-    assertThat(RoleChangePolicy.DISABLED.minConfidence()).isGreaterThan(1.0);
-  }
+    @Test
+    void disabled_constant_has_unreachable_threshold() {
+        assertThat(RoleChangePolicy.DISABLED.mode()).isEqualTo(RoleChangePolicy.Mode.DISABLED);
+        assertThat(RoleChangePolicy.DISABLED.minConfidence()).isEqualTo(0.0);
+        assertThat(RoleChangePolicy.DISABLED.demotionConfidence()).isEqualTo(0.0);
+        assertThat(RoleChangePolicy.DISABLED.minHoldCycles()).isEqualTo(0);
+    }
 
   @Test
   void advisory_mode_allows_equal_thresholds() {

@@ -7,6 +7,7 @@ import io.casehub.eidos.api.AttestationRef;
 import io.casehub.eidos.api.GraphDataSufficiency;
 import io.casehub.eidos.api.TaskResult;
 import io.casehub.eidos.api.TaskSemanticEnricher;
+import io.casehub.eidos.api.WilsonConfidence;
 import io.casehub.eidos.graph.entity.AgentOutcomeEntity;
 import io.casehub.eidos.graph.entity.AgentTaskEntity;
 import io.casehub.eidos.graph.entity.AttestationRefEntity;
@@ -37,14 +38,7 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
         return switch (r) { case SUCCEEDED -> 1.0; case PARTIALLY -> 0.5; case FAILED -> 0.0; };
     }
 
-    static double wilsonScore(final double sumQuality, final int n) {
-        if (n == 0) return 0.0;
-        double p = sumQuality / n;
-        double z = 1.645;
-        double z2 = z * z;
-        double num = p + z2 / (2 * n) - z * Math.sqrt((p * (1 - p) + z2 / (4.0 * n)) / n);
-        return num / (1 + z2 / n);
-    }
+    static double wilsonScore(final double sumQuality, final int n) {return WilsonConfidence.score(sumQuality, n);}
 
     @Override
     @Transactional(TxType.SUPPORTS)

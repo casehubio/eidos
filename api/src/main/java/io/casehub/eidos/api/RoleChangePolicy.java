@@ -10,10 +10,10 @@ public record RoleChangePolicy(
       new RoleChangePolicy(Mode.ADVISORY, 0.0, 0.0, 0);
 
   public static final RoleChangePolicy DISABLED =
-      new RoleChangePolicy(Mode.ADVISORY, 1.1, 0.0, 0);
+      new RoleChangePolicy(Mode.DISABLED, 0.0, 0.0, 0);
 
   public RoleChangePolicy {
-    if (mode != Mode.ADVISORY && demotionConfidence >= minConfidence) {
+    if (mode != Mode.ADVISORY && mode != Mode.DISABLED && demotionConfidence >= minConfidence) {
       throw new IllegalArgumentException(
           "demotionConfidence (" + demotionConfidence
               + ") must be lower than minConfidence (" + minConfidence
@@ -27,6 +27,7 @@ public record RoleChangePolicy(
   public enum Mode {
     ADVISORY,
     AUTO_ABOVE_THRESHOLD,
-    AUTOMATIC
+    AUTOMATIC,
+    DISABLED
   }
 }
