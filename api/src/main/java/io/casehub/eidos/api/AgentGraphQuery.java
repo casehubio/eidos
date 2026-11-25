@@ -7,7 +7,18 @@ public interface AgentGraphQuery {
     /** Returns all tasks including in-progress (endedAt=null). */
     AgentTaskHistory agentHistory(String agentId, String tenancyId);
 
+    default AgentTaskHistory agentHistory(String agentId, String tenancyId, Instant since) {
+        return agentHistory(agentId, tenancyId);
+    }
+
+
     AgentTaskHistory historyByCapability(String agentId, String capabilityTag, String tenancyId);
+
+    default AgentTaskHistory historyByCapability(String agentId, String capabilityTag,
+                                                 String tenancyId, Instant since) {
+        return historyByCapability(agentId, capabilityTag, tenancyId);
+    }
+
 
     AgentTaskHistory historyByRole(String agentId, String roleName,
                                    String tenancyId, Instant since);

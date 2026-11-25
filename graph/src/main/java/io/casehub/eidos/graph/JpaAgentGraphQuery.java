@@ -68,6 +68,32 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
             GraphDataSufficiency.forCount(n, from, through, List.of()));
     }
 
+    @Override
+    @Transactional(TxType.SUPPORTS)
+    public AgentTaskHistory agentHistory(final String agentId, final String tenancyId,
+                                         final Instant since) {
+        if (since == null) {return agentHistory(agentId, tenancyId);}
+        List<AgentTaskEntity> tasks = em.createQuery(
+                                                "SELECT t FROM AgentTaskEntity t WHERE t.agentId = :a AND t.tenancyId = :tn " +
+                                                "AND t.startedAt >= :since",
+                                                AgentTaskEntity.class)
+                                        .setParameter("a", agentId).setParameter("tn", tenancyId)
+                                        .setParameter("since", since)
+                                        .getResultList();
+
+        List<AgentOutcome>   outcomes = outcomesFor(agentId, tenancyId, since);
+        List<AttestationRef> refs     = attestationsFor(agentId, tenancyId);
+        int                  n        = outcomes.size();
+        Instant from = tasks.stream().map(AgentTaskEntity::startedAt).filter(Objects::nonNull)
+                            .min(Comparator.naturalOrder()).orElse(null);
+        Instant through = tasks.stream().map(AgentTaskEntity::startedAt).filter(Objects::nonNull)
+                               .max(Comparator.naturalOrder()).orElse(null);
+        return new AgentTaskHistory(agentId, tenancyId,
+                                    tasks.stream().map(AgentTaskEntity::toRecord).toList(),
+                                    outcomes, refs, GraphDataSufficiency.forCount(n, from, through, List.of()));
+    }
+
+
     private List<AgentOutcome> outcomesFor(final String agentId, final String tenancyId) {
         return em.createQuery(
                 "SELECT o FROM AgentOutcomeEntity o JOIN o.task t " +
@@ -78,6 +104,18 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
             .map(AgentOutcomeEntity::toRecord)
             .toList();
     }
+
+    private List<AgentOutcome> outcomesFor(final String agentId, final String tenancyId,
+                                           final Instant since) {
+        String jpql = "SELECT o FROM AgentOutcomeEntity o JOIN o.task t " +
+                      "WHERE t.agentId = :a AND t.tenancyId = :tn";
+        if (since != null) {jpql += " AND t.startedAt >= :since";}
+        var q = em.createQuery(jpql, AgentOutcomeEntity.class)
+                  .setParameter("a", agentId).setParameter("tn", tenancyId);
+        if (since != null) {q.setParameter("since", since);}
+        return q.getResultList().stream().map(AgentOutcomeEntity::toRecord).toList();
+    }
+
 
     private List<AgentOutcome> outcomesFor(final String agentId, final String capabilityTag,
                                             final String tenancyId) {
@@ -91,6 +129,19 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
             .map(AgentOutcomeEntity::toRecord)
             .toList();
     }
+
+    private List<AgentOutcome> outcomesFor(final String agentId, final String capabilityTag,
+                                           final String tenancyId, final Instant since) {
+        String jpql = "SELECT o FROM AgentOutcomeEntity o JOIN o.task t " +
+                      "WHERE t.agentId = :a AND t.capabilityTag = :cap AND t.tenancyId = :tn";
+        if (since != null) {jpql += " AND t.startedAt >= :since";}
+        var q = em.createQuery(jpql, AgentOutcomeEntity.class)
+                  .setParameter("a", agentId).setParameter("cap", capabilityTag)
+                  .setParameter("tn", tenancyId);
+        if (since != null) {q.setParameter("since", since);}
+        return q.getResultList().stream().map(AgentOutcomeEntity::toRecord).toList();
+    }
+
 
     private List<AgentOutcome> outcomesForRole(final String agentId, final String roleName,
                                                final String tenancyId, final Instant since) {
@@ -125,6 +176,29 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
             tasks.stream().map(AgentTaskEntity::toRecord).toList(),
             outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
+
+    @Override
+    @Transactional(TxType.SUPPORTS)
+    public AgentTaskHistory historyByCapability(final String agentId, final String capabilityTag,
+                                                final String tenancyId, final Instant since) {
+        if (since == null) {return historyByCapability(agentId, capabilityTag, tenancyId);}
+        List<AgentTaskEntity> tasks = em.createQuery(
+                                                "SELECT t FROM AgentTaskEntity t WHERE t.agentId = :a " +
+                                                "AND t.capabilityTag = :cap AND t.tenancyId = :tn " +
+                                                "AND t.startedAt >= :since",
+                                                AgentTaskEntity.class)
+                                        .setParameter("a", agentId).setParameter("cap", capabilityTag)
+                                        .setParameter("tn", tenancyId).setParameter("since", since)
+                                        .getResultList();
+
+        List<AgentOutcome>   outcomes = outcomesFor(agentId, capabilityTag, tenancyId, since);
+        List<AttestationRef> refs     = attestationsFor(agentId, tenancyId);
+        int                  n        = outcomes.size();
+        return new AgentTaskHistory(agentId, tenancyId,
+                                    tasks.stream().map(AgentTaskEntity::toRecord).toList(),
+                                    outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+    }
+
 
     @Override
     @Transactional(TxType.SUPPORTS)
