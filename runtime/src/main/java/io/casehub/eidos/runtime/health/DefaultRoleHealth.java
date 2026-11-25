@@ -7,6 +7,7 @@ import io.casehub.eidos.api.GraphDataSufficiency;
 import io.casehub.eidos.api.RoleHealth;
 import io.casehub.eidos.api.SufficiencyLevel;
 import io.casehub.eidos.api.TaskResult;
+import io.casehub.eidos.api.TemporalDecay;
 import io.casehub.eidos.api.WilsonConfidence;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -21,13 +22,17 @@ public class DefaultRoleHealth implements RoleHealth {
 
     private final AgentGraphQuery graphQuery;
     private final int windowDays;
+    private final double halfLifeDays;
 
     @Inject
     public DefaultRoleHealth(final AgentGraphQuery graphQuery,
                              @ConfigProperty(name = "casehub.eidos.role-health.window-days",
-                                     defaultValue = "90") final int windowDays) {
+                                     defaultValue = "90") final int windowDays,
+                             @ConfigProperty(name = "casehub.eidos.role-health.decay-half-life-days",
+                                     defaultValue = "90") final double halfLifeDays) {
         this.graphQuery = graphQuery;
         this.windowDays = windowDays;
+        this.halfLifeDays = halfLifeDays;
     }
 
     @Override
@@ -41,19 +46,24 @@ public class DefaultRoleHealth implements RoleHealth {
         final var history = graphQuery.historyByRole(
                 descriptor.agentId(), roleName, descriptor.tenancyId(), since);
 
-        final int n = history.outcomes().size();
-        if (GraphDataSufficiency.forCount(n, since, Instant.now(), List.of()).level()
+        final Instant now = Instant.now();
+        final int rawCount = history.outcomes().size();
+        if (GraphDataSufficiency.forCount(rawCount, since, now, List.of()).level()
                 == SufficiencyLevel.INSUFFICIENT) {
             return new RoleStatus.DeclaredFit(roleName);
         }
 
         double sumQuality = 0.0;
+        double effectiveN = 0.0;
         int failureCount = 0;
         for (final var outcome : history.outcomes()) {
-            sumQuality += outcome.confidence() * multiplier(outcome.result());
+            final double decay = TemporalDecay.exponential(outcome.observedAt(), now, halfLifeDays);
+            sumQuality += outcome.confidence() * multiplier(outcome.result()) * decay;
+            effectiveN += decay;
             if (outcome.result() == TaskResult.FAILED) failureCount++;
         }
 
+        final int n = Math.max(1, (int) Math.round(effectiveN));
         final double confidence = WilsonConfidence.score(sumQuality, n);
         final var policy = descriptor.roleProfile().changePolicy();
 

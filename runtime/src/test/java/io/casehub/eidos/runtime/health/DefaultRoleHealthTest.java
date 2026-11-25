@@ -21,7 +21,7 @@ class DefaultRoleHealthTest {
     @BeforeEach
     void setUp() {
         graphQuery = new StubGraphQuery();
-        roleHealth = new DefaultRoleHealth(graphQuery, 90);
+        roleHealth = new DefaultRoleHealth(graphQuery, 90, 90);
     }
 
     @Test
@@ -89,6 +89,45 @@ class DefaultRoleHealthTest {
         assertThat(unfit.totalOutcomes()).isEqualTo(15);
     }
 
+    @Test
+    void decay_reduces_confidence_for_old_outcomes() {
+        var descriptor = descriptorWithRoles("coordinator",
+                                             new RoleChangePolicy(RoleChangePolicy.Mode.AUTO_ABOVE_THRESHOLD,
+                                                                  0.5, 0.3, 2));
+        var recentHistory = historyWithOutcomes(20, TaskResult.SUCCEEDED, 0.9);
+        graphQuery.setHistory("coordinator", recentHistory);
+        var recentStatus = roleHealth.probe(descriptor, "coordinator", ProbeContext.of(null));
+        assertThat(recentStatus).isInstanceOf(RoleStatus.Fit.class);
+        double recentConfidence = ((RoleStatus.Fit) recentStatus).confidence();
+
+        var oldHistory = historyWithAgedOutcomes(20, TaskResult.SUCCEEDED, 0.9,
+                                                 Instant.now().minus(80, java.time.temporal.ChronoUnit.DAYS));
+        graphQuery.setHistory("coordinator", oldHistory);
+        var oldStatus = roleHealth.probe(descriptor, "coordinator", ProbeContext.of(null));
+        double oldConfidence = switch (oldStatus) {
+            case RoleStatus.Fit f -> f.confidence();
+            case RoleStatus.Marginal m -> m.confidence();
+            case RoleStatus.Unfit u -> u.confidence();
+            default -> -1;
+        };
+        assertThat(oldConfidence).isLessThan(recentConfidence);
+    }
+
+    @Test
+    void zero_half_life_disables_decay() {
+        var noDecayHealth = new DefaultRoleHealth(graphQuery, 90, 0);
+        var descriptor = descriptorWithRoles("coordinator",
+                                             new RoleChangePolicy(RoleChangePolicy.Mode.AUTO_ABOVE_THRESHOLD,
+                                                                  0.5, 0.3, 2));
+        var oldHistory = historyWithAgedOutcomes(20, TaskResult.SUCCEEDED, 0.9,
+                                                 Instant.now().minus(80, java.time.temporal.ChronoUnit.DAYS));
+        graphQuery.setHistory("coordinator", oldHistory);
+
+        var status = noDecayHealth.probe(descriptor, "coordinator", ProbeContext.of(null));
+        assertThat(status).isInstanceOf(RoleStatus.Fit.class);
+    }
+
+
     // ── Helpers ──
 
     private static AgentDescriptor descriptorWithoutRoleProfile() {
@@ -135,6 +174,17 @@ class DefaultRoleHealthTest {
         return new AgentTaskHistory("a1", "t1", List.of(), outcomes, List.of(),
                 GraphDataSufficiency.forCount(count, Instant.now(), Instant.now(), List.of()));
     }
+
+    private static AgentTaskHistory historyWithAgedOutcomes(int count, TaskResult result,
+                                                            double confidence, Instant observedAt) {
+        var outcomes = new java.util.ArrayList<AgentOutcome>();
+        for (int i = 0; i < count; i++) {
+            outcomes.add(new AgentOutcome("t" + i, result, confidence, observedAt, null));
+        }
+        return new AgentTaskHistory("a1", "t1", List.of(), outcomes, List.of(),
+                                    GraphDataSufficiency.forCount(count, observedAt, observedAt, List.of()));
+    }
+
 
     static class StubGraphQuery implements AgentGraphQuery {
         private final Map<String, AgentTaskHistory> historyByRole = new HashMap<>();
