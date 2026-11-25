@@ -141,6 +141,86 @@ class JpaAgentGraphQueryTest {
 
 // --- coActiveAgents tests ---
 
+
+// --- historyByRole tests ---
+
+    @Test
+    void historyByRole_returns_only_matching_role_within_window() {
+        Instant now           = Instant.now();
+        Instant withinWindow  = now.minus(30, java.time.temporal.ChronoUnit.DAYS);
+        Instant outsideWindow = now.minus(120, java.time.temporal.ChronoUnit.DAYS);
+
+        // Task with role "coordinator" within window
+        store.recordTask(new AgentTask("r1", "agent-r", "t1", "cap", "java", "coordinator",
+                                       "ref", withinWindow, withinWindow));
+        store.recordOutcome(new AgentTaskId("r1", "agent-r", "t1"),
+                            new AgentOutcome("r1", TaskResult.SUCCEEDED, 0.9, withinWindow, null));
+
+        // Task with role "coordinator" outside window
+        store.recordTask(new AgentTask("r2", "agent-r", "t1", "cap", "java", "coordinator",
+                                       "ref", outsideWindow, outsideWindow));
+        store.recordOutcome(new AgentTaskId("r2", "agent-r", "t1"),
+                            new AgentOutcome("r2", TaskResult.SUCCEEDED, 0.8, outsideWindow, null));
+
+        // Task with different role within window
+        store.recordTask(new AgentTask("r3", "agent-r", "t1", "cap", "java", "analyst",
+                                       "ref", withinWindow, withinWindow));
+        store.recordOutcome(new AgentTaskId("r3", "agent-r", "t1"),
+                            new AgentOutcome("r3", TaskResult.FAILED, 0.5, withinWindow, null));
+
+        // Task with null role within window
+        store.recordTask(new AgentTask("r4", "agent-r", "t1", "cap", "java", null,
+                                       "ref", withinWindow, withinWindow));
+
+        Instant          since   = now.minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory history = query.historyByRole("agent-r", "coordinator", "t1", since);
+
+        assertThat(history.tasks()).hasSize(1);
+        assertThat(history.tasks().get(0).taskId()).isEqualTo("r1");
+        assertThat(history.outcomes()).hasSize(1);
+        assertThat(history.outcomes().get(0).taskId()).isEqualTo("r1");
+    }
+
+    @Test
+    void historyByRole_returns_empty_for_unknown_role() {
+        Instant          since   = Instant.now().minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory history = query.historyByRole("agent-r", "nonexistent", "t1", since);
+        assertThat(history.tasks()).isEmpty();
+        assertThat(history.outcomes()).isEmpty();
+    }
+
+    @Test
+    void historyByRole_isolates_by_tenancy() {
+        Instant now = Instant.now();
+        store.recordTask(new AgentTask("rt1", "agent-r", "tenant-a", "cap", "java", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("rt1", "agent-r", "tenant-a"),
+                            new AgentOutcome("rt1", TaskResult.SUCCEEDED, 0.9, now, null));
+
+        Instant          since   = now.minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory history = query.historyByRole("agent-r", "coordinator", "tenant-b", since);
+        assertThat(history.tasks()).isEmpty();
+    }
+
+    @Test
+    void historyByRole_ordered_by_started_at_descending() {
+        Instant now     = Instant.now();
+        Instant earlier = now.minus(10, java.time.temporal.ChronoUnit.DAYS);
+        Instant later   = now.minus(1, java.time.temporal.ChronoUnit.DAYS);
+
+        store.recordTask(new AgentTask("ro1", "agent-r", "t1", "cap", "java", "coordinator",
+                                       "ref", earlier, earlier));
+        store.recordTask(new AgentTask("ro2", "agent-r", "t1", "cap", "java", "coordinator",
+                                       "ref", later, later));
+
+        Instant          since   = now.minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory history = query.historyByRole("agent-r", "coordinator", "t1", since);
+
+        assertThat(history.tasks()).hasSize(2);
+        assertThat(history.tasks().get(0).taskId()).isEqualTo("ro2");
+        assertThat(history.tasks().get(1).taskId()).isEqualTo("ro1");
+    }
+
     @Test
     void coActiveAgents_returns_agents_with_in_progress_tasks() {
         store.recordTask(new AgentTask("t1", "agent-x", "t1", "cap", "java", null, "case-42", Instant.now(), null));
