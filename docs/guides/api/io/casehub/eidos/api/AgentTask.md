@@ -14,6 +14,8 @@
 
 ### `externalRef` (`java.lang.String`)
 
+### `role` (`java.lang.String`)
+
 ### `startedAt` (`java.time.Instant`)
 
 ### `taskDomain` (`java.lang.String`)
@@ -32,6 +34,8 @@
 
 ### `externalRef` (`java.lang.String`)
 
+### `role` (`java.lang.String`)
+
 ### `startedAt` (`java.time.Instant`)
 
 ### `taskDomain` (`java.lang.String`)
@@ -42,7 +46,7 @@
 
 ## Constructors
 
-### `public AgentTask(java.lang.String taskId, java.lang.String agentId, java.lang.String tenancyId, java.lang.String capabilityTag, java.lang.String taskDomain, java.lang.String externalRef, java.time.Instant startedAt, java.time.Instant endedAt)`
+### `public AgentTask(java.lang.String taskId, java.lang.String agentId, java.lang.String tenancyId, java.lang.String capabilityTag, java.lang.String taskDomain, java.lang.String role, java.lang.String externalRef, java.time.Instant startedAt, java.time.Instant endedAt)`
 
 #### Parameters
 
@@ -51,6 +55,7 @@
 - `tenancyId` (`java.lang.String`)
 - `capabilityTag` (`java.lang.String`)
 - `taskDomain` (`java.lang.String`)
+- `role` (`java.lang.String`)
 - `externalRef` (`java.lang.String`)
 - `startedAt` (`java.time.Instant`)
 - `endedAt` (`java.time.Instant`)
@@ -72,6 +77,8 @@
 ### `public java.lang.String externalRef()`
 
 ### `public final int hashCode()`
+
+### `public java.lang.String role()`
 
 ### `public java.time.Instant startedAt()`
 

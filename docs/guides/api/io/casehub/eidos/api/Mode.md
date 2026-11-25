@@ -12,6 +12,8 @@
 
 ### `AUTO_ABOVE_THRESHOLD` (`io.casehub.eidos.api.RoleChangePolicy.Mode`)
 
+### `DISABLED` (`io.casehub.eidos.api.RoleChangePolicy.Mode`)
+
 ## Constructors
 
 ### `private Mode()`
