@@ -23,6 +23,12 @@ public interface AgentGraphQuery {
     AgentTaskHistory historyByRole(String agentId, String roleName,
                                    String tenancyId, Instant since);
 
+    default AgentTaskHistory historyByRole(String agentId, String roleName,
+                                           String tenancyId, Instant since,
+                                           String taskDomain) {
+        return historyByRole(agentId, roleName, tenancyId, since);
+    }
+
 
     /**
      * Returns agentIds ranked by Wilson lower bound score.

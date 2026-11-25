@@ -222,6 +222,56 @@ class JpaAgentGraphQueryTest {
     }
 
     @Test
+    void historyByRole_with_taskDomain_filters_to_matching_domain() {
+        Instant now = Instant.now();
+
+        store.recordTask(new AgentTask("rd1", "agent-r", "t1", "cap", "java", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("rd1", "agent-r", "t1"),
+                            new AgentOutcome("rd1", TaskResult.SUCCEEDED, 0.9, now, null));
+
+        store.recordTask(new AgentTask("rd2", "agent-r", "t1", "cap", "python", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("rd2", "agent-r", "t1"),
+                            new AgentOutcome("rd2", TaskResult.FAILED, 0.8, now, null));
+
+        store.recordTask(new AgentTask("rd3", "agent-r", "t1", "cap", "rust", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("rd3", "agent-r", "t1"),
+                            new AgentOutcome("rd3", TaskResult.SUCCEEDED, 0.7, now, null));
+
+        Instant          since       = now.minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory javaHistory = query.historyByRole("agent-r", "coordinator", "t1", since, "java");
+
+        assertThat(javaHistory.tasks()).hasSize(1);
+        assertThat(javaHistory.tasks().get(0).taskId()).isEqualTo("rd1");
+        assertThat(javaHistory.outcomes()).hasSize(1);
+        assertThat(javaHistory.outcomes().get(0).result()).isEqualTo(TaskResult.SUCCEEDED);
+    }
+
+    @Test
+    void historyByRole_with_null_taskDomain_returns_all_domains() {
+        Instant now = Instant.now();
+
+        store.recordTask(new AgentTask("rn1", "agent-r", "t1", "cap", "java", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("rn1", "agent-r", "t1"),
+                            new AgentOutcome("rn1", TaskResult.SUCCEEDED, 0.9, now, null));
+
+        store.recordTask(new AgentTask("rn2", "agent-r", "t1", "cap", "python", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("rn2", "agent-r", "t1"),
+                            new AgentOutcome("rn2", TaskResult.FAILED, 0.8, now, null));
+
+        Instant          since   = now.minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory history = query.historyByRole("agent-r", "coordinator", "t1", since, null);
+
+        assertThat(history.tasks()).hasSize(2);
+        assertThat(history.outcomes()).hasSize(2);
+    }
+
+
+    @Test
     void coActiveAgents_returns_agents_with_in_progress_tasks() {
         store.recordTask(new AgentTask("t1", "agent-x", "t1", "cap", "java", null, "case-42", Instant.now(), null));
         store.recordTask(new AgentTask("t2", "agent-y", "t1", "cap", "java", null, "case-42", Instant.now(), null));

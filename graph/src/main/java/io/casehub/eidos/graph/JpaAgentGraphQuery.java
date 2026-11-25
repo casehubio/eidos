@@ -157,6 +157,22 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
                  .toList();
     }
 
+    private List<AgentOutcome> outcomesForRole(final String agentId, final String roleName,
+                                               final String tenancyId, final Instant since,
+                                               final Set<String> domains) {
+        return em.createQuery(
+                         "SELECT o FROM AgentOutcomeEntity o JOIN o.task t " +
+                         "WHERE t.agentId = :a AND t.role = :role AND t.tenancyId = :tn " +
+                         "AND t.startedAt >= :since AND t.taskDomain IN :domains",
+                         AgentOutcomeEntity.class)
+                 .setParameter("a", agentId).setParameter("role", roleName)
+                 .setParameter("tn", tenancyId).setParameter("since", since)
+                 .setParameter("domains", domains)
+                 .getResultList().stream()
+                 .map(AgentOutcomeEntity::toRecord)
+                 .toList();
+    }
+
 
     @Override
     @Transactional(TxType.SUPPORTS)
@@ -220,6 +236,52 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
                                         .getResultList();
 
         List<AgentOutcome>   outcomes = outcomesForRole(agentId, roleName, tenancyId, since);
+        List<AttestationRef> refs     = attestationsFor(agentId, tenancyId);
+        int                  n        = outcomes.size();
+        return new AgentTaskHistory(agentId, tenancyId,
+                                    tasks.stream().map(AgentTaskEntity::toRecord).toList(),
+                                    outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+    }
+
+    @Override
+    @Transactional(TxType.SUPPORTS)
+    public AgentTaskHistory historyByRole(final String agentId, final String roleName,
+                                          final String tenancyId, final Instant since,
+                                          final String taskDomain) {
+        if (taskDomain == null) {
+            return historyByRole(agentId, roleName, tenancyId, since);
+        }
+        Objects.requireNonNull(agentId, "agentId");
+        Objects.requireNonNull(roleName, "roleName");
+        Objects.requireNonNull(tenancyId, "tenancyId");
+        Objects.requireNonNull(since, "since");
+
+        Set<String> domains = new LinkedHashSet<>();
+        domains.add(taskDomain);
+        List<String> allDomains = em.createQuery(
+                                            "SELECT DISTINCT t.taskDomain FROM AgentTaskEntity t " +
+                                            "WHERE t.agentId = :a AND t.role = :role AND t.tenancyId = :tn " +
+                                            "AND t.startedAt >= :since",
+                                            String.class)
+                                    .setParameter("a", agentId).setParameter("role", roleName)
+                                    .setParameter("tn", tenancyId).setParameter("since", since)
+                                    .getResultList();
+        allDomains.stream()
+                  .filter(d -> d != null && enricher.semanticallyEquivalent(taskDomain, d))
+                  .forEach(domains::add);
+
+        List<AgentTaskEntity> tasks = em.createQuery(
+                                                "SELECT t FROM AgentTaskEntity t WHERE t.agentId = :a " +
+                                                "AND t.tenancyId = :tn AND t.role = :role " +
+                                                "AND t.startedAt >= :since AND t.taskDomain IN :domains " +
+                                                "ORDER BY t.startedAt DESC",
+                                                AgentTaskEntity.class)
+                                        .setParameter("a", agentId).setParameter("tn", tenancyId)
+                                        .setParameter("role", roleName).setParameter("since", since)
+                                        .setParameter("domains", domains)
+                                        .getResultList();
+
+        List<AgentOutcome>   outcomes = outcomesForRole(agentId, roleName, tenancyId, since, domains);
         List<AttestationRef> refs     = attestationsFor(agentId, tenancyId);
         int                  n        = outcomes.size();
         return new AgentTaskHistory(agentId, tenancyId,

@@ -44,28 +44,29 @@ public class DefaultRoleHealth implements RoleHealth {
 
         final Instant since = Instant.now().minus(windowDays, ChronoUnit.DAYS);
         final var history = graphQuery.historyByRole(
-                descriptor.agentId(), roleName, descriptor.tenancyId(), since);
+                descriptor.agentId(), roleName, descriptor.tenancyId(), since,
+                context.taskDomain());
 
-        final Instant now = Instant.now();
-        final int rawCount = history.outcomes().size();
+        final Instant now      = Instant.now();
+        final int     rawCount = history.outcomes().size();
         if (GraphDataSufficiency.forCount(rawCount, since, now, List.of()).level()
-                == SufficiencyLevel.INSUFFICIENT) {
+            == SufficiencyLevel.INSUFFICIENT) {
             return new RoleStatus.DeclaredFit(roleName);
         }
 
-        double sumQuality = 0.0;
-        double effectiveN = 0.0;
-        int failureCount = 0;
+        double sumQuality   = 0.0;
+        double effectiveN   = 0.0;
+        int    failureCount = 0;
         for (final var outcome : history.outcomes()) {
             final double decay = TemporalDecay.exponential(outcome.observedAt(), now, halfLifeDays);
             sumQuality += outcome.confidence() * multiplier(outcome.result()) * decay;
             effectiveN += decay;
-            if (outcome.result() == TaskResult.FAILED) failureCount++;
+            if (outcome.result() == TaskResult.FAILED) {failureCount++;}
         }
 
-        final int n = Math.max(1, (int) Math.round(effectiveN));
+        final int    n          = Math.max(1, (int) Math.round(effectiveN));
         final double confidence = WilsonConfidence.score(sumQuality, n);
-        final var policy = descriptor.roleProfile().changePolicy();
+        final var    policy     = descriptor.roleProfile().changePolicy();
 
         if (confidence >= policy.minConfidence()) {
             return new RoleStatus.Fit(roleName, confidence);

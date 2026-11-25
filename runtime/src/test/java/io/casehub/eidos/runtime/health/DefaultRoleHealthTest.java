@@ -127,6 +127,41 @@ class DefaultRoleHealthTest {
         assertThat(status).isInstanceOf(RoleStatus.Fit.class);
     }
 
+    @Test
+    void domain_scoped_probe_uses_domain_specific_history() {
+        var descriptor = descriptorWithRoles("coordinator",
+                                             new RoleChangePolicy(RoleChangePolicy.Mode.AUTO_ABOVE_THRESHOLD,
+                                                                  0.5, 0.3, 2));
+        graphQuery.setHistory("coordinator", "java", historyWithOutcomes(20, TaskResult.SUCCEEDED, 0.9));
+        graphQuery.setHistory("coordinator", "python", historyWithOutcomes(15, TaskResult.FAILED, 0.9));
+
+        var javaStatus = roleHealth.probe(descriptor, "coordinator", ProbeContext.of("java"));
+        assertThat(javaStatus).isInstanceOf(RoleStatus.Fit.class);
+
+        var pythonStatus = roleHealth.probe(descriptor, "coordinator", ProbeContext.of("python"));
+        assertThat(pythonStatus).isInstanceOf(RoleStatus.Unfit.class);
+    }
+
+    @Test
+    void null_domain_falls_back_to_aggregate_history() {
+        var descriptor = descriptorWithRoles("coordinator",
+                                             new RoleChangePolicy(RoleChangePolicy.Mode.AUTO_ABOVE_THRESHOLD,
+                                                                  0.5, 0.3, 2));
+        graphQuery.setHistory("coordinator", historyWithOutcomes(20, TaskResult.SUCCEEDED, 0.9));
+
+        var status = roleHealth.probe(descriptor, "coordinator", ProbeContext.of(null));
+        assertThat(status).isInstanceOf(RoleStatus.Fit.class);
+    }
+
+    @Test
+    void domain_scoped_declared_fit_when_no_domain_history() {
+        var descriptor = descriptorWithRoles("coordinator");
+        graphQuery.setHistory("coordinator", "rust", emptyHistory());
+
+        var status = roleHealth.probe(descriptor, "coordinator", ProbeContext.of("rust"));
+        assertThat(status).isInstanceOf(RoleStatus.DeclaredFit.class);
+    }
+
 
     // ── Helpers ──
 
@@ -193,6 +228,10 @@ class DefaultRoleHealthTest {
             historyByRole.put(role, history);
         }
 
+        void setHistory(String role, String taskDomain, AgentTaskHistory history) {
+            historyByRole.put(role + "|" + taskDomain, history);
+        }
+
         @Override
         public AgentTaskHistory agentHistory(String agentId, String tenancyId) {
             return emptyHistory();
@@ -200,19 +239,29 @@ class DefaultRoleHealthTest {
 
         @Override
         public AgentTaskHistory historyByCapability(String agentId, String capabilityTag,
-                                                     String tenancyId) {
+                                                    String tenancyId) {
             return emptyHistory();
         }
 
         @Override
         public AgentTaskHistory historyByRole(String agentId, String roleName,
-                                               String tenancyId, Instant since) {
+                                              String tenancyId, Instant since) {
             return historyByRole.getOrDefault(roleName, emptyHistory());
         }
 
         @Override
+        public AgentTaskHistory historyByRole(String agentId, String roleName,
+                                              String tenancyId, Instant since,
+                                              String taskDomain) {
+            if (taskDomain == null) {
+                return historyByRole(agentId, roleName, tenancyId, since);
+            }
+            return historyByRole.getOrDefault(roleName + "|" + taskDomain, emptyHistory());
+        }
+
+        @Override
         public List<String> topAgentsByOutcome(String capabilityTag, String taskDomain,
-                                                String tenancyId, int limit) {
+                                               String tenancyId, int limit) {
             return List.of();
         }
 
