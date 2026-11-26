@@ -1,13 +1,17 @@
 package io.casehub.eidos.graph;
 
 import io.casehub.eidos.api.*;
-import io.casehub.eidos.graph.entity.*;
+import io.casehub.eidos.graph.entity.AgentOutcomeEntity;
+import io.casehub.eidos.graph.entity.AgentTaskEntity;
+import io.casehub.eidos.graph.entity.AttestationRefEntity;
+import io.casehub.eidos.graph.entity.RoleOutcomeEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import java.util.UUID;
+
 import java.util.List;
+import java.util.UUID;
 
 @ApplicationScoped
 public class JpaAgentGraphStore implements AgentGraphStore {
@@ -45,5 +49,11 @@ public class JpaAgentGraphStore implements AgentGraphStore {
 
         AgentTaskEntity task = em.find(AgentTaskEntity.class, id.taskId());
         em.persist(AttestationRefEntity.from(UUID.randomUUID().toString(), ref, task));
+    }
+
+    @Override
+    @Transactional
+    public void recordRoleOutcome(final AgentTaskId id, final RoleOutcome outcome) {
+        em.persist(RoleOutcomeEntity.from(outcome));
     }
 }

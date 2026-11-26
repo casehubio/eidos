@@ -7,6 +7,7 @@ import io.casehub.eidos.api.AgentTask;
 import io.casehub.eidos.api.AgentTaskHistory;
 import io.casehub.eidos.api.AgentTaskId;
 import io.casehub.eidos.api.AttestationRef;
+import io.casehub.eidos.api.RoleOutcome;
 import io.casehub.eidos.api.SufficiencyLevel;
 import io.casehub.eidos.api.TaskResult;
 import io.quarkus.test.TestTransaction;
@@ -268,6 +269,39 @@ class JpaAgentGraphQueryTest {
 
         assertThat(history.tasks()).hasSize(2);
         assertThat(history.outcomes()).hasSize(2);
+    }
+
+    @Test
+    void recordRoleOutcome_and_retrieve_via_historyByRole() {
+        Instant now = Instant.now();
+        store.recordTask(new AgentTask("ro-t1", "agent-ro", "t1", "cap", "java", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("ro-t1", "agent-ro", "t1"),
+                            new AgentOutcome("ro-t1", TaskResult.SUCCEEDED, 0.9, now, null));
+        store.recordRoleOutcome(new AgentTaskId("ro-t1", "agent-ro", "t1"),
+                                new RoleOutcome("ro-t1", 0.75, "coordination", now));
+
+        Instant          since   = now.minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory history = query.historyByRole("agent-ro", "coordinator", "t1", since);
+
+        assertThat(history.roleOutcomes()).hasSize(1);
+        assertThat(history.roleOutcomes().get(0).roleQuality()).isEqualTo(0.75);
+        assertThat(history.roleOutcomes().get(0).dimension()).isEqualTo("coordination");
+    }
+
+    @Test
+    void historyByRole_returns_empty_roleOutcomes_when_none_recorded() {
+        Instant now = Instant.now();
+        store.recordTask(new AgentTask("ro-t2", "agent-ro", "t1", "cap", "java", "coordinator",
+                                       "ref", now, now));
+        store.recordOutcome(new AgentTaskId("ro-t2", "agent-ro", "t1"),
+                            new AgentOutcome("ro-t2", TaskResult.SUCCEEDED, 0.9, now, null));
+
+        Instant          since   = now.minus(90, java.time.temporal.ChronoUnit.DAYS);
+        AgentTaskHistory history = query.historyByRole("agent-ro", "coordinator", "t1", since);
+
+        assertThat(history.roleOutcomes()).isEmpty();
+        assertThat(history.outcomes()).hasSize(1);
     }
 
 

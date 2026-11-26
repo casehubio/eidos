@@ -5,12 +5,14 @@ import io.casehub.eidos.api.AgentOutcome;
 import io.casehub.eidos.api.AgentTaskHistory;
 import io.casehub.eidos.api.AttestationRef;
 import io.casehub.eidos.api.GraphDataSufficiency;
+import io.casehub.eidos.api.RoleOutcome;
 import io.casehub.eidos.api.TaskResult;
 import io.casehub.eidos.api.TaskSemanticEnricher;
 import io.casehub.eidos.api.WilsonConfidence;
 import io.casehub.eidos.graph.entity.AgentOutcomeEntity;
 import io.casehub.eidos.graph.entity.AgentTaskEntity;
 import io.casehub.eidos.graph.entity.AttestationRefEntity;
+import io.casehub.eidos.graph.entity.RoleOutcomeEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -173,6 +175,36 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
                  .toList();
     }
 
+    private List<RoleOutcome> roleOutcomesForRole(final String agentId, final String roleName,
+                                                  final String tenancyId, final Instant since) {
+        return em.createQuery(
+                         "SELECT ro FROM RoleOutcomeEntity ro JOIN ro.task t " +
+                         "WHERE t.agentId = :a AND t.role = :role AND t.tenancyId = :tn " +
+                         "AND t.startedAt >= :since",
+                         RoleOutcomeEntity.class)
+                 .setParameter("a", agentId).setParameter("role", roleName)
+                 .setParameter("tn", tenancyId).setParameter("since", since)
+                 .getResultList().stream()
+                 .map(RoleOutcomeEntity::toRecord)
+                 .toList();
+    }
+
+    private List<RoleOutcome> roleOutcomesForRole(final String agentId, final String roleName,
+                                                  final String tenancyId, final Instant since,
+                                                  final Set<String> domains) {
+        return em.createQuery(
+                         "SELECT ro FROM RoleOutcomeEntity ro JOIN ro.task t " +
+                         "WHERE t.agentId = :a AND t.role = :role AND t.tenancyId = :tn " +
+                         "AND t.startedAt >= :since AND t.taskDomain IN :domains",
+                         RoleOutcomeEntity.class)
+                 .setParameter("a", agentId).setParameter("role", roleName)
+                 .setParameter("tn", tenancyId).setParameter("since", since)
+                 .setParameter("domains", domains)
+                 .getResultList().stream()
+                 .map(RoleOutcomeEntity::toRecord)
+                 .toList();
+    }
+
 
     @Override
     @Transactional(TxType.SUPPORTS)
@@ -235,12 +267,13 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
                                         .setParameter("since", since)
                                         .getResultList();
 
-        List<AgentOutcome>   outcomes = outcomesForRole(agentId, roleName, tenancyId, since);
-        List<AttestationRef> refs     = attestationsFor(agentId, tenancyId);
-        int                  n        = outcomes.size();
+        List<AgentOutcome>   outcomes     = outcomesForRole(agentId, roleName, tenancyId, since);
+        List<RoleOutcome>    roleOutcomes = roleOutcomesForRole(agentId, roleName, tenancyId, since);
+        List<AttestationRef> refs         = attestationsFor(agentId, tenancyId);
+        int                  n            = outcomes.size();
         return new AgentTaskHistory(agentId, tenancyId,
                                     tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-                                    outcomes, List.of(), refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+                                    outcomes, roleOutcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
 
     @Override
@@ -281,12 +314,13 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
                                         .setParameter("domains", domains)
                                         .getResultList();
 
-        List<AgentOutcome>   outcomes = outcomesForRole(agentId, roleName, tenancyId, since, domains);
-        List<AttestationRef> refs     = attestationsFor(agentId, tenancyId);
-        int                  n        = outcomes.size();
+        List<AgentOutcome>   outcomes     = outcomesForRole(agentId, roleName, tenancyId, since, domains);
+        List<RoleOutcome>    roleOutcomes = roleOutcomesForRole(agentId, roleName, tenancyId, since, domains);
+        List<AttestationRef> refs         = attestationsFor(agentId, tenancyId);
+        int                  n            = outcomes.size();
         return new AgentTaskHistory(agentId, tenancyId,
                                     tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-                                    outcomes, List.of(), refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+                                    outcomes, roleOutcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
 
 
