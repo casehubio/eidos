@@ -36,6 +36,12 @@
 
 ### `public java.lang.String lowPoleLabel()`
 
+### `public double signedPosition(java.lang.String term)`
+
+#### Parameters
+
+- `term` (`java.lang.String`)
+
 ### `public static io.casehub.eidos.api.DispositionAxis valueOf(java.lang.String name)`
 
 #### Parameters
