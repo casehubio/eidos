@@ -7,6 +7,7 @@ import io.casehub.eidos.api.AgentGraphStore;
 import io.casehub.eidos.api.AgentStateStore;
 import io.casehub.eidos.api.BehavioralSignalStore;
 import io.casehub.eidos.api.CrossUnitEvidenceAssessor;
+import io.casehub.eidos.api.DetectedRoleSignalStore;
 import io.casehub.eidos.api.DispositionEvolution;
 import io.casehub.eidos.api.DispositionHealth;
 import io.casehub.eidos.api.DispositionProfileListener;
@@ -34,6 +35,7 @@ import io.casehub.eidos.core.graph.NoOpRuntimeCollaborationQuery;
 import io.casehub.eidos.core.graph.NoOpTaskSemanticEnricher;
 import io.casehub.eidos.core.health.NoOpAgentStateStore;
 import io.casehub.eidos.core.health.NoOpBehavioralSignalStore;
+import io.casehub.eidos.core.health.NoOpDetectedRoleSignalStore;
 import io.casehub.eidos.core.health.NoOpDispositionEvolution;
 import io.casehub.eidos.core.health.NoOpDispositionHealth;
 import io.casehub.eidos.core.health.NoOpDispositionProfileListener;
@@ -89,6 +91,11 @@ public class EidosCoreProducer {
     @Produces @DefaultBean
     BehavioralSignalStore behavioralSignalStore() {
         return new NoOpBehavioralSignalStore();
+    }
+
+    @Produces @DefaultBean
+    DetectedRoleSignalStore detectedRoleSignalStore() {
+        return new NoOpDetectedRoleSignalStore();
     }
 
     @Produces @DefaultBean
