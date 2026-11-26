@@ -29,6 +29,8 @@ public class StigmergyEvidenceSource implements RoleEvidenceSource {
                             defaultValue = "90") final double halfLifeDays,
             @ConfigProperty(name = "casehub.eidos.stigmergy.evidence-weight",
                             defaultValue = "0.5") final double weight) {
+        if (weight <= 0.0 || Double.isNaN(weight) || Double.isInfinite(weight))
+            throw new IllegalArgumentException("casehub.eidos.stigmergy.evidence-weight must be positive and finite, got: " + weight);
         this.store = store;
         this.windowDays = windowDays;
         this.halfLifeDays = halfLifeDays;
