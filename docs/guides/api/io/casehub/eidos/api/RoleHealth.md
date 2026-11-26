@@ -6,6 +6,8 @@
 
 ## Methods
 
+### `public default java.util.List<io.casehub.eidos.api.RoleEvidence> lastProbeEvidence()`
+
 ### `public abstract io.casehub.eidos.api.RoleHealth.RoleStatus probe(io.casehub.eidos.api.AgentDescriptor descriptor, java.lang.String roleName, io.casehub.eidos.api.CapabilityHealth.ProbeContext context)`
 
 #### Parameters

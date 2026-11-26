@@ -20,6 +20,13 @@
 - `id` (`io.casehub.eidos.api.AgentTaskId`)
 - `outcome` (`io.casehub.eidos.api.AgentOutcome`)
 
+### `public default void recordRoleOutcome(io.casehub.eidos.api.AgentTaskId id, io.casehub.eidos.api.RoleOutcome outcome)`
+
+#### Parameters
+
+- `id` (`io.casehub.eidos.api.AgentTaskId`)
+- `outcome` (`io.casehub.eidos.api.RoleOutcome`)
+
 ### `public abstract void recordTask(io.casehub.eidos.api.AgentTask task)`
 
 #### Parameters

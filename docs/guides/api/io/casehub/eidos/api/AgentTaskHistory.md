@@ -12,6 +12,8 @@
 
 ### `outcomes` (`java.util.List<io.casehub.eidos.api.AgentOutcome>`)
 
+### `roleOutcomes` (`java.util.List<io.casehub.eidos.api.RoleOutcome>`)
+
 ### `sufficiency` (`io.casehub.eidos.api.GraphDataSufficiency`)
 
 ### `tasks` (`java.util.List<io.casehub.eidos.api.AgentTask>`)
@@ -26,6 +28,8 @@
 
 ### `outcomes` (`java.util.List<io.casehub.eidos.api.AgentOutcome>`)
 
+### `roleOutcomes` (`java.util.List<io.casehub.eidos.api.RoleOutcome>`)
+
 ### `sufficiency` (`io.casehub.eidos.api.GraphDataSufficiency`)
 
 ### `tasks` (`java.util.List<io.casehub.eidos.api.AgentTask>`)
@@ -34,7 +38,7 @@
 
 ## Constructors
 
-### `public AgentTaskHistory(java.lang.String agentId, java.lang.String tenancyId, java.util.List<io.casehub.eidos.api.AgentTask> tasks, java.util.List<io.casehub.eidos.api.AgentOutcome> outcomes, java.util.List<io.casehub.eidos.api.AttestationRef> attestationRefs, io.casehub.eidos.api.GraphDataSufficiency sufficiency)`
+### `public AgentTaskHistory(java.lang.String agentId, java.lang.String tenancyId, java.util.List<io.casehub.eidos.api.AgentTask> tasks, java.util.List<io.casehub.eidos.api.AgentOutcome> outcomes, java.util.List<io.casehub.eidos.api.RoleOutcome> roleOutcomes, java.util.List<io.casehub.eidos.api.AttestationRef> attestationRefs, io.casehub.eidos.api.GraphDataSufficiency sufficiency)`
 
 #### Parameters
 
@@ -42,6 +46,7 @@
 - `tenancyId` (`java.lang.String`)
 - `tasks` (`java.util.List<io.casehub.eidos.api.AgentTask>`)
 - `outcomes` (`java.util.List<io.casehub.eidos.api.AgentOutcome>`)
+- `roleOutcomes` (`java.util.List<io.casehub.eidos.api.RoleOutcome>`)
 - `attestationRefs` (`java.util.List<io.casehub.eidos.api.AttestationRef>`)
 - `sufficiency` (`io.casehub.eidos.api.GraphDataSufficiency`)
 
@@ -60,6 +65,8 @@
 ### `public final int hashCode()`
 
 ### `public java.util.List<io.casehub.eidos.api.AgentOutcome> outcomes()`
+
+### `public java.util.List<io.casehub.eidos.api.RoleOutcome> roleOutcomes()`
 
 ### `public io.casehub.eidos.api.GraphDataSufficiency sufficiency()`
 
