@@ -2,12 +2,14 @@ package io.casehub.eidos.api;
 
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
 
+import java.util.List;
+
 public interface RoleHealth {
 
     RoleStatus probe(AgentDescriptor descriptor, String roleName, ProbeContext context);
 
-    default java.util.List<RoleEvidence> lastProbeEvidence() {
-        return java.util.List.of();
+    default List<RoleEvidence> lastProbeEvidence() {
+        return List.of();
     }
 
 

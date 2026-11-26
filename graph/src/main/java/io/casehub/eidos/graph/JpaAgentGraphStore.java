@@ -54,6 +54,8 @@ public class JpaAgentGraphStore implements AgentGraphStore {
     @Override
     @Transactional
     public void recordRoleOutcome(final AgentTaskId id, final RoleOutcome outcome) {
+        AgentTaskEntity task = em.find(AgentTaskEntity.class, id.taskId());
+        if (task == null) return;
         em.persist(RoleOutcomeEntity.from(outcome));
     }
 }

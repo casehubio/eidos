@@ -3,10 +3,9 @@ package io.casehub.eidos.runtime.health;
 import io.casehub.eidos.api.*;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
 import io.casehub.eidos.api.RoleHealth.RoleStatus;
+import jakarta.enterprise.inject.Instance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import jakarta.enterprise.inject.Instance;
 
 import java.lang.annotation.Annotation;
 import java.time.Instant;
@@ -187,6 +186,34 @@ class DefaultRoleHealthTest {
         assertThat(status).isInstanceOf(RoleStatus.DeclaredFit.class);
     }
 
+    @Test
+    void zero_sources_returns_declared_fit() {
+        var emptyHealth = new DefaultRoleHealth(stubInstance(), 90);
+        var descriptor = descriptorWithRoles("coordinator",
+                                             new RoleChangePolicy(RoleChangePolicy.Mode.AUTO_ABOVE_THRESHOLD,
+                                                                  0.5, 0.3, 2));
+        var status = emptyHealth.probe(descriptor, "coordinator", ProbeContext.of(null));
+        assertThat(status).isInstanceOf(RoleStatus.DeclaredFit.class);
+    }
+
+    @Test
+    void multi_source_aggregation_combines_weighted_evidence() {
+        var source1     = new FixedEvidenceSource("s1", 9.0, 10.0, 1.0);
+        var source2     = new FixedEvidenceSource("s2", 4.0, 10.0, 1.0);
+        var multiHealth = new DefaultRoleHealth(stubInstance(source1, source2), 90);
+
+        var descriptor = descriptorWithRoles("coordinator",
+                                             new RoleChangePolicy(RoleChangePolicy.Mode.AUTO_ABOVE_THRESHOLD,
+                                                                  0.5, 0.3, 2));
+        var status = multiHealth.probe(descriptor, "coordinator", ProbeContext.of(null));
+        assertThat(status).isNotInstanceOf(RoleStatus.DeclaredFit.class);
+        assertThat(status).isNotInstanceOf(RoleStatus.Undeclared.class);
+
+        var evidence = multiHealth.lastProbeEvidence();
+        assertThat(evidence).hasSize(2);
+        assertThat(evidence).extracting(RoleEvidence::sourceId).containsExactly("s1", "s2");
+    }
+
 
     // ── Helpers ──
 
@@ -299,5 +326,19 @@ class DefaultRoleHealthTest {
         public List<String> coActiveAgents(String externalRef, String tenancyId) {
             return List.of();
         }
+    }
+
+    record FixedEvidenceSource(String id, double qualitySum, double effectiveCount,
+                               double weight) implements
+
+    RoleEvidenceSource {
+        @Override
+        public RoleEvidence evaluate (String agentId, String roleName,
+                                                                     String tenancyId, ProbeContext context){
+            return new RoleEvidence(id, qualitySum, effectiveCount, weight, Instant.now());
+        }
+
+        @Override
+        public String sourceId () {return id;}
     }
 }
