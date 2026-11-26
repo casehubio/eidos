@@ -12,7 +12,7 @@ public class NoOpAgentGraphQuery implements AgentGraphQuery {
 
     @Override
     public AgentTaskHistory agentHistory(final String agentId, final String tenancyId) {
-        return new AgentTaskHistory(agentId, tenancyId, List.of(), List.of(), List.of(),
+        return new AgentTaskHistory(agentId, tenancyId, List.of(), List.of(), List.of(), List.of(),
             GraphDataSufficiency.empty(List.of()));
     }
 

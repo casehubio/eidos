@@ -7,6 +7,7 @@ public record AgentTaskHistory(
     String tenancyId,
     List<AgentTask> tasks,           // includes in-progress (endedAt=null)
     List<AgentOutcome> outcomes,
+    List<RoleOutcome> roleOutcomes,
     List<AttestationRef> attestationRefs,
     GraphDataSufficiency sufficiency
 ) {}

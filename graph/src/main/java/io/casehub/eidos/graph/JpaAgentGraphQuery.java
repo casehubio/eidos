@@ -64,7 +64,7 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
 
         return new AgentTaskHistory(agentId, tenancyId,
             tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-            outcomes, refs,
+            outcomes, List.of(), refs,
             GraphDataSufficiency.forCount(n, from, through, List.of()));
     }
 
@@ -90,7 +90,7 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
                                .max(Comparator.naturalOrder()).orElse(null);
         return new AgentTaskHistory(agentId, tenancyId,
                                     tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-                                    outcomes, refs, GraphDataSufficiency.forCount(n, from, through, List.of()));
+                                    outcomes, List.of(), refs, GraphDataSufficiency.forCount(n, from, through, List.of()));
     }
 
 
@@ -190,7 +190,7 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
         int n = outcomes.size();
         return new AgentTaskHistory(agentId, tenancyId,
             tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-            outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+            outcomes, List.of(), refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
 
     @Override
@@ -212,7 +212,7 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
         int                  n        = outcomes.size();
         return new AgentTaskHistory(agentId, tenancyId,
                                     tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-                                    outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+                                    outcomes, List.of(), refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
 
 
@@ -240,7 +240,7 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
         int                  n        = outcomes.size();
         return new AgentTaskHistory(agentId, tenancyId,
                                     tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-                                    outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+                                    outcomes, List.of(), refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
 
     @Override
@@ -286,7 +286,7 @@ public class JpaAgentGraphQuery implements AgentGraphQuery {
         int                  n        = outcomes.size();
         return new AgentTaskHistory(agentId, tenancyId,
                                     tasks.stream().map(AgentTaskEntity::toRecord).toList(),
-                                    outcomes, refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
+                                    outcomes, List.of(), refs, GraphDataSufficiency.forCount(n, null, null, List.of()));
     }
 
 

@@ -196,7 +196,7 @@ class DefaultRoleHealthTest {
     }
 
     private static AgentTaskHistory emptyHistory() {
-        return new AgentTaskHistory("a1", "t1", List.of(), List.of(), List.of(),
+        return new AgentTaskHistory("a1", "t1", List.of(), List.of(), List.of(), List.of(),
                 GraphDataSufficiency.empty(List.of()));
     }
 
@@ -206,7 +206,7 @@ class DefaultRoleHealthTest {
         for (int i = 0; i < count; i++) {
             outcomes.add(new AgentOutcome("t" + i, result, confidence, Instant.now(), null));
         }
-        return new AgentTaskHistory("a1", "t1", List.of(), outcomes, List.of(),
+        return new AgentTaskHistory("a1", "t1", List.of(), outcomes, List.of(), List.of(),
                 GraphDataSufficiency.forCount(count, Instant.now(), Instant.now(), List.of()));
     }
 
@@ -216,7 +216,7 @@ class DefaultRoleHealthTest {
         for (int i = 0; i < count; i++) {
             outcomes.add(new AgentOutcome("t" + i, result, confidence, observedAt, null));
         }
-        return new AgentTaskHistory("a1", "t1", List.of(), outcomes, List.of(),
+        return new AgentTaskHistory("a1", "t1", List.of(), outcomes, List.of(), List.of(),
                                     GraphDataSufficiency.forCount(count, observedAt, observedAt, List.of()));
     }
 
