@@ -11,7 +11,11 @@ public final class AmpdFacets {
             "Anxiousness", "Callousness", "Deceitfulness", "Emotional Lability",
             "Grandiosity", "Hostility", "Impulsivity", "Intimacy Avoidance",
             "Manipulativeness", "Risk Taking", "Suspiciousness", "Withdrawal",
-            "Attention Seeking");
+            "Attention Seeking",
+            "Anhedonia", "Depressivity", "Perseveration", "Rigid Perfectionism",
+            "Distractibility", "Separation Insecurity", "Restricted Affectivity",
+            "Irresponsibility", "Cognitive Perceptual Dysregulation", "Eccentricity",
+            "Submissiveness", "Unusual Beliefs");
 
     private static final Map<String, String> LOOKUP = CANONICAL.stream()
             .collect(Collectors.toUnmodifiableMap(

@@ -90,13 +90,17 @@ class SituationalProfileApiTest {
     }
 
     @Test
-    void all13FacetsAreValid() {
-        assertThat(AmpdFacets.CANONICAL).hasSize(13);
+    void all25FacetsAreValid() {
+        assertThat(AmpdFacets.CANONICAL).hasSize(25);
         assertThat(AmpdFacetShift.VALID_FACETS).isSameAs(AmpdFacets.CANONICAL);
         for (String facet : List.of("Anxiousness", "Callousness", "Deceitfulness",
                                     "Emotional Lability", "Grandiosity", "Hostility", "Impulsivity",
                                     "Intimacy Avoidance", "Manipulativeness", "Risk Taking",
-                                    "Suspiciousness", "Withdrawal", "Attention Seeking")) {
+                                    "Suspiciousness", "Withdrawal", "Attention Seeking",
+                                    "Anhedonia", "Depressivity", "Perseveration", "Rigid Perfectionism",
+                                    "Distractibility", "Separation Insecurity", "Restricted Affectivity",
+                                    "Irresponsibility", "Cognitive Perceptual Dysregulation", "Eccentricity",
+                                    "Submissiveness", "Unusual Beliefs")) {
             assertThat(AmpdFacets.CANONICAL).contains(facet);
         }
     }
