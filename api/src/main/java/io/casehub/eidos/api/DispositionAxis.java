@@ -91,5 +91,11 @@ public enum DispositionAxis {
         };
     }
 
+    public double signedPosition(String term) {
+        if (term.equalsIgnoreCase(highPoleLabel())) {return +1.0;}
+        if (term.equalsIgnoreCase(lowPoleLabel())) {return -1.0;}
+        return 0.0;
+    }
+
 
 }
