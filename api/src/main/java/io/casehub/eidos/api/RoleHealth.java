@@ -6,6 +6,11 @@ public interface RoleHealth {
 
     RoleStatus probe(AgentDescriptor descriptor, String roleName, ProbeContext context);
 
+    default java.util.List<RoleEvidence> lastProbeEvidence() {
+        return java.util.List.of();
+    }
+
+
     sealed interface RoleStatus permits
             RoleStatus.DeclaredFit,
             RoleStatus.Fit,

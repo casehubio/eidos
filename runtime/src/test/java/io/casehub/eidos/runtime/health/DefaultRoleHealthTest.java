@@ -6,8 +6,12 @@ import io.casehub.eidos.api.RoleHealth.RoleStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import jakarta.enterprise.inject.Instance;
+
+import java.lang.annotation.Annotation;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +25,27 @@ class DefaultRoleHealthTest {
     @BeforeEach
     void setUp() {
         graphQuery = new StubGraphQuery();
-        roleHealth = new DefaultRoleHealth(graphQuery, 90, 90);
+        var source = new TaskOutcomeEvidenceSource(graphQuery, 90, 90);
+        roleHealth = new DefaultRoleHealth(stubInstance(source), 90);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Instance<RoleEvidenceSource> stubInstance(RoleEvidenceSource... sources) {
+        var list = List.of(sources);
+        return new Instance<>() {
+            @Override public Instance<RoleEvidenceSource> select(Annotation... qualifiers) { return this; }
+            @Override public <U extends RoleEvidenceSource> Instance<U> select(Class<U> subtype, Annotation... qualifiers) { return (Instance<U>) this; }
+            @Override public <U extends RoleEvidenceSource> Instance<U> select(jakarta.enterprise.util.TypeLiteral<U> subtype, Annotation... qualifiers) { return (Instance<U>) this; }
+            @Override public boolean isUnsatisfied() { return list.isEmpty(); }
+            @Override public boolean isAmbiguous() { return list.size() > 1; }
+            @Override public boolean isResolvable() { return list.size() == 1; }
+            @Override public RoleEvidenceSource get() { return list.get(0); }
+            @Override public Iterator<RoleEvidenceSource> iterator() { return list.iterator(); }
+            @Override public void destroy(RoleEvidenceSource instance) {}
+            @Override public Handle<RoleEvidenceSource> getHandle() { return null; }
+            @Override public Iterable<? extends Handle<RoleEvidenceSource>> handles() { return List.of(); }
+            @Override public void forEach(java.util.function.Consumer<? super RoleEvidenceSource> action) { list.forEach(action); }
+        };
     }
 
     @Test
@@ -115,7 +139,8 @@ class DefaultRoleHealthTest {
 
     @Test
     void zero_half_life_disables_decay() {
-        var noDecayHealth = new DefaultRoleHealth(graphQuery, 90, 0);
+        var noDecaySource = new TaskOutcomeEvidenceSource(graphQuery, 90, 0);
+        var noDecayHealth = new DefaultRoleHealth(stubInstance(noDecaySource), 90);
         var descriptor = descriptorWithRoles("coordinator",
                                              new RoleChangePolicy(RoleChangePolicy.Mode.AUTO_ABOVE_THRESHOLD,
                                                                   0.5, 0.3, 2));

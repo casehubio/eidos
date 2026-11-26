@@ -1,38 +1,36 @@
 package io.casehub.eidos.runtime.health;
 
 import io.casehub.eidos.api.AgentDescriptor;
-import io.casehub.eidos.api.AgentGraphQuery;
 import io.casehub.eidos.api.CapabilityHealth.ProbeContext;
 import io.casehub.eidos.api.GraphDataSufficiency;
+import io.casehub.eidos.api.RoleEvidence;
+import io.casehub.eidos.api.RoleEvidenceSource;
 import io.casehub.eidos.api.RoleHealth;
 import io.casehub.eidos.api.SufficiencyLevel;
-import io.casehub.eidos.api.TaskResult;
-import io.casehub.eidos.api.TemporalDecay;
 import io.casehub.eidos.api.WilsonConfidence;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
 public class DefaultRoleHealth implements RoleHealth {
 
-    private final AgentGraphQuery graphQuery;
-    private final int windowDays;
-    private final double halfLifeDays;
+    private final Instance<RoleEvidenceSource>    evidenceSources;
+    private final int                             windowDays;
+    private final ThreadLocal<List<RoleEvidence>> lastEvidence = ThreadLocal.withInitial(List::of);
 
     @Inject
-    public DefaultRoleHealth(final AgentGraphQuery graphQuery,
+    public DefaultRoleHealth(final Instance<RoleEvidenceSource> evidenceSources,
                              @ConfigProperty(name = "casehub.eidos.role-health.window-days",
-                                     defaultValue = "90") final int windowDays,
-                             @ConfigProperty(name = "casehub.eidos.role-health.decay-half-life-days",
-                                     defaultValue = "90") final double halfLifeDays) {
-        this.graphQuery = graphQuery;
-        this.windowDays = windowDays;
-        this.halfLifeDays = halfLifeDays;
+                                             defaultValue = "90") final int windowDays) {
+        this.evidenceSources = evidenceSources;
+        this.windowDays      = windowDays;
     }
 
     @Override
@@ -42,30 +40,33 @@ public class DefaultRoleHealth implements RoleHealth {
             return new RoleStatus.Undeclared(roleName);
         }
 
-        final Instant since = Instant.now().minus(windowDays, ChronoUnit.DAYS);
-        final var history = graphQuery.historyByRole(
-                descriptor.agentId(), roleName, descriptor.tenancyId(), since,
-                context.taskDomain());
+        final var evidenceList = new ArrayList<RoleEvidence>();
+        for (final var source : evidenceSources) {
+            evidenceList.add(source.evaluate(descriptor.agentId(), roleName,
+                                             descriptor.tenancyId(), context));
+        }
+        lastEvidence.set(List.copyOf(evidenceList));
 
-        final Instant now      = Instant.now();
-        final int     rawCount = history.outcomes().size();
-        if (GraphDataSufficiency.forCount(rawCount, since, now, List.of()).level()
+        double qTotal = 0.0;
+        double nTotal = 0.0;
+        for (final var evidence : evidenceList) {
+            qTotal += evidence.weight() * evidence.qualitySum();
+            nTotal += evidence.weight() * evidence.effectiveCount();
+        }
+
+        if (nTotal < 1.0) {
+            return new RoleStatus.DeclaredFit(roleName);
+        }
+
+        final Instant since = Instant.now().minus(windowDays, ChronoUnit.DAYS);
+        final Instant now   = Instant.now();
+        final int     n     = Math.max(1, (int) Math.round(nTotal));
+        if (GraphDataSufficiency.forCount(n, since, now, List.of()).level()
             == SufficiencyLevel.INSUFFICIENT) {
             return new RoleStatus.DeclaredFit(roleName);
         }
 
-        double sumQuality   = 0.0;
-        double effectiveN   = 0.0;
-        int    failureCount = 0;
-        for (final var outcome : history.outcomes()) {
-            final double decay = TemporalDecay.exponential(outcome.observedAt(), now, halfLifeDays);
-            sumQuality += outcome.confidence() * multiplier(outcome.result()) * decay;
-            effectiveN += decay;
-            if (outcome.result() == TaskResult.FAILED) {failureCount++;}
-        }
-
-        final int    n          = Math.max(1, (int) Math.round(effectiveN));
-        final double confidence = WilsonConfidence.score(sumQuality, n);
+        final double confidence = WilsonConfidence.score(qTotal, n);
         final var    policy     = descriptor.roleProfile().changePolicy();
 
         if (confidence >= policy.minConfidence()) {
@@ -73,15 +74,12 @@ public class DefaultRoleHealth implements RoleHealth {
         } else if (confidence >= policy.demotionConfidence()) {
             return new RoleStatus.Marginal(roleName, confidence, n);
         } else {
-            return new RoleStatus.Unfit(roleName, confidence, failureCount, n);
+            return new RoleStatus.Unfit(roleName, confidence, (int) Math.round(nTotal - qTotal), n);
         }
     }
 
-    private static double multiplier(final TaskResult result) {
-        return switch (result) {
-            case SUCCEEDED -> 1.0;
-            case PARTIALLY -> 0.5;
-            case FAILED -> 0.0;
-        };
+    @Override
+    public List<RoleEvidence> lastProbeEvidence() {
+        return lastEvidence.get();
     }
 }
